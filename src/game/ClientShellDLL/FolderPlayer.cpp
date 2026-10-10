@@ -306,6 +306,10 @@ void    CFolderPlayer::OnFocus(LTBOOL bFocus)
 		if (strcmp(szTemp,m_szPlayerHead) != 0)
 			bChanged = LTTRUE;
 
+#ifdef NOLFSRC_MODERN
+		// M-P6-01: no format characters in player names
+		FilterFormatChars(m_szPlayerName);
+#endif
 		SAFE_STRCPY(szTemp,g_vtPlayerName.GetStr() );
 		if (strcmp(szTemp,m_szPlayerName) != 0)
 			bChanged = LTTRUE;

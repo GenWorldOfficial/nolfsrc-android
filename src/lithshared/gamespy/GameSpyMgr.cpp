@@ -22,20 +22,74 @@
 //  service was shut down in 2013, so there is no heartbeat, and \secure\
 //  (the master's challenge) gets no answer.
 //
+//  THE MODERN BUILD (NOLFSRC_MODERN, M-P6-02) does report to a master: a
+//  heartbeat every minute to the address the game sets with
+//  SetGameSpyAddr (default master.openspy.net), and the answer to its
+//  \secure\ challenge; see gsmaster.h.
+//
 // *********************************************************************** //
 
 #include <windows.h>
 #include <stdio.h>
 #include <string.h>
 #include "GameSpyMgr.h"
+#ifdef NOLFSRC_MODERN
+#include "gsmaster.h"
+#endif
 
 #define GSM_PACKET_LIMIT	1300	// flush before a UDP datagram grows past this
 
+
+#ifdef NOLFSRC_MODERN
+// M-P6-02: the master's address, resolved at the first heartbeat and again
+// every 30 minutes (or after a failure).
+static char          s_sMasterAddr[128];
+static unsigned long s_nMasterIP      = 0;
+static int           s_nMasterPort    = 0;
+static DWORD         s_dwResolveTime  = 0;
+static BOOL          s_bWinsock       = FALSE;
+
+#define GSM_RESOLVE_INTERVAL	(30 * 60 * 1000)
+
+static BOOL GSM_GetMaster(const char* sAddr, char* sIP, int* pPort)
+{
+	DWORD dwNow = GetTickCount();
+
+	if (stricmp(sAddr, s_sMasterAddr) != 0 || !s_nMasterIP ||
+	    (dwNow - s_dwResolveTime) > GSM_RESOLVE_INTERVAL)
+	{
+		strncpy(s_sMasterAddr, sAddr, sizeof(s_sMasterAddr) - 1);
+		s_sMasterAddr[sizeof(s_sMasterAddr) - 1] = '\0';
+		s_dwResolveTime = dwNow;
+		if (!GSM_Resolve(sAddr, GSM_HEARTBEAT_PORT, &s_nMasterIP, &s_nMasterPort))
+		{
+			s_nMasterIP = 0;
+			return(FALSE);
+		}
+	}
+
+	struct in_addr in;
+	in.s_addr = s_nMasterIP;
+	strcpy(sIP, inet_ntoa(in));
+	*pPort = s_nMasterPort;
+	return(TRUE);
+}
+#endif
 
 BOOL CGameSpyMgr::Init(const char* sGameName, const char* sGameVer, const char* sGameKey,
                        int nGameLoc, int nGamePort, int nSpyPort, DWORD dwFlags)
 {
 	Term();
+
+#ifdef NOLFSRC_MODERN
+	// M-P6-02: name lookups need Winsock (the engine has it running
+	// already; this only takes a reference)
+	if (!s_bWinsock)
+	{
+		WSADATA wsaData;
+		s_bWinsock = (WSAStartup(MAKEWORD(1, 1), &wsaData) == 0);
+	}
+#endif
 
 	if (!sGameName || !sGameName[0]) return(FALSE);
 
@@ -54,6 +108,23 @@ BOOL CGameSpyMgr::Init(const char* sGameName, const char* sGameVer, const char* 
 
 void CGameSpyMgr::Term()
 {
+#ifdef NOLFSRC_MODERN
+	// M-P6-02: tell the master we are gone (statechanged 2), so the server
+	// leaves the list at once rather than when it expires
+	if (m_bInit && m_pSender && m_timerHeartbeat)
+	{
+		char sIP[32];
+		int  nPort;
+		if (GSM_GetMaster(m_sGameSpyAddr, sIP, &nPort))
+		{
+			char sBeat[256];
+			sprintf(sBeat, "\\heartbeat\\%d\\gamename\\%.64s\\statechanged\\2",
+			        (int)m_dwGamePort, (const char*)m_sGameName);
+			SendSocketString(sIP, (DWORD)nPort, sBeat);
+		}
+	}
+	m_timerHeartbeat = 0;
+#endif
 	m_bInit = FALSE;
 }
 
@@ -65,8 +136,27 @@ void CGameSpyMgr::Update()
 
 BOOL CGameSpyMgr::UpdateHeartbeat()
 {
+#ifdef NOLFSRC_MODERN
+	// M-P6-02: a heartbeat every TIMER_HEARTBEAT, sent from the game port
+	// (the port the master is told to query, GSMF_USEGAMEPORTFORHEARTBEAT)
+	if (!m_pSender) return(FALSE);
+
+	DWORD dwNow = GetTickCount();
+	if (m_timerHeartbeat && (dwNow - m_timerHeartbeat) < TIMER_HEARTBEAT) return(FALSE);
+	m_timerHeartbeat = dwNow ? dwNow : 1;
+
+	char sIP[32];
+	int  nPort;
+	if (!GSM_GetMaster(m_sGameSpyAddr, sIP, &nPort)) return(FALSE);
+
+	char sBeat[256];
+	sprintf(sBeat, "\\heartbeat\\%d\\gamename\\%.64s",
+	        (int)m_dwGamePort, (const char*)m_sGameName);
+	return(SendSocketString(sIP, (DWORD)nPort, sBeat));
+#else
 	// The master server this used to report to no longer exists.
 	return(FALSE);
+#endif
 }
 
 
@@ -98,6 +188,15 @@ BOOL CGameSpyMgr::OnQuery(char* sAddr, DWORD dwPort, char* sData, int nLen)
 	StartResponse(sAddr, dwPort);
 
 	BOOL bAnswered = FALSE;
+#ifdef NOLFSRC_MODERN
+	// M-P6-02: the master reads \validate\ as the first key of the reply,
+	// so a challenge is answered before anything else asked with it
+	char sChallenge[80];
+	if (GSM_FindKey(sQuery, "secure", sChallenge, sizeof(sChallenge)))
+	{
+		bAnswered |= OnSecureQuery(sChallenge);
+	}
+#endif
 	CString sToken = GetFirstQueryToken(sQuery);
 
 	while (!sToken.IsEmpty())
@@ -130,7 +229,9 @@ BOOL CGameSpyMgr::OnQuery(char* sAddr, DWORD dwPort, char* sData, int nLen)
 		else if (sToken.CompareNoCase("secure") == 0)
 		{
 			CString sValue = GetNextQueryToken();
+#ifndef NOLFSRC_MODERN
 			bAnswered |= OnSecureQuery(sValue);
+#endif
 		}
 
 		sToken = GetNextQueryToken();
@@ -149,8 +250,18 @@ BOOL CGameSpyMgr::OnEchoQuery(const char* sQuery)
 
 BOOL CGameSpyMgr::OnSecureQuery(const char* sValue)
 {
+#ifdef NOLFSRC_MODERN
+	// M-P6-02: prove to the master that we know the game's secret key
+	if (!sValue || !sValue[0] || m_sGameKey.IsEmpty()) return(FALSE);
+
+	char sResponse[96];
+	GSM_Validate(sValue, m_sGameKey, sResponse);
+	SendResponseInfo("validate", sResponse);
+	return(TRUE);
+#else
 	// The master's validation challenge: nothing left to validate against.
 	return(FALSE);
+#endif
 }
 
 BOOL CGameSpyMgr::OnBasicQuery()

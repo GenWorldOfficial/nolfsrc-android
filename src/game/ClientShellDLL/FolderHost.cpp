@@ -691,6 +691,11 @@ LTBOOL CFolderHost::LaunchGame()
 	// Setup our client.
 	clientData.m_dwTeam = (uint32)GetConsoleInt("NetPlayerTeam",0);
 	SAFE_STRCPY(clientData.m_sName,g_vtPlayerName.GetStr());
+#ifdef NOLFSRC_MODERN
+	// M-P6-01: no format characters in the session or the host's name
+	FilterFormatChars(gameInfo.m_sSession);
+	FilterFormatChars(clientData.m_sName);
+#endif
 
 	req.m_Type = STARTGAME_HOST;
 	req.m_pGameInfo = &gameInfo;
@@ -707,6 +712,10 @@ LTBOOL CFolderHost::LaunchGame()
     req.m_HostInfo.m_dwMaxPlayers = (uint32)GetConsoleInt("NetMaxPlayers",16)-1;
 
 	strcpy(req.m_HostInfo.m_sName,g_vtNetSessionName.GetStr());
+#ifdef NOLFSRC_MODERN
+	// M-P6-01: (as above)
+	FilterFormatChars(req.m_HostInfo.m_sName);
+#endif
 
 	g_pGameClientShell->SetGameType( (GameType)m_nGameType );
 	g_pInterfaceMgr->DrawFragCount(LTFALSE);

@@ -31,6 +31,9 @@
 #include "Camera.h"
 
 #include "CRC32.h"
+#ifdef NOLFSRC_MODERN
+#include "object/p6_master.h"
+#endif
 
 #define MAX_CLIENT_NAME_LENGTH		100
 #define CLIENT_PING_UPDATE_RATE		3.0f
@@ -366,6 +369,10 @@ LPBASECLASS	CGameServerShell::OnClientEnterWorld(HCLIENT hClient, void *pClientD
 		dwTeamID = pNcd->m_dwTeam;
 		strcpy(szPlayerName,pNcd->m_sName);
 	}
+#ifdef NOLFSRC_MODERN
+	// M-P6-01: no format characters in player names
+	FilterFormatChars(szPlayerName);
+#endif
 	if (GetGameType() == COOPERATIVE_ASSAULT)
 	{
 		// Add this client to the appropriate team...
@@ -1024,6 +1031,10 @@ void CGameServerShell::OnMessage(HCLIENT hSender, uint8 messageID, HMESSAGEREAD 
 			char szString[100];
 			szString[0] = 0;
 			hMessage->ReadStringFL(szString, sizeof(szString));
+#ifdef NOLFSRC_MODERN
+			// M-P6-01: no format characters in chat
+			FilterFormatChars(szString);
+#endif
 
 			// So it shows up in GameSrv..
             if(szString[0] && !(g_pLTServer->GetClientInfoFlags(hSender) & CIF_LOCAL))
@@ -1052,6 +1063,10 @@ void CGameServerShell::OnMessage(HCLIENT hSender, uint8 messageID, HMESSAGEREAD 
 			char szString[100];
 			szString[0] = 0;
 			hMessage->ReadStringFL(szString, sizeof(szString));
+#ifdef NOLFSRC_MODERN
+			// M-P6-01: no format characters in chat
+			FilterFormatChars(szString);
+#endif
 
 			// So it shows up in GameSrv..
             if(szString[0] && !(g_pLTServer->GetClientInfoFlags(hSender) & CIF_LOCAL))
@@ -1088,6 +1103,10 @@ void CGameServerShell::OnMessage(HCLIENT hSender, uint8 messageID, HMESSAGEREAD 
 			char szString[100];
 			szString[0] = 0;
 			hMessage->ReadStringFL(szString, sizeof(szString));
+#ifdef NOLFSRC_MODERN
+			// M-P6-01: no format characters in chat
+			FilterFormatChars(szString);
+#endif
 
 			// So it shows up in GameSrv..
             if(szString[0] && !(g_pLTServer->GetClientInfoFlags(hSender) & CIF_LOCAL))
@@ -3714,6 +3733,10 @@ LTBOOL CGameServerShell::InitGameSpy()
 	if (m_GameSpyMgr.Init(GAMESPY_GAME_NAME, sVer, GAMESPY_SECRET_KEY, 0, wPort, (wPort+166), GSMF_USEGAMEPORTFORHEARTBEAT))
 	{
 		m_GameSpyMgr.SetSendHandler(&m_SendHandler);
+#ifdef NOLFSRC_MODERN
+		// M-P6-02: report to a master server
+		P6_SetServerMaster(&m_GameSpyMgr);
+#endif
 	}
 	else
 	{
