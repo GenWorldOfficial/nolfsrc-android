@@ -27,7 +27,10 @@ case "$mode" in
     *) echo "usage: build/progress.sh check|update" >&2; exit 2 ;;
 esac
 
-for f in lithtech.exe server.dll d3d.ren NOLF.exe ltmsg.dll; do
+# the images, and the tables build/reference.sh derives from them
+for f in lithtech.exe server.dll d3d.ren NOLF.exe ltmsg.dll \
+         server-functions.csv lithtech-functions.csv d3d-functions.csv \
+         NOLF-functions.csv server-vtables.csv lithtech-vtables.csv d3d-vtables.csv; do
     if [ ! -f "out/reference/$f" ]; then
         echo "== retail images -> out/reference/ (for scoring only)"
         bash build/reference.sh
