@@ -58,6 +58,11 @@
 #include "FolderHost.h"
 #include "FolderHostOptions.h"
 #include "FolderHostLevels.h"
+#ifdef NOLFSRC_MODERN
+// M-P3-11: the main menu of the day; M-P3-13: the Interface options folder
+#include "cshell/p3_ui.h"
+#include "cshell/p3_folderinterface.h"
+#endif
 
 
 
@@ -200,6 +205,10 @@ LTBOOL CFolderMgr::PreviousFolder()
 
 LTBOOL CFolderMgr::SetCurrentFolder(eFolderID folderID)
 {
+#ifdef NOLFSRC_MODERN
+	// M-P3-11: the main menu is today's main menu
+	folderID = (eFolderID)P3_MainFolder(folderID);
+#endif
 
 	CBaseFolder *pNewFolder=GetFolderFromID(folderID);
 	if (pNewFolder)
@@ -547,6 +556,18 @@ void CFolderMgr::AddFolder(eFolderID folderID)
 		pFolder = debug_new(CFolderSummary);
 		break;
 
+#ifdef NOLFSRC_MODERN
+	// M-P3-11: the seasonal main menus
+	case FOLDER_ID_MAIN_CASUAL:
+	case FOLDER_ID_MAIN_WINTER:
+		pFolder = debug_new(CFolderMain);
+		break;
+
+	// M-P3-13: the Interface options folder
+	case FOLDER_ID_INTERFACE:
+		pFolder = debug_new(CFolderInterface);
+		break;
+#endif
 	}
 
 	if (pFolder)

@@ -64,6 +64,12 @@ LTBOOL CFolderTexture::Build()
 	}
 	if (g_pLayoutMgr->HasCustomValue(FOLDER_ID_TEXTURE,"SliderWidth"))
 		kSliderWidth = g_pLayoutMgr->GetFolderCustomInt(FOLDER_ID_TEXTURE,"SliderWidth");
+#ifdef NOLFSRC_MODERN
+	// M-P3-03: the columns scale with the menu page
+	kTotalWidth = P3_MenuLen(kTotalWidth);
+	kHeaderWidth = kTotalWidth - kSpacerWidth;
+	kSliderWidth = P3_MenuLen(kSliderWidth);
+#endif
 
 	CreateTitle(IDS_TITLE_TEXTURE);
 
@@ -271,6 +277,10 @@ LTBOOL CFolderTexture::OnLButtonUp(int x, int y)
 		}
 		else if (IsSlider(pCtrl))
 		{
+#ifdef NOLFSRC_MODERN
+			// M-P3-01: the point in the slider's own frame
+			P3_PointToCtrl(pCtrl, x, y);
+#endif
 			LTBOOL bSlid = pCtrl->OnLButtonUp(x, y);
 			if (bSlid)
 			{

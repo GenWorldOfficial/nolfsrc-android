@@ -255,6 +255,16 @@ void CPopupText::CreateScaleFX(char *szFXName)
 		g_pFXButeMgr->CreateScaleFX(pScaleFX, g_vPos, LTVector(0, 0, 1),
 			LTNULL, LTNULL, pSFX);
 		m_SFXArray.Add(pSFX);
+#ifdef NOLFSRC_MODERN
+		// M-P3-15: the background comes close enough to fill the screen
+		if (stricmp(szFXName, "PopupBackground") == 0 && pSFX->GetObject())
+		{
+			LTVector vNewPos;
+			g_pLTClient->GetObjectPos(pSFX->GetObject(), &vNewPos);
+			vNewPos.z = 1.0f;
+			g_pLTClient->SetObjectPos(pSFX->GetObject(), &vNewPos);
+		}
+#endif
 
 		if (pScaleFX->eType == SCALEFX_MODEL)
 		{

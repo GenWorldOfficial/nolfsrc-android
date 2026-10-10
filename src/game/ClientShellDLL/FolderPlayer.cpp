@@ -86,50 +86,105 @@ LTBOOL CFolderPlayer::Build()
 
     LTIntPt offset(0,0);
     m_pNameGroup->AddControl(m_pLabel,offset,LTTRUE);
+#ifdef NOLFSRC_MODERN
+	// M-P3-03: the columns scale with the menu page
+	offset.x = P3_MenuLen(200);
+#else
 	offset.x = 200;
+#endif
     m_pNameGroup->AddControl(m_pEdit,offset,LTFALSE);
 
 	AddBlankLine();
 
+#ifdef NOLFSRC_MODERN
+	// M-P3-03: the columns scale with the menu page
+	CToggleCtrl* pToggle = AddToggle(IDS_AUTOSWITCH_WEAPONS, IDS_HELP_AUTOSWITCH_WEAPONS, P3_MenuLen(225), &m_bAutoSwitchWeapons );
+#else
 	CToggleCtrl* pToggle = AddToggle(IDS_AUTOSWITCH_WEAPONS, IDS_HELP_AUTOSWITCH_WEAPONS, 225, &m_bAutoSwitchWeapons );
+#endif
 	pToggle->SetOnString(IDS_ON);
 	pToggle->SetOffString(IDS_OFF);
 
+#ifdef NOLFSRC_MODERN
+	// M-P3-03: the columns scale with the menu page
+	pToggle = AddToggle(IDS_AUTOSWITCH_AMMO, IDS_HELP_AUTOSWITCH_AMMO, P3_MenuLen(225), &m_bAutoSwitchAmmo );
+#else
 	pToggle = AddToggle(IDS_AUTOSWITCH_AMMO, IDS_HELP_AUTOSWITCH_AMMO, 225, &m_bAutoSwitchAmmo );
+#endif
 	pToggle->SetOnString(IDS_ON);
 	pToggle->SetOffString(IDS_OFF);
 
+#ifdef NOLFSRC_MODERN
+	// M-P3-03: the columns scale with the menu page
+	pToggle = AddToggle(IDS_IGNORE_TAUNTS, IDS_HELP_IGNORE_TAUNTS, P3_MenuLen(225), &m_bIgnoreTaunts );
+#else
 	pToggle = AddToggle(IDS_IGNORE_TAUNTS, IDS_HELP_IGNORE_TAUNTS, 225, &m_bIgnoreTaunts );
+#endif
 	pToggle->SetOnString(IDS_YES);
 	pToggle->SetOffString(IDS_NO);
 
+#ifdef NOLFSRC_MODERN
+	// M-P3-03: the columns scale with the menu page
+	CCycleCtrl *pCycle = AddCycleItem(IDS_CONNECT_SPEED,IDS_CONNECT_SPEED,P3_MenuLen(200),25,&m_nConnect);
+#else
 	CCycleCtrl *pCycle = AddCycleItem(IDS_CONNECT_SPEED,IDS_CONNECT_SPEED,200,25,&m_nConnect);
+#endif
 	pCycle->AddString(IDS_CONNECT_VSLOW);
 	pCycle->AddString(IDS_CONNECT_SLOW);
 	pCycle->AddString(IDS_CONNECT_MEDIUM);
 	pCycle->AddString(IDS_CONNECT_FAST);
 
+#ifdef NOLFSRC_MODERN
+	// M-P3-03: the columns scale with the menu page
+	pCycle = AddCycleItem(IDS_PLAYER_TEAM,IDS_HELP_PLAYER_TEAM,P3_MenuLen(200),25,&m_nTeam);
+#else
 	pCycle = AddCycleItem(IDS_PLAYER_TEAM,IDS_HELP_PLAYER_TEAM,200,25,&m_nTeam);
+#endif
 	pCycle->AddString(IDS_PLAYER_EITHER);
 	pCycle->AddString(IDS_PLAYER_UNITY);
 	pCycle->AddString(IDS_PLAYER_HARM);
 
+#ifdef NOLFSRC_MODERN
+	// M-P3-03: the columns scale with the menu page
+	CSliderCtrl* pSlider = AddSlider(IDS_TARGETNAMETRANSPARENCY, IDS_TARGETNAMETRANSPARENCY_HELP, P3_MenuLen(225), P3_MenuLen(200), &m_nTargetNameTransparency);
+#else
 	CSliderCtrl* pSlider = AddSlider(IDS_TARGETNAMETRANSPARENCY, IDS_TARGETNAMETRANSPARENCY_HELP, 225, 200, &m_nTargetNameTransparency);
+#endif
 	pSlider->SetSliderRange(0, 100);
 	pSlider->SetSliderIncrement(5);
 
+#ifdef NOLFSRC_MODERN
+	// M-P3-03: the columns scale with the menu page
+	pCycle = AddCycleItem(IDS_TARGETNAMESIZE,IDS_TARGETNAMESIZE_HELP,P3_MenuLen(200),25,&m_nTargetNameSize);
+#else
 	pCycle = AddCycleItem(IDS_TARGETNAMESIZE,IDS_TARGETNAMESIZE_HELP,200,25,&m_nTargetNameSize);
+#endif
 	pCycle->AddString(IDS_SMALL);
 	pCycle->AddString(IDS_MEDIUM);
 	pCycle->AddString(IDS_LARGE);
 
+#ifdef NOLFSRC_MODERN
+	// M-P3-03: the columns scale with the menu page
+	m_pModelCtrl = AddCycleItem(IDS_PLAYER_MODEL,IDS_HELP_PLAYER_MODEL,P3_MenuLen(200),25,&m_nModNum);
+#else
 	m_pModelCtrl = AddCycleItem(IDS_PLAYER_MODEL,IDS_HELP_PLAYER_MODEL,200,25,&m_nModNum);
+#endif
 	m_pModelCtrl->NotifyOnChange(CMD_MODEL_CHANGE,this);
 
+#ifdef NOLFSRC_MODERN
+	// M-P3-03: the columns scale with the menu page
+	m_pSkinCtrl = AddCycleItem(IDS_PLAYER_SKIN,IDS_HELP_PLAYER_SKIN,P3_MenuLen(200),25,&m_nSkinNum);
+#else
 	m_pSkinCtrl = AddCycleItem(IDS_PLAYER_SKIN,IDS_HELP_PLAYER_SKIN,200,25,&m_nSkinNum);
+#endif
 	m_pSkinCtrl->NotifyOnChange(CMD_SKIN_CHANGE,this);
 
+#ifdef NOLFSRC_MODERN
+	// M-P3-03: the columns scale with the menu page
+	m_pHeadCtrl = AddCycleItem(IDS_PLAYER_HEAD,IDS_HELP_PLAYER_HEAD,P3_MenuLen(200),25,&m_nHeadNum);
+#else
 	m_pHeadCtrl = AddCycleItem(IDS_PLAYER_HEAD,IDS_HELP_PLAYER_HEAD,200,25,&m_nHeadNum);
+#endif
 	m_pHeadCtrl->NotifyOnChange(CMD_HEAD_CHANGE,this);
 
 	// Make sure to call the base class
@@ -523,7 +578,11 @@ LTBOOL   CFolderPlayer::CreatePlayerModel(LTBOOL bNewSkin /* = LTTRUE */)
     g_pLTClient->RotateAroundAxis(&rRot, &vU, fRot);
 
 	VEC_MULSCALAR(vTemp, vF, vModPos.z);
+#ifdef NOLFSRC_MODERN
+	// M-P3-01: keeps its depth, as the scaled menu page fills the screen's height
+#else
 	VEC_MULSCALAR(vTemp, vTemp, g_pInterfaceResMgr->GetXRatio());
+#endif
 	VEC_ADD(vPos, vPos, vTemp);
 
 	VEC_MULSCALAR(vTemp, vR, vModPos.x);

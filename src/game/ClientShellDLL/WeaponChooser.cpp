@@ -234,10 +234,16 @@ void CWeaponChooser::Draw()
 	}
 
 	x -= (NUM_WEAPON_ICONS * (kIconWidth + kIconSpacing)) / 2;
+#ifdef NOLFSRC_MODERN
+	// M-P3-18: the previous weapon beside the current one
+	if (m_hWeaponSurf[0] && m_nWeapons[0] != m_nWeapons[kLastWeapon])
+        g_pLTClient->DrawSurfaceToSurfaceTransparent(hScreen, m_hWeaponSurf[0], LTNULL, x, y,SETRGB_T(255,0,255));
+#else
 /*
 	if (m_hWeaponSurf[0] && m_nWeapons[0] != m_nWeapons[kLastWeapon])
         g_pLTClient->DrawSurfaceToSurfaceTransparent(hScreen, m_hWeaponSurf[0], LTNULL, x, y,SETRGB_T(255,0,255));
 */
+#endif
 	x += (kIconWidth + kIconSpacing);
 	if (m_hWeaponSurf[1])
 	{
@@ -256,10 +262,16 @@ void CWeaponChooser::Draw()
 */
 	x += (kIconWidth + kIconSpacing);
 
+#ifdef NOLFSRC_MODERN
+	// M-P3-18: the next weapon beside the current one
+	if (m_hWeaponSurf[2] && m_nWeapons[2] != m_nWeapons[1])
+        g_pLTClient->DrawSurfaceToSurfaceTransparent(hScreen, m_hWeaponSurf[2], LTNULL, x, y,SETRGB_T(255,0,255));
+#else
 /*
 	if (m_hWeaponSurf[2] && m_nWeapons[2] != m_nWeapons[1])
         g_pLTClient->DrawSurfaceToSurfaceTransparent(hScreen, m_hWeaponSurf[2], LTNULL, x, y,SETRGB_T(255,0,255));
 */
+#endif
 }
 
 void CWeaponChooser::SetCommandStr(int nWeaponId)
@@ -425,8 +437,17 @@ void CAmmoChooser::Draw()
 	CLTGUIFont *pFont = g_pInterfaceResMgr->GetChooserFont();
 	pFont->Draw(m_hAmmoStr,hScreen,x,y+(kIconWidth + kIconSpacing),LTF_JUSTIFY_CENTER,kWhite);
 
+#ifdef NOLFSRC_MODERN
+	// M-P3-18: the current ammo and the next one, the row centred
+	LTBOOL bNextAmmo = (m_hAmmoSurf[kLastAmmo] && m_nAmmo[kLastAmmo] != m_nAmmo[kCurrAmmo]);
+	if (bNextAmmo)
+		x -= (NUM_AMMO_ICONS * (kIconWidth + kIconSpacing) - kIconSpacing) / 2;
+	else
+		x -= kIconWidth / 2;
+#else
 //	x -= (NUM_AMMO_ICONS * (kIconWidth + kIconSpacing)) / 2;
 	x -= kIconWidth / 2;
+#endif
 
 	if (m_hAmmoSurf[kCurrAmmo])
 	{
@@ -442,6 +463,20 @@ void CAmmoChooser::Draw()
 		}
 	}
 	x += (kIconWidth + kIconSpacing);
+#ifdef NOLFSRC_MODERN
+	// M-P3-18: the next ammo beside the current one
+	if (bNextAmmo)
+	{
+        g_pLTClient->DrawSurfaceToSurfaceTransparent(hScreen, m_hAmmoSurf[kLastAmmo], LTNULL, x, y,SETRGB_T(255,0,255));
+		int count = pStats->GetAmmoCount(m_nAmmo[kLastAmmo]);
+		if (count > 0 && count < 1000)
+		{
+			char szStr[5] = "";
+			sprintf(szStr,"%d",count);
+			pFont->Draw(szStr,hScreen,(x+kIconWidth/2),y + kIconWidth - 16,LTF_JUSTIFY_CENTER);
+		}
+	}
+#else
 /*
 	if (m_hAmmoSurf[kLastAmmo])
 	{
@@ -455,4 +490,5 @@ void CAmmoChooser::Draw()
 		}
 	}
 */
+#endif
 }

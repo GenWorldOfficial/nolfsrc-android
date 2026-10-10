@@ -1,0 +1,27 @@
+// p3.rc -- strings of the modern build's package P3 (menus and HUD at any
+// resolution), compiled into CRes.dll by the modern build only.  IDs in p3.h.
+
+#include "p3.h"
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_P3_INTERFACE            "Interface"
+    IDS_P3_HELP_INTERFACE       "HUD size, frame rate, cutscene framing and the main menu's look"
+    IDS_P3_TITLE_INTERFACE      "INTERFACE"
+    IDS_P3_HUD_SCALE            "HUD size"
+    IDS_P3_HELP_HUD_SCALE       "How large the health, armor, ammo and other HUD displays are drawn"
+    IDS_P3_FRAMERATE_LOCK       "Frame rate"
+    IDS_P3_HELP_FRAMERATE_LOCK  "Hold the game at 60 frames per second, the speed its timing was made for"
+    IDS_P3_FPS_LOCKED           "60 fps"
+    IDS_P3_FPS_UNLOCKED         "Unlimited"
+    IDS_P3_SHOW_FRAMERATE       "Frame rate counter"
+    IDS_P3_HELP_SHOW_FRAMERATE  "Show the current frame rate in the lower left corner"
+    IDS_P3_CINEMATICS           "Cutscene framing"
+    IDS_P3_HELP_CINEMATICS      "Black out the sides of wide screens during cutscenes, which were staged for 4:3"
+    IDS_P3_CINEMATICS_4X3       "4:3"
+    IDS_P3_CINEMATICS_WIDE      "Full width"
+    IDS_P3_MENU_STYLE           "Main menu art"
+    IDS_P3_HELP_MENU_STYLE      "Use the Game of the Year edition's main menu art or the original release's"
+    IDS_P3_MENU_GOTY            "Game of the Year"
+    IDS_P3_MENU_ORIGINAL        "Original"
+END

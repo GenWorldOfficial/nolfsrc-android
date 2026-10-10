@@ -399,7 +399,13 @@ void CMessageMgr::Draw( void )
 
 		if (pMsg->hSurface)
 		{
+#ifdef NOLFSRC_MODERN
+			// M-P3-16: drawn without the colour key, which costs a lot of frame rate
+			// and changes nothing that shows
+            g_pLTClient->DrawSurfaceToSurface(hScreen,pMsg->hSurface,LTNULL,x,y);
+#else
             g_pLTClient->DrawSurfaceToSurfaceTransparent(hScreen,pMsg->hSurface,LTNULL,x,y,hTransColor);
+#endif
 		}
 		y += pMsg->nHeight;
 

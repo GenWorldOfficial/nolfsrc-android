@@ -34,6 +34,10 @@
 // M-P2-01: the developer console
 #include "cshell/p2_console.h"
 #endif
+#ifdef NOLFSRC_MODERN
+// M-P3: menus and HUD at any resolution
+#include "cshell/p3_ui.h"
+#endif
 
 // TESTING DYNAMIC LIGHT IN INTERFACE
 /*
@@ -1133,7 +1137,12 @@ void CInterfaceMgr::UpdatePausedState()
 		int xo = g_pInterfaceResMgr->GetXOffset();
 		int yo = g_pInterfaceResMgr->GetYOffset();
 
+#ifdef NOLFSRC_MODERN
+		// M-P3-05: scaled into the 4:3 area
+		P3_DrawBackground(g_pLTClient->GetScreenSurface(), m_hGamePausedSurface);
+#else
         g_pLTClient->DrawSurfaceToSurface(g_pLTClient->GetScreenSurface(), m_hGamePausedSurface, LTNULL, xo,yo);
+#endif
 	}
 
     g_pLTClient->EndOptimized2D();
@@ -1175,7 +1184,12 @@ void CInterfaceMgr::UpdateSplashScreenState()
     g_pLTClient->Start3D();
     g_pLTClient->StartOptimized2D();
 
+#ifdef NOLFSRC_MODERN
+	// M-P3-05: scaled into the 4:3 area, not stretched over the screen
+	P3_DrawBackground(hScreen, g_hSplash);
+#else
     g_pLTClient->ScaleSurfaceToSurface(hScreen, g_hSplash, &rcDst, &rcSrc);
+#endif
 
 	UpdateScreenFade();
 
@@ -1305,8 +1319,14 @@ void CInterfaceMgr::UpdateFailureState()
     g_pLTClient->Start3D();
     g_pLTClient->StartOptimized2D();
 
+#ifdef NOLFSRC_MODERN
+	// M-P3-05: scaled into the 4:3 area
+	if (m_hFailBack)
+		P3_DrawBackground(hScreen, m_hFailBack);
+#else
 	if (m_hFailBack)
         g_pLTClient->DrawSurfaceToSurface(hScreen, m_hFailBack, LTNULL, xo, yo);
+#endif
 
 	int nStringWidth = (int)(0.8f * (LTFLOAT)nScrnWidth);
     LTIntPt failPos = g_pLayoutMgr->GetFailStringPos();
@@ -3175,12 +3195,22 @@ LTBOOL CInterfaceMgr::PrePopupState(GameState eCurState)
     if (eCurState == GS_POPUP) return LTFALSE;
 
 	// Pause the game...
+#ifdef NOLFSRC_MODERN
+	// M-P3-15: the game waits while the player reads
+	g_pGameClientShell->PauseGame(LTTRUE);
+#else
 //    g_pGameClientShell->PauseGame(LTTRUE);
+#endif
 	g_pGameClientShell->AllowPlayerMovement(LTFALSE);
 
 	g_bLockPopup = LTTRUE;
 
+#ifdef NOLFSRC_MODERN
+	// M-P3-15: with the cursor shown
+    UseCursor(LTTRUE);
+#else
     UseCursor(LTFALSE);
+#endif
 	m_bUseInterfaceCamera = LTFALSE;
 
     return LTTRUE;
@@ -3198,6 +3228,11 @@ LTBOOL CInterfaceMgr::PostPopupState(GameState eNewState)
 {
     if (eNewState == GS_POPUP) return LTFALSE;
 
+#ifdef NOLFSRC_MODERN
+	// M-P3-15: the game goes on, the cursor goes away
+	g_pGameClientShell->PauseGame(LTFALSE);
+	UseCursor(LTFALSE);
+#endif
 	g_pGameClientShell->AllowPlayerMovement(LTTRUE);
 	g_pLTClient->ClearInput();
 
@@ -4795,6 +4830,20 @@ void CInterfaceMgr::UpdateLetterBox()
 	rcDest.Init(0, dwHeight - nBorderSize, dwWidth, dwHeight);
  	g_pLTClient->ScaleSurfaceToSurfaceTransparent(hScreen, m_hLetterBoxSurface,
 	   &rcDest, &rcSrc, hTransColor);
+
+#ifdef NOLFSRC_MODERN
+	// M-P3-08: RestrictCinematicsTo4x3 covers the side margins too
+	if (P3_Cinematics4x3() && g_pInterfaceResMgr->GetXOffset() > 0)
+	{
+		int xo = g_pInterfaceResMgr->GetXOffset();
+		rcDest.Init(0, 0, xo, dwHeight);
+		g_pLTClient->ScaleSurfaceToSurfaceTransparent(hScreen, m_hLetterBoxSurface,
+		   &rcDest, &rcSrc, hTransColor);
+		rcDest.Init(dwWidth - xo, 0, dwWidth, dwHeight);
+		g_pLTClient->ScaleSurfaceToSurfaceTransparent(hScreen, m_hLetterBoxSurface,
+		   &rcDest, &rcSrc, hTransColor);
+	}
+#endif
 }
 
 // --------------------------------------------------------------------------- //
@@ -4885,7 +4934,11 @@ void CInterfaceMgr::CreateInterfaceBackground()
 
 
 	VEC_MULSCALAR(vTemp, vF, g_fBackDist);
+#ifdef NOLFSRC_MODERN
+	// M-P3-01: keeps its depth, as the scaled menu page fills the screen's height
+#else
 	VEC_MULSCALAR(vTemp, vTemp, g_pInterfaceResMgr->GetXRatio());
+#endif
 	VEC_ADD(vPos, vPos, vTemp);
 
 	VEC_COPY(bcs.vPos, vPos);
@@ -4946,7 +4999,11 @@ void CInterfaceMgr::UpdateInterfaceBackground()
     g_pLTClient->GetRotationVectors(&rRot, &vU, &vR, &vF);
 
 	VEC_MULSCALAR(vTemp, vF, g_fBackDist);
+#ifdef NOLFSRC_MODERN
+	// M-P3-01: keeps its depth, as the scaled menu page fills the screen's height
+#else
 	VEC_MULSCALAR(vTemp, vTemp, g_pInterfaceResMgr->GetXRatio());
+#endif
 	VEC_ADD(vPos, vPos, vTemp);
 
     g_pLTClient->SetObjectPos(m_BackSprite.GetObject(), &vPos);

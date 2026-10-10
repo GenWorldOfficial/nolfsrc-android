@@ -110,11 +110,21 @@ LTBOOL CFolderHost::Build()
 
     LTIntPt offset(0,0);
     m_pNameGroup->AddControl(m_pLabel,offset,LTTRUE);
+#ifdef NOLFSRC_MODERN
+	// M-P3-03: the columns scale with the menu page
+	offset.x = P3_MenuLen(200);
+#else
 	offset.x = 200;
+#endif
     m_pNameGroup->AddControl(m_pEdit,offset,LTFALSE);
 
 
+#ifdef NOLFSRC_MODERN
+	// M-P3-03: the columns scale with the menu page
+	m_pTypeCtrl = AddCycleItem(IDS_GAME_TYPE,IDS_HELP_GAME_TYPE,P3_MenuLen(200),25,&m_nGameType);
+#else
 	m_pTypeCtrl = AddCycleItem(IDS_GAME_TYPE,IDS_HELP_GAME_TYPE,200,25,&m_nGameType);
+#endif
 	m_pTypeCtrl->AddString(IDS_SPACER);
 	m_pTypeCtrl->AddString(IDS_COOPERATIVE_ASSAULT);
 	m_pTypeCtrl->AddString(IDS_DEATHMATCH);
@@ -122,7 +132,12 @@ LTBOOL CFolderHost::Build()
 	AddTextItem(IDS_HOST_OPTIONS, CMD_SET_OPTIONS, IDS_HELP_HOST_OPTIONS);
 	AddTextItem(IDS_HOST_LEVELS, CMD_SET_LEVELS, IDS_HELP_HOST_LEVELS);
 
+#ifdef NOLFSRC_MODERN
+	// M-P3-03: the columns scale with the menu page
+	m_pPassToggle = AddToggle(IDS_USE_PASSWORD,IDS_HELP_PASSWORD,P3_MenuLen(225),&m_bUsePassword);
+#else
 	m_pPassToggle = AddToggle(IDS_USE_PASSWORD,IDS_HELP_PASSWORD,225,&m_bUsePassword);
+#endif
 	m_pPassToggle->SetOnString(IDS_ON);
 	m_pPassToggle->SetOffString(IDS_OFF);
 	m_pPassToggle->NotifyOnChange(CMD_TOGGLE_PASS,this);
@@ -138,7 +153,12 @@ LTBOOL CFolderHost::Build()
 
     offset = LTIntPt(0,0);
     m_pPassGroup->AddControl(m_pPassLabel,offset,LTTRUE);
+#ifdef NOLFSRC_MODERN
+	// M-P3-03: the columns scale with the menu page
+	offset.x = P3_MenuLen(200);
+#else
 	offset.x = 200;
+#endif
     m_pPassGroup->AddControl(m_pPassEdit,offset,LTFALSE);
 
 	m_pPortLabel = CreateTextItem(IDS_PORT, CMD_EDIT_PORT, IDS_HELP_ENTER_PORT);
@@ -151,7 +171,12 @@ LTBOOL CFolderHost::Build()
 
     offset = LTIntPt(0,0);
     m_pPortGroup->AddControl(m_pPortLabel,offset,LTTRUE);
+#ifdef NOLFSRC_MODERN
+	// M-P3-03: the columns scale with the menu page
+	offset.x = P3_MenuLen(200);
+#else
 	offset.x = 200;
+#endif
     m_pPortGroup->AddControl(m_pPortEdit,offset,LTFALSE);
 
 
@@ -160,7 +185,12 @@ LTBOOL CFolderHost::Build()
 	LTIntPt pos = g_pLayoutMgr->GetFolderCustomPoint(FOLDER_ID_HOST,"LaunchPos");
 	AddFixedControl(pCtrl,pos);
 
+#ifdef NOLFSRC_MODERN
+	// M-P3-03: the columns scale with the menu page
+	m_pBandwidthCycle = AddCycleItem(IDS_BANDWIDTH_CYCLE,IDS_HELP_BANDWIDTH_CYCLE,P3_MenuLen(200),25,&m_nBandwidth);
+#else
 	m_pBandwidthCycle = AddCycleItem(IDS_BANDWIDTH_CYCLE,IDS_HELP_BANDWIDTH_CYCLE,200,25,&m_nBandwidth);
+#endif
 	m_pBandwidthCycle->AddString(IDS_56K);
 	m_pBandwidthCycle->AddString(IDS_CABLE);
 	m_pBandwidthCycle->AddString(IDS_DSL);
@@ -178,7 +208,12 @@ LTBOOL CFolderHost::Build()
 
     offset = LTIntPt(0,0);
     m_pBandwidthGroup->AddControl(m_pBandwidthLabel,offset,LTTRUE);
+#ifdef NOLFSRC_MODERN
+	// M-P3-03: the columns scale with the menu page
+	offset.x = P3_MenuLen(200);
+#else
 	offset.x = 200;
+#endif
     m_pBandwidthGroup->AddControl(m_pBandwidthEdit,offset,LTFALSE);
 
 	UpdateBandwidth();
