@@ -54,10 +54,63 @@ Each retail function gets one status (`out/progress/functions.csv`):
 | `todo` | nothing of ours corresponds to it yet |
 | `crt` | the statically linked C runtime / MFC: listed, not counted |
 
-`unplaced` counts functions of ours that occur nowhere in that image (most
-are server code `lithtech.exe` compiles but never links); they are counted in
-neither direction. The README's bars are identical bytes over all counted
-bytes.
+Three more statuses are for functions of OURS, not shipped ones, so none of
+them is counted in the denominator:
+
+| Status | Meaning |
+|---|---|
+| `unplaced` | written, and our own link puts it in our image, but no shipped function is placed for it |
+| `unlinked` | compiled, but our own link leaves it out too: not part of this binary (most are server code `lithtech.exe` compiles but never links) |
+| `driver` | emitted only by a scoring driver that ships nowhere (`sdkforce.cpp`) |
+
+The README's bars are identical bytes over all counted bytes.
+
+## Coverage: unwritten and unplaced
+
+Next to identity, the scoreboard measures coverage, and the README shows it
+per binary:
+
+* **Unwritten**: shipped functions with nothing of ours placed at them
+  (`todo` + `attempted`).
+* **Unplaced**: functions of ours in our own image that no shipped function
+  is placed for.
+
+Both at zero means the build is complete: every shipped function has a
+written, placed counterpart, near or identical, and nothing of ours is left
+over. Identity is then a matter of converging the near ones.
+
+A function is placed first by its bytes (identical, or `small` by shape), then
+by similarity (`near`: same length within 15% and most unmasked bytes
+agreeing). What both miss -- a function written right but compiled with other
+registers, another block order, a different member offset -- would otherwise
+be counted twice, once as an unwritten shipped function and once as an
+unplaced one of ours. So the scorer also joins the two sides, and a function
+joined this way is `near`:
+
+1. **By name**: a function named for the shipped address it reconstructs
+   (`sub_<addr>`, `d3d.ren`'s convention) is placed there, however
+   differently it compiled.
+2. **By object**: the linker lays an object's functions out together, so a
+   shipped function nothing is placed at, whose nearest placed neighbours are
+   object X's, is one of X's; X's unplaced functions are matched to those by
+   size, closest first (within a factor of two). Our order within an object
+   need not follow the shipped one -- a reconstructed file is not laid out in
+   Monolith's order.
+3. **By link order**: what is left, between two neighbouring functions placed
+   in both images (our `.map` gives our addresses), is aligned in order by
+   size.
+
+Two refinements keep the count honest. An inline function from a header is
+compiled into every object that includes it; the linker keeps one copy, so
+placing one places them all (compiler-generated per-object names such as
+`_$E12` excepted). And functions too short to tell apart (`mov eax,8 / ret`,
+a one-`jmp` initializer thunk) are counted by shape: of each exact shape,
+ours are unplaced only by as many as our image has more of than the shipped
+one.
+
+`make progress` fails if either count goes up; `make progress COVERED=1`
+fails unless both are zero everywhere. `tools/progress.py --unplaced=<target>`
+and `--todo=<target>` (and `--attempted`) list them.
 
 This is the per-function measure. A whole binary is byte-perfect only once
 every function is identical *and* it links in the same order, with the same

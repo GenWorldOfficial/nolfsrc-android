@@ -59,7 +59,7 @@ help:
 	@echo
 	@echo "Variables: NOLF_ISOS=<dir> (default ISOS/), TEST_LEVELS=\"$(TEST_LEVELS)\""
 	@echo "           NOLF_SOURCE=<dir> (the NOLF Source Code v1.003 release, for"
-	@echo "           make progress), COMPLETE=1, ACCEPT_LOSSES=1 (progress/README.md)"
+	@echo "           make progress), COMPLETE=1, COVERED=1, ACCEPT_LOSSES=1 (progress/README.md)"
 
 game: check-isos check-toolchain image
 	$(DOCKER_RUN) bash build/all.sh
@@ -94,7 +94,7 @@ test: image
 	else echo "== make test: FAILED (see out/play/test-*/result.txt, wine.log)"; fi; exit $$rc
 
 progress: check-isos image
-	$(DOCKER_RUN) env COMPLETE=$(COMPLETE) bash build/progress.sh check
+	$(DOCKER_RUN) env COMPLETE=$(COMPLETE) COVERED=$(COVERED) bash build/progress.sh check
 
 progress-update: check-isos image
 	$(DOCKER_RUN) env ACCEPT_LOSSES=$(ACCEPT_LOSSES) bash build/progress.sh update

@@ -14,7 +14,8 @@
 #
 #   check   tools/progress.py, then tools/ratchet.py check: fails if a
 #           function recorded in progress/identical.txt no longer matches
-#           (COMPLETE=1: also unless every function matches)
+#           (COMPLETE=1: also unless every function matches; COVERED=1:
+#           unless nothing is unwritten or unplaced)
 #   update  tools/progress.py, then tools/ratchet.py update: records the run
 #           in progress/ and rewrites README.md's table (ACCEPT_LOSSES=1 to
 #           record a run that lost functions)
@@ -43,7 +44,7 @@ done
 python3 tools/progress.py
 echo
 if [ "$mode" = check ]; then
-    python3 tools/ratchet.py check ${COMPLETE:+--complete}
+    python3 tools/ratchet.py check ${COMPLETE:+--complete} ${COVERED:+--covered}
 else
     python3 tools/ratchet.py update ${ACCEPT_LOSSES:+--accept-losses}
 fi
