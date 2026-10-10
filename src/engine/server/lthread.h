@@ -208,7 +208,13 @@ public:
 			m_pTail = pMsg;
 	}
 
-	void InsertBefore(LThreadMessage* pAt, LThreadMessage* pMsg)
+	// lithtech 0x45a210, the one out-of-line copy (netmgr's SendPacketData
+	// declines the expansion; src/engine/lithtech/nettrace.cpp emits it).
+	// It RETURNS pMsg, as Append below does: the shipped copy keeps pMsg in
+	// eax from its first load to the `ret` and counts in edx. As a void
+	// function VC6 put pAt in eax and the count after it (36/36, an eax/edx
+	// transposition). Every caller discards the result.
+	LThreadMessage* InsertBefore(LThreadMessage* pAt, LThreadMessage* pMsg)
 	{
 		pAt->m_pPrev->m_pNext = pMsg;
 		pMsg->m_pPrev = pAt->m_pPrev;
@@ -216,6 +222,8 @@ public:
 		pAt->m_pPrev = pMsg;
 
 		m_nMessages++;
+
+		return pMsg;
 	}
 
 	// 0x100242e2 / lithtech 0x45a1c0. Splicing in behind the tail; the

@@ -11775,6 +11775,7 @@ lithtech.exe	sub_44b160
 lithtech.exe	sub_44b260
 lithtech.exe	sub_44b2a0
 lithtech.exe	sub_44b3d0
+lithtech.exe	sub_44b4d0
 lithtech.exe	sub_44b510
 lithtech.exe	sub_44b580
 lithtech.exe	sub_44b6b0
@@ -11962,6 +11963,7 @@ lithtech.exe	sub_45a020
 lithtech.exe	sub_45a120
 lithtech.exe	sub_45a160
 lithtech.exe	sub_45a1c0
+lithtech.exe	sub_45a210
 lithtech.exe	sub_45a240
 lithtech.exe	sub_45a350
 lithtech.exe	sub_45a370

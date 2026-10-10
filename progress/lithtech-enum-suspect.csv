@@ -175,7 +175,7 @@ addr,severity,reason
 0x0041bba0,suspect,contains an interior ret then a prologue | start missing at 0x0041bbb4 (+20); this row spans two functions
 0x0041bea0,suspect,"does not end in a terminator | last is `push`; next start 0x0041c010 is a clean boundary, so a start is missing inside this row or the size is short"
 0x0041bea0,suspect,contains an interior ret then a prologue | start missing at 0x0041bf37 (+151); this row spans two functions
-0x0041c5a0,suspect,contains an interior ret then a prologue | start missing at 0x0041c6f4 (+340); this row spans two functions
+0x0041c5a0,note,"ONE function, 830 bytes, no missing start: enumcheck's 'start missing at 0x0041c6f4' is wrong. 0x0041c6f3 is the first of two /O2 epilogues (the shared failure exit that every early return of CConsoleView::InitFont jumps to); 0x0041c6f4 `push %esi` is not a prologue but SizeofResource's first argument, reached only by `jne 0x41c6f4` at 0x0041c6ad (the growstream_Open success test) and using %esi (hRes), %edi (pData) and %ebp (the stream) set before the ret. No call or pointer reaches it. Written at clientconsole.cpp (near, 823 of 830)"
 0x0041d3a0,suspect,"does not end in a terminator | last is `.byte`; next start 0x0041d520 is a clean boundary, so a start is missing inside this row or the size is short"
 0x0041d3a0,suspect,contains an interior ret then a prologue | start missing at 0x0041d3ea (+74); this row spans two functions
 0x0041d870,suspect,contains an interior ret then a prologue | start missing at 0x0041d9f7 (+391); this row spans two functions

@@ -1715,22 +1715,18 @@ LTRESULT ci_GetBorderSizeQ40CA(HSURFACE hSurface, HLTCOLOR hColor, LTRect* pRect
 //                both sides.
 //
 //    0x0045a210  CMessageQueueBase::InsertBefore,
-//                src/engine/server/lthread.h:218 -- already written, and
-//                the existing source reproduces these 36 bytes statement
-//                for statement (the doubled `mov 0x4(%edx),%esi` is the
-//                two written reads of `pAt->m_pPrev`, and `inc`/store on
-//                +0x04 is m_nMessages++).  It is an in-class inline, so our
-//                build expands it at every call site and emits no COMDAT,
-//                which is why byte matching cannot place it.  The shipped image
-//                has an out-of-line copy because ONE caller declined the
-//                expansion: 0x004583f9 (inside the netmgr function that
-//                begins before 0x004583d0) has Prepend's body written out
+//                src/engine/server/lthread.h -- an in-class inline, so our
+//                build expands it at every call site and emits no COMDAT.
+//                The shipped image has an out-of-line copy because ONE
+//                caller declined the expansion: 0x004583f9 (netmgr.cpp's
+//                SendPacketData, 0x004582f0) has Prepend's body written out
 //                with `call 0x0045a210` for the splice and `call
-//                0x0045a1c0` for Append.  NOTHING TO WRITE: the row will
-//                resolve itself when that caller is reconstructed.  Do not
-//                move InsertBefore out of the class -- server.dll's
-//                Prepend (0x10015ad0) expands it inline and depends on it
-//                staying inline.
+//                0x0045a1c0` for Append.  Our compiler expands the splice
+//                there, so src/engine/lithtech/nettrace.cpp takes the
+//                function's address to emit it.  IDENTICAL once it returns
+//                pMsg (the eax it ends with).  Do not move InsertBefore out
+//                of the class -- server.dll's Prepend (0x10015ad0) expands
+//                it inline and depends on it staying inline.
 //
 //  NOT A FUNCTION, 2 rows:
 //

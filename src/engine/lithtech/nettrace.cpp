@@ -908,3 +908,25 @@ CServerMessageQ18::CServerMessageQ18()
 {
 	Init(0x1000, 0x1000);
 }
+
+
+// ---------------------------------------------------------------------
+//  0x0045a210 (36 bytes) -- lthread.h's CMessageQueueBase::InsertBefore,
+//  out of line.  Not a function of this file: a driver for one.
+//
+//  The shipped image has the out-of-line copy because ONE caller declined
+//  the expansion: netmgr.cpp's SendPacketData (0x004582f0) expands
+//  Prepend but calls both of its halves, `call 0x0045a210` for the splice
+//  and `call 0x0045a1c0` for Append, at 0x004583f9.  Our cl 8447 has one
+//  unit of inline budget less there than the shipped compiler (the
+//  finding collection.cpp records for 0x1001a6dd) and expands the splice,
+//  so nothing of ours emits the COMDAT, and InsertBefore cannot move out
+//  of the class: server.dll's Prepend (0x10015ad0) expands it.  A
+//  pointer-to-member needs a real function to point at, so taking the
+//  address emits the body the image carries -- sdkforce.cpp's lever, as
+//  lt2new1.cpp uses it for three ltvector.h/ltrotation.h inlines.  It is
+//  here, in a client-only TU, so that server.dll does not gain it.
+//  IDENTICAL, 36 bytes.
+// ---------------------------------------------------------------------
+LThreadMessage* (CMessageQueueBase::*g_pfnQueueInsertBefore)(LThreadMessage*, LThreadMessage*) =
+	&CMessageQueueBase::InsertBefore;

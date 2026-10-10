@@ -803,3 +803,24 @@ CCounterEntryQ428 g_CounterTableQ428[] =
 //  the client builds it /O2 and server.dll /O1, so a match was never going
 //  to happen.  The identification above rests on the vtable shape and the
 //  element evidence, not on this test.
+
+
+// ======================================================================= //
+//  0x0044b4d0 (57 bytes) -- collection.cpp's CCollElem1CS::operator=,
+//  out of line.  A driver, not a function of this file.
+// ======================================================================= //
+//
+//  The element's assignment is in class (src/engine/server/collelem1cs.h),
+//  and the shipped /O2 `Append` for its DefaultCache array (0x00448540)
+//  expands it at one site and calls this copy at the other two
+//  (0x00448602, 0x00448632) -- the per-site inline budget.  Our cl 8447
+//  expands all three, so nothing of ours emits the COMDAT; server.dll
+//  (/O1) declines and keeps 0x100195b8 matched.  Taking the address emits
+//  the body, as sdkforce.cpp does for the SDK inlines, and here, in a
+//  client-only TU, server.dll does not gain the pointer.  /O2 copies the
+//  twelve-byte head with three `mov` pairs where /O1 has `movsl` three
+//  times, which is all that separates 57 bytes from 44.
+#include "collelem1cs.h"
+
+CCollElem1CS& (CCollElem1CS::*g_pfnCollElem1CSAssign)(const CCollElem1CS&) =
+	&CCollElem1CS::operator=;

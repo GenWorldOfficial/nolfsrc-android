@@ -17,6 +17,7 @@
 #include <stdarg.h>
 #include "servermgr.h"
 #include "de_error.h"
+#include "cltdib.h"
 
 
 // ----------------------------------------------------------------------- //
@@ -861,6 +862,7 @@ public:
 	~CConsoleCritSec();                                // 0x00444170
 	void Enter();                                      // 0x00444180
 	void Leave();                                      // 0x00444190
+	LTBOOL IsValid();                                  // 0x00490730, `mov $1,%eax; ret`
 
 	uint8 m_CS[0x18];
 };
@@ -954,7 +956,7 @@ public:
 	void   VPrintf(uint32 nColor, int nLevel, char* pFormat, va_list ap);  // 0x0041d320
 	LTBOOL Init(LTRect* pRect, void (*pfnCommand)(char* pText),
 	            uint32 nUnknown268, CConsoleNameList* pHistory);  // 0x0041c3e0
-	LTBOOL InitFont();                                 // 0x0041c5a0 (cltcursor.cpp)
+	LTBOOL InitFont();                                 // 0x0041c5a0
 	LTRESULT LoadBackground();                         // 0x0041cd50 (cltcursor.cpp)
 	LTBOOL SetNumLines(uint32 nNumLines);              // 0x0041c910 (ccline.cpp)
 	void   RefreshFromVars();                          // 0x0041ca60 (ccline.cpp)
@@ -987,9 +989,10 @@ public:
 	LTRect             m_rcConsole;          // 0x26c  (ccline.cpp's name)
 	LTRect             m_rc27c;              // 0x27c
 	LTRect             m_rc28c;              // 0x28c
-	void*              m_pUnknown29c;        // 0x29c
+	uint32*            m_pCharBits;          // 0x29c  InitFont's row masks, one dword per cell row
 	uint16             m_nFontHeight;        // 0x2a0  (ccline.cpp's name); 1
-	uint8              m_pad_2a2[0x3a4 - 0x2a2];
+	uint16             m_nCharStride;        // 0x2a2  dwords per character
+	uint16             m_CharWidths[128];    // 0x2a4
 	void*              m_hSurface;           // 0x3a4
 	float              m_fAlpha;             // 0x3a8  (ccline.cpp's name); 1.0f
 	LTRESULT           m_nOptimized;         // 0x3ac  (ccline.cpp's name)
@@ -1021,7 +1024,7 @@ CConsoleNameList g_EmptyNameList;                            // 0x004b2af0
 // history with size 0 (a call).  Then the body, in the shipped store order.
 CConsoleView::CConsoleView() : m_History(0)
 {
-	m_pUnknown29c = LTNULL;
+	m_pCharBits = LTNULL;
 	m_hMainWnd    = LTNULL;
 	m_pfnCommand  = LTNULL;
 	m_nLevel      = 1;
@@ -1135,14 +1138,168 @@ void CConsoleView::FreeSurface()
 	}
 }
 
-// 0x0041c8e0 — the same for whatever +0x29c holds; a plain dfree, and the
+// ----------------------------------------------------------------------- //
+//  0x0041c5a0 (830 bytes) -- build the console's bitmap font.
+// ----------------------------------------------------------------------- //
+//
+// Between FreeSurface and Free29c in the shipped image, so this TU's; it
+// builds cltdib.h's bitmap on its stack (0x478 frame: the 0x458-byte
+// bitmap at +0x30 and eight dwords under it).  Its one caller is Init
+// (0x0041c404).  It was first written in cltcursor.cpp, beside the bitmap
+// class, where no shipped neighbour could place it.
+//
+// The font is a resource of type "#12345" (0x004a87f8) in the EXE's own
+// module, its id the "ConsoleFont" console variable (con_FindVar 0x0041b3e0
+// on the client's state at 0x004b2f00, then atoi 0x004937a7), else 0x8c --
+// and 0x8c again if that id is not there.  The resource is an 8-bit PCX
+// (the bitmap's format type must be 0): copied into a memory stream
+// (0x00484170, chunk 0x100; Write +0x24, SeekTo +0x14), read by 0x0043df40,
+// and cut into a 16 x 16 grid of cells.  Each cell row becomes one dword
+// whose bit N is set when pixel N is non-zero; the dwords go to +0x29c,
+// charH per character, and every character's width is the cell width.
+// GetDC/ReleaseDC on the main window bracket the cut and nothing uses the
+// DC.  (names ours)
+//
+// NEAR, 823 vs 830 bytes, 236 instructions against 238; the block layout,
+// all six exits and their three destructor expansions, the rep-stos width
+// fill and the four loops are shipped's.  The SizeofResource result is a
+// named local: shipped calls it BEFORE loading the stream's vptr for Write
+// (0x0041c6f7 / 0x0041c6fd); with the call nested in the argument list VC6
+// loads the vptr first and spills it across the call (831 bytes, 25
+// register-blind instruction differences; now 9).  What is left is a
+// register permutation: shipped has this=%ebx, pData=%edi, pStream=%ebp
+// (hence a 1-byte longer `mov 0x0(%ebp)` three times) and in the loops
+// charH=%esi, charW=%ebx, pCell=%ebp, where charH's reload from its spill
+// slot inside the row loop and pCell's `mov %eax,%ebp` are the two
+// instructions ours does without.  Not moved by: local declaration order
+// (fourteen shuffles, byte-identical output), charW/charH statement order,
+// block-scoped row locals, an explicit ci counter (up or down x loop),
+// pSrc[col] vs *pSrc++, pCell recomputed per cell or folded into pSrc, an
+// int charW, the GetDC test folded into the assignment, the load test
+// split in two, or cl 8168 / 8804 / 8966.
+// Declared as their definitions are: clientstreams.cpp's growstream_Open
+// (con_FindVar is servermgr.h's, dalloc is declared at the top).
+ILTStream* growstream_Open(uint32 nWantedCache);                          // 0x00484170
+
+LTBOOL CConsoleView::InitFont()
+{
+	CObj4a1ab4View bitmap;
+	LTCommandVar* pVar;
+	HRSRC hRes;
+	HGLOBAL hGlobal;
+	void* pData;
+	ILTStream* pStream;
+	HDC hDC;
+	LTBOOL bRet;
+	int nFontID;
+	uint32 charW, charH;
+	uint32 x, y, row, col, ci;
+	uint8 *pCell, *pSrc;
+	uint32 *pOut;
+	uint32 bits, mask;
+	DWORD nSize;
+
+	if (!m_CS.IsValid())
+		return LTFALSE;
+
+	nFontID = 0x8c;
+	pVar = (LTCommandVar*)con_FindVar(&g_ClientConsoleState, "ConsoleFont");
+	if (pVar)
+		nFontID = atoi(pVar->m_pStringVal);
+
+	hRes = FindResourceA(NULL, MAKEINTRESOURCE(nFontID), "#12345");
+	if (!hRes)
+	{
+		hRes = FindResourceA(NULL, MAKEINTRESOURCE(0x8c), "#12345");
+		if (!hRes)
+			return LTFALSE;
+	}
+
+	hGlobal = LoadResource(NULL, hRes);
+	if (!hGlobal)
+		return LTFALSE;
+
+	pData = LockResource(hGlobal);
+	if (!pData)
+		return LTFALSE;
+
+	pStream = growstream_Open(0x100);
+	if (!pStream)
+		return LTFALSE;
+
+	nSize = SizeofResource(NULL, hRes);
+	pStream->Write(pData, nSize);
+	pStream->SeekTo(0);
+
+	bRet = LTFALSE;
+
+	if (dib_LoadQ41C(pStream, &bitmap) && bitmap.m_Format.m_nBitDepth == 0)
+	{
+		hDC = GetDC((HWND)m_hMainWnd);
+		if (hDC)
+		{
+			charW = bitmap.m_Unknown438 >> 4;
+			charH = bitmap.m_Unknown43c >> 4;
+
+			m_pCharBits = (uint32*)dalloc(charH << 10);
+			if (m_pCharBits)
+			{
+				m_nCharStride = (uint16)charH;
+				m_nFontHeight = (uint16)charH;
+
+				for (ci = 0; ci < 127; ci++)
+					m_CharWidths[ci] = (uint16)charW;
+
+				for (y = 0; y < 16; y++)
+				{
+					pCell = bitmap.m_Data.GetArray() + bitmap.m_Unknown440 * y * charH;
+
+					for (x = 0; x < 16; x++)
+					{
+						pOut = &m_pCharBits[m_nCharStride * (y * 16 + x)];
+
+						for (row = 0; row < charH; row++)
+						{
+							pSrc = pCell + row * bitmap.m_Unknown440;
+							bits = 0;
+							mask = 1;
+
+							for (col = 0; col < charW; col++)
+							{
+								if (*pSrc)
+									bits |= mask;
+
+								mask <<= 1;
+								pSrc++;
+							}
+
+							*pOut++ = bits;
+						}
+
+						pCell += charW;
+					}
+				}
+
+				bRet = LTTRUE;
+			}
+
+			ReleaseDC((HWND)m_hMainWnd, hDC);
+		}
+	}
+
+	pStream->Release();
+
+	return bRet;
+}
+
+// 0x0041c8e0 — the same for the font's row masks; a plain dfree, and the
 // clear is inside the test rather than after it.
 void CConsoleView::Free29c()
 {
-	if (m_pUnknown29c)
+	if (m_pCharBits)
 	{
-		dfree(m_pUnknown29c);
-		m_pUnknown29c = LTNULL;
+		dfree(m_pCharBits);
+		m_pCharBits = LTNULL;
 	}
 }
 

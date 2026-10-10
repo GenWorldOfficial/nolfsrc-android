@@ -37,6 +37,7 @@
 #include "ltbasedefs.h"
 #include "iltcursor.h"
 #include "collection.h"
+#include "cltdib.h"
 #include "cluglob.h"                // g_CluClientGlob, 0x004b0ac0
 
 // windows.h renames engine methods out from under us otherwise.
@@ -516,61 +517,8 @@ LTRESULT CLTCursor::RefreshCursor()
 // That is as far as the class is identified, so only the one member whose
 // body needs nothing else is written here.  See the attribution block for
 // why 0x0043de60 and 0x0043df40 are NOT.
-// The 0x4a1ab4 vtable is PFormat's (lttexmod.cpp: one virtual, 0x38
-// bytes, no declared constructor) and cissurf.cpp shows a PFormat at +0 with a 256-entry palette at +0x38.  The second vptr at +0x444 is
-// collection.h's CMoArray<uint8>: +0x448 m_pArray, +0x44c m_nElements,
-// +0x450 m_CacheSize, +0x454 m_WantedCache -- the BaseDelete count at
-// 0x0043de98 is m_nElements + m_CacheSize, and 0x0043df40 reads a PCX
-// header into it (byte 3 == 8 is the PCX bits-per-pixel), so this is the
-// engine's 8-bit bitmap loader's image.  Class names ours.
-//
-// The format member IS lttexmod.cpp's PFormat, so it carries that name and
-// its calls (Init 0x0045f0e0, InitPValue 0x0045f1b0, GetBytesPerPixel
-// 0x0045f230) link to lttexmod.cpp's definitions.
-class PFormat
-{
-public:
-	virtual void Init(uint32 nBitDepth, uint32 aMask, uint32 rMask,
-	                  uint32 gMask, uint32 bMask);          // +0x00 0x0045f0e0
-
-public:
-	uint32 m_nBitDepth;                      // 0x04
-	uint32 m_Masks[4];                       // 0x08
-	uint32 m_nBits[4];                       // 0x18
-	uint32 m_nShifts[4];                     // 0x28
-
-	// Both called out of line by dib_LoadQ41C.
-	void   InitPValue();                                    // 0x0045f1b0
-	uint32 GetBytesPerPixel();                              // 0x0045f230
-};
-
-// One palette entry: a pad byte, then red, green, blue (0x0043e114..).
-struct CDibColorQ41C
-{
-	uint8 m_Pad;                             // 0x00
-	uint8 m_R;                               // 0x01
-	uint8 m_G;                               // 0x02
-	uint8 m_B;                               // 0x03
-};
-
-class CObj4a1ab4View
-{
-public:
-	CObj4a1ab4View();                        // 0x0043de60
-
-	void   ResetCounters();                  // 0x0043df20 (name ours)
-
-public:
-	// A MEMBER, not a base: a base with virtuals would give this class a
-	// vtable of its own and a second vptr store after the members'.  The
-	// constructor stores 0x004a1ab4 exactly once.
-	PFormat     m_Format;                    // +0x000
-	CDibColorQ41C m_Palette[256];            // +0x038
-	uint32 m_Unknown438;                     // +0x438
-	uint32 m_Unknown43c;                     // +0x43c
-	uint32 m_Unknown440;                     // +0x440
-	CMoArray<uint8> m_Data;                  // +0x444
-};
+// The class itself (PFormat, the palette entry and the bitmap) is in
+// cltdib.h, which clientconsole.cpp's console font includes too.
 
 // 0x0043de60 — 182 bytes.  The two vptr stores, then CMoArray's
 // `Clear(); Init();` expanded (both of Init's teardowns inlined against the
@@ -860,31 +808,14 @@ public:
 
 // 0x004b0b14 -- g_CluClientGlob.m_pClientMgr, read through this view.
 
-// 0x00490730 -- `mov $1,%eax; ret`, thiscall on the console's +0x250 (the
-// critical section clientconsole.cpp lays out there): a folded "yes".
-class CCritSecQ41C
-{
-public:
-	LTBOOL IsValid();                                  // 0x00490730
-
-	uint8  m_CS[0x18];
-};
-
 class CConsoleQ41C
 {
 public:
 	void     FreeSurface();                            // 0x0041c570
 	void     SetAlpha(float fAlpha);                   // 0x0041ce70
 	LTRESULT LoadBackground();                         // 0x0041cd50
-	LTBOOL   InitFont();                               // 0x0041c5a0
 
-	uint8        m_pad_000[0x250];
-	CCritSecQ41C m_CS;                       // 0x250 .. 0x268
-	uint8        m_pad_268[0x29c - 0x268];
-	uint32*      m_pCharBits;                // 0x29c  one row mask per dword
-	uint16       m_nFontHeight;              // 0x2a0  (ccline.cpp's name)
-	uint16       m_nCharStride;              // 0x2a2  dwords per character
-	uint16       m_CharWidths[128];          // 0x2a4
+	uint8        m_pad_000[0x3a4];
 	HSURFACE     m_hSurface;                 // 0x3a4
 	float        m_fAlpha;                   // 0x3a8
 	LTRESULT     m_nOptimized;               // 0x3ac
@@ -922,169 +853,10 @@ LTRESULT CConsoleQ41C::LoadBackground()
 }
 
 
-// ----------------------------------------------------------------------- //
-//  0x0041c5a0 (830 bytes) -- build the console's bitmap font.
-// ----------------------------------------------------------------------- //
-//
-// HOME is the console TU, like 0x0041cd50 above; here for the bitmap class
-// (0x478 frame: the 0x458-byte bitmap at +0x30 and eight dwords under it).
-// Its one caller is clientconsole.cpp's CConsoleView::Init (0x0041c404).
-//
-// The font is a resource of type "#12345" (0x004a87f8) in the EXE's own
-// module, its id the "ConsoleFont" console variable (con_FindVar 0x0041b3e0
-// on the client's state at 0x004b2f00, then atoi 0x004937a7), else 0x8c --
-// and 0x8c again if that id is not there.  The resource is an 8-bit PCX
-// (the bitmap's format type must be 0): copied into a memory stream
-// (0x00484170, chunk 0x100; Write +0x24, SeekTo +0x14), read by 0x0043df40,
-// and cut into a 16 x 16 grid of cells.  Each cell row becomes one dword
-// whose bit N is set when pixel N is non-zero; the dwords go to +0x29c,
-// charH per character, and every character's width is the cell width.
-// GetDC/ReleaseDC on the main window bracket the cut and nothing uses the
-// DC.  (names ours)
-//
-// NEAR, 823 vs 830 bytes, 236 instructions against 238; the block layout,
-// all six exits and their three destructor expansions, the rep-stos width
-// fill and the four loops are shipped's.  The SizeofResource result is a
-// named local: shipped calls it BEFORE loading the stream's vptr for Write
-// (0x0041c6f7 / 0x0041c6fd); with the call nested in the argument list VC6
-// loads the vptr first and spills it across the call (831 bytes, 25
-// register-blind instruction differences; now 9).  What is left is a
-// register permutation: shipped has this=%ebx, pData=%edi, pStream=%ebp
-// (hence a 1-byte longer `mov 0x0(%ebp)` three times) and in the loops
-// charH=%esi, charW=%ebx, pCell=%ebp, where charH's reload from its spill
-// slot inside the row loop and pCell's `mov %eax,%ebp` are the two
-// instructions ours does without.  Not moved by: local declaration order
-// (fourteen shuffles, byte-identical output), charW/charH statement order,
-// block-scoped row locals, an explicit ci counter (up or down x loop),
-// pSrc[col] vs *pSrc++, pCell recomputed per cell or folded into pSrc, an
-// int charW, the GetDC test folded into the assignment, the load test
-// split in two, or cl 8168 / 8804 / 8966.
-class CommandVarQ41C
-{
-public:
-	uint8 m_pad_00[0x14];
-	char* m_pStringVal;                      // 0x14  (servermgr.h's name)
-};
-
-// Declared as their definitions are: the console TU's con_FindVar
-// (src/engine/server/console.cpp) and the client state it is handed
-// (0x004b2f00), and clientstreams.cpp's growstream_Open.
-class ConsoleState;
-extern ConsoleState g_ClientConsoleState;                   // 0x004b2f00
-HCONSOLEVAR con_FindVar(ConsoleState* pState, char* pName);               // 0x0041b3e0
-ILTStream* growstream_Open(uint32 nWantedCache);                          // 0x00484170
-void*           dalloc(unsigned long nSize);                             // 0x004290b0
-
-LTBOOL CConsoleQ41C::InitFont()
-{
-	CObj4a1ab4View bitmap;
-	CommandVarQ41C* pVar;
-	HRSRC hRes;
-	HGLOBAL hGlobal;
-	void* pData;
-	ILTStream* pStream;
-	HDC hDC;
-	LTBOOL bRet;
-	int nFontID;
-	uint32 charW, charH;
-	uint32 x, y, row, col, ci;
-	uint8 *pCell, *pSrc;
-	uint32 *pOut;
-	uint32 bits, mask;
-	DWORD nSize;
-
-	if (!m_CS.IsValid())
-		return LTFALSE;
-
-	nFontID = 0x8c;
-	pVar = (CommandVarQ41C*)con_FindVar(&g_ClientConsoleState, "ConsoleFont");
-	if (pVar)
-		nFontID = atoi(pVar->m_pStringVal);
-
-	hRes = FindResourceA(NULL, MAKEINTRESOURCE(nFontID), "#12345");
-	if (!hRes)
-	{
-		hRes = FindResourceA(NULL, MAKEINTRESOURCE(0x8c), "#12345");
-		if (!hRes)
-			return LTFALSE;
-	}
-
-	hGlobal = LoadResource(NULL, hRes);
-	if (!hGlobal)
-		return LTFALSE;
-
-	pData = LockResource(hGlobal);
-	if (!pData)
-		return LTFALSE;
-
-	pStream = growstream_Open(0x100);
-	if (!pStream)
-		return LTFALSE;
-
-	nSize = SizeofResource(NULL, hRes);
-	pStream->Write(pData, nSize);
-	pStream->SeekTo(0);
-
-	bRet = LTFALSE;
-
-	if (dib_LoadQ41C(pStream, &bitmap) && bitmap.m_Format.m_nBitDepth == 0)
-	{
-		hDC = GetDC(m_hMainWnd);
-		if (hDC)
-		{
-			charW = bitmap.m_Unknown438 >> 4;
-			charH = bitmap.m_Unknown43c >> 4;
-
-			m_pCharBits = (uint32*)dalloc(charH << 10);
-			if (m_pCharBits)
-			{
-				m_nCharStride = (uint16)charH;
-				m_nFontHeight = (uint16)charH;
-
-				for (ci = 0; ci < 127; ci++)
-					m_CharWidths[ci] = (uint16)charW;
-
-				for (y = 0; y < 16; y++)
-				{
-					pCell = bitmap.m_Data.GetArray() + bitmap.m_Unknown440 * y * charH;
-
-					for (x = 0; x < 16; x++)
-					{
-						pOut = &m_pCharBits[m_nCharStride * (y * 16 + x)];
-
-						for (row = 0; row < charH; row++)
-						{
-							pSrc = pCell + row * bitmap.m_Unknown440;
-							bits = 0;
-							mask = 1;
-
-							for (col = 0; col < charW; col++)
-							{
-								if (*pSrc)
-									bits |= mask;
-
-								mask <<= 1;
-								pSrc++;
-							}
-
-							*pOut++ = bits;
-						}
-
-						pCell += charW;
-					}
-				}
-
-				bRet = LTTRUE;
-			}
-
-			ReleaseDC(m_hMainWnd, hDC);
-		}
-	}
-
-	pStream->Release();
-
-	return bRet;
-}
+// 0x0041c5a0 (830 bytes), the console font, is clientconsole.cpp's
+// CConsoleView::InitFont: it sits between FreeSurface (0x0041c570) and
+// Free29c (0x0041c8e0) in the console TU, and the bitmap it builds is
+// cltdib.h's.
 
 
 // ======================================================================= //

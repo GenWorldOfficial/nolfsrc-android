@@ -2462,9 +2462,9 @@
 # 0x45f0e0 -- PFormat::Init, slot 0 of the PFormat vtable 0x4a1ab4 that smackvideo.cpp's
 # PFormatS view emits (lttexmod.cpp, placed)
 /ALTERNATENAME:?Init@PFormatS@@UAEXKKKKK@Z=?Init@PFormat@@UAEXKKKKK@Z
-# cltcursor.cpp. 0x490730 (`mov $1,%eax; ret`) -- LCriticalSection::IsValid,
-# the console's +0x250 critical section
-/ALTERNATENAME:?IsValid@CCritSecQ41C@@QAEIXZ=?IsValid@LCriticalSection@@QAEIXZ
+# clientconsole.cpp. 0x490730 (`mov $1,%eax; ret`) -- LCriticalSection::IsValid,
+# the console's +0x250 critical section (InitFont, 0x41c5a0)
+/ALTERNATENAME:?IsValid@CConsoleCritSec@@QAEIXZ=?IsValid@LCriticalSection@@QAEIXZ
 # worldbsp.obj. 0x48b8e0 -- CWorldBsp::DoVisQuery (0x426b50) calls it at
 # 0x426b55: fntdraw.cpp's vis_TraversalQ488 (near)
 /ALTERNATENAME:?wt_VisibilityTraversal@@YAXPAVCWorldVisQuery@@@Z=?vis_TraversalQ488@@YAXPAVCVisQueryQ488@@@Z
@@ -2654,8 +2654,6 @@
 # clientconsole/ltnew1/ltnew2/predobj/cmgrinit/lthread/tcpdriver link names, each onto the shipped address it reads back as.
 # 0x439fc0: vtable 0x4a1e88 slot 0 (the console scrollback list's GenBegin), the one CGLinkedList GenBegin body every such table shares
 /ALTERNATENAME:?GetFirst@CConsoleLineList@@UAEXXZ=?GenBegin@CMessageQueueBase@@UBE?AVGenListPos@@XZ
-# 0x41c5a0: CConsoleView::Init (0x41c3e0) calls it; cltcursor.cpp's CConsoleQ41C::InitFont is the body at that address (830 bytes)
-/ALTERNATENAME:?InitFont@CConsoleView@@QAEIXZ=?InitFont@CConsoleQ41C@@QAEIXZ
 # 0x4b3228 / 0x4b3218: cc_ModelAdd (0x41d640) / cc_ModelDirAdd (0x41d740) write them; demodtx.cpp's initialisers 0x42f610 / 0x42f640 zero the same words
 /ALTERNATENAME:?g_ModelAdd@@3V?$_CVector@M@@A=?g_ModelAddQ42C@@3VCVectorZeroInitQ42C@@A
 /ALTERNATENAME:?g_ModelDirAdd@@3V?$_CVector@M@@A=?g_ModelDirAddQ42C@@3VCVectorZeroInitQ42C@@A

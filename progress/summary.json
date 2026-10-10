@@ -233,25 +233,25 @@
       "unwritten_bytes": 2448
     },
     "lithtech.exe": {
-      "attempted": 3,
-      "bytes_identical": 437064,
+      "attempted": 0,
+      "bytes_identical": 437157,
       "bytes_total": 571006,
       "crt": 477,
       "crt_bytes": 56852,
       "driver": 132,
       "driver_bytes": 8395,
       "funcs": 3429,
-      "identical": 3028,
-      "near": 149,
+      "identical": 3030,
+      "near": 150,
       "small": 249,
       "started": true,
       "todo": 0,
       "unlinked": 595,
       "unlinked_bytes": 109553,
-      "unplaced": 94,
-      "unplaced_bytes": 10402,
-      "unwritten": 3,
-      "unwritten_bytes": 923
+      "unplaced": 92,
+      "unplaced_bytes": 9578,
+      "unwritten": 0,
+      "unwritten_bytes": 0
     },
     "ltguimgr_LT2": {
       "attempted": 0,
@@ -297,17 +297,17 @@
     }
   },
   "total": {
-    "attempted": 4,
-    "bytes_identical": 2867164,
+    "attempted": 1,
+    "bytes_identical": 2867257,
     "bytes_total": 3675486,
     "funcs": 19687,
-    "identical": 15067,
-    "near": 679,
+    "identical": 15069,
+    "near": 680,
     "small": 3727,
     "todo": 210,
-    "unplaced": 202,
-    "unplaced_bytes": 24470,
-    "unwritten": 214,
-    "unwritten_bytes": 31193
+    "unplaced": 200,
+    "unplaced_bytes": 23646,
+    "unwritten": 211,
+    "unwritten_bytes": 30270
   }
 }
