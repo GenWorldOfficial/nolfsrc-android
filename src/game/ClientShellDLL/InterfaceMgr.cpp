@@ -26,14 +26,14 @@
 #include "GameButes.h"
 #include "FolderPerformance.h"
 
-// TESTING DYNAMIC LIGHT IN INTERFACE
-/*
-#include "FXButeMgr.h"
-
 #ifdef NOLFSRC_MODERN
 // M-P2-01: the developer console
 #include "cshell/p2_console.h"
 #endif
+
+// TESTING DYNAMIC LIGHT IN INTERFACE
+/*
+#include "FXButeMgr.h"
 static HOBJECT g_hLight = LTNULL;
 */
 // END TEST

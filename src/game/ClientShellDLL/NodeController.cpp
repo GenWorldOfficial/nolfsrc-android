@@ -16,6 +16,10 @@
 #include "CharacterFx.h"
 #include "SoundMgr.h"
 #include "VarTrack.h"
+#ifdef NOLFSRC_MODERN
+// M-P2-10: big head mode
+#include "cshell/p2_bighead.h"
+#endif
 
 VarTrack	g_vtLipSyncMaxRot;
 VarTrack	g_vtLipSyncFreq;
@@ -25,10 +29,6 @@ VarTrack	g_vtLipSyncFreq;
 #include "SFXMgr.h"
 #include "GameClientShell.h"
 #include "GraphFX.h"
-#ifdef NOLFSRC_MODERN
-// M-P2-10: big head mode
-#include "cshell/p2_bighead.h"
-#endif
 
 class GraphPoints
 {
