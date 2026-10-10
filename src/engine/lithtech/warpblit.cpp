@@ -1000,6 +1000,58 @@ inline void cis_UnlockSurfaceQ40E(CSurfaceQ40E* pSurface)
 		g_pRenderQ40E->UnlockSurface(pSurface->m_pRenderData);
 }
 
+#ifdef NOLFSRC_MODERN
+// M-P0-03: fast FillRect.  A fill of the SCREEN locks the whole back buffer
+// and writes the pixels in software, which costs the video card a round
+// trip of the frame per rectangle -- menus, sliders, the scope and the
+// letterbox fill many each frame.  A renderer that offers a colour fill
+// (the modern d3d.ren: GetRenderObject("FillScreenRect"), d3dblit.cpp)
+// does it there instead.  The colour is converted to the screen format the
+// same way the software fill converts it, so the pixels are the same.
+// Returns FALSE (and the caller does the retail fill) when the renderer has
+// no such fill or it fails.
+class FMFormat;
+
+class FMConvertMgrAPI                                // fmconvert.cpp
+{
+public:
+	unsigned long PValueToFormatColor(FMFormat* pFormat, unsigned long nValue,
+	                                  unsigned long* pOut);   // 0x0045f5e0
+};
+
+struct RenderHookQ40E
+{
+	uint8   m_pad_00[0xb8];
+	void*  (*GetRenderObject)(const char* pName);                   // 0x0b8
+};
+
+typedef LTBOOL (__cdecl *FillScreenRectFnQ40E)(LTRectQ438* pRect, uint32 nPixel);
+
+static LTBOOL ci_ModernFillScreen(LTRectQ438* pRect, HLTCOLORQ40E hColor)
+{
+	FillScreenRectFnQ40E fnFill;
+	unsigned long        nPixel;
+
+	if (g_ScreenFormatQ40E.m_nBitDepth != 2 && g_ScreenFormatQ40E.m_nBitDepth != 3)
+		return LTFALSE;
+
+	fnFill = (FillScreenRectFnQ40E)
+		((RenderHookQ40E*)g_pRenderQ40E)->GetRenderObject("FillScreenRect");
+	if (!fnFill)
+		return LTFALSE;
+
+	nPixel = 0;
+	((FMConvertMgrAPI*)&g_pClientMgrQ40E->m_Blitter)->PValueToFormatColor(
+		(FMFormat*)&g_ScreenFormatQ40E, hColor, &nPixel);
+
+	// 16-bit screens take the low word, as the software fill writes it.
+	if (g_ScreenFormatQ40E.m_nBitDepth == 2)
+		nPixel &= 0xffff;
+
+	return fnFill(pRect, nPixel);
+}
+#endif
+
 LTRESULTQ40E ci_FillRectQ40E(CSurfaceQ40E* hDest, LTRectQ438* pRect,
                              HLTCOLORQ40E hColor)
 {
@@ -1029,6 +1081,12 @@ LTRESULTQ40E ci_FillRectQ40E(CSurfaceQ40E* hDest, LTRectQ438* pRect,
 		rect.right = pSurface->m_nWidth;
 		rect.bottom = pSurface->m_nHeight;
 	}
+
+#ifdef NOLFSRC_MODERN
+	// M-P0-03: fast FillRect
+	if (pSurface == &g_ScreenSurfaceQ40E && ci_ModernFillScreen(&rect, hColor))
+		return 0;
+#endif
 
 	request.m_pDest = cis_LockSurfaceQ40E(pSurface, &request.m_nDestPitch,
 	                                      LTTRUE);

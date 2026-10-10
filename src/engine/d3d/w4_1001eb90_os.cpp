@@ -181,6 +181,44 @@ LTBOOL sub_10020c00(void* pArg0, uint32 nArg1, uint32 nArg2, float fArg3,
                     float fArg8, Vec10020c00* pPos,
                     Rot10020c00* pRot);                 // 0x10020c00
 
+#ifdef NOLFSRC_MODERN
+// M-P0-01: widescreen (Hor+) field of view.  The game picks its horizontal
+// field of view for a 4:3 screen (FovX 90, FovY 75 degrees), and the
+// renderer uses it as given, so on a wider screen the picture is stretched
+// sideways.  Keep the vertical view a 4:3 screen would have and widen the
+// horizontal one to the scene rectangle's real aspect ratio:
+//     fovX' = 2 * atan(tan(fovX / 2) * (aspect / (4/3)))
+// At 4:3 this is fovX itself.
+extern "C" double __cdecl tan(double x);
+extern "C" double __cdecl atan(double x);
+
+//
+// Models with a field of view of their own (the player-view weapons) are
+// drawn from the game's field of view, not the widened one, and narrowed by
+// the same factor (w43_10017c10_osoiqipni.cpp); these two hold, for the
+// scene being drawn, the field of view the game asked for and that factor,
+// tan(fovX'/2) / tan(fovX/2).
+float g_fModernFovX4x3   = 1.5707964f;
+float g_fModernFovXScale = 1.0f;
+
+static float ModernHorPlusFovX(SceneDesc* pScene)
+{
+	float fWidth  = (float)(pScene->m_Rect[2] - pScene->m_Rect[0]);
+	float fHeight = (float)(pScene->m_Rect[3] - pScene->m_Rect[1]);
+
+	g_fModernFovX4x3   = pScene->m_fFovX;
+	g_fModernFovXScale = 1.0f;
+
+	if (fWidth <= 0.0f || fHeight <= 0.0f)
+		return pScene->m_fFovX;
+
+	g_fModernFovXScale = 0.75f * fWidth / fHeight;
+
+	return 2.0f * (float)atan(tan(0.5 * pScene->m_fFovX)
+	                          * g_fModernFovXScale);
+}
+#endif
+
 unsigned int sub_1001eb90(SceneDesc* pScene, void* pMem, unsigned long nMemSize)
 {
 	uint16          nCW;
@@ -284,12 +322,26 @@ unsigned int sub_1001eb90(SceneDesc* pScene, void* pMem, unsigned long nMemSize)
 	g_1008be67              = 0xff;
 	g_1008be30              = 0.0f;
 
+#ifdef NOLFSRC_MODERN
+	// M-P0-01: widescreen (Hor+) field of view
+	{
+		float fFovX = ModernHorPlusFovX(pScene);
+
+		sub_10020c00(g_1008b880,
+		             *(uint32*)&fFovX, *(uint32*)&pScene->m_fFovY, 7.0f,
+		             *(uint32*)&pScene->m_fFarZ,
+		             (float)pScene->m_Rect[0], (float)pScene->m_Rect[1],
+		             (float)pScene->m_Rect[2] - 0.1f, (float)pScene->m_Rect[3] - 0.1f,
+		             (Vec10020c00*)pScene->m_vPos, (Rot10020c00*)pScene->m_rRot);
+	}
+#else
 	sub_10020c00(g_1008b880,
 	             *(uint32*)&pScene->m_fFovX, *(uint32*)&pScene->m_fFovY, 7.0f,
 	             *(uint32*)&pScene->m_fFarZ,
 	             (float)pScene->m_Rect[0], (float)pScene->m_Rect[1],
 	             (float)pScene->m_Rect[2] - 0.1f, (float)pScene->m_Rect[3] - 0.1f,
 	             (Vec10020c00*)pScene->m_vPos, (Rot10020c00*)pScene->m_rRot);
+#endif
 
 	return 1;
 }
