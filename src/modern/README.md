@@ -26,16 +26,21 @@ Conventions, so that work done in parallel merges cleanly:
 * In retail files, each change is an `#ifdef NOLFSRC_MODERN` block opened by
   a comment naming the item (`// M-P1-01: frame limiter`), preferably a single
   call into the package's file, with the retail code kept in the `#else`.
-* Add nothing outside the block, not even a blank line, and keep blocks few:
-  the release build must compile the retail file as it was.
+* Add nothing outside the block, not even a blank line: the release build
+  compiles each retail file with its `NOLFSRC_MODERN` blocks taken out
+  (below), so a line outside a block is a change to the release build.
+  `python3 tools/releasesrc.py diff master` lists every such change.
 
-Even so, a `NOLFSRC_MODERN` block is not quite invisible to the release
-build. VC6 decides where some out-of-line copies of inline functions go from
-the layout of the whole file, disabled lines included, so enough blocks in
-one file can move such a function in the release binary without changing a
-single release token. `GameClientShell.cpp`, with blocks from five packages,
-does this: the release `CShell.dll` places `CGlobalMgr::CGlobalMgr` before
-`CGameClientShell::UnpackClientSaveMsg` instead of after it (same code, a
-different order). Nothing scores the game DLLs yet, so it is tolerated; check
-a release `CShell.dll`/`Object.lto` against one built without your change
-(timestamps masked) when you add blocks to a game file.
+The release build never sees these blocks at all. Skipping them is not
+enough with VC6: a skipped block still moves everything below it, and the
+compiler lets a file's layout decide where some out-of-line inline
+functions go, so blocks from several packages in `GameClientShell.cpp`
+reordered two functions in the release `CShell.dll` with every release
+token unchanged (and restoring the line numbers with `#line` did not help).
+So `build/libs.sh`, `build/build.sh` and `build/engine.sh` compile a copy of
+`src/` in `out/release-tree/` with every `#ifdef`/`#ifndef NOLFSRC_MODERN`
+(and `NOLFSRC_DEBUG`) block resolved as the release build sees it
+(`tools/releasesrc.py`; `build/env.sh`, `nolfsrc_release_tree`), and copy
+the build outputs back into `src/`. Test the variant macros only with
+`#ifdef` or `#ifndef`; anything else (`#if defined(...)`, `#elif`) stops the
+release build with an error.

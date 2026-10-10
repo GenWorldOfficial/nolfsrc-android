@@ -41,6 +41,7 @@
 # Usage: build/engine.sh <target> [verify|link|test]   (in the build container)
 set -e
 source "$(dirname "$0")/env.sh"
+nolfsrc_release_tree "$@"    # compile src/ without its variant blocks (build/env.sh)
 cd "$REPO"
 
 # The retail images the checks compare against (build/reference.sh).
@@ -262,7 +263,7 @@ case "${1:-}" in
               python3 tools/mkimplib.py src/engine/d3d/link/ddraw7.lib DDRAW.dll _DirectDrawCreateEx@16
               ( cd src/engine/d3d &&
                 objs=$(ls Release/*.obj | tr "\n" " ") &&
-                LIB="z:${ICLDIR//\//\\}\\LIB;$LIB" run_link /nologo /dll /machine:I386 /out:Release/d3d.ren /map:Release/d3d.map \
+                LIB="$(wpath "$ICLDIR")\\LIB;$LIB" run_link /nologo /dll /machine:I386 /out:Release/d3d.ren /map:Release/d3d.map \
                     /export:RenderDLLSetup /export:GetSupportedModes /export:FreeModeList \
                     link/aliases.obj link/d3dviews.obj $objs ..\\..\\lithshared\\out\\StdLith.lib \
                     libcmt.lib kernel32.lib user32.lib winmm.lib ddraw.lib link/ddraw7.lib dxguid.lib \

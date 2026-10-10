@@ -19,10 +19,39 @@ WINESERVER=wineserver
 export WINEDEBUG=-all
 export WINEDLLOVERRIDES="mscoree,mshtml="
 
-# Windows-side view of the paths (wine maps Z: -> /)
-WREPO="z:${REPO//\//\\}"
-WVC="z:${MSVC//\//\\}\\VC98"
-WMSDEV="z:${MSVC//\//\\}\\Common\\MSDev98"
+# Windows-side view of the paths: Z: is / ...
+#
+# ... except for the game DLLs. VC6's output for CShell.dll and Object.lto
+# depends on where the compiler finds things: the same source built in two
+# directories whose paths differ in length gave two different binaries. So
+# build/build.sh sets NOLFSRC_DRIVES=1 before sourcing this, and then the
+# checkout's src/ is Wine's drive S: and its toolchain/ drive T: (links in
+# the prefix's dosdevices/), and the compilers see the same paths --
+# S:\game\ObjectDLL as their working directory, T:\msvc600\... in INCLUDE --
+# wherever the checkout is (the main one, a worktree, out/release-tree/).
+# Everything else keeps Z:, and the links are removed for it: Intel C/C++
+# builds a different d3d.ren from a working directory on a drive of its own,
+# and the engine's and libraries' output never depended on the path.
+WINEPFX="${WINEPREFIX:-$HOME/.wine}"
+if [ "${NOLFSRC_DRIVES:-0}" = 1 ]; then
+    [ -d "$WINEPFX/dosdevices" ] || "$WINE" cmd /c exit >/dev/null 2>&1 || true
+    ln -sfn "$REPO/src" "$WINEPFX/dosdevices/s:"
+    ln -sfn "$REPO/toolchain" "$WINEPFX/dosdevices/t:"
+else
+    rm -f "$WINEPFX/dosdevices/s:" "$WINEPFX/dosdevices/t:"
+fi
+wpath() {  # wpath <unix path> -> its Windows path
+    local p="$1"
+    case "${NOLFSRC_DRIVES:-0}:$p" in
+        1:"$REPO/src"|1:"$REPO/src"/*)             p="s:${p#"$REPO/src"}" ;;
+        1:"$REPO/toolchain"|1:"$REPO/toolchain"/*) p="t:${p#"$REPO/toolchain"}" ;;
+        *)                                         p="z:$p" ;;
+    esac
+    echo "${p//\//\\}"
+}
+WREPO="$(wpath "$REPO")"
+WVC="$(wpath "$MSVC")\\VC98"
+WMSDEV="$(wpath "$MSVC")\\Common\\MSDev98"
 
 # cl.exe / link.exe / rc.exe environment (wine imports these env vars)
 export WINEPATH="$WVC\\Bin;$WMSDEV\\Bin"
@@ -32,7 +61,7 @@ export LIB="$WVC\\LIB;$WVC\\MFC\\LIB"
 # src/nolfsrc/ (nolfsrc_debug.h) is on every compiler's include path, last,
 # so any file of any target can include it. It holds nothing else, so it
 # cannot change which header another #include finds.
-WNOLFSRC="$WREPO\\src\\nolfsrc"
+WNOLFSRC="$(wpath "$REPO/src/nolfsrc")"
 INCLUDE="$INCLUDE;$WNOLFSRC"
 
 # Extra flags for every compile and every link, for the debug and modern
@@ -81,7 +110,7 @@ elif [ -n "${CL_REV:-}" ] && [ -d "$REPO/toolchain/msvc-$CL_REV" ]; then
     CLDIR="$REPO/toolchain/msvc-$CL_REV"
 fi
 if [ -n "$CLDIR" ]; then
-    WCLDIR="z:${CLDIR//\//\\}"
+    WCLDIR="$(wpath "$CLDIR")"
     run_cl() { INCLUDE="$WCLDIR\\INCLUDE;$WCLDIR\\MFC\\INCLUDE;$WNOLFSRC" \
                nolfsrc_cl_args "$@"; "$WINE" "$CLDIR/BIN/cl.exe" "${NOLFSRC_ARGS[@]}"; }
 fi
@@ -95,11 +124,41 @@ run_icl() {
         return 1
     fi
     local WI WV
-    WI="z:${ICLDIR//\//\\}"
-    WV="z:${REPO//\//\\}\\toolchain\\msvc-6.00-8168"
+    WI="$(wpath "$ICLDIR")"
+    WV="$(wpath "$REPO/toolchain/msvc-6.00-8168")"
     nolfsrc_cl_args "$@"
     INCLUDE="$WI\\INCLUDE;$WV\\INCLUDE;$WNOLFSRC" LIB="$WI\\LIB;$WV\\LIB" \
         "$WINE" "$ICLDIR/BIN/icl.exe" "${NOLFSRC_ARGS[@]}"
+}
+
+# The release build compiles src/ WITHOUT its NOLFSRC_MODERN / NOLFSRC_DEBUG
+# blocks, not merely with them switched off: a block the compiler skips
+# still moves everything below it, and VC6 lets the file's layout decide
+# where some out-of-line inline functions go, so enough skipped blocks can
+# change the release binary (tools/releasesrc.py). build/libs.sh, build.sh
+# and engine.sh call this first, with their own arguments: in a checkout it
+# brings out/release-tree/ up to date -- src/ with those blocks resolved as
+# the release build sees them, the same build/ and tools/, this checkout's
+# build outputs -- runs the script there, copies the build outputs back into
+# this checkout's src/ (where `make progress` and the checks read them) and
+# exits with the script's status. In a build/variant.sh tree (out/build-*/,
+# which must see the blocks), or inside the release tree, it does nothing.
+nolfsrc_release_tree() {
+    [ -n "${NOLFSRC_IN_RELEASE_TREE:-}" ] && return 0
+    case "$REPO" in */out/build-*) return 0 ;; esac
+    local tree="$REPO/out/release-tree" script rc=0
+    script="$(basename "${BASH_SOURCE[1]}")"
+    mkdir -p "$tree"
+    python3 "$REPO/tools/releasesrc.py" sync "$REPO/src" "$tree/src" || exit 1
+    python3 "$REPO/tools/releasesrc.py" outputs "$REPO/src" "$tree/src" || exit 1
+    rm -rf "$tree/build" "$tree/tools"
+    tar -C "$REPO" -cf - --exclude='__pycache__' build tools | tar -C "$tree" -xf -
+    [ -L "$tree/toolchain" ] || ln -s ../../toolchain "$tree/toolchain"
+    ( cd "$tree" && NOLFSRC_IN_RELEASE_TREE=1 \
+        NOLF_REFERENCE="$(cd "$REPO" && realpath -m "${NOLF_REFERENCE:-out/reference}")" \
+        bash "build/$script" "$@" ) || rc=$?
+    python3 "$REPO/tools/releasesrc.py" outputs "$tree/src" "$REPO/src" || exit 1
+    exit $rc
 }
 
 run_link() { "$WINE" "$MSVC/VC98/Bin/LINK.EXE" $NOLFSRC_LDFLAGS "$@"; }

@@ -13,6 +13,7 @@
 set -e
 export CL_REV="${CL_REV:-8447}"
 source "$(dirname "$0")/env.sh"
+nolfsrc_release_tree "$@"    # compile src/ without its variant blocks (build/env.sh)
 cd "$REPO"
 
 LIB_CFLAGS="${LIB_CFLAGS:-/nologo /MT /W3 /GX /O2 /D WIN32 /D NDEBUG /D _WINDOWS /D NO_PRAGMA_LIBS /c}"

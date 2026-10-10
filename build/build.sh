@@ -5,7 +5,9 @@
 # configuration adds _REZFILE/_FINAL, which running from .rez archives needs.
 # Usage: build/build.sh [cres|cshell|object|all] [release|final]
 set -e
+NOLFSRC_DRIVES=1    # fixed Wine drives for src/ and toolchain/ (build/env.sh)
 source "$(dirname "$0")/env.sh"
+nolfsrc_release_tree "$@"    # compile src/ without its variant blocks (build/env.sh)
 cd "$REPO"
 
 TARGET="${1:-all}"

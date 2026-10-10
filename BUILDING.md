@@ -142,10 +142,30 @@ branch:
 #endif
 ```
 
-The release build compiles exactly what it compiled before, so it still
-matches the retail binaries and `make progress` still passes; check that
-after any such change (`build/engine.sh <target>-one <file>` shows the
-function still matching). The modern build is never scored -- it differs from
+The release build never sees such a block: `build/libs.sh`, `build/build.sh`
+and `build/engine.sh` compile a copy of `src/` in `out/release-tree/` with
+every `#ifdef`/`#ifndef NOLFSRC_MODERN` (and `NOLFSRC_DEBUG`) block resolved
+and its directives removed (`tools/releasesrc.py`), then copy their outputs
+back into `src/`. Merely skipping the blocks is not enough: VC6 lets a file's
+layout, skipped lines included, decide where some out-of-line inline
+functions go (`src/modern/README.md`). So the release build compiles exactly
+what it compiled before -- as long as nothing is added outside a block, not
+even a blank line; `python3 tools/releasesrc.py diff master` lists anything
+that is. It still matches the retail binaries and `make progress` still
+passes; check that after any such change (`build/engine.sh <target>-one
+<file>` shows the function still matching). Test the two macros only with
+`#ifdef`/`#ifndef`: anything else stops the release build with an error.
+
+The game DLLs are also built from the same paths wherever the checkout is:
+`build/build.sh` makes the checkout's `src/` Wine's drive `S:` and its
+`toolchain/` drive `T:`, so their compiles run in `S:\game\...` with
+`T:\...` on the include path. VC6's output for `CShell.dll` and
+`Object.lto` depends on those paths (the same source built in two
+directories of different path lengths gave different binaries), so without
+this a worktree, the main checkout and `out/release-tree/` would each build
+their own. The engine and the libraries keep `Z:` (`/`): their output never
+depended on the path, and Intel C/C++ builds a different `d3d.ren` from a
+working directory on a drive of its own (`build/env.sh`). The modern build is never scored -- it differs from
 the retail game on purpose. When a fix lands, mark its entry in
 `RETAIL_BUGS.md` as fixed, naming the file.
 
