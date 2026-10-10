@@ -21,6 +21,20 @@ produced for it:
 |---|---|---|
 | `lithtech.exe`, `server.dll`, `d3d.ren`, `NOLF.exe` | the retail images, extracted from disc 2 into `out/reference/` | `src/engine/*/Release/*.obj` (plus the lithshared libraries each links) |
 | `StdLith`, `CryptMgr`, `RegMgr`, `MFCStub`, `ButeMgrNoMFC`, `ltguimgr_LT2`, `LithFontMgr_LT2` | Monolith's prebuilt `.lib`s from the NOLF Source Code v1.003 release (`NOLF_SOURCE`) | `src/lithshared/out/*.lib` |
+| `CShell.dll`, `Object.lto` | the Game of the Year copies in disc 1's `NOLFGOTY.REZ` (the ones the GOTY install runs), extracted into `out/reference/` | `src/game/*/Final_Release/*.obj` (plus the lithshared libraries each links) |
+| `CRes.dll` | the same archive's `CRES.dll` | `src/game/ClientRes/Release/CRes.dll`, resource by resource |
+
+The discs hold three generations of the game DLLs (`NOLF2.REZ`: the
+original release, `nolfu003.rez`: the 1.003 update, `NOLFGOTY.REZ`: Game of
+the Year). Monolith's source release builds the Game of the Year ones:
+`Object.lto` scores 89% of its bytes identical against them and 55% against
+1.003's (`CShell.dll` is close either way: 66% and 68%).
+
+`CRes.dll` has no code of Monolith's -- its only code is the C runtime's DLL
+entry -- so each of its resources (string tables, dialogs, bitmaps, text) is
+a row, sized by its data, `identical` when our bytes are the retail bytes.
+The README lists it after `Object.lto`, marked as not in the total, which
+counts code only.
 
 The retail images have no symbols, so their functions are enumerated from the
 code itself (call targets, vtables, callbacks, exports, ...), and each of our

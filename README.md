@@ -64,7 +64,10 @@ of each binary's code, by size, those functions make up.
 | `d3d.ren` | the Direct3D renderer | 739 / 935 | 129,857 / 514,531 bytes | `█████░░░░░░░░░░░░░░░` 25.2% |
 | `NOLF.exe` | the launcher | 172 / 220 | 34,056 / 35,020 bytes | `███████████████████░` 97.2% |
 | lithshared | the seven shared libraries | 793 / 798 | 94,450 / 96,637 bytes | `███████████████████░` 97.7% |
-| **All** | | **6,759 / 7,652** | **907,284 / 1,466,802 bytes** | `████████████░░░░░░░░` **61.8%** |
+| `CShell.dll` | the game: client | 3,433 / 5,097 | 729,146 / 942,584 bytes | `███████████████░░░░░` 77.3% |
+| `Object.lto` | the game: server objects | 4,875 / 6,938 | 1,230,734 / 1,266,100 bytes | `███████████████████░` 97.2% |
+| `CRes.dll` | the game's resources, not in the total | 411 / 411 resources | 704,745 / 704,745 bytes | `████████████████████` 100.0% |
+| **All** | | **15,067 / 19,687** | **2,867,164 / 3,675,486 bytes** | `███████████████░░░░░` **78.0%** |
 <!-- progress:end -->
 
 Every function in that table is recorded in `progress/identical.txt`, and

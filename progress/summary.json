@@ -16,6 +16,36 @@
       "unplaced": 0,
       "unplaced_bytes": 0
     },
+    "CRes.dll": {
+      "attempted": 0,
+      "bytes_identical": 704745,
+      "bytes_total": 704745,
+      "crt": 0,
+      "crt_bytes": 0,
+      "funcs": 411,
+      "identical": 411,
+      "near": 0,
+      "small": 0,
+      "started": false,
+      "todo": 0,
+      "unplaced": 0,
+      "unplaced_bytes": 0
+    },
+    "CShell.dll": {
+      "attempted": 0,
+      "bytes_identical": 729146,
+      "bytes_total": 942584,
+      "crt": 2450,
+      "crt_bytes": 91152,
+      "funcs": 5097,
+      "identical": 3433,
+      "near": 255,
+      "small": 1201,
+      "started": true,
+      "todo": 208,
+      "unplaced": 316,
+      "unplaced_bytes": 72156
+    },
     "CryptMgr": {
       "attempted": 0,
       "bytes_identical": 2905,
@@ -75,6 +105,21 @@
       "todo": 0,
       "unplaced": 2,
       "unplaced_bytes": 50
+    },
+    "Object.lto": {
+      "attempted": 0,
+      "bytes_identical": 1230734,
+      "bytes_total": 1266100,
+      "crt": 2463,
+      "crt_bytes": 83717,
+      "funcs": 6938,
+      "identical": 4875,
+      "near": 8,
+      "small": 1999,
+      "started": true,
+      "todo": 56,
+      "unplaced": 156,
+      "unplaced_bytes": 19774
     },
     "RegMgr": {
       "attempted": 0,
@@ -169,14 +214,14 @@
   },
   "total": {
     "attempted": 77,
-    "bytes_identical": 907284,
-    "bytes_total": 1466802,
-    "funcs": 7652,
-    "identical": 6759,
-    "near": 290,
-    "small": 526,
-    "todo": 0,
-    "unplaced": 1562,
-    "unplaced_bytes": 367745
+    "bytes_identical": 2867164,
+    "bytes_total": 3675486,
+    "funcs": 19687,
+    "identical": 15067,
+    "near": 553,
+    "small": 3726,
+    "todo": 264,
+    "unplaced": 2034,
+    "unplaced_bytes": 459675
   }
 }

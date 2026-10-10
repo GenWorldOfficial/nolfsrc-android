@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Extract the retail engine images -- lithtech.exe, server.dll, d3d.ren,
-# NOLF.exe, ltmsg.dll -- from disc 2 into out/reference/, with their function
+# NOLF.exe, ltmsg.dll -- from disc 2, and the Game of the Year game DLLs --
+# CShell.dll, Object.lto, CRes.dll -- out of disc 1's NOLFGOTY.REZ, into
+# out/reference/, with their function
 # and vtable tables (<stem>-functions.csv, <stem>-vtables.csv), for the checks that
 # compare our build against them: `build/engine.sh <target> verify`, the
 # *-one loops, tools/progress.py (`make progress` runs this itself) and the
@@ -18,7 +20,8 @@ python3 tools/discextract.py reference "$(iso_dir)" out/reference
 # how the start was found, and the name an error-tag literal or export gives
 # it. The reconstruction tools read these (fndiff.py's sizes, tagmap.py,
 # uncovered.py, ...); like the images, they are derived, never committed.
-for pair in server:server.dll lithtech:lithtech.exe d3d:d3d.ren NOLF:NOLF.exe; do
+for pair in server:server.dll lithtech:lithtech.exe d3d:d3d.ren NOLF:NOLF.exe \
+            CShell:CShell.dll Object:Object.lto; do
     python3 tools/enumfuncs.py "out/reference/${pair#*:}" \
         --csv "out/reference/${pair%%:*}-functions.csv" | tail -1
 done

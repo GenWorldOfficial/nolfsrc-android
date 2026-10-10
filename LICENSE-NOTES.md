@@ -25,8 +25,9 @@ This file says which is which; it is not legal advice and grants nothing.
 | the Game of the Year strings and credits | Monolith, from the retail GOTY `CRES.dll`'s resources | `src/game/ClientRes/goty/` (gitignored), compiled into our `CRes.dll` |
 
 `make progress` also extracts the retail `lithtech.exe`, `server.dll`,
-`d3d.ren` and `NOLF.exe` into `out/reference/`, to compare our build against;
-they are never run and never go into the game directory.
+`d3d.ren` and `NOLF.exe`, and the Game of the Year `CShell.dll`, `Object.lto`
+and `CRes.dll` (from `NOLFGOTY.REZ`), into `out/reference/`, to compare our
+build against; they are never run and never go into the game directory.
 
 The retail game DLLs inside the `.rez` archives are overwritten with zeros
 when the archives are copied; the retail executables are never copied into
