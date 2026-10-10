@@ -18,6 +18,10 @@
 #include "AI.h"
 #include "CharacterHitBox.h"
 #include "PlayerObj.h"
+#ifdef NOLFSRC_MODERN
+// M-P2-10: big head mode
+#include "object/p2_server.h"
+#endif
 
 // Static constants
 
@@ -850,6 +854,20 @@ void CAttachments::AddRequirements(ModelId eModelId, ModelStyle eModelStyle)
 
 void CAttachments::Update()
 {
+#ifdef NOLFSRC_MODERN
+	// M-P2-10: hats, glasses and the like grow with big heads
+	for ( int iP2Position = 0 ; iP2Position < m_cAttachmentPositions ; iP2Position++ )
+	{
+		CAttachmentPosition* pP2Position = m_apAttachmentPositions[iP2Position];
+
+		if ( pP2Position && pP2Position->HasAttachment() )
+		{
+			P2Server_ScaleHeadAttachment(pP2Position->GetName(),
+			                             pP2Position->GetAttachment()->GetModel());
+		}
+	}
+#endif
+
 	/*	// Put all attachments in their place
 
 	{for ( int iAttachmentPosition = 0 ; iAttachmentPosition < m_cAttachmentPositions ; iAttachmentPosition++ )

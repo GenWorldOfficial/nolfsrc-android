@@ -283,7 +283,11 @@ case "${1:-}" in
     lithtech-link)
               export CL_REV="${CL_REV:-8447}"; source "$(dirname "$0")/env.sh"
               python3 tools/mkaliasobj.py src/engine/lithtech/link/aliases.rsp src/engine/lithtech/link/aliases.obj
-              python3 tools/mkvtabobj.py src/engine/lithtech/link/vtables.txt src/engine/lithtech/link/vtables.obj
+              # the modern build's ILTClient has slots the retail one lacks
+              # (vtables.txt's %ifdef NOLFSRC_MODERN block); empty otherwise
+              vtabdefs=""
+              case " ${NOLFSRC_CFLAGS:-} " in *NOLFSRC_MODERN*) vtabdefs="--define NOLFSRC_MODERN" ;; esac
+              python3 tools/mkvtabobj.py $vtabdefs src/engine/lithtech/link/vtables.txt src/engine/lithtech/link/vtables.obj
               mss32_implib || exit 1
               python3 tools/mkimplib.py --keep-decoration src/engine/lithtech/link/mss32dec.lib mss32.dll \
                   $(sed -n "s/^ *\(AIL_[A-Za-z0-9_]*@[0-9]*\) *$/_\1/p" src/engine/launcher/libs/mss32.def)

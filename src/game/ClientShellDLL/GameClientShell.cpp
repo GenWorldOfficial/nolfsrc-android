@@ -42,6 +42,11 @@
 
 #include "CRC32.h"
 
+#ifdef NOLFSRC_MODERN
+// P2: developer console, big head mode, speed-run block
+#include "cshell/p2_client.h"
+#endif
+
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -1292,6 +1297,11 @@ uint32 CGameClientShell::OnEngineInitialized(RMode *pMode, LTGUID *pAppGuid)
 	m_eDifficulty = (GameDifficulty)nDiff;
 	m_bFadeBodies = (LTBOOL)GetConsoleInt("FadeBodies",0);
 
+#ifdef NOLFSRC_MODERN
+	// M-P2-01: the developer console and the rest of P2's client side
+	P2_OnEngineInitialized();
+#endif
+
 	// Check for playdemo....
 
     if (hVar = g_pLTClient->GetConsoleVar("playdemo"))
@@ -1313,6 +1323,11 @@ uint32 CGameClientShell::OnEngineInitialized(RMode *pMode, LTGUID *pAppGuid)
 
 void CGameClientShell::OnEngineTerm()
 {
+#ifdef NOLFSRC_MODERN
+	// M-P2-01: unhook the console from the engine before anything goes
+	P2_OnEngineTerm();
+#endif
+
     UnhookWindow();
 
 	if (m_hCamera)
@@ -1505,6 +1520,11 @@ void CGameClientShell::OnEnterWorld()
 	m_vLastReverbPos.Init();
 
 	m_MoveMgr.OnEnterWorld();
+
+#ifdef NOLFSRC_MODERN
+	// M-P2-10: the server learns our BigHeadMode (single player / host)
+	P2_OnEnterWorld();
+#endif
 }
 
 
@@ -1606,6 +1626,11 @@ void CGameClientShell::Update()
 		m_bForceDisconnect = LTFALSE;
 		return;
 	}
+
+#ifdef NOLFSRC_MODERN
+	// M-P2-12: the speed-run block follows the mission and level
+	P2_Update();
+#endif
 
 	// Set up the time for this frame...
     m_fFrameTime = g_pLTClient->GetFrameTime();
@@ -4074,6 +4099,11 @@ void CGameClientShell::ProcessHandshake(HMESSAGEREAD hMessage)
 
 void CGameClientShell::OnCommandOn(int command)
 {
+#ifdef NOLFSRC_MODERN
+	// M-P2-01: no game command while the developer console is open
+	if (P2_OnCommandOn(command)) return;
+#endif
+
 	// Let the interface handle the command first...
 
 	if (IsPlayerInWorld())

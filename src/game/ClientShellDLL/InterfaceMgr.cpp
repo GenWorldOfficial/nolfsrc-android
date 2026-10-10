@@ -29,6 +29,11 @@
 // TESTING DYNAMIC LIGHT IN INTERFACE
 /*
 #include "FXButeMgr.h"
+
+#ifdef NOLFSRC_MODERN
+// M-P2-01: the developer console
+#include "cshell/p2_console.h"
+#endif
 static HOBJECT g_hLight = LTNULL;
 */
 // END TEST
@@ -655,6 +660,10 @@ LTBOOL CInterfaceMgr::PostUpdate()
 {
 	if (/*m_eGameState != GS_SPLASHSCREEN &&*/ m_eGameState != GS_LOADINGLEVEL)
 	{
+#ifdef NOLFSRC_MODERN
+		// M-P2-01: the developer console, over everything else
+		P2Console_Draw();
+#endif
         g_pLTClient->FlipScreen(FLIPSCREEN_CANDRAWCONSOLE);
 	}
 
@@ -2488,6 +2497,11 @@ LTBOOL CInterfaceMgr::OnKeyDown(int key, int rep)
 {
 	if (FadingToExit()) return LTTRUE;
 
+#ifdef NOLFSRC_MODERN
+	// M-P2-01: the console key, and every key while the console is open
+	if (P2Console_OnKeyDown(key, rep)) return LTTRUE;
+#endif
+
 	if (m_MessageBox.IsVisible())
 		return m_MessageBox.HandleKeyDown(key,rep);
 
@@ -2711,6 +2725,11 @@ LTBOOL CInterfaceMgr::OnKeyUp(int key)
 void CInterfaceMgr::OnChar(char c)
 {
 	if (c < ' ') return;
+
+#ifdef NOLFSRC_MODERN
+	// M-P2-01: typing into the open console
+	if (P2Console_OnChar(c)) return;
+#endif
 	if (m_messageMgr.GetEditingState())
 	{
 		m_messageMgr.HandleChar(c);
@@ -4771,6 +4790,11 @@ void CInterfaceMgr::UpdateLetterBox()
 
 LTBOOL CInterfaceMgr::AllowCameraMovement()
 {
+#ifdef NOLFSRC_MODERN
+	// M-P2-01: the camera stays put while the console is open
+	if (P2Console_IsVisible()) return LTFALSE;
+#endif
+
 	switch (m_eGameState)
 	{
 		case GS_DIALOGUE :

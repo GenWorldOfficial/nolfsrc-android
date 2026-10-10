@@ -67,6 +67,12 @@
 	class ILTClientSoundMgr;
 	class ILTDirectMusicMgr;
 
+#ifdef NOLFSRC_MODERN
+	// M-P0-02 / M-P2-04: callbacks for the modern build's ILTClient additions
+	typedef void (*ConsoleOutputFn)(void *pUser, uint32 nColor, int nLevel, const char *pText);
+	typedef void (*ConsoleCommandEnumFn)(void *pUser, const char *pName, uint32 nFlags);
+#endif
+
 
 	// ------------------------------------------------------------------ //
 	// ILTClient interface. This is what the ClientShells and special
@@ -1112,6 +1118,23 @@
 
 		// End the current query.
 		virtual LTRESULT EndQuery()=0;
+
+#ifdef NOLFSRC_MODERN
+		// M-P0-02 / M-P2-04: the modern build's own additions, appended after
+		// the last retail slot so every retail slot keeps its place (the
+		// engine's table: src/engine/lithtech/link/vtables.txt; the bodies:
+		// src/engine/lithtech/clientconsole.cpp).
+
+		// Have every line the console prints handed to pFn as well (NULL
+		// removes it). pFn runs inside the console's lock: it must not print
+		// to the console itself. Remove it before the shell DLL goes away.
+		virtual LTRESULT SetConsoleOutputFn(ConsoleOutputFn pFn, void *pUser)=0;
+
+		// Call pFn once for every console command the client knows, in
+		// registration order. nFlags bit 0: registered by the game
+		// (RegisterConsoleProgram) rather than built into the engine.
+		virtual LTRESULT EnumConsoleCommands(ConsoleCommandEnumFn pFn, void *pUser)=0;
+#endif
 
 
 		// Determines if we werw lobby launched.

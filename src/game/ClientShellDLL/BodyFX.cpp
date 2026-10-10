@@ -18,6 +18,10 @@
 #include "SoundMgr.h"
 #include "BaseScaleFX.h"
 #include "SurfaceFunctions.h"
+#ifdef NOLFSRC_MODERN
+// M-P2-10: big head mode
+#include "cshell/p2_bighead.h"
+#endif
 
 extern CGameClientShell* g_pGameClientShell;
 
@@ -36,6 +40,11 @@ CBodyFX::CBodyFX()
 	m_fFaderTimer = 3.0f;
 
 	m_hMarker = LTNULL;
+
+#ifdef NOLFSRC_MODERN
+	// M-P2-10
+	m_bBigHeadControl = LTFALSE;
+#endif
 }
 
 // ----------------------------------------------------------------------- //
@@ -140,6 +149,11 @@ LTBOOL CBodyFX::Update()
 	{
 		UpdateMarker();
 	}
+
+#ifdef NOLFSRC_MODERN
+	// M-P2-10: bodies keep their big heads
+	P2BigHead_UpdateBody(m_hServerObject, &m_bBigHeadControl);
+#endif
 
     return LTTRUE;
 }

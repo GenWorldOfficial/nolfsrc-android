@@ -1,0 +1,11 @@
+// P2's new CRes.dll strings (see p2.h). build/build.sh includes this file
+// from src/game/ClientRes/goty/, hence the path of the header.
+#include "..\..\..\modern\cres\p2.h"
+
+LANGUAGE 0x09, 0x01     // LANG_ENGLISH, SUBLANG_ENGLISH_US, as ClientRes.rc
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_CONTROL_CONSOLE             "Developer console"
+    IDS_ACTIONSTRING_CONSOLE        "ToggleConsole"
+END
