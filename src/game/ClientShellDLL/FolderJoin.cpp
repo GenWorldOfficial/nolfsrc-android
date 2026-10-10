@@ -258,10 +258,20 @@ LTBOOL CFolderJoin::Build()
 	//Add Server List
 	pos.x = rcServerRect.left + nIndent;
 	pos.y = rcServerRect.top + nBarHeight;
+#ifdef NOLFSRC_MODERN
+	// M-P3-06: the lists scale with the menu page
+	int nListHeight = P3_MenuLen((rcServerRect.bottom - rcServerRect.top) - nBarHeight);
+#else
 	int nListHeight = (rcServerRect.bottom - rcServerRect.top) - nBarHeight;
+#endif
 	nListHeight += 19;	// [blg] tweak
 
+#ifdef NOLFSRC_MODERN
+	// M-P3-06: the lists scale with the menu page
+	nServerGroupWidth = P3_MenuLen((rcServerRect.right - rcServerRect.left) - nArrowWidth);
+#else
 	nServerGroupWidth = (rcServerRect.right - rcServerRect.left) - nArrowWidth;
+#endif
 	m_pServerList = debug_new(CListCtrl);
     m_pServerList->Create(nListHeight, LTTRUE, nServerGroupWidth);
 	m_pServerList->SetItemSpacing(0);
@@ -289,9 +299,19 @@ LTBOOL CFolderJoin::Build()
 	//Add PlayerList Here
 	pos.x = rcPlayerRect.left + nIndent;
 	pos.y = rcPlayerRect.top + nBarHeight;
+#ifdef NOLFSRC_MODERN
+	// M-P3-06: the lists scale with the menu page
+	nListHeight = P3_MenuLen((rcPlayerRect.bottom - rcPlayerRect.top) - nBarHeight);
+#else
 	nListHeight = (rcPlayerRect.bottom - rcPlayerRect.top) - nBarHeight;
+#endif
 	nListHeight += 24;	// [blg] tweak
+#ifdef NOLFSRC_MODERN
+	// M-P3-06: the lists scale with the menu page
+	nPlayerGroupWidth = P3_MenuLen((rcPlayerRect.right - rcPlayerRect.left) - nArrowWidth);
+#else
 	nPlayerGroupWidth = (rcPlayerRect.right - rcPlayerRect.left) - nArrowWidth;
+#endif
 	m_pPlayerList = debug_new(CListCtrl);
     m_pPlayerList->Create(nListHeight, LTTRUE, nPlayerGroupWidth);
 	m_pPlayerList->SetItemSpacing(0);
@@ -352,8 +372,18 @@ LTBOOL CFolderJoin::Build()
 	//Add OptionList Here
 	pos.x = rcOptionRect.left + nIndent;
 	pos.y = rcOptionRect.top + nBarHeight;
+#ifdef NOLFSRC_MODERN
+	// M-P3-06: the lists scale with the menu page
+	nListHeight = P3_MenuLen((rcOptionRect.bottom - rcOptionRect.top) - nBarHeight);
+#else
 	nListHeight = (rcOptionRect.bottom - rcOptionRect.top) - nBarHeight;
+#endif
+#ifdef NOLFSRC_MODERN
+	// M-P3-06: the lists scale with the menu page
+	nOptionGroupWidth = P3_MenuLen((rcOptionRect.right - rcOptionRect.left) - nArrowWidth);
+#else
 	nOptionGroupWidth = (rcOptionRect.right - rcOptionRect.left) - nArrowWidth;
+#endif
 	m_pOptionList = debug_new(CListCtrl);
     m_pOptionList->Create(nListHeight, LTTRUE, nOptionGroupWidth);
 	m_pOptionList->SetItemSpacing(0);
@@ -363,6 +393,20 @@ LTBOOL CFolderJoin::Build()
 	rcStatusRect.top = rcStatusRect.bottom - nBarHeight;
 
     bFrameDelay = LTTRUE;
+
+#ifdef NOLFSRC_MODERN
+	// M-P3-06: from here on the column widths are used inside the lists'
+	// rows, in pixels: they scale with the menu page
+	nGap = P3_MenuLen(nGap);
+	nGameWidth = P3_MenuLen(nGameWidth);
+	nPlayerWidth = P3_MenuLen(nPlayerWidth);
+	nPingWidth = P3_MenuLen(nPingWidth);
+	nTypeWidth = P3_MenuLen(nTypeWidth);
+	nMapWidth = P3_MenuLen(nMapWidth);
+	nNameWidth = P3_MenuLen(nNameWidth);
+	nScoreWidth = P3_MenuLen(nScoreWidth);
+	nOptionWidth = P3_MenuLen(nOptionWidth);
+#endif
 
 	// Make sure to call the base class
 	return CBaseFolder::Build();
@@ -401,7 +445,12 @@ LTBOOL CFolderJoin::Render(HSURFACE hDestSurf)
 			nOldIndex = m_pServerList->GetLastDisplayedIndex();
 		}
 		
+#ifdef NOLFSRC_MODERN
+		// M-P3-06: at its place in the 4:3 area
+		GetSmallFont()->Draw(m_hServersShown, hDestSurf, P3_MenuX(rcServerRect.right-nIndent), P3_MenuY(rcServerRect.top+nIndent), LTF_JUSTIFY_RIGHT, m_hNonSelectedColor);
+#else
 		GetSmallFont()->Draw(m_hServersShown, hDestSurf, xo+rcServerRect.right-nIndent, yo+rcServerRect.top+nIndent, LTF_JUSTIFY_RIGHT, m_hNonSelectedColor);
+#endif
 	}
 
     CLTGUICtrl *pSortCtrl = LTNULL;
@@ -426,8 +475,13 @@ LTBOOL CFolderJoin::Render(HSURFACE hDestSurf)
 	if (pSortCtrl)
 	{
         LTIntPt pos = pSortCtrl->GetPos();
+#ifdef NOLFSRC_MODERN
+		// M-P3-06: under the sort column's header, where it is drawn
+		pos = P3_MenuPos(pos);
+#else
 		pos.x += xo;
 		pos.y += yo;
+#endif
         LTRect rect(pos.x, (pos.y + pSortCtrl->GetHeight()) - 5, pos.x + pSortCtrl->GetWidth(), (pos.y + pSortCtrl->GetHeight()) - 3);
         g_pLTClient->FillRect(hDestSurf,&rect,m_hSelectedColor);
 
@@ -452,8 +506,13 @@ LTBOOL CFolderJoin::Render(HSURFACE hDestSurf)
 	if (pSortCtrl)
 	{
         LTIntPt pos = pSortCtrl->GetPos();
+#ifdef NOLFSRC_MODERN
+		// M-P3-06: under the sort column's header, where it is drawn
+		pos = P3_MenuPos(pos);
+#else
 		pos.x += xo;
 		pos.y += yo;
+#endif
         LTRect rect(pos.x, (pos.y + pSortCtrl->GetHeight()) - 5, pos.x + pSortCtrl->GetWidth(), (pos.y + pSortCtrl->GetHeight()) - 3);
         g_pLTClient->FillRect(hDestSurf,&rect,m_hSelectedColor);
 
@@ -468,10 +527,16 @@ LTBOOL CFolderJoin::Render(HSURFACE hDestSurf)
 	if (m_hStatus)
 	{
 
+#ifdef NOLFSRC_MODERN
+		// M-P3-06: at its place in the 4:3 area
+		GetSmallFont()->Draw(m_hStatus, hDestSurf, P3_MenuX(nIndent), P3_MenuY(rcStatusRect.top+nIndent), LTF_JUSTIFY_LEFT,
+			(m_nState == FSS_IDLE) ? m_hNonSelectedColor : m_hSelectedColor);
+#else
 		if (m_nState == FSS_IDLE)
 			GetSmallFont()->Draw(m_hStatus, hDestSurf, xo+nIndent, yo+rcStatusRect.top+nIndent, LTF_JUSTIFY_LEFT, m_hNonSelectedColor);
 		else
 			GetSmallFont()->Draw(m_hStatus, hDestSurf, xo+nIndent, yo+rcStatusRect.top+nIndent, LTF_JUSTIFY_LEFT, m_hSelectedColor);
+#endif
 	}
 
     LTBOOL bOK = CBaseFolder::Render(hDestSurf);
@@ -1400,7 +1465,12 @@ void CFolderJoin::DrawBar(HSURFACE hDestSurf,LTRect *rect)
 	int yo = g_pInterfaceResMgr->GetYOffset();
 
 	//Draw server bar
+#ifdef NOLFSRC_MODERN
+	// M-P3-06: at its place in the 4:3 area, scaled with the page
+    LTRect barRect(P3_MenuX(rect->left), P3_MenuY(rect->top), P3_MenuX(rect->right), P3_MenuY(rect->top)+P3_MenuLen(nBarHeight));
+#else
     LTRect barRect(xo+rect->left, yo+rect->top, xo+rect->right, yo+rect->top+nBarHeight);
+#endif
     g_pLTClient->FillRect(hDestSurf,&barRect,m_hBarColor);
 
 	barRect.left += 2;
@@ -1972,6 +2042,21 @@ void CFolderJoin::AskForPassword()
 
 	LTIntPt pos(0,0);
 
+#ifdef NOLFSRC_MODERN
+	// M-P3-07: centred on the screen (the page's centre), the dialog's own
+	// pixel offsets kept
+	pos.x = P3_MenuCentreX(320, m_pPassBack->GetWidth());
+	pos.y = P3_MenuCentreY(240, m_pPassBack->GetHeight());
+	AddFixedControl(m_pPassBack,pos,LTFALSE);
+
+	pos.x += P3_LayoutLen(16);
+	pos.y = 240 + P3_LayoutLen(4 + m_pPassEdit->GetHeight());
+	AddFixedControl(m_pPassEdit,pos,LTTRUE);
+
+	pos.x = P3_MenuCentreX(320, m_pPassLabel->GetWidth());
+	pos.y = 240 - P3_LayoutLen(4 + m_pPassLabel->GetHeight());
+	AddFixedControl(m_pPassLabel,pos,LTFALSE);
+#else
 	pos.x = 320 - m_pPassBack->GetWidth() / 2;
 	pos.y = 240 - m_pPassBack->GetHeight() / 2;
 	AddFixedControl(m_pPassBack,pos,LTFALSE);
@@ -1983,6 +2068,7 @@ void CFolderJoin::AskForPassword()
 	pos.x = 320 - m_pPassLabel->GetWidth() / 2;
 	pos.y = 236 - m_pPassLabel->GetHeight();
 	AddFixedControl(m_pPassLabel,pos,LTFALSE);
+#endif
 
 
 
@@ -2039,7 +2125,14 @@ LTBOOL CFolderJoin::OnLButtonDblClick(int x, int y)
 {
 	bDblClick = LTTRUE;
 	CLTGUICtrl* pCtrl = GetSelectedControl();
+#ifdef NOLFSRC_MODERN
+	// M-P3-06: the point in the server list's own frame
+	int lx = x, ly = y;
+	P3_PointToCtrl(m_pServerList, lx, ly);
+	if (pCtrl==m_pServerList && !m_pServerList->OnLButtonDblClick( lx, ly))
+#else
 	if (pCtrl==m_pServerList && !m_pServerList->OnLButtonDblClick( x, y))
+#endif
 		return OnEnter();
     
 	return CBaseFolder::OnLButtonDblClick( x, y);

@@ -39,6 +39,10 @@ enum eFolderCmds
 	FOLDER_CMD_CONTROLS,
 	FOLDER_CMD_GAME,
 	FOLDER_CMD_PERFORMANCE,
+#ifdef NOLFSRC_MODERN
+	// M-P3-13 (P3), then P4's: the modern build's options folders
+	FOLDER_CMD_INTERFACE,
+#endif
 
 // Display
 	FOLDER_CMD_RENDERER,

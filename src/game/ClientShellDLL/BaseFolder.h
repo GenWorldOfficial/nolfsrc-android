@@ -18,6 +18,10 @@
 #include "stdlith.h"
 #include "BaseScaleFX.h"
 #include "StaticTextCtrl.h"
+#ifdef NOLFSRC_MODERN
+// M-P3: menus and HUD at any resolution (every folder draws through it)
+#include "cshell/p3_ui.h"
+#endif
 
 
 #define MAX_INT_ATTACHMENTS 5

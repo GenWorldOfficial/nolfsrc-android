@@ -1,0 +1,100 @@
+--- a/ATTRIBUTES/LAYOUT.txt
++++ b/ATTRIBUTES/LAYOUT.txt
+@@ -275,6 +275,51 @@
+ ScaleName9			= "mainnolftext"
+ ScaleName10			= "InterfaceFlowerMod1"
+ 
++[FolderMainCasual]
++TitlePos			= (-100,-100)
++SinglePlayerPos		= (54,148)
++ResumePos			= (54,180)
++MultiPlayerPos		= (54,212)
++OptionsPos			= (54,244)
++QuitPos				= (54,276)
++VersionPos			= (620,468)
++Character			= "CateCasual"
++Attachment0			= "SunGlasses;Eyes"
++Attachment1			= "P38;RightHand"
++ScaleName0			= "InterfaceSpr1"
++ScaleName1			= "InterfacePinwheelMod1"
++ScaleName2			= "GreenTextBoxMod1"
++ScaleName3			= "GreenTextBoxMod2"
++ScaleName4			= "HelpTextBoxSpr1"
++ScaleName5			= "HelpTextBoxSpr2"
++ScaleName6			= "VertBarLMod1"
++ScaleName7			= "VertBarRMod1"
++ScaleName8			= "mainoperativetext"
++ScaleName9			= "mainnolftext"
++ScaleName10			= "InterfaceFlowerMod1"
++
++[FolderMainWinter]
++TitlePos			= (-100,-100)
++SinglePlayerPos		= (54,148)
++ResumePos			= (54,180)
++MultiPlayerPos		= (54,212)
++OptionsPos			= (54,244)
++QuitPos				= (54,276)
++VersionPos			= (620,468)
++Character			= "CateWinter"
++Attachment0			= "P38;RightHand"
++ScaleName0			= "InterfaceSpr1"
++ScaleName1			= "InterfacePinwheelMod1"
++ScaleName2			= "GreenTextBoxMod1"
++ScaleName3			= "GreenTextBoxMod2"
++ScaleName4			= "HelpTextBoxSpr1"
++ScaleName5			= "HelpTextBoxSpr2"
++ScaleName6			= "VertBarLMod1"
++ScaleName7			= "VertBarRMod1"
++ScaleName8			= "mainoperativetext"
++ScaleName9			= "mainnolftext"
++ScaleName10			= "InterfaceFlowerMod1"
++
+ [FolderSingle]
+ PageRect			= (54,148,585,385)
+ ScaleName0			= "InterfaceSpr1"
+@@ -414,6 +459,22 @@
+ PageRect			= (70,138,585,385)
+ FontSize			= 0
+ ColumnWidth			= 300
++SliderWidth			= 150
++ScaleName0			= "WeaponBackgroundSpr1"
++ScaleName1			= "GreenTextBoxMod1"
++ScaleName2			= "GreenTextBoxMod2"
++ScaleName3			= "HorzBarTMod1"
++ScaleName4			= "HorzBarBMod1"
++ScaleName5			= "HelpTextBoxSpr1"
++ScaleName6			= "HelpTextBoxSpr2"
++ScaleName7			= "RoundSelectionSpr6"
++ScaleName8			= "RoundyMovingMod3"
++ScaleName9			= "RoundyMovingMod4"
++
++[FolderInterface]
++PageRect			= (70,138,585,385)
++FontSize			= 0
++ColumnWidth			= 250
+ SliderWidth			= 150
+ ScaleName0			= "WeaponBackgroundSpr1"
+ ScaleName1			= "GreenTextBoxMod1"
+@@ -1975,6 +2036,22 @@
+ Scale				= 1.3
+ Rotation			= 0.0
+ 
++[Character1]
++Name				= "CateCasual"
++Model				= "IntHero"
++Style				= "Casual"
++Pos					= <35.0,-30.0,80.0>
++Scale				= 1.3
++Rotation			= 0.0
++
++[Character2]
++Name				= "CateWinter"
++Model				= "IntHero"
++Style				= "Winter"
++Pos					= <35.0,-30.0,80.0>
++Scale				= 1.3
++Rotation			= 0.0
++
+ 
+ /************************************************************************
+ **

@@ -73,6 +73,12 @@ LTBOOL CFolderAdvDisplay::Build()
 	}
 	if (g_pLayoutMgr->HasCustomValue(FOLDER_ID_ADVDISPLAY,"SliderWidth"))
 		kSliderWidth = g_pLayoutMgr->GetFolderCustomInt(FOLDER_ID_ADVDISPLAY,"SliderWidth");
+#ifdef NOLFSRC_MODERN
+	// M-P3-03: the columns scale with the menu page
+	kTotalWidth = P3_MenuLen(kTotalWidth);
+	kHeaderWidth = kTotalWidth - kSpacerWidth;
+	kSliderWidth = P3_MenuLen(kSliderWidth);
+#endif
 
 	CreateTitle(IDS_TITLE_ADVDISPLAY);
 

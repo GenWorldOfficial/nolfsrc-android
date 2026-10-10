@@ -55,6 +55,11 @@ LTBOOL CFolderGame::Build()
 		kGap = g_pLayoutMgr->GetFolderCustomInt(FOLDER_ID_GAME,"ColumnWidth");
 	if (g_pLayoutMgr->HasCustomValue(FOLDER_ID_GAME,"SliderWidth"))
 		kWidth = g_pLayoutMgr->GetFolderCustomInt(FOLDER_ID_GAME,"SliderWidth");
+#ifdef NOLFSRC_MODERN
+	// M-P3-03: the columns scale with the menu page
+	kGap = P3_MenuLen(kGap);
+	kWidth = P3_MenuLen(kWidth);
+#endif
 
 	//crosshair menu
 	AddTextItem(IDS_CONTROLS_CROSSHAIR, FOLDER_CMD_CROSSHAIR, IDS_HELP_CROSSHAIRMENU);

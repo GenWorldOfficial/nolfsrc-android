@@ -53,6 +53,10 @@ LTBOOL CFolderJoinLAN::Build()
 	{
 		kColumnWidth = g_pLayoutMgr->GetFolderCustomInt(FOLDER_ID_JOIN_LAN,"ColumnWidth");
 	}
+#ifdef NOLFSRC_MODERN
+	// M-P3-03: the columns scale with the menu page
+	kColumnWidth = P3_MenuLen(kColumnWidth);
+#endif
 
 	LTIntPt pos = g_pLayoutMgr->GetFolderCustomPoint(FOLDER_ID_JOIN_LAN,"SearchPos");
 	CLTGUITextItemCtrl *pCtrl = CreateTextItem(IDS_FIND_SERVERS,CMD_SEARCH,IDS_HELP_FIND_SERVERS,LTFALSE,GetMediumFont());

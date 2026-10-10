@@ -59,6 +59,11 @@ LTBOOL CFolderControls::Build()
 		kGap = g_pLayoutMgr->GetFolderCustomInt(FOLDER_ID_CONTROLS,"ColumnWidth");
 	if (g_pLayoutMgr->HasCustomValue(FOLDER_ID_CONTROLS,"SliderWidth"))
 		kWidth = g_pLayoutMgr->GetFolderCustomInt(FOLDER_ID_CONTROLS,"SliderWidth");
+#ifdef NOLFSRC_MODERN
+	// M-P3-03: the columns scale with the menu page
+	kGap = P3_MenuLen(kGap);
+	kWidth = P3_MenuLen(kWidth);
+#endif
 
 	//customize
 	AddTextItem(IDS_CUSTOM_CONTROLS, FOLDER_CMD_CUSTOM_CONTROLS, IDS_HELP_CUSTOMCONTROLS);

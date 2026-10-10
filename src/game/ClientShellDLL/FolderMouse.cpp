@@ -52,6 +52,11 @@ LTBOOL CFolderMouse::Build()
 		kGap = g_pLayoutMgr->GetFolderCustomInt(FOLDER_ID_MOUSE,"ColumnWidth");
 	if (g_pLayoutMgr->HasCustomValue(FOLDER_ID_MOUSE,"SliderWidth"))
 		kWidth = g_pLayoutMgr->GetFolderCustomInt(FOLDER_ID_MOUSE,"SliderWidth");
+#ifdef NOLFSRC_MODERN
+	// M-P3-03: the columns scale with the menu page
+	kGap = P3_MenuLen(kGap);
+	kWidth = P3_MenuLen(kWidth);
+#endif
 
 	//Always mouse look
 	CToggleCtrl* pToggle = AddToggle(IDS_MOUSE_MOUSELOOK, IDS_HELP_MOUSELOOK, kGap, &m_bMouseLook );
