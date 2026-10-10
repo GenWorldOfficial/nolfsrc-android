@@ -13,6 +13,11 @@
 | `LT2/` | headers only: the LithTech SDK (`sdk/inc`) and shared-library headers (`lithshared/`) | |
 | `nolfsrc/` | headers only, ours: the debug build's logging (`nolfsrc_debug.h`) and crash handler (`nolfsrc_crash.h`); on every compiler's include path, and empty in a release build | `make debug` |
 
+Code that departs from the retail game -- bug fixes, new features -- goes
+behind `#ifdef NOLFSRC_MODERN`, with the retail code in the `#else`; debug-only
+code behind `NOLFSRC_DEBUG`. Neither is ever defined in the release build
+(`make modern`, `make debug`; `BUILDING.md`, "Variant builds").
+
 `engine/*/link/` holds each image's committed link inputs (see
 `build/engine.sh`). The four source trees sit side by side because the
 sources include each other by relative path (`../../LT2/...`), as in

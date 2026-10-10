@@ -103,16 +103,56 @@ commands. The engine targets in order, and the compiler each uses, are in
 The `verify` and `*-one` targets are the reconstruction loop:
 `guides/02-the-loop.md` explains it, and `guides/` the rest of the method.
 
-## The debug build
+## Variant builds: debug and modern
 
-`make debug` builds the same game into `out/game-debug/` with debug symbols
-and the project's debug-only diagnostics compiled in, for finding out why
-something misbehaves or crashes. It is never scored: progress is measured on
-the release build only, and the debug build cannot change it (it builds a copy
-of the source in `out/debug/` and leaves `src/*/Release`, `out/game/` and
-the release command lines exactly as they were). The first run also
+`make` builds the release game: what the retail game was, compiled to its
+exact machine code, and the only build `make progress` ever scores. Two
+project defines add to it, each in a build of its own:
+
+| | define | for | into |
+|---|---|---|---|
+| `make debug` | `NOLFSRC_DEBUG` | symbols, logging and crash backtraces: finding out why something goes wrong | `out/game-debug/` |
+| `make modern` | `NOLFSRC_MODERN` | the retail bugs fixed (`RETAIL_BUGS.md`), and later new features | `out/game-modern/` |
+| `make modern-debug` | both | debugging the modern build | `out/game-modern-debug/` |
+
+All three are `build/variant.sh <variant>`. Each copies the source (without
+any build output) into `out/build-<variant>/` and builds it there with the
+same `build/all.sh`, so `src/*/Release` (what `make progress` scores),
+`out/game/` and the release command lines are left exactly as they were.
+`build/env.sh` passes the extra flags to the compilers only inside those
+copies, and refuses them anywhere else, so neither define can reach the
+release build or the scoring by accident. The first run of each variant
 extracts the game data again (about 1.1 GB); later runs take about three
-minutes.
+minutes. Play them as the release game: `out/game-<variant>/run.sh`, or
+`tools/playtest.sh out/game-<variant> 'Worlds\T01S01'`.
+
+### The modern build: `NOLFSRC_MODERN`
+
+`make modern` compiles everything with `/D NOLFSRC_MODERN` and nothing else
+changed. Every departure from the retail game -- a bug fix, later a new
+feature -- goes behind it, with the retail code kept, unchanged, in the other
+branch:
+
+```cpp
+#ifdef NOLFSRC_MODERN
+    if (stricmp(pFilter, pName) == 0)       // fixed: report the filter that matches
+#else
+    if (stricmp(pFilter, pName))            // retail: reports the first that does not
+#endif
+```
+
+The release build compiles exactly what it compiled before, so it still
+matches the retail binaries and `make progress` still passes; check that
+after any such change (`build/engine.sh <target>-one <file>` shows the
+function still matching). The modern build is never scored -- it differs from
+the retail game on purpose. When a fix lands, mark its entry in
+`RETAIL_BUGS.md` as fixed, naming the file.
+
+### The debug build: `NOLFSRC_DEBUG`
+
+`make debug` builds the same game with debug symbols and the project's
+debug-only diagnostics compiled in, for finding out why something misbehaves
+or crashes.
 
 What differs from the release build: every compile adds `/Z7 /Oy-
 /D NOLFSRC_DEBUG` (debug information, frame pointers kept so a backtrace can
@@ -160,9 +200,8 @@ information -- the static C runtime, or a `d3d.ren` file compiled with
 binary's preferred base; `tools/mapaddr.py out/game-debug/d3d.map
 0x10036d1c` names it from the map.
 
-Play it as the release game: `out/game-debug/run.sh`, or
-`tools/playtest.sh out/game-debug 'Worlds\T01S01'` in `make shell` (the
-playtest runs the game in `out/play/<name>/`, so its `nolfsrc.log` is there).
+The playtest runs the game in `out/play/<name>/`, so a playtest's
+`nolfsrc.log` is there.
 
 ## Notes
 

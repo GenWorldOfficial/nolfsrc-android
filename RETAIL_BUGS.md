@@ -4,10 +4,19 @@ Bugs in *No One Lives Forever* (GOTY Edition, version 1.003) as it shipped,
 found while reconstructing it. Each is a mistake in the code that a source
 change would fix.
 
-The source in this repository reproduces every one of them, on purpose:
-compiling to the retail machine code means compiling its mistakes too. They
-are collected here so that, once the byte-exact version is preserved, they
-can be fixed (step 3 of the README's roadmap) without being rediscovered.
+The release build reproduces every one of them, on purpose: compiling to the
+retail machine code means compiling its mistakes too. They are fixed in the
+**modern build** (`make modern`, the `NOLFSRC_MODERN` define; see
+`BUILDING.md`, "Variant builds"): each fix goes behind `#ifdef
+NOLFSRC_MODERN`, with the retail code kept in the `#else`, so the release
+build is unchanged and still matches. This is step 3 of the README's roadmap.
+
+An entry that is fixed says so under its heading, with the file the fix is
+in.
+
+**Fixed so far** (in the modern build):
+
+* [`CSoundMgr::GetFilterIndex`: the name comparison is inverted](#csoundmgrgetfilterindex-the-name-comparison-is-inverted)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -36,6 +45,10 @@ the close sits after the `if`, not inside it.
 
 ### `CSoundMgr::GetFilterIndex`: the name comparison is inverted
 `0x00482fd0` (lithtech.exe) · `src/engine/lithtech/clientsound.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`):
+> `src/engine/lithtech/clientsound.cpp` tests `stricmp(...) == 0`. The
+> release build keeps the retail test.
 
 The function answers "which index is the filter called this?" by walking
 Miles' filter enumeration, and the comparison is the wrong way round:

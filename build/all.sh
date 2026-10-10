@@ -159,7 +159,7 @@ install_built src/engine/sres/Release/sres.dll           custom/sres.dll
 step "8. audit: every PE file in $OUT"
 python3 tools/discextract.py audit "$OUT"
 
-# (NOLF_PACKAGE=0 skips it: build/debug.sh makes no tar)
+# (NOLF_PACKAGE=0 skips it: build/variant.sh makes no tar)
 if [ "${NOLF_PACKAGE:-1}" = 1 ]; then
     step "9. package: $OUT -> ${OUT%/*}/nolf-game.tar"
     # One file to copy to the machine that plays it: unpack anywhere, ./run.sh.

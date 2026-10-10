@@ -3,6 +3,7 @@
 #   make          build the whole game into out/game/ (and out/nolf-game.tar)
 #   make test     scripted playtest of out/game/ on two levels
 #   make debug    the same game with symbols and debug logging, in out/game-debug/
+#   make modern   the game with the retail bugs fixed (NOLFSRC_MODERN), in out/game-modern/
 #   make progress how much of the build is byte-identical to the retail game;
 #                 fails if a function recorded as identical stops matching
 #   make help     everything else
@@ -36,7 +37,7 @@ TOOLCHAIN_FILES = toolchain/msvc600/VC98/Bin/CL.EXE \
 	toolchain/msvc-6.00-8447/BIN/cl.exe \
 	toolchain/icl-4.0/BIN/icl.exe
 
-.PHONY: all game debug image toolchain check-isos check-toolchain test progress progress-update shell clean distclean help
+.PHONY: all game debug modern modern-debug image toolchain check-isos check-toolchain test progress progress-update shell clean distclean help
 
 all: game
 
@@ -44,7 +45,9 @@ help:
 	@echo "make            build everything into out/game/ and out/nolf-game.tar"
 	@echo "make toolchain  download and assemble the compilers in toolchain/ (once)"
 	@echo "make debug      the game with symbols and NOLFSRC_DEBUG logging, in out/game-debug/"
-	@echo "                (never scored; build/debug.sh)"
+	@echo "make modern     the game with NOLFSRC_MODERN (the retail bugs fixed), in out/game-modern/"
+	@echo "make modern-debug  both, in out/game-modern-debug/"
+	@echo "                (none of these is ever scored; build/variant.sh)"
 	@echo "make test       scripted playtest of out/game/ ($(TEST_LEVELS)), under Xvfb"
 	@echo "make progress   score the build against the retail binaries; fails if a"
 	@echo "                function recorded in progress/identical.txt stops matching"
@@ -61,8 +64,8 @@ help:
 game: check-isos check-toolchain image
 	$(DOCKER_RUN) bash build/all.sh
 
-debug: check-isos check-toolchain image
-	$(DOCKER_RUN) bash build/debug.sh
+debug modern modern-debug: check-isos check-toolchain image
+	$(DOCKER_RUN) bash build/variant.sh $@
 
 image:
 	@docker build -q -t $(IMAGE) docker/ >/dev/null || \

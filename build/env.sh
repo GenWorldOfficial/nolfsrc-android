@@ -35,11 +35,22 @@ export LIB="$WVC\\LIB;$WVC\\MFC\\LIB"
 WNOLFSRC="$WREPO\\src\\nolfsrc"
 INCLUDE="$INCLUDE;$WNOLFSRC"
 
-# Extra flags for every compile and every link, for the debug build
-# (build/debug.sh sets them). Empty otherwise -- and the release build's
-# command lines are then exactly what they always were.
+# Extra flags for every compile and every link, for the debug and modern
+# builds (build/variant.sh sets them). Empty otherwise -- and the release
+# build's command lines are then exactly what they always were.
 NOLFSRC_CFLAGS="${NOLFSRC_CFLAGS:-}"
 NOLFSRC_LDFLAGS="${NOLFSRC_LDFLAGS:-}"
+# They are only allowed in the trees build/variant.sh makes (out/build-*/):
+# anywhere else they would put NOLFSRC_DEBUG or NOLFSRC_MODERN code into the
+# objects `make progress` scores, which must only ever be the release build.
+if [ -n "$NOLFSRC_CFLAGS$NOLFSRC_LDFLAGS" ]; then
+    case "$REPO" in
+        */out/build-*) ;;
+        *) echo "error: NOLFSRC_CFLAGS / NOLFSRC_LDFLAGS are set, but this is not a" >&2
+           echo "       build/variant.sh tree ($REPO). Unset them; use make debug/modern." >&2
+           return 1 2>/dev/null || exit 1 ;;
+    esac
+fi
 
 # The compile flags go AFTER the command's own (a later flag wins: /Oy- must
 # follow the /O2 that implies /Oy), but before a /link, after which the

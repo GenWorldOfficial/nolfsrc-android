@@ -15,7 +15,7 @@
  * DLLs too. Release builds get nothing: without NOLFSRC_DEBUG the macro is
  * empty and this header includes nothing.
  *
- * The names and lines come from the .pdb files build/debug.sh puts beside
+ * The names and lines come from the .pdb files build/variant.sh puts beside
  * each binary, read through dbghelp.dll (Wine has its own), which is loaded
  * only when a crash happens, so nothing is linked against it. Wine's own
  * crash backtrace (winedbg) shows the same, but only when it can open its

@@ -3,7 +3,7 @@
  *
  * The release build has to compile to the retail bytes, so nothing here may
  * reach it: without NOLFSRC_DEBUG (which only the debug build defines, see
- * build/debug.sh) every macro below expands to nothing and this header
+ * build/variant.sh) every macro below expands to nothing and this header
  * includes nothing. Arguments are not evaluated in release either, so never
  * put a side effect in them.
  *

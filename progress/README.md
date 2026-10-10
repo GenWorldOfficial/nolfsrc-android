@@ -51,6 +51,14 @@ data and headers; that final, whole-file comparison is not made yet.
 
 ## The test
 
+Only the release build is scored. The debug and modern builds
+(`NOLFSRC_DEBUG`, `NOLFSRC_MODERN`; `BUILDING.md`, "Variant builds") are built
+in copies under `out/build-<variant>/` that the scoring never reads, and
+`build/env.sh` refuses their flags anywhere else, so code behind either define
+cannot reach what is scored -- and the modern build, which fixes retail bugs on
+purpose, could never pass this test.
+
+
 `progress/identical.txt` lists every function verified identical, and
 `progress/summary.json` the figures they add up to. `make progress`
 (`build/progress.sh check`) re-scores the current build and fails if:

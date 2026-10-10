@@ -35,7 +35,9 @@ binaries not built from source) straight from images of them.
 3. **Fix the bugs found during reverse engineering.** Rebuilding the engine
    to the exact bytes means reproducing its original bugs as well; once the
    byte-exact version is preserved, the fixes can go on top of it. The bugs
-   found so far are listed in [`RETAIL_BUGS.md`](RETAIL_BUGS.md).
+   found so far are listed in [`RETAIL_BUGS.md`](RETAIL_BUGS.md). Fixes go
+   behind the `NOLFSRC_MODERN` define and are built by `make modern`, so the
+   release build keeps matching the retail one.
 4. **Move the renderer from Direct3D 7 to Vulkan**, for native play on every
    platform, without Wine.
 
@@ -82,7 +84,9 @@ make            # -> out/game/ and out/nolf-game.tar  (about 3 minutes,
                 #    plus about 3 for the docker image the first time)
 make test       # optional: plays two levels under Xvfb with scripted input
 make debug      # optional: the same game with symbols and debug logging,
-                #    in out/game-debug/ (BUILDING.md, "The debug build")
+                #    in out/game-debug/
+make modern     # optional: the game with the retail bugs fixed, in
+                #    out/game-modern/ (both: BUILDING.md, "Variant builds")
 make progress   # optional: how much of it matches the retail binaries
 ```
 
