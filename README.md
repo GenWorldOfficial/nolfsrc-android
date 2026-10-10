@@ -117,6 +117,22 @@ it and run `game/run.sh`. `game/run-launcher.sh` starts the game through the
 `NOLF.exe` launcher instead. Both scripts document their options in their
 headers. Sound needs Wine's audio to work on that machine.
 
+Music needs more: it is DirectMusic, which Wine implements only in part. Its
+own DirectMusic cannot load the music's styles and has no General MIDI
+instrument set (`gm.dls`), so the game plays in silence apart from the sound
+effects. Install Microsoft's DirectMusic and the instrument set into the Wine
+prefix the game runs in (`run.sh` uses `~/.wine-nolf`):
+
+```sh
+WINEPREFIX=~/.wine-nolf winetricks dmband dmcompos dmime dmloader dmscript \
+    dmstyle dmsynth dmusic dmusic32 dswave gmdls
+```
+
+Not winetricks' `directmusic` verb: it also replaces Wine's DirectSound with
+Microsoft's, which the sound effects play through, and they then repeat. If
+it is already installed, give DirectSound back to Wine:
+`WINEPREFIX=~/.wine-nolf wine reg delete 'HKCU\Software\Wine\DllOverrides' /v dsound /f`.
+
 ## Contributing
 
 The remaining work is functions that are written but not yet byte-identical,

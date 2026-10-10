@@ -23,7 +23,8 @@
 # launcher appends its own arguments to the command file, and full screen
 # fails under many Wine setups ("Couldn't set D3D Emulation mode").
 #
-# Sound needs Wine's audio working (see run.sh).
+# Sound needs Wine's audio working, and music Microsoft's DirectMusic in the
+# prefix (see run.sh).
 set -e
 cd "$(dirname "$0")"
 HERE="$(pwd)"

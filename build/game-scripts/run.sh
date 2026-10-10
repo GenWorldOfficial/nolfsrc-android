@@ -29,8 +29,15 @@
 # Sound: the game uses the Miles Sound System (mss32.dll, the one third-party
 # DLL here besides Bink's binkw32.dll) through DirectSound, so it needs
 # Wine's audio working on this machine (winecfg > Audio); +DisableSound 1
-# runs without it. The intro movies are off (+DisableMovies 1 in
-# nolfcmds.txt) because they stall under some Wine setups.
+# runs without it. The music is DirectMusic, which Wine only partly
+# implements: its own cannot load the music's styles and has no General
+# MIDI instruments (gm.dls), so there is no music until Microsoft's
+# DirectMusic is installed in the prefix (not winetricks' `directmusic`,
+# which also replaces Wine's DirectSound, and the sound effects repeat):
+#   WINEPREFIX=~/.wine-nolf winetricks dmband dmcompos dmime dmloader \
+#       dmscript dmstyle dmsynth dmusic dmusic32 dswave gmdls
+# The intro movies are off (+DisableMovies 1 in nolfcmds.txt) because they
+# stall under some Wine setups.
 set -e
 cd "$(dirname "$0")"
 
@@ -44,7 +51,7 @@ while [ $# -gt 0 ]; do
         --windowed)   WINDOWED=1 ;;
         --res)        RES="${2:?--res needs WxH}"; shift ;;
         --world)      WORLD="${2:?--world needs a world path}"; shift ;;
-        --help|-h)    sed -n '2,33p' "./${0##*/}" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        --help|-h)    sed -n '2,40p' "./${0##*/}" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *)            EXTRA="$EXTRA $1" ;;
     esac
     shift
