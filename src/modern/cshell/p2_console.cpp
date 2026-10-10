@@ -132,8 +132,8 @@ static void OnEngineConsoleLine(void* pUser, uint32 nColor, int nLevel, const ch
 
 	if (!pText || !s_bCSInit) return;
 
-	// White on black is the engine's default; a colour of 0 would draw
-	// nothing at all.
+	// A colour of 0 means "the font's own colours" to CLTGUIFont::Draw:
+	// draw those lines white, like the engine's own default.
 	nColor &= 0x00ffffff;
 	if (!nColor)
 		nColor = SETRGB(255, 255, 255);
