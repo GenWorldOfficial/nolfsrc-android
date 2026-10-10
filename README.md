@@ -34,7 +34,8 @@ binaries not built from source) straight from images of them.
    applied on top.
 3. **Fix the bugs found during reverse engineering.** Rebuilding the engine
    to the exact bytes means reproducing its original bugs as well; once the
-   byte-exact version is preserved, the fixes can go on top of it.
+   byte-exact version is preserved, the fixes can go on top of it. The bugs
+   found so far are listed in [`RETAIL_BUGS.md`](RETAIL_BUGS.md).
 4. **Move the renderer from Direct3D 7 to Vulkan**, for native play on every
    platform, without Wine.
 
