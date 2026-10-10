@@ -35,6 +35,10 @@ protected:
 	CSliderCtrl			*m_pInputCtrl;
 	CSliderCtrl			*m_pSensitivityCtrl;
 
+#ifdef NOLFSRC_MODERN
+	// M-P1-04: legacy mouse look (OldMouseLook)
+	LTBOOL	m_bP1OldMouseLook;
+#endif
 };
 
 #endif // _FOLDER_MOUSE_H_

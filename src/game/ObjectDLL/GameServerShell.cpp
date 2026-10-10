@@ -32,6 +32,11 @@
 
 #include "CRC32.h"
 
+#ifdef NOLFSRC_MODERN
+// M-P1-02: 60 fps limiter on servers
+#include "object/p1_server.h"
+#endif
+
 #define MAX_CLIENT_NAME_LENGTH		100
 #define CLIENT_PING_UPDATE_RATE		3.0f
 #define UPDATENAME_INTERVAL			10.0f
@@ -171,6 +176,10 @@ inline float TODHoursToSeconds(float time)
 
 CGameServerShell::CGameServerShell(ILTServer *pServerDE)
 {
+#ifdef NOLFSRC_MODERN
+	// M-P1-02: 60 fps limiter on servers
+	P1Server_Init();
+#endif
 	memset(&m_GameInfo, 0, sizeof(NetGame));
 
 	m_nCurLevel			 = 0;
@@ -813,6 +822,15 @@ void CGameServerShell::OnMessage(HCLIENT hSender, uint8 messageID, HMESSAGEREAD 
 {
 	switch (messageID)
 	{
+#ifdef NOLFSRC_MODERN
+		// M-P1-02: the hosting client paces this server itself
+		case MID_DONT_LOCK_SERVER_FPS:
+		{
+			P1Server_OnDontLockMessage(hSender, hMessage);
+		}
+		break;
+#endif
+
 		case MID_PLAYER_UPDATE :
 		{
 			HandleUpdatePlayerMsg(hSender, hMessage);
@@ -2358,6 +2376,11 @@ void CGameServerShell::Update(LTFLOAT timeElapsed)
 
 	// See if we should change worlds.
 	CheckMultiSwitchWorlds();
+
+#ifdef NOLFSRC_MODERN
+	// M-P1-02: 60 fps limiter on multiplayer servers
+	P1Server_EndUpdate(GetGameType() != SINGLE);
+#endif
 }
 
 

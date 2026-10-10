@@ -45,6 +45,11 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#ifdef NOLFSRC_MODERN
+// M-P1: timing, input, window and display options
+#include "cshell/p1_modern.h"
+#endif
+
 #ifdef STRICT
 	WNDPROC g_pfnMainWndProc = NULL;
 #else
@@ -983,6 +988,11 @@ uint32 CGameClientShell::OnEngineInitialized(RMode *pMode, LTGUID *pAppGuid)
         g_pLTClient->RunConsoleString("+UpdateRate 6");
 	}
 
+#ifdef NOLFSRC_MODERN
+	// M-P1-01/03/08/10/12: P1's console variables, optimizesurfaces
+	P1Config_InitVars();
+#endif
+
     m_MoveMgr.Init();
 	m_editMgr.Init();
 	m_cheatMgr.Init();
@@ -1041,18 +1051,31 @@ uint32 CGameClientShell::OnEngineInitialized(RMode *pMode, LTGUID *pAppGuid)
 
 		RMode rMode;
 
+#ifdef NOLFSRC_MODERN
+		// M-P1-08: if an error occurred, try 800x600x32...
+
+		rMode.m_Width		= 800;
+		rMode.m_Height		= 600;
+		rMode.m_BitDepth	= 32;
+#else
 		// If an error occurred, try 640x480x16...
 
 		rMode.m_Width		= 640;
 		rMode.m_Height		= 480;
 		rMode.m_BitDepth	= 16;
+#endif
 		rMode.m_bHardware	= pMode->m_bHardware;
 
 		sprintf(rMode.m_RenderDLL, "%s", pMode->m_RenderDLL);
 		sprintf(rMode.m_InternalName, "%s", pMode->m_InternalName);
 		sprintf(rMode.m_Description, "%s", pMode->m_Description);
 
+#ifdef NOLFSRC_MODERN
+		// M-P1-08: the fallback mode
+        g_pLTClient->DebugOut("Setting render mode to 800x600x32...\n");
+#else
         g_pLTClient->DebugOut("Setting render mode to 640x480x16...\n");
+#endif
 
         if (g_pLTClient->SetRenderMode(&rMode) != LT_OK)
 		{
@@ -1299,6 +1322,11 @@ uint32 CGameClientShell::OnEngineInitialized(RMode *pMode, LTGUID *pAppGuid)
         DoLoadWorld("", NULL, NULL, LOAD_NEW_GAME, NULL, g_pLTClient->GetVarValueString(hVar));
 	}
 
+#ifdef NOLFSRC_MODERN
+	// M-P1-08, M-P1-12: CursorCenter off, one-time config upgrade
+	P1Config_AfterInit();
+#endif
+
 	return LT_OK;
 }
 
@@ -1417,6 +1445,11 @@ void CGameClientShell::OnEvent(uint32 dwEventID, uint32 dwParam)
 		}
 		break;
 	}
+
+#ifdef NOLFSRC_MODERN
+	// M-P1-03, M-P1-06, M-P1-10: window placement, mouse capture, tint
+	P1_OnClientEvent(dwEventID);
+#endif
 
 	m_InterfaceMgr.OnEvent(dwEventID, dwParam);
 }
@@ -1809,6 +1842,11 @@ void CGameClientShell::PostUpdate()
 
 
 	m_InterfaceMgr.PostUpdate();
+
+#ifdef NOLFSRC_MODERN
+	// M-P1-01: 60 fps frame limiter (FramerateLock; always in multiplayer)
+	P1Timing_EndFrame(IsMultiplayerGame() ? true : false);
+#endif
 }
 
 // ----------------------------------------------------------------------- //
@@ -2617,7 +2655,12 @@ void CGameClientShell::CalculateCameraRotation()
 	// Get axis offsets...
 
 	float offsets[3];
+#ifdef NOLFSRC_MODERN
+	// M-P1-03: raw mouse look (the retail axis offsets with OldMouseLook 1)
+	P1Input_GetAxisOffsets(offsets);
+#else
     g_pLTClient->GetAxisOffsets(offsets);
+#endif
 
 	if (m_bRestoreOrientation)
 	{
@@ -6902,6 +6945,11 @@ void CGameClientShell::RenderCamera(LTBOOL bDrawInterface)
     g_pLTClient->RenderCamera(m_hCamera);
     g_pLTClient->StartOptimized2D();
 
+#ifdef NOLFSRC_MODERN
+	// M-P1-10: the screen tint as an overlay (EnableScreenTinting 0)
+	m_ScreenTintMgr.P1DrawOverlay();
+#endif
+
 	m_InterfaceMgr.Draw();
 
 	// Display any necessary debugging info...
@@ -7288,6 +7336,11 @@ void CGameClientShell::InitMultiPlayer()
     hWrite = g_pLTClient->StartMessage(MID_PLAYER_INITVARS);
     g_pLTClient->WriteToMessageByte(hWrite, (uint8)pSettings->RunLock());
     g_pLTClient->EndMessage(hWrite);
+
+#ifdef NOLFSRC_MODERN
+	// M-P1-02: a hosting client paces its own server
+	P1Timing_SendDontLockServer(IsHosting() ? true : false);
+#endif
 }
 
 
@@ -8276,6 +8329,18 @@ void DefaultModelHook (ModelHookData *pData, void *pUser)
 
 LRESULT CALLBACK HookedWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+#ifdef NOLFSRC_MODERN
+	// M-P1-13: during shutdown a message can arrive after UnhookWindow
+	// cleared the engine's procedure; calling through NULL crashed
+	if (!g_pfnMainWndProc)
+	{
+		return DefWindowProc(hWnd, uMsg, wParam, lParam);
+	}
+#endif
+#ifdef NOLFSRC_MODERN
+	// M-P1-03: raw mouse input (WM_INPUT), the cursor while captured
+	P1Input_OnWindowMessage(hWnd, uMsg, wParam, lParam);
+#endif
 	switch(uMsg)
 	{
 		HANDLE_MSG(hWnd, WM_LBUTTONUP, CGameClientShell::OnLButtonUp);
@@ -8430,6 +8495,10 @@ BOOL HookWindow()
 
 void UnhookWindow()
 {
+#ifdef NOLFSRC_MODERN
+	// M-P1-03: stop raw mouse input, free the cursor
+	P1Input_OnWindowUnhooked();
+#endif
 	if(g_pfnMainWndProc && g_hMainWnd)
 	{
 		SetWindowLong(g_hMainWnd, GWL_WNDPROC, (LONG)g_pfnMainWndProc);

@@ -7,6 +7,10 @@
 #include "gameclientshell.h"
 #include "InterfaceResMgr.h"
 #include "ClientButeMgr.h"
+#ifdef NOLFSRC_MODERN
+// M-P1-06: window placement
+#include "cshell/p1_modern.h"
+#endif
 
 
 CInterfaceResMgr*   g_pInterfaceResMgr = LTNULL;
@@ -568,6 +572,10 @@ void CInterfaceResMgr::ScreenDimsChanged()
 	m_dwScreenWidth = currentMode.m_Width;
 	m_dwScreenHeight = currentMode.m_Height;
 
+#ifdef NOLFSRC_MODERN
+	// M-P1-06: size, centre or un-frame the window for the new mode
+	P1Window_Apply();
+#endif
 }
 
 

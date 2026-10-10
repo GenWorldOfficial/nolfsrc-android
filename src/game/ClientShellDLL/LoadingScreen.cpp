@@ -16,6 +16,10 @@
 #include "GameClientShell.h"
 #include "WinUtil.h"
 #include "BaseFolder.h"
+#ifdef NOLFSRC_MODERN
+// M-P1-01, M-P1-11: loading-screen timing
+#include "cshell/p1_modern.h"
+#endif
 
 extern CGameClientShell* g_pGameClientShell;
 
@@ -388,15 +392,31 @@ int CLoadingScreen::RunThread()
 	// Tell the main thread we're now in our main loop
 	SetEvent(m_hEventThreadRunning);
 
+#ifdef NOLFSRC_MODERN
+	// M-P1-01: no frame limiter while loading
+	P1Timing_SuspendFrameLimit(true);
+#endif
+
 	// The main rendering loop...  (i.e. keep drawing until someone tells us to stop)
 	while (WaitForSingleObject(m_hEventEnd, 0) == WAIT_TIMEOUT)
 	{
 		// Draw the frame..
 		Update();
 		
+#ifdef NOLFSRC_MODERN
+		// M-P1-11: faster loading -- 100 ms between frames slowed the load
+		// itself down
+		Sleep(10);
+#else
 		// Make sure we're not running faster than 10fps so stuff can still happen in the background
 		Sleep(100);
+#endif
 	}
+
+#ifdef NOLFSRC_MODERN
+	// M-P1-01: no frame limiter while loading
+	P1Timing_SuspendFrameLimit(false);
+#endif
 	return 0;
 }
 

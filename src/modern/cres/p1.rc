@@ -1,0 +1,29 @@
+// p1.rc -- CRes strings of the modern build's package P1 (MODERN.md):
+// timing, input, window and display options.  IDs in p1.h (31000-31099).
+// The include path is relative to the directory rc runs in
+// (src/game/ClientRes/goty, see build/build.sh).
+
+#include "..\..\..\modern\cres\p1.h"
+
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_P1_WINDOWED             "Windowed"
+    IDS_P1_HELP_WINDOWED        "Play in a window instead of full screen. A window as large as the desktop is shown without a border."
+    IDS_P1_INTELFIX             "Intel graphics fix"
+    IDS_P1_HELP_INTELFIX        "Turn on if the screen goes black under water or colour flashes never appear (some Intel graphics chips)."
+    IDS_P1_LEGACYMOUSE          "Legacy mouse look"
+    IDS_P1_HELP_LEGACYMOUSE     "Read the mouse the way the original game did, instead of from raw mouse input."
+    IDS_P1_WHEELRATE            "Wheel smoothing"
+    IDS_P1_HELP_WHEELRATE       "How much input read through DirectInput is smoothed: the mouse wheel, and the mouse itself with legacy mouse look."
+    IDS_P1_TEXFILTER            "Texture filtering"
+    IDS_P1_HELP_TEXFILTER       "How textures are filtered: none (blocky), bilinear, trilinear, or anisotropic, which keeps distant surfaces sharper at 2x to 16x."
+    IDS_P1_TEXFILTER_NONE       "None"
+    IDS_P1_TEXFILTER_BILINEAR   "Bilinear"
+    IDS_P1_TEXFILTER_TRILINEAR  "Trilinear"
+    IDS_P1_TEXFILTER_ANISO2     "Anisotropic 2x"
+    IDS_P1_TEXFILTER_ANISO4     "Anisotropic 4x"
+    IDS_P1_TEXFILTER_ANISO8     "Anisotropic 8x"
+    IDS_P1_TEXFILTER_ANISO16    "Anisotropic 16x"
+END

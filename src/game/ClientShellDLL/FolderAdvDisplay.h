@@ -49,6 +49,12 @@ protected:
 //	CToggleCtrl*	m_pOverdraw;
 	CToggleCtrl*	m_pLightMap;
 	CToggleCtrl*	m_pMirrors;
+
+#ifdef NOLFSRC_MODERN
+	// M-P1-09: texture filtering (none, bilinear, trilinear, anisotropic)
+	int		m_nP1Filter;		// the cycle's index
+	int		m_nP1FilterShown;	// the index the folder opened with
+#endif
 };
 
 #endif // _FOLDER_ADV_DISPLAY_H_
