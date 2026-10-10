@@ -10,6 +10,10 @@
 #include "GameSettings.h"
 #include "InterfaceMgr.h"
 #include "GameSettings.h"
+#ifdef NOLFSRC_MODERN
+// M-P1-04: mouse options
+#include "cshell/p1_modern.h"
+#endif
 
 namespace
 {
@@ -35,6 +39,10 @@ CFolderMouse::CFolderMouse()
     m_pInputCtrl = LTNULL;
 
 	m_nVehicleTurn	= 100;
+#ifdef NOLFSRC_MODERN
+	// M-P1-04: legacy mouse look
+	m_bP1OldMouseLook = LTFALSE;
+#endif
 
 }
 
@@ -64,7 +72,13 @@ LTBOOL CFolderMouse::Build()
 	m_pSensitivityCtrl->SetSliderIncrement(1);
 
 	//mouse responsiveness
+#ifdef NOLFSRC_MODERN
+	// M-P1-04: InputRate smooths DirectInput, which the new mouse look no
+	// longer reads the mouse through: what is left is the wheel
+	m_pInputCtrl=AddSlider(IDS_P1_WHEELRATE, IDS_P1_HELP_WHEELRATE, kGap, kWidth, &m_nInputRate);
+#else
 	m_pInputCtrl=AddSlider(IDS_MOUSE_INPUTRATE, IDS_HELP_MOUSE_INPUT, kGap, kWidth, &m_nInputRate);
+#endif
 	m_pInputCtrl->SetSliderRange(0, 40);
 	m_pInputCtrl->SetSliderIncrement(2);
 
@@ -77,6 +91,12 @@ LTBOOL CFolderMouse::Build()
 	pSlider->SetSliderRange(50, 150);
 	pSlider->SetSliderIncrement(5);
 
+#ifdef NOLFSRC_MODERN
+	// M-P1-04: legacy mouse look (OldMouseLook)
+	CToggleCtrl* pP1OldLook = AddToggle(IDS_P1_LEGACYMOUSE, IDS_P1_HELP_LEGACYMOUSE, kGap, &m_bP1OldMouseLook );
+	pP1OldLook->SetOnString(IDS_YES);
+	pP1OldLook->SetOffString(IDS_NO);
+#endif
 
 	// Make sure to call the base class
 	if (! CBaseFolder::Build()) return LTFALSE;
@@ -113,6 +133,11 @@ void CFolderMouse::OnFocus(LTBOOL bFocus)
 		float fTemp = GetConsoleFloat("VehicleTurnRateScale",1.0f);
 		m_nVehicleTurn = (int)(100.0f * fTemp);
 
+#ifdef NOLFSRC_MODERN
+		// M-P1-04: legacy mouse look
+		m_bP1OldMouseLook = P1Config_OldMouseLook();
+#endif
+
         UpdateData(LTFALSE);
 	}
 	else
@@ -128,6 +153,11 @@ void CFolderMouse::OnFocus(LTBOOL bFocus)
 
 		float fTemp = (float)m_nVehicleTurn / 100.0f;
 		WriteConsoleFloat("VehicleTurnRateScale",fTemp);
+
+#ifdef NOLFSRC_MODERN
+		// M-P1-04: legacy mouse look
+		WriteConsoleInt("OldMouseLook",m_bP1OldMouseLook ? 1 : 0);
+#endif
 
 		// Just to be safe save the config incase anything changed...
 

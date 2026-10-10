@@ -1,0 +1,25 @@
+// p1.h -- CRes string IDs of the modern build's package P1 (MODERN.md):
+// timing, input, window and display options.  Range 31000-31099.
+
+#ifndef __P1_CRES_H__
+#define __P1_CRES_H__
+
+#define IDS_P1_WINDOWED				31000
+#define IDS_P1_HELP_WINDOWED		31001
+#define IDS_P1_INTELFIX				31002
+#define IDS_P1_HELP_INTELFIX		31003
+#define IDS_P1_LEGACYMOUSE			31004
+#define IDS_P1_HELP_LEGACYMOUSE		31005
+#define IDS_P1_WHEELRATE			31006
+#define IDS_P1_HELP_WHEELRATE		31007
+#define IDS_P1_TEXFILTER			31008
+#define IDS_P1_HELP_TEXFILTER		31009
+#define IDS_P1_TEXFILTER_NONE		31010
+#define IDS_P1_TEXFILTER_TRILINEAR	31011
+#define IDS_P1_TEXFILTER_ANISO2		31012
+#define IDS_P1_TEXFILTER_ANISO4		31013
+#define IDS_P1_TEXFILTER_ANISO8		31014
+#define IDS_P1_TEXFILTER_ANISO16	31015
+#define IDS_P1_TEXFILTER_BILINEAR	31016
+
+#endif // __P1_CRES_H__

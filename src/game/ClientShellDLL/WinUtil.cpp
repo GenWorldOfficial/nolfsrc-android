@@ -5,6 +5,10 @@
 #include <time.h>
 #include <direct.h>
 #include "ltbasedefs.h"
+#ifdef NOLFSRC_MODERN
+// M-P1-05: high-resolution game clock
+#include "cshell/p1_modern.h"
+#endif
 
 BOOL CWinUtil::GetMoviesPath (char* strPath)
 {
@@ -125,7 +129,12 @@ void CWinUtil::DebugBreak()
 
 float CWinUtil::GetTime()
 {
+#ifdef NOLFSRC_MODERN
+	// M-P1-05: the performance counter, not GetTickCount's 10-16 ms steps
+	return P1Timing_GetTime();
+#else
 	return (float)GetTickCount() / 1000.0f;
+#endif
 }
 
 char* CWinUtil::GetFocusWindow()

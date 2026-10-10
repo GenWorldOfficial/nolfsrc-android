@@ -10,6 +10,10 @@
 #include "GameClientShell.h"
 #include "GameSettings.h"
 extern CGameClientShell* g_pGameClientShell;
+#ifdef NOLFSRC_MODERN
+// M-P1-06, M-P1-10: windowed mode, Intel graphics fix
+#include "cshell/p1_modern.h"
+#endif
 
 namespace
 {
@@ -81,6 +85,12 @@ CFolderDisplay::CFolderDisplay()
     m_pRendererCtrl     = LTNULL;
     m_pResolutionCtrl   = LTNULL;
 	m_pHardwareCursor	= LTNULL;
+#ifdef NOLFSRC_MODERN
+	// M-P1-06, M-P1-10: windowed mode, Intel graphics fix
+	m_bP1Windowed		= LTFALSE;
+	m_bP1ForceModeSet	= LTFALSE;
+	m_bP1IntelFix		= LTFALSE;
+#endif
 }
 
 CFolderDisplay::~CFolderDisplay()
@@ -127,6 +137,13 @@ LTBOOL CFolderDisplay::Build()
 	// Setup the resolution control based on the currently selected renderer
 	SetupResolutionCtrl();
 
+#ifdef NOLFSRC_MODERN
+	// M-P1-06: windowed mode
+	CToggleCtrl *pP1Windowed = AddToggle(IDS_P1_WINDOWED,IDS_P1_HELP_WINDOWED,175,&m_bP1Windowed);
+	pP1Windowed->SetOnString(IDS_ON);
+	pP1Windowed->SetOffString(IDS_OFF);
+#endif
+
 	CToggleCtrl *pToggle = AddToggle(IDS_DISPLAY_TEXTURE,IDS_HELP_TEXTUREDEPTH,175,&m_bTexture32);
 	pToggle->SetOnString(IDS_DISPLAY_32BIT);
 	pToggle->SetOffString(IDS_DISPLAY_16BIT);
@@ -135,6 +152,12 @@ LTBOOL CFolderDisplay::Build()
 	m_pHardwareCursor->SetOnString(IDS_ON);
 	m_pHardwareCursor->SetOffString(IDS_OFF);
 	
+#ifdef NOLFSRC_MODERN
+	// M-P1-10: Intel graphics fix
+	CToggleCtrl *pP1IntelFix = AddToggle(IDS_P1_INTELFIX,IDS_P1_HELP_INTELFIX,175,&m_bP1IntelFix);
+	pP1IntelFix->SetOnString(IDS_ON);
+	pP1IntelFix->SetOffString(IDS_OFF);
+#endif
 
 
 	CalculateLastDrawn();
@@ -241,15 +264,34 @@ void CFolderDisplay::BuildRendererArray()
 	// Build the list of render modes
     RMode *pRenderModes=g_pLTClient->GetRenderModes();
 
+#ifdef NOLFSRC_MODERN
+	// M-P1-07: the mode in use
+	RMode p1InUse;
+	if (g_pLTClient->GetRenderMode(&p1InUse) != LT_OK)
+	{
+		p1InUse.m_BitDepth = 0;
+	}
+#endif
+
 	// Iterate through the list of render modes adding each one to the array
 	RMode *pCurrentMode=pRenderModes;
     while (pCurrentMode != LTNULL)
 	{
 		if (pCurrentMode->m_Width >= 640 && pCurrentMode->m_Height >= 480)
 		{
+#ifdef NOLFSRC_MODERN
+			// M-P1-07: every aspect ratio (wide screens' native modes), but
+			// no 16-bit modes -- unless it is the one in use, so that
+			// opening this folder does not change the mode by itself
+			if (pCurrentMode->m_BitDepth == 16 &&
+				!(pCurrentMode->m_Width == p1InUse.m_Width &&
+				  pCurrentMode->m_Height == p1InUse.m_Height &&
+				  p1InUse.m_BitDepth == 16))
+#else
 			// disallow non-standard aspect ratios
 			uint32 testWidth = (pCurrentMode->m_Height * 4 / 3);
 			if (pCurrentMode->m_Width != testWidth)
+#endif
 			{
 			
 				// Go to the next render mode
@@ -367,7 +409,12 @@ LTBOOL CFolderDisplay::SetRenderer(int nRendererIndex, int nResolutionIndex)
 	RMode currentMode;
     if (g_pLTClient->GetRenderMode(&currentMode) == LT_OK)
 	{
+#ifdef NOLFSRC_MODERN
+		// M-P1-06: switching to or from a window needs the mode set again
+		if (IsRendererEqual(&newMode, &currentMode) && !m_bP1ForceModeSet)
+#else
 		if (IsRendererEqual(&newMode, &currentMode))
+#endif
 		{
             return LTFALSE;
 		}
@@ -476,6 +523,11 @@ void CFolderDisplay::OnFocus(LTBOOL bFocus)
 
 		m_bHardwareCursor = (GetConsoleInt("HardwareCursor",0) > 0 && GetConsoleInt("DisableHardwareCursor",0) == 0);
 		m_pHardwareCursor->Enable(GetConsoleInt("DisableHardwareCursor",0) == 0);
+#ifdef NOLFSRC_MODERN
+		// M-P1-06, M-P1-10: windowed mode, Intel graphics fix
+		m_bP1Windowed = (GetConsoleInt("Windowed",0) == 1);
+		m_bP1IntelFix = !P1Config_LightScale() || !P1Config_ScreenTinting();
+#endif
 
 		// The current render mode
 		RMode currentMode;
@@ -520,6 +572,22 @@ void CFolderDisplay::OnFocus(LTBOOL bFocus)
 			LTBOOL bTexture32 = pSettings->GetBoolVar("32BitTextures");
 
 			WriteConsoleInt("HardwareCursor",(int)m_bHardwareCursor);
+#ifdef NOLFSRC_MODERN
+			// M-P1-10: Intel graphics fix -- no light scaling, the tint as
+			// an overlay
+			if ((!P1Config_LightScale() || !P1Config_ScreenTinting()) != (m_bP1IntelFix ? true : false))
+			{
+				WriteConsoleInt("EnableLightScale",!m_bP1IntelFix);
+				WriteConsoleInt("EnableScreenTinting",!m_bP1IntelFix);
+				g_pGameClientShell->GetLightScaleMgr()->Enable();
+			}
+			// M-P1-06: windowed mode takes effect by setting the mode again
+			if ((GetConsoleInt("Windowed",0) == 1) != (m_bP1Windowed ? true : false))
+			{
+				WriteConsoleInt("Windowed",m_bP1Windowed ? 1 : 0);
+				m_bP1ForceModeSet = LTTRUE;
+			}
+#endif
 
 			pSettings->SetBoolVar("32BitTextures",m_bTexture32);
 
@@ -533,6 +601,10 @@ void CFolderDisplay::OnFocus(LTBOOL bFocus)
 				int oldMO = (int)pSettings->GetFloatVar("MipmapOffset");
 
 				LTBOOL bSet = SetRenderer(m_pRendererCtrl->GetSelIndex(), m_pResolutionCtrl->GetSelIndex());
+#ifdef NOLFSRC_MODERN
+				// M-P1-06: windowed mode
+				m_bP1ForceModeSet = LTFALSE;
+#endif
 
 				// If we didn't switch resolutions and the mipmap offset changed, rebind textures.
 				if(!bSet)

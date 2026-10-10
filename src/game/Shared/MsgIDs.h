@@ -103,6 +103,12 @@
 	#define MID_HANDSHAKE_DONE			3 // You'll do just fine.  Server to client
 	// Handshake version state
 
+#ifdef NOLFSRC_MODERN
+// M-P1-02: the hosting client asks its own server not to limit its frame
+// rate (the value the NOLF Modernizer uses)
+#define MID_DONT_LOCK_SERVER_FPS		250 // Client to server
+#endif
+
 // Object <-> Object messages...
 
 

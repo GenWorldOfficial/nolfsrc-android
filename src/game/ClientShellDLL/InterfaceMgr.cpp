@@ -25,6 +25,10 @@
 #include "CharacterFX.h"
 #include "GameButes.h"
 #include "FolderPerformance.h"
+#ifdef NOLFSRC_MODERN
+// M-P1-03: raw mouse look
+#include "cshell/p1_modern.h"
+#endif
 
 // TESTING DYNAMIC LIGHT IN INTERFACE
 /*
@@ -4199,9 +4203,18 @@ void CInterfaceMgr::OnMouseMove(int x, int y)
 void CInterfaceMgr::UseCursor(LTBOOL bUseCursor)
 {
 	m_bUseCursor = bUseCursor;
+#ifdef NOLFSRC_MODERN
+	// M-P1-03: raw mouse look -- give the mouse to the menus, or take it
+	// for playing (the retail CursorCenter with OldMouseLook 1)
+	P1Input_UseCursor(m_bUseCursor ? true : false);
+#endif
 	if (m_bUseCursor)
 	{
+#ifdef NOLFSRC_MODERN
+		// M-P1-03: CursorCenter is P1Input_UseCursor's
+#else
         g_pLTClient->RunConsoleString("CursorCenter 0");
+#endif
 
 		if (m_bUseHardwareCursor)
 		{
@@ -4210,7 +4223,11 @@ void CInterfaceMgr::UseCursor(LTBOOL bUseCursor)
 	}
 	else
 	{
+#ifdef NOLFSRC_MODERN
+		// M-P1-03: CursorCenter is P1Input_UseCursor's
+#else
         g_pLTClient->RunConsoleString ("CursorCenter 1");
+#endif
         g_pLTClient->Cursor()->SetCursorMode(CM_None);
 
 	}
