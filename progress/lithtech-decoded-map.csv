@@ -1,0 +1,362 @@
+object,symbol,addr,ship_size,our_size,evidence
+modelanim.obj,?at_IsDone@@YAIPAVLTAnimTracker@@@Z,0x00401100,92,76,bridged-callsite
+modelanim.obj,?at_Advance@@YAXPAVLTAnimTracker@@KH@Z,0x00401370,511,364,bridged-callsite
+lt2new4.obj,??1CUnknown401820@@QAE@XZ,0x00401820,46,38,decl-comment
+counter.obj,?sub_10001977@@YAHPAVCClassMgr@@@Z,0x00402a50,444,454,bridged-callsite
+counter.obj,?sub_10001b54@@YAHPAVCClassMgr@@@Z,0x00402c90,528,138,bridged-callsite|SIZE-FLAG ship/ours=3.8x
+clientphysics.obj,?MoveObject@CPhysicsLT@@UAEKPAVLTObject@@PAV?$_CVector@M@@K@Z,0x00404e10,278,275,decl-comment
+lt2new1.obj,?UpdateMovement@CPhysicsLTView@@QAEKPAVMoveInfoView@@@Z,0x00404f30,193,266,sized-citation
+clientphysics.obj,?SetObjectDims@CPhysicsLT@@UAEKPAVLTObject@@PAV?$_CVector@M@@K@Z,0x00405000,341,334,near
+cltnew.obj,?AddParticle@CLTClient@@QAEPAULTParticle@@PAVLTObject@@PAV?$_CVector@M@@11M@Z,0x004067c0,385,390,sized-citation
+cltnew.obj,?EndQuery@CLTClient@@QAEKXZ,0x00406a60,76,77,sized-citation
+cltnew.obj,?SendToServer@CLTClient@@QAEKAAVIMessageWriteView@@EK@Z,0x00406c90,316,576,decl-comment+starts-row-is-partial(run=580)
+cltnew.obj,?IsVideoPlaying@CLTClient@@QAEKXZ,0x004074f0,49,49,sized-citation
+cltrest.obj,?StartHMessageWrite@CLTClient@@QAEPAVILTMessage@@XZ,0x00407630,138,138,sized-citation
+cltnew.obj,?GetPointContainers@CLTClient@@QAEKPAV?$_CVector@M@@PAPAVLTObject@@K@Z,0x004078d0,128,124,sized-citation
+clientinterface.obj,?ci_GetLobbyLaunchInfo@@YAKPADPAPAX@Z,0x00408440,198,198,near
+clientworldinfo.obj,?ci_GetWorldInfoString@@YAKPAD0KPAK@Z,0x004093d0,224,224,sized-citation
+clientinterface.obj,?ci_CreateColor@@YAKMMMI@Z,0x0040c9b0,83,87,near
+clientmgr2.obj,?surface_SaveAll@@YAIXZ,0x0040f110,60,55,comment-prose
+clientmgr2.obj,?Disconnect@CClientMgrView@@QAEXXZ,0x00410350,42,50,comment
+commonphysics.obj,?Set@GlobalForceControl@@QAEXPAV?$_CVector@M@@@Z,0x00410e20,144,143,near
+clientmgr2.obj,?cm_OnShellTerm@@YAXPAVCClientMgrView@@PAVCClientShell@@@Z,0x004115c0,64,64,near
+smgr.obj,?_v10@CBaseMgr@@UAEXHPADH@Z,0x004132e0,3,3,bridged-vtable
+clientmgr2.obj,?Init@CClientShell@@QAEIPAVCClientMgrView@@@Z,0x00413310,57,49,comment
+clientmgr2.obj,?SendToServer@CClientShell@@QAEKPAX@Z,0x00413cd0,31,36,comment
+clientmgr2.obj,?ResetRecords@CClientShell@@QAEXXZ,0x00413cf0,42,42,near
+clientmgr2.obj,?cs_ReleaseListToWorld@@YAXPAVCClientShell@@PAVLTList@@@Z,0x00414370,51,53,comment
+clientmgr2.obj,?cs_ReleaseListItems@@YAXPAVCClientShell@@PAVLTList@@@Z,0x004144b0,34,34,near
+clientmgr2.obj,?cs_PreLoadWorld@@YAXPAD@Z,0x004148d0,33,33,near
+worldsim.obj,?w_IsPolyBlocking@@YAHPAVWorldPolyOwner@@@Z,0x004152f0,621,680,bridged-callsite
+clientmgr2.obj,?IsMatch@CClientCSBase@@UAEIPAXK0@Z,0x004157c0,48,50,comment+starts-row-is-partial(run=51)
+worldsim.obj,?ws_ProjectBox@@YAHPAVCBoxProject@@@Z,0x00416210,194,194,near
+worldsim.obj,?Setup@CSimContext@@QAEXXZ,0x004169e0,436,435,near
+worldsim.obj,?DeflectOffHit@CSimContext@@QAEXPAVWorldPoly@@PAVCBounceState@@@Z,0x004176c0,373,373,near
+worldsim.obj,?ws_SetupSweptBox@@YAXPAV?$_CVector@M@@0@Z,0x00418190,626,624,near
+worldsim.obj,?ws_PushBoxOutOfContacts@@YAXXZ,0x00419390,559,559,near
+worldsim.obj,?ws_AddClippedContact@@YAXPAVLTPlane@@PAXM@Z,0x004195c0,312,312,near
+worldsim.obj,?ws_StairStep@@YAHGPAVCBounceState@@@Z,0x0041a0e0,1429,1425,bridged-callseq-j1.00
+worldsim.obj,?ws_HandleImpact@@YAXPAVCollisionInfo@@PAVCBounceState@@PAVLTObject@@2PAVIWorldBsp@@PAVWorldPoly@@H@Z,0x0041a680,528,308,bridged-callsite
+worldsim.obj,?ws_ObjectsCollided@@YAXPAVIPhysicsSim@@PAVLTObject@@1PAV?$_CVector@M@@M@Z,0x0041a890,689,689,near
+console.obj,?con_RunStringEx@@YAXPAVConsoleState@@PADHH@Z,0x0041ac20,736,666,near
+console.obj,?con_InternString@@YAPADPAVConsoleState@@PAD@Z,0x0041af00,81,77,near
+console.obj,?con_FindBinding@@YAPAVConsoleBinding@@PAVConsoleState@@PAD@Z,0x0041b070,123,75,bridged-callsite
+console.obj,?con_AddCommand@@YAXPAVConsoleState@@PADPAX2@Z,0x0041b2f0,65,63,bridged-callsite
+console.obj,?parse_Token@@YAHPAPAD0@Z,0x0041b710,272,269,bridged-callsite
+clientconsole.obj,?SetSize@CConsoleHistory@@QAEIH@Z,0x0041c180,225,230,decl-comment
+lt2new4.obj,?SetMode@CUnknown41CD10@@QAEXH@Z,0x0041cd10,45,37,decl-comment
+netmgr.obj,?GenAppend@CNetSentQueue@@UAEIAAPAVLThreadMessage@@@Z,0x0041d550,71,20,bridged-vtable|SIZE-FLAG ship/ours=3.5x
+clientconsole.obj,?GetName@CConsoleCompletion@@UAEPADXZ,0x0041eaa0,99,93,decl-comment
+lt2new2.obj,?CountFrame@CClientMgrRateView@@QAEXXZ,0x0041fe30,35,35,sized-citation
+clienttexmgr.obj,?tm_FreeAllTextures@@YAXPAVCClientMgrTexBankView@@@Z,0x00420020,14,49,comment+size-outlier+starts-row-is-partial(run=49)+entry-of-split-run(interior 0x420034)
+clienttexmgr.obj,?tm_UnmarkTextures@@YAXPAVCClientMgrTexBankView@@@Z,0x004200c0,37,37,near
+clienttexmgr.obj,?tbl_GetObject@@YAPAXPAVCClientMgrTexBankView@@G@Z,0x00420520,42,45,near
+clienttexmgr.obj,?tbl_GetSlot@@YAPAVCClientSlot@@PAVCClientMgrTexBankView@@G@Z,0x00420550,34,34,near
+fsstream.obj,?Release@CTreeStream@@UAEXXZ,0x00420b00,47,12,bridged-vtable|SIZE-FLAG ship/ours=3.9x
+fsstream.obj,?Read@CMemStream@@UAEKPAXK@Z,0x00421200,195,204,near
+fsstream.obj,?fs_CopyStreamToFile@@YAHPAVILTStream@@PBD@Z,0x00421670,218,234,bridged-callsite-sizeexact
+ltobject.obj,?wm_Transform@@YAXPAVLTObject@@PAVLTMatrix@@H@Z,0x00421d10,584,572,bridged-callsite
+smgr.obj,?Term@CServerWorld@@QAEXXZ,0x00424bc0,487,310,bridged-callsite
+worldmodels.obj,?TermArrays@CWorldData@@QAEXXZ,0x00425420,186,80,bridged-callsite|SIZE-FLAG ship/ours=2.3x
+clientworld.obj,?FlagResolved@CResolver2cView@@QAEXPAVCKeyArray2cView@@@Z,0x00425580,54,54,near
+worldbsp.obj,??1CWorldSimple@@QAE@XZ,0x00425cf0,121,58,bridged-callsite|SIZE-FLAG ship/ours=2.1x
+worldbsp.obj,?wb_MaxDistSqr@@YAMPAPAVCWorldPart@@KPAV?$_CVector@M@@@Z,0x004260c0,157,155,near
+worldbsp.obj,?Term@CWorldBsp@@QAEXXZ,0x00426480,449,406,bridged-callseq-j0.43
+collection.obj,?GenGetNext@?$CMoArray@VCCollElemC0@@VDefaultCache@@@@UBE?AVCCollElemC0@@AAVGenListPos@@@Z,0x00427460,216,41,bridged-vtable|SIZE-FLAG ship/ours=5.3x
+collection.obj,?GenGetAt@?$CMoArray@VCCollElemC0@@VDefaultCache@@@@UBE?AVCCollElemC0@@AAVGenListPos@@@Z,0x00427540,213,36,bridged-vtable|SIZE-FLAG ship/ours=5.9x
+collection.obj,?GenAppend@?$CMoArray@VCCollElemC0@@VDefaultCache@@@@UAEIAAVCCollElemC0@@@Z,0x00427620,761,366,bridged-vtable|SIZE-FLAG ship/ours=2.1x
+collection.obj,?GenRemoveAt@?$CMoArray@VCCollElemC0@@VDefaultCache@@@@UAEXVGenListPos@@@Z,0x00427920,310,337,bridged-vtable
+collection.obj,?GenCopyList@?$CMoArray@VCCollElemC0@@VDefaultCache@@@@UAEIABV?$GenList@VCCollElemC0@@@@@Z,0x00427ca0,12,342,bridged-vtable|SIZE-FLAG ship/ours=0.0x
+collection.obj,?GenAppendList@?$CMoArray@VCCollElemC0@@VDefaultCache@@@@UAEIABV?$GenList@VCCollElemC0@@@@@Z,0x00427f30,598,269,bridged-vtable|SIZE-FLAG ship/ours=2.2x
+lt2new3.obj,?CopyBuffer@CUnknown428370@@QAEXPAV1@@Z,0x00428370,39,35,decl-comment
+collection.obj,?InternalNiceSetSize@?$CMoArray@VCCollElem18@@VDefaultCache@@@@AAEIKIPAVLAlloc@@@Z,0x004285e0,317,293,bridged-callsite
+collection.obj,?BaseNew@@YAPAVCCollElem18@@PAVLAlloc@@PAV1@K@Z,0x00428dd0,84,63,bridged-callsite
+dalloc.obj,?dalloc@@YAPAXK@Z,0x00428fd0,13,130,bridged-callsite|SIZE-FLAG ship/ours=0.1x
+dalloc.obj,?dfree@@YAXPAX@Z,0x00429080,42,88,bridged-callsite-sizeexact|SIZE-FLAG ship/ours=0.5x
+ltobject.obj,?obj_LinkIntoWorldTree@@YAPAXPAVCWorldBspView@@PAVLTObject@@@Z,0x004296a0,145,139,bridged-callsite
+collelem.obj,??_GCElem1CQ428@@QAEPAXI@Z,0x0042bcc0,94,94,near-SHAPE-COINCIDENCE-not-ModelWeightSet
+dhash.obj,?dhash_HashFilename@@YAKPAXK@Z,0x0042cc70,57,58,bridged-funcptr
+dhash.obj,?dhash_CmpFilename@@YAIPAX0K@Z,0x0042cd60,88,73,bridged-funcptr
+dhash.obj,?dhash_AddElement@@YAPAXPAVCHashTable@@PAXK@Z,0x0042ce30,13,149,bridged-callsite|SIZE-FLAG ship/ours=0.1x
+counter.obj,?cb_LoadServerObjects@@YAHPAVCClassMgr@@@Z,0x0042da50,939,939,near
+clientdsi.obj,?sub_42eec0@@YAPAXPAUSurfaceData@@HPAPAD@Z,0x0042eec0,63,62,sized-citation
+clientdsi.obj,?sub_42ef00@@YAPAXPAUSurfaceData@@HPAPAD@Z,0x0042ef00,65,62,sized-citation
+objbank.obj,?w_IntersectSegment@@YAIPAVIntersectQuery@@PAUIntersectInfo@@PAVCUnknown210@@H@Z,0x004305f0,753,810,bridged-callsite
+objbank.obj,?w_IsectObjectGeometry@@YAEPAVLTObject@@@Z,0x004312c0,900,915,bridged-callseq-j0.75
+saveio.obj,?sav_SaveObjects@@YAXPAVSavServerMgr@@PAVILTStream@@PAUSavObjectList@@KK@Z,0x00431770,842,842,near
+saveio.obj,?sav_SaveObjectExtra@@YAXPAVSavServerMgr@@PAVSavObject@@PAVILTStream@@@Z,0x00432130,193,189,near
+saveio.obj,?sm_RestoreNextObject@@YAKPAVSavServerMgr@@PAVILTStream@@PAVSavObject@@K@Z,0x004331f0,421,422,near
+genericprop.obj,?gp_Clear@@YAXPAUGenericProp@@@Z,0x00433610,64,64,near
+genericprop.obj,?gp_SetString@@YAXPAUGenericProp@@PAD@Z,0x00433650,121,133,near
+basestream.obj,?WriteStream@CBaseStream@@UAEKAAVILTStream@@KK@Z,0x00433920,179,183,bridged-vtable
+servercommon.obj,?world_PointInsideCB@@YAXPAVLTObject@@PAVCPointQuery@@@Z,0x004355d0,247,247,near
+servermsg.obj,?sub_1001307f@@YAXPAVLTRotation@@PAE@Z,0x00435ad0,558,374,bridged-callsite
+commonmodel.obj,?ci_GetNextModelNode@@YAKPAVLTObject@@KPAK@Z,0x00436370,113,113,bridged-funcptr
+filemgr.obj,?fs_BuildFileList@@YAPAUFileEntry@@PAPAXHPAD@Z,0x00436520,423,421,near
+clientinput.obj,?input_EnableDevice@@YAIPAUInputMgr@@PAD@Z,0x00436e80,443,450,near
+clientinput.obj,?di_FindDevice@@YAPAUInputDevice@@PAD@Z,0x00437040,181,181,near
+clientinput.obj,?di_FindDeviceByType@@YAPAUInputDevice@@K@Z,0x00437100,94,94,near
+clientinput.obj,?input_FlushDeviceData@@YAIXZ,0x00437b70,76,77,near
+clientinput.obj,?di_FindDeviceObject@@YAPAVCDeviceObject@@PAUInputDevice@@PAD@Z,0x00438140,95,91,near
+clientinput.obj,?input_GetDeviceName@@YAIKPADK@Z,0x00439e40,90,99,comment
+clientinput.obj,?input_ListDeviceObjects@@YAIPAD@Z,0x00439ec0,92,194,comment+size-outlier+starts-row-is-partial(run=192)
+netmgr.obj,?GenAppendList@CNetSentQueue@@UAEIABV?$GenList@PAVLThreadMessage@@@@@Z,0x00439fe0,134,100,bridged-vtable
+packet.obj,?sm_BreakAttachments@@YAXPAVCLinkMgrView@@PAVCLinkedObject@@HH@Z,0x0043bcc0,229,229,near
+worldsim.obj,?bsp_IntersectLine@@YAPAVWorldPoly@@PAVBSPNode@@PAV?$_CVector@M@@11PAVLTPlane@@@Z,0x0043c360,113,108,bridged-callsite
+clientinterface.obj,?ci_GetNextLine@@YAPAUHLTLINE_t@@PAVLTObject@@PAU1@@Z,0x0043ce00,71,56,decl-comment
+lmessage.obj,?ReadCompVectorFL@LMessageImpl@@QAEKAAV?$_CVector@M@@@Z,0x0043d820,281,281,near
+clientmusic.obj,?ChangeIntensity@CLTDirectMusicMgr@@UAEKHW4LTDMEnactTypes@@@Z,0x00440620,798,750,near
+clientmusic.obj,?StopSecondary@CLTDirectMusicMgr@@UAEKPBDW4LTDMEnactTypes@@@Z,0x00440ae0,280,279,near
+clientmusic.obj,?StopMotif@CLTDirectMusicMgr@@QAEKPBDW4LTDMEnactTypes@@@Z,0x00440dc0,280,279,near
+lthread.obj,?Flush@LThreadQueue@@QAEXXZ,0x00444270,76,32,bridged-callsite|SIZE-FLAG ship/ours=2.4x
+lthread.obj,?PeekMessage@LThreadQueue@@QAEKPAVLThreadMessage@@@Z,0x00444440,64,94,bridged-callsite
+lthread.obj,?TakeMessage@LThreadQueue@@QAEIPAVLThreadMessage@@@Z,0x004444a0,68,171,bridged-callsite|SIZE-FLAG ship/ours=0.4x
+lt2new4.obj,?FreeAll@CUnknown445250List@@QAEXXZ,0x00445250,45,45,near
+commonmodel.obj,?IsValid@CAnimTimeRefView@@QAEIXZ,0x00445370,123,125,near
+commonmodel.obj,?sub_100165e5@CUnknownD974@@QAEXXZ,0x004456f0,231,232,bridged-callsite
+commonmodel.obj,??0CUnknownD9E4@@QAE@PAVModel@@@Z,0x004459c0,94,94,near
+commonmodel.obj,?sub_100167e1@CUnknownD9E4@@QAEXXZ,0x00445a90,101,94,bridged-callsite
+modelanim.obj,?GetLength@ModelAnim@@QAEKXZ,0x00445c30,21,24,bridged-callsite
+commonmodel.obj,?sub_10016a00@CModelSub20C@Model@@QAEXXZ,0x00445dd0,163,163,near
+commonmodel.obj,??0Model@@QAE@PAK0@Z,0x00446360,732,773,near
+commonmodel.obj,?sub_10017016@Model@@QAEXI@Z,0x004467c0,418,426,bridged-callsite
+commonmodel.obj,?sub_100171f4@Model@@QAEII@Z,0x00446ad0,170,170,near
+commonmodel.obj,?sub_1001728c@Model@@QAEII@Z,0x00446b80,166,195,bridged-callsite-sizeexact
+commonmodel.obj,?sub_100172e3@Model@@QAEII@Z,0x00446c30,224,228,bridged-callsite-sizeexact
+lt2new2.obj,?SameNodeTree@CModelNodeTreeView@@QAEIPAV1@PAPAVCModelSub20CView@@@Z,0x00447750,34,34,sized-citation
+collection.obj,?GenGetNext@?$CMoArray@VCCollElem1C@@VDefaultCache@@@@UBE?AVCCollElem1C@@AAVGenListPos@@@Z,0x00447980,79,43,bridged-vtable
+collection.obj,?GenGetAt@?$CMoArray@VCCollElem1C@@VDefaultCache@@@@UBE?AVCCollElem1C@@AAVGenListPos@@@Z,0x004479d0,76,40,bridged-vtable
+collection.obj,?GenAppend@?$CMoArray@VCCollElem1C@@VNoCache@@@@UAEIAAVCCollElem1C@@@Z,0x00447a20,49,247,bridged-vtable|SIZE-FLAG ship/ours=0.2x
+collection.obj,?GenRemoveAt@?$CMoArray@VCCollElem1C@@VNoCache@@@@UAEXVGenListPos@@@Z,0x00447b80,387,263,bridged-vtable
+collection.obj,?GenCopyList@?$CMoArray@VCCollElem1C@@VNoCache@@@@UAEIABV?$GenList@VCCollElem1C@@@@@Z,0x00447d10,324,281,bridged-vtable
+collection.obj,?GenAppendList@?$CMoArray@VCCollElem1C@@VNoCache@@@@UAEIABV?$GenList@VCCollElem1C@@@@@Z,0x00447e60,291,239,bridged-vtable
+collection.obj,?GenAppend@?$CMoArray@VCCollElem1C@@VDefaultCache@@@@UAEIAAVCCollElem1C@@@Z,0x00448540,485,355,bridged-vtable
+collection.obj,?GenRemoveAt@?$CMoArray@VCCollElem1C@@VDefaultCache@@@@UAEXVGenListPos@@@Z,0x00448730,430,306,bridged-vtable
+collection.obj,?GenCopyList@?$CMoArray@VCCollElem1C@@VDefaultCache@@@@UAEIABV?$GenList@VCCollElem1C@@@@@Z,0x004488e0,351,315,bridged-vtable
+collection.obj,?GenAppendList@?$CMoArray@VCCollElem1C@@VDefaultCache@@@@UAEIABV?$GenList@VCCollElem1C@@@@@Z,0x00448a40,299,247,bridged-vtable
+collection.obj,?GenGetNext@?$CMoArray@VCCollElem24@@VNoCache@@@@UBE?AVCCollElem24@@AAVGenListPos@@@Z,0x004495c0,95,37,bridged-vtable|SIZE-FLAG ship/ours=2.6x
+collection.obj,?GenGetAt@?$CMoArray@VCCollElem24@@VNoCache@@@@UBE?AVCCollElem24@@AAVGenListPos@@@Z,0x00449620,90,34,bridged-vtable|SIZE-FLAG ship/ours=2.6x
+collection.obj,?GenAppend@?$CMoArray@VCCollElem24@@VNoCache@@@@UAEIAAVCCollElem24@@@Z,0x00449680,347,245,bridged-vtable
+collection.obj,?GenRemoveAt@?$CMoArray@VCCollElem24@@VNoCache@@@@UAEXVGenListPos@@@Z,0x004497e0,560,269,bridged-vtable|SIZE-FLAG ship/ours=2.1x
+collection.obj,?GenCopyList@?$CMoArray@VCCollElem24@@VNoCache@@@@UAEIABV?$GenList@VCCollElem24@@@@@Z,0x00449aa0,526,290,bridged-vtable
+collection.obj,?GenAppendList@?$CMoArray@VCCollElem24@@VNoCache@@@@UAEIABV?$GenList@VCCollElem24@@@@@Z,0x00449cb0,509,243,bridged-vtable|SIZE-FLAG ship/ours=2.1x
+commonmodel.obj,?sub_1001bc69@CUnknownD9E4@@QAEIPAVILTStream@@@Z,0x0044cf50,306,342,near
+commonmodel.obj,?sub_1001cec1@CModelLoadState@@QAEIPAK@Z,0x0044e790,350,350,bridged-callsite|ENUM-SPLIT-CORRECTED: the enumeration cut this function into 0x0044e790(11)+0x0044e79b(339); true size 350. was SIZE-FLAG ship/ours=0.0x
+commonmodel.obj,?AddTracker@CommonModelLT@@UAEKPAVLTObject@@PAVLTAnimTracker@@@Z,0x0044fb20,243,243,near
+commonphysics.obj,?wm_MoveObject@@YAXPAUWMMoveState@@V?$_CVector@M@@K@Z,0x00451000,1676,1487,comment:commonphysics.cpp:2761
+commonphysics.obj,?wm_PushIntersectingObjects@@YAXPAUWMMoveState@@PAV?$_CVector@M@@1@Z,0x00451720,1306,838,comment:commonphysics.cpp:2763
+commonphysics.obj,?wm_IsPushBlocker@@YAIPAVLTObject@@@Z,0x00451c40,52,56,near
+commonphysics.obj,?wm_NotifyContact@@YAXPAVIWMSetupSource@@PAVLTObject@@1@Z,0x00451d70,160,160,near
+commonphysics.obj,?wm_PushWithGeometry@@YAHPAUWMMoveState@@PAVLTObject@@PAV?$_CVector@M@@2HPAH@Z,0x00451e10,1691,1439,comment:commonphysics.cpp:2768
+commonphysics.obj,?wm_MoveThroughSim@@YAHPAUWMMoveState@@PAVIWorldBsp@@PAVLTObject@@2PAV?$_CVector@M@@3HH@Z,0x004524e0,38,514,comment:commonphysics.cpp:2770|SIZE-FLAG ship/ours=0.1x
+commonphysics.obj,?wm_PushWithBox@@YAHPAUWMMoveState@@PAVLTObject@@PAV?$_CVector@M@@2@Z,0x004526f0,1315,1296,comment:commonphysics.cpp:2772
+commonphysics.obj,?wm_ResizeAxis@@YAXPAUWMMoveState@@HPAM@Z,0x00454250,731,698,near
+netmgr.obj,??0NetConnection@@QAE@XZ,0x00455150,106,106,near
+netmgr.obj,?AddDriver@CNetMgr@@QAEPAVCBaseDriver@@PAD@Z,0x00456010,454,219,bridged-callsite|SIZE-FLAG ship/ours=2.1x
+netmgr.obj,?RemoveDriver@CNetMgr@@QAEXPAVCBaseDriver@@@Z,0x004561e0,315,92,bridged-callsite|SIZE-FLAG ship/ours=3.4x
+netmgr.obj,?GetPacket@CNetMgr@@QAEIPAVServerMessage@@@Z,0x00457840,531,496,near
+netmgr.obj,?SendPacket@CNetMgrSendView@@QAEIPAVServerMessage@@PAVNetConnection@@E@Z,0x00457ab0,385,210,bridged-callsite
+netmgr.obj,?sub_10022c2f@CNetMgrSendView@@QAEIPAXKKPAVNetConnection@@@Z,0x00458180,364,365,near
+netmgr.obj,?SendPacketData@CNetMgrSendView@@QAEIPAVServerMessage@@PAVNetConnection@@@Z,0x004582f0,1026,942,near
+netmgr.obj,?sub_100233ad@CNetMgrSendView@@QAEPAVCNetFragRec@@KPAVNetConnection@@@Z,0x00458ad0,62,62,near
+netmgr.obj,?ReleaseQueued@CNetMgr@@QAEXPAVCNetPending@@@Z,0x00458d50,111,41,bridged-callsite|SIZE-FLAG ship/ours=2.7x
+netmgr.obj,?sub_10023a91@CNetMgrSendView@@QAEXPAVLMessageList@@K@Z,0x004594c0,116,73,bridged-callsite
+netmgr.obj,?FindQueuedPacket@CNetMgr@@QAEPAXPAVLMessageList@@K@Z,0x00459760,54,54,near
+netmgr.obj,?sub_10023d73@CNetMgrSendView@@QAEXPAVServerMessage@@PAXK@Z,0x004599f0,195,36,bridged-callsite|SIZE-FLAG ship/ours=5.4x
+netmgr.obj,?DebugPrint@CNetMgrSendView@@QAAXHPADZZ,0x00459b50,92,104,near
+netmgr.obj,?DebugPrint@CNetMgr@@QAAXPAVNetConnection@@HPADZZ,0x00459bb0,114,126,near
+commonmodel.obj,?GenSetCacheSize@?$CMoArray@PAVCModelSub20C@Model@@VNoCache@@@@UAEXK@Z,0x00459f70,3,3,bridged-vtable
+objtypes.obj,??1CObjBase@@UAE@XZ,0x0045a6f0,195,166,bridged-callsite
+objtypes.obj,?InitFields@CObjBase@@QAEXXZ,0x0045a850,440,440,near
+ltobject.obj,?SetPos@LTObject@@QAEXV?$_CVector@M@@@Z,0x0045aaa0,255,38,bridged-callsite|SIZE-FLAG ship/ours=6.7x
+commonphysics.obj,?SetDims@CObjDimsSetter@@QAEXV?$_CVector@M@@@Z,0x0045aba0,219,38,bridged-callsite|SIZE-FLAG ship/ours=5.8x
+objbank.obj,??0CObjModel@@QAE@XZ,0x0045b180,203,202,near
+objtypes.obj,??0CObjLineSystem@@QAE@XZ,0x0045b940,112,112,near
+objtypes.obj,??1CObjLineSystem@@UAE@XZ,0x0045b9d0,79,79,near
+netmgr.obj,?netbank_Term@@YAXXZ,0x0045c020,96,96,near
+servermsg.obj,?msg_AllocPacket@@YAPAXPAPAVCAbstractIO@@KK@Z,0x0045c080,336,115,bridged-callsite|SIZE-FLAG ship/ours=2.9x
+servermsg.obj,?WriteData@ServerMessage@@QAEXPAXK@Z,0x0045c390,363,170,bridged-callsite|SIZE-FLAG ship/ours=2.1x
+fmconvert.obj,?fm_BlitPal8To16@@YAKPAVFMConvertMgr@@PAVFMConvertRequest@@@Z,0x0045d5e0,373,246,sized-citation
+fmconvert.obj,?fm_BlitPal8To32@@YAKPAVFMConvertMgr@@PAVFMConvertRequest@@@Z,0x0045d7d0,442,421,sized-citation
+fmconvert.obj,?fm_Blit8To8@@YAKPAVFMConvertMgr@@PAVFMConvertRequest@@@Z,0x0045da30,369,274,sized-citation
+fmconvert.obj,?Read8@FMFormatRead@@QAEKPAE@Z,0x0045dc00,130,107,sized-citation
+fmconvert.obj,?fm_Blit8To16@@YAKPAVFMConvertMgr@@PAVFMConvertRequest@@@Z,0x0045dc90,342,252,sized-citation
+fmconvert.obj,?fm_Blit8To32@@YAKPAVFMConvertMgr@@PAVFMConvertRequest@@@Z,0x0045ddf0,400,440,sized-citation
+fmconvert.obj,?fm_Blit16To8@@YAKPAVFMConvertMgr@@PAVFMConvertRequest@@@Z,0x0045df80,328,254,sized-citation
+fmconvert.obj,?Read16@FMFormatRead@@QAEKPAG@Z,0x0045e0d0,129,106,sized-citation
+fmconvert.obj,?fm_Blit16To16@@YAKPAVFMConvertMgr@@PAVFMConvertRequest@@@Z,0x0045e160,386,293,sized-citation
+fmconvert.obj,?fm_Blit16To32@@YAKPAVFMConvertMgr@@PAVFMConvertRequest@@@Z,0x0045e2f0,408,446,sized-citation+near-disagrees(0x45ddf0)
+fmconvert.obj,?Read32@FMFormatRead@@QAEKPAK@Z,0x0045e490,81,73,sized-citation
+fmconvert.obj,?fm_Blit32To8@@YAKPAVFMConvertMgr@@PAVFMConvertRequest@@@Z,0x0045e4f0,398,438,sized-citation
+fmconvert.obj,?fm_Blit32To16@@YAKPAVFMConvertMgr@@PAVFMConvertRequest@@@Z,0x0045e680,404,442,sized-citation+near-disagrees(0x45e4f0)
+fmconvert.obj,?fm_Blit32To32@@YAKPAVFMConvertMgr@@PAVFMConvertRequest@@@Z,0x0045e820,460,291,sized-citation
+fmconvert.obj,?fm_BlitPal32To16@@YAKPAVFMConvertMgr@@PAVFMConvertRequest@@@Z,0x0045e9f0,358,246,sized-citation
+fmconvert.obj,?fm_BlitPal32To32@@YAKPAVFMConvertMgr@@PAVFMConvertRequest@@@Z,0x0045eb90,375,249,sized-citation
+fmconvert.obj,?fm_WritePixel8@@YAXPAVFMConvertMgr@@PAVFMFormat@@PAX2@Z,0x0045ed50,145,46,sized-citation+size-outlier
+fmconvert.obj,?fm_WritePixel16@@YAXPAVFMConvertMgr@@PAVFMFormat@@PAX2@Z,0x0045edf0,141,47,sized-citation+size-outlier
+fmconvert.obj,?fm_WritePixel32@@YAXPAVFMConvertMgr@@PAVFMFormat@@PAX2@Z,0x0045ee80,158,46,sized-citation+size-outlier
+fmconvert.obj,?fm_ReadPixel8@@YAXPAVFMConvertMgr@@PAVFMFormat@@PAX2@Z,0x0045ef20,168,46,sized-citation+size-outlier
+fmconvert.obj,?fm_ReadPixel16@@YAXPAVFMConvertMgr@@PAVFMFormat@@PAX2@Z,0x0045efd0,167,46,sized-citation+size-outlier
+lt2new2.obj,??0CPFormatHolderView@@QAE@XZ,0x0045f340,37,37,sized-citation
+clientrender.obj,?r_InitRender@@YAKPAVCClientMgrView@@PAURMode@@@Z,0x004623d0,977,977,sized-citation
+serverlightanim.obj,?sm_Unknown26755@@YAXPAVCServerMgr@@PAVClient@@@Z,0x00462fd0,286,290,bridged-callsite
+smgr.obj,?sm_UpdateClientState2@@YAKPAVCServerMgr@@PAVClient@@@Z,0x004630f0,987,829,bridged-callsite
+lt2new3.obj,?sub_00463cf0@@YAXPAVLTObject@@PAX@Z,0x00463cf0,41,33,name-encoded
+smgr.obj,?sm_AttachClient@@YAKPAVCServerMgr@@PAVClient@@1@Z,0x00463d60,404,281,bridged-callsite
+smgr.obj,?sm_DetachClient@@YAKPAVCServerMgr@@PAVClient@@@Z,0x00463f00,349,130,bridged-callsite|SIZE-FLAG ship/ours=2.7x
+smgr.obj,?sm_RemoveClient@@YAXPAVCServerMgr@@PAVClient@@@Z,0x004640a0,246,204,bridged-callsite
+smgr.obj,?sm_ClientEnterWorld2@@YAKPAVCServerMgr@@PAVClient@@@Z,0x00464390,682,564,bridged-callsite
+smgr.obj,?sm_ClientExitWorld@@YAXPAVCServerMgr@@PAVClient@@@Z,0x00464640,170,172,bridged-callsite
+smgr.obj,?sm_FinishUpdatePacket@@YAIPAVCUpdateContext@@PAVServerMessage@@HH@Z,0x00464840,45,118,bridged-callsite|SIZE-FLAG ship/ours=0.4x
+smgr.obj,?sub_10027918@@YAXPAVLTObject@@PAVCUpdateContext@@@Z,0x00464a00,926,204,bridged-callsite|SIZE-FLAG ship/ours=4.5x
+smgr.obj,?sub_10027ad0@@YAXPAVCUpdateContext@@PAVLTObject@@PAVCObjInfo@@@Z,0x00464da0,291,287,near
+smgr.obj,?sm_WriteClientUpdate@@YAXPAVCServerMgr@@PAVClient@@@Z,0x00465610,2186,1514,bridged-callsite
+serverlightanim.obj,?la_FindClientChange@@YAHPAVClient@@KPAK@Z,0x00466610,54,55,near
+lt2new1.obj,?sub_466b90@@YAXXZ,0x00466b90,21,52,name-encoded+size-outlier+starts-row-is-partial(run=52)
+sharedcommon.obj,?cc_OnVarCreated@@YAXPAVConsoleState@@PAVLTCommandVar@@@Z,0x00466e30,177,196,bridged-funcptr
+smgr.obj,?sub_100298d9@@YAXPAVCServerMgr@@PAVSoundInstance@@PAVCObjInfo@@PAVClient@@PAVServerMessage@@@Z,0x00468330,1326,621,bridged-callsite|SIZE-FLAG ship/ours=2.1x
+smgr.obj,?sm_ResetProfileCounters@@YAXXZ,0x00468f20,87,91,bridged-callsite-sizeexact
+servermodel.obj,?sm_LoadWorldObjects@@YAKPAVCServerMgr@@PAVILTStream@@PADK@Z,0x00469d10,1392,928,bridged-callseq-j0.42
+smgr.obj,?sm_RemoveObject@@YAXPAVCServerMgr@@PAVLTObject@@@Z,0x0046a280,146,110,bridged-callsite
+smgr.obj,?sm_SetObjectSFXMessage@@YAXPAVCServerMgr@@PAVLTObject@@PAVServerMessage@@@Z,0x0046a420,293,175,bridged-callsite
+serverengine.obj,?se_LoadChildModel@@YAKPAVCModelLoadRequest@@PAPAVModel@@@Z,0x0046a790,762,662,near
+serverengine.obj,?se_LoadModelData@@YAKPAVCServerMgr@@PADPAXPAPAVModel@@@Z,0x0046aac0,583,562,bridged-callseq-j0.67
+serverengine.obj,?se_RegisterModel@@YAKPAVCServerMgr@@PAVModel@@PAXH@Z,0x0046ad10,215,217,near
+serverengine.obj,?se_LoadModel@@YAKPAVCServerMgr@@PADPAPAVModel@@PAPAXHH@Z,0x0046adf0,374,348,near
+serverengine.obj,?se_InitModel@@YAKPAVCServerMgr@@PAVLTObject@@PAUObjectCreateStruct@@@Z,0x0046b020,541,487,near
+serverengine.obj,?se_InitWorldModel@@YAKPAVCServerMgr@@PAVLTObject@@PAUObjectCreateStruct@@@Z,0x0046b330,393,401,near
+filemgr.obj,?fs_Term@@YAXPAVCFileMgr@@@Z,0x0046b690,92,92,near
+filemgr.obj,?fs_AddResources@@YAXPAVCFileMgr@@PAPADKPAPAXPAH@Z,0x0046b6f0,166,166,near
+filemgr.obj,?fs_OpenFileEx@@YAPAVILTStream@@PAVCFileMgr@@PADHH@Z,0x0046b7c0,154,154,near
+serverengine.obj,?fs_CopyFile@@YAKPAVCFileMgr@@PBD1@Z,0x0046b890,95,95,near
+serverengine.obj,?se_LoadFile@@YAHPAVCFileMgr@@PADHPAPAX@Z,0x0046b9d0,303,277,near
+commonphysics.obj,?SetVelocity@SPhysicsLT@@UAEKPAVLTObject@@PAV?$_CVector@M@@@Z,0x0046bd00,226,217,near
+commonphysics.obj,?SetAcceleration@SPhysicsLT@@UAEKPAVLTObject@@PAV?$_CVector@M@@@Z,0x0046bdf0,201,201,near
+commonphysics.obj,?SetObjectDims@SPhysicsLT@@UAEKPAVLTObject@@PAV?$_CVector@M@@K@Z,0x0046bf20,403,402,near
+servermessage.obj,?FindWorldModelObjectIntersections@CLTServer@@QAEKPAVLTObject@@V?$_CVector@M@@VLTRotation@@AAV?$BaseObjArray@PAVLTObject@@@@@Z,0x0046daa0,544,538,near
+servermessage.obj,?SendTo@CLTServer@@QAEKPBXKPBDK@Z,0x0046ea70,88,88,near
+servermessage.obj,?StartMessage@CLTServer@@QAEPAVILTMessage@@PAUHCLIENT_t@@E@Z,0x0046f110,44,44,near
+smgr.obj,?sm_FindObjectsTouchingSphere@@YAPAUObjectList@@PAV?$_CVector@M@@M@Z,0x0046faa0,293,318,bridged-funcptr
+smgr.obj,?si_CreateObjectList@@YAPAUObjectList@@XZ,0x0046fc10,69,33,bridged-funcptr|SIZE-FLAG ship/ours=2.1x
+smgr.obj,?si_AddObjectToList@@YAPAUObjectLink@@PAUObjectList@@PAVLTObject@@@Z,0x0046fc60,69,40,bridged-funcptr
+smgr.obj,?si_IsKindOf@@YAIPAUHCLASS_t@@0@Z,0x00470730,46,50,near
+smgr.obj,?si_GetPropRotation@@YAKPADPAVLTRotation@@@Z,0x00470a60,87,56,bridged-funcptr
+smgr.obj,?si_GetPropRotationEuler@@YAKPADPAV?$_CVector@M@@@Z,0x00470ac0,77,58,bridged-funcptr
+smgr.obj,?si_CreateObjectProps@@YAPAVBaseClass@@PAUHCLASS_t@@PAUObjectCreateStruct@@PAD@Z,0x00470c70,682,588,bridged-funcptr
+smgr.obj,?si_GetServerFlags@@YAKXZ,0x00470f20,37,37,near
+smgr.obj,?si_GetClientRefInfoFlags@@YAKPAUHCLIENTREF_t@@@Z,0x004713b0,23,18,bridged-funcptr
+smgr.obj,?sm_ObjectColorChanged@@YAXPAVLTObject@@@Z,0x00471ea0,200,23,bridged-callsite|SIZE-FLAG ship/ours=8.7x
+smgr.obj,?si_SetObjectUserFlags@@YAKPAVLTObject@@K@Z,0x00471f80,312,104,bridged-funcptr|SIZE-FLAG ship/ours=3.0x
+smgr.obj,?si_GetNextObject@@YAPAVLTObject@@PAV1@@Z,0x004720c0,71,65,bridged-funcptr
+smgr.obj,?si_GetNextInactiveObject@@YAPAVLTObject@@PAV1@@Z,0x00472110,80,63,bridged-funcptr
+smgr.obj,?si_GetObjectState@@YAHPAVLTObject@@@Z,0x004722f0,42,37,near
+smgr.obj,?sm_SetObjectRotation@@YAKPAVLTObject@@PAVLTRotation@@H@Z,0x004723c0,500,317,bridged-callsite
+smgr.obj,?si_ScaleObject@@YAXPAVLTObject@@PAV?$_CVector@M@@@Z,0x004725e0,252,50,bridged-funcptr|SIZE-FLAG ship/ours=5.0x
+smgr.obj,?si_ClipSprite@@YAKPAVLTObject@@K@Z,0x004727c0,257,69,bridged-funcptr|SIZE-FLAG ship/ours=3.7x
+smgr.obj,?si_SetLightRadius@@YAXPAVLTObject@@M@Z,0x00472b10,245,42,bridged-funcptr|SIZE-FLAG ship/ours=5.8x
+smgr.obj,?si_GetModelCommandString@@YAKPAVLTObject@@PADK@Z,0x00472c10,169,170,bridged-funcptr
+smgr.obj,?si_SetModelPlaying@@YAXPAVLTObject@@I@Z,0x00472cc0,268,82,bridged-funcptr|SIZE-FLAG ship/ours=3.3x
+smgr.obj,?Init@CServerMgr@@QAEIXZ,0x00473160,985,985,near
+smgr.obj,?Term@CServerMgr@@QAEXXZ,0x00473550,690,641,bridged-callseq-j0.65
+smgr.obj,?sm_ApplyChangeFlags@@YAXPAVCServerMgr@@@Z,0x00474040,164,160,near
+smgr.obj,?Update@CServerMgr@@QAEIJM@Z,0x004742a0,698,711,bridged-callseq-j0.55
+smgr.obj,?CreateObject@CServerMgr@@QAEPAVBaseClass@@PAUHCLASS_t@@PAUObjectCreateStruct@@@Z,0x004745a0,185,104,bridged-callsite
+smgr.obj,?LoadWorld@CServerMgr@@QAEKPAVILTStream@@PAD@Z,0x00474660,219,214,near
+smgr.obj,?sub_100334cc@@YAXPAVCServerMgr@@PAVLTObject@@@Z,0x00474a60,73,55,bridged-callsite
+smgr.obj,?DoStartWorld@CServerMgr@@QAEKPADKM@Z,0x004750f0,530,688,bridged-tagmap
+smgr.obj,?sm_EndWorldC@@YAXPAVCServerMgr@@@Z,0x00475520,62,62,near
+smgr.obj,?FreeUnusedModels@CServerMgr@@QAEKXZ,0x00475560,260,255,near
+smgr.obj,?PlaySound@CServerMgr@@UAEKPAUPlaySoundInfo@@AAPAUHLTSOUND_t@@@Z,0x004759f0,649,600,bridged-vtable
+smgr.obj,?GetSoundDuration@CServerMgr@@UAEKPAUHLTSOUND_t@@AAM@Z,0x00475c80,87,87,near
+smgr.obj,?KillSound@CServerMgr@@UAEKPAUHLTSOUND_t@@@Z,0x00475d60,148,148,near
+smgr.obj,?KillSoundLoop@CServerMgr@@UAEKPAUHLTSOUND_t@@@Z,0x00475e00,279,171,bridged-tagmap
+smgr.obj,?sm_BroadcastPrintf@@YAXPADZZ,0x00476010,310,176,bridged-callsite
+smgr.obj,?sm_EndWorldD@@YAXPAVCServerMgr@@@Z,0x004764f0,155,124,bridged-callsite
+smgr.obj,?sm_FlushList44@@YAXPAVCServerMgr@@@Z,0x00476590,88,65,bridged-callsite
+smgr.obj,?sm_PingObjects@@YAXPAVCServerMgr@@PAVLTObject@@@Z,0x004766c0,170,113,bridged-callsite
+smgr.obj,?sm_SendSFXMessage@@YAKPAVCServerMgr@@HPAVServerMessage@@PAVLTObject@@PAV?$_CVector@M@@K@Z,0x00476920,263,198,bridged-callsite
+smgr.obj,?sm_CacheFile@@YAKPAVCServerMgr@@KPAD@Z,0x00476ac0,512,518,bridged-callsite
+smgr.obj,?StartMessage@CServerMgr@@QAEPAVServerMessage@@XZ,0x00476dd0,96,117,bridged-callsite
+lt2new4.obj,??0CUnknown4789A0@@QAE@XZ,0x004789a0,42,35,decl-comment
+commonphysics.obj,?sm_MoveObject@@YAXPAVIWorldSim@@PAVLTObject@@PAV?$_CVector@M@@K@Z,0x0047c5b0,118,176,bridged-callsite
+clientsoundinst.obj,?sub_47d240@CSoundDataView@@QAEKPAEPAGK@Z,0x0047d240,48,48,near
+smgr.obj,?Reset@CCacheRecView@@QAEXXZ,0x0047d300,9,9,bridged-callsite
+clientsoundinst.obj,?sub_47e390@CSoundInstanceView@@QAEIXZ,0x0047e390,47,45,name-encoded
+clientsoundinst.obj,??0CSoundInstance1@@QAE@XZ,0x0047e970,42,33,decl-comment
+clientsoundmgr.obj,?Alloc3DVoices@CSoundMgrView@@QAEKXZ,0x00480620,329,318,decl-comment
+clientsoundmgr.obj,?Free3DVoices@CSoundMgrView@@QAEKXZ,0x00480770,190,177,decl-comment
+clientsoundmgr.obj,?AllocSWVoices@CSoundMgrView@@QAEKXZ,0x00480830,329,318,decl-comment
+clientsoundmgr.obj,?FreeSWVoices@CSoundMgrView@@QAEKXZ,0x00480980,190,177,decl-comment
+clientsoundmgr.obj,?SortSoundInstances@@YAHPBX0@Z,0x00481500,219,224,comment
+clientsoundmgr.obj,?sub_481e70@CSoundMgrView@@QAEKXZ,0x00481e70,117,117,near
+clientsoundmgr.obj,?sub_481ef0@CSoundMgrView@@QAEKXZ,0x00481ef0,113,111,name-encoded
+clientsoundmgr.obj,?GetSound3DProviderLists@CSoundMgrView@@UAEKAAPAUSound3DProvider@@I@Z,0x004825a0,39,152,comment+size-outlier
+clientsound.obj,?GetFilterName@CSoundMgr@@QAEKKPAPBD@Z,0x00482ee0,233,235,near
+clientsound.obj,?GetFilterParamName@CSoundMgr@@QAEKKPBDPAPBD@Z,0x004830d0,399,401,near
+clientsound.obj,?GetFilterParamIndex@CSoundMgr@@QAEKPBD0PAK@Z,0x00483260,346,345,near
+spritecontrol.obj,?UpdateTimer@SoundInstance@@QAEXM@Z,0x00483900,344,225,bridged-callsite
+spritecontrol.obj,?SetCurPos@SpriteControl@@QAEKKK@Z,0x00483e60,161,160,near
+clientstreams.obj,?growstream_Open@@YAPAVILTStream@@K@Z,0x00484170,129,135,near
+clientstreams.obj,?Write@CGrowStream@@UAEKPBXK@Z,0x00484280,193,250,decl-comment
+clientstreams.obj,?growstream_OpenFile@@YAPAVILTStream@@PAD@Z,0x00484440,310,346,comment
+clientstreams.obj,?tcp_BuildSockaddrFromString@@YAHPADPAUsockaddr_in@@@Z,0x00484a80,282,276,comment
+tcpdriver.obj,?CloseSockets@TCPDriver@@QAEXH@Z,0x00484de0,181,119,bridged-callsite
+tcpdriver.obj,?StartQuery@TCPDriver@@UAEKPAD@Z,0x004852ef,196,490,bridged-tagmap|SIZE-FLAG ship/ours=0.4x
+tcpdriver.obj,?UpdateSessionName@TCPDriver@@UAEKPBD@Z,0x00485d70,137,137,near
+tcpdriver.obj,?GetTcpIpAddress@TCPDriver@@UAEIPADKAAG@Z,0x00486780,544,535,near
+tcpdriver.obj,?JoinSession@TCPDriver@@QAEKPAUsockaddr_in@@@Z,0x004869a0,1867,1752,bridged-callsite
+lttexmod.obj,?GetTextureHandle@LTTexMod@@UAEKPADAAPAVSharedTexture@@K@Z,0x00488280,758,749,comment
+lttexmod.obj,?ReleaseTextureHandle@LTTexMod@@UAEKQAVSharedTexture@@@Z,0x00488580,135,127,near
+lttexmod.obj,?LockTexture@LTTexMod@@UAEKQAVSharedTexture@@PBVLTRect@@KAAPAEAAJ@Z,0x00488720,415,415,near
+lt2new4.obj,??0CUnknown48A5F0@@QAE@PAVCUnknown48A5F0Owner@@@Z,0x0048a5f0,42,42,decl-comment
+lt2new3.obj,??1CClass4A38A4@@UAE@XZ,0x0048ac40,38,38,near
+lttexmod.obj,?ParseWaveChunk@@YAIPAVILTStream@@KKKPAUWaveInfo@@@Z,0x0048c270,713,726,comment
+collection.obj,??A?$CMoArray@VCCollElem60@@VDefaultCache@@@@QBEAAVCCollElem60@@K@Z,0x0048cd30,18,18,near
+lt2new2.obj,?Visit@CObjVisitorView@@QAEXPAVCObjBaseVisitView@@@Z,0x0048db00,35,35,sized-citation
+ltnew1.obj,??0CSub48df10View@@QAE@XZ,0x0048df10,26,23,near
+lt2new4.obj,?FindByName@CUnknown48E630@@QAEPAXPBD@Z,0x0048e630,42,41,decl-comment
+collection.obj,?GenGetSize@?$CMoArray@EVDefaultCache@@@@UBEKXZ,0x00491480,4,4,bridged-vtable
+ltnew2.obj,?GetValue@CNode@@QAEHPAJ@Z,0x00491a50,26,26,near
+ltnew2.obj,?GetValue@CNode@@QAEHPAM@Z,0x00491a70,26,26,near
+fsstream.obj,??0CStreamFields@@QAE@XZ,0x00491b20,32,35,near
+clientshell.obj,?Term@CClientShell@@QAEXXZ,0x00413350,219,220,cluster-0x413080
+clientshell.obj,?StartupLocal@CClientShell@@QAEKPAVStartGameRequest@@HK@Z,0x00413440,332,0,cluster-0x413080
+clientshell.obj,?Update@CClientShell@@QAEKXZ,0x004139a0,410,411,cluster-0x413080
+clientshell.obj,?cs_UpdateAttachPositions@@YAXPAVCClientShell@@@Z,0x00413b40,283,0,cluster-0x413080
+clientshell.obj,?SendMessage0A@CClientShell@@QAEXK@Z,0x00413c60,97,81,cluster-0x413080
+ccclient.obj,?cc_RangeBind@@YAXHPAPAD@Z,0x0041dc20,179,179,cluster-0x41da40
+ccclient.obj,?cc_ReadHistory@@YAXHPAPAD@Z,0x0041e4b0,223,223,cluster-0x41da40
+ccline.obj,?SetNumLines@CcnConsole@@QAEIK@Z,0x0041c910,254,0,cluster-0x41c910
+ccline.obj,?RefreshFromVars@CcnConsole@@QAEXXZ,0x0041ca60,123,0,cluster-0x41c910
+ccline.obj,?ListMatches@CcnConsole@@QAEXXZ,0x0041cca0,98,0,cluster-0x41c910
+ccline.obj,?SetAlpha@CcnConsole@@QAEXM@Z,0x0041ce70,99,0,cluster-0x41c910
+ccline.obj,?SetRect@CcnConsole@@QAEXPAVLTRect@@@Z,0x0041cf30,259,0,cluster-0x41c910
+binkvideo.obj,?Init@BinkVideoMgrK@@QAEHXZ,0x00401850,500,500,cluster-0x401770-extent-corrected
+binkvideo.obj,?InitScreen@BinkVideoInstK@@QAEHXZ,0x00401dd0,611,619,cluster-0x401770
+binkvideo.obj,?BindToSurface@BinkVideoInstK@@UAEHPAVCVideoPolyK@@@Z,0x00402200,192,0,cluster-0x401770
+binkvideo.obj,??0BinkVideoInstK@@QAE@PAVBinkVideoMgrK@@@Z,0x00401b90,103,0,cluster-0x401770
+soundinst2.obj,?Init@CSndInstanceLocalJ@@UAEKPAUCSndDataJ@@PAUPlaySoundInfo@@K@Z,0x0047e710,80,0,cluster-0x47e710
+soundinst2.obj,?Update@CSndInstanceLocalJ@@UAEIK@Z,0x0047e7b0,436,0,cluster-0x47e710
+soundinst2.obj,?Init@CSndInstanceAmbientJ@@UAEKPAUCSndDataJ@@PAUPlaySoundInfo@@K@Z,0x0047e9a0,76,0,cluster-0x47e710
+soundinst2.obj,?GetListenerOffset@CSndInstanceAmbientJ@@UAEKPAVCSndVec3J@@@Z,0x0047e9f0,166,0,cluster-0x47e710
+soundinst2.obj,?Update@CSndInstanceAmbientJ@@UAEIK@Z,0x0047eaa0,756,0,cluster-0x47e710
+soundinst2.obj,?Init@CSndInstance3DJ@@UAEKPAUCSndDataJ@@PAUPlaySoundInfo@@K@Z,0x0047ee50,77,0,cluster-0x47e710
+soundinst2.obj,?GetListenerOffset@CSndInstance3DJ@@UAEKPAVCSndVec3J@@@Z,0x0047eea0,102,0,cluster-0x47e710
+clientmgr3.obj,?ProcessThreadMessages@CCmgClientMgr@@QAEXXZ,0x00410670,76,0,cluster
+clientmgr3.obj,?Update@CCmgClientMgr@@QAEKXZ,0x004106c0,412,0,cluster
+clientmgr3.obj,?PlaySound@CCmgClientMgr@@QAEKPAXPADM@Z,0x00410960,175,0,cluster
+clientmgr3.obj,?cmg_CreateClientMgr@@YAPAVCCmgClientMgr@@XZ,0x00410a70,904,0,cluster
+clientmgr3.obj,??1CCmgClientMgr@@QAE@XZ,0x00410ec0,1112,0,cluster
+clientmgr3.obj,?cmg_ReleaseRefList@@YAXPAULTLink@@@Z,0x00411340,90,0,cluster
+clientwin.obj,?clu_dsi_RunClientApp@@YAHPAUHINSTANCE__@@PAUCluCommandLineArgs@@@Z,0x00402f90,918,0,cluster-0x402f90
+clientwin.obj,?clu_dsi_InitGame@@YAIPAUCluClientGlob@@PAUCluCommandLineArgs@@@Z,0x00403330,372,0,cluster-0x402f90
+clientwin.obj,?clu_WndProc@@YGJPAUHWND__@@IIJ@Z,0x004034b0,1335,0,cluster-0x402f90
+clientwin.obj,?clu_dsi_BuildCommandLine@@YAIPAUCluCommandLineArgs@@@Z,0x004039f0,454,0,cluster-0x402f90
+clientwin.obj,?clu_dsi_ParseCommandLine@@YAXPAD@Z,0x00403bc0,414,0,cluster-0x402f90
+clientwin.obj,?clu_dsi_ParseCommandFile@@YAIPAD@Z,0x00403da0,143,0,cluster-0x402f90
+clientwin.obj,?clu_WinMain@@YGHPAUHINSTANCE__@@0PADH@Z,0x00403e30,338,0,cluster-0x402f90
+clientwin.obj,?clu_fm_Create@@YAPAVCluFileMgr@@PAVCluClientMgrView@@@Z,0x00403fd0,261,0,cluster-0x402f90
+clientwin.obj,?clu_fm_Destroy@@YAXPAVCluFileMgr@@@Z,0x004040f0,179,0,cluster-0x402f90
+clientwin.obj,?clu_fm_Init@@YAXPAVCluFileMgr@@H@Z,0x004041f0,140,0,cluster-0x402f90
+clientwin.obj,?clu_fm_OnServerFile@@YAHPAXHPADG@Z,0x00404280,302,0,cluster-0x402f90
+clientwin.obj,?clu_fm_GetFileRec@@YAPAUCluFileRec@@PAVCluFileMgr@@PAUCluFileIdent@@E@Z,0x00404680,526,0,cluster-0x402f90

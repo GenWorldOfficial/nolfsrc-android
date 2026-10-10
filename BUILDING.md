@@ -55,6 +55,13 @@ make test         # tools/playtest.sh with tools/playtest-basic.txt on
                   #   Worlds\T01S01 and Worlds\M03S01, under Xvfb; passes if the
                   #   game is still running after the script on both
 make test TEST_LEVELS="M06S01"   # other levels
+make progress     # score the build against the retail binaries, function by
+                  #   function; fails if a function recorded as byte-identical
+                  #   in progress/identical.txt no longer is
+make progress NOLF_SOURCE=<dir>  # the same, with the lithshared libraries
+                  #   (<dir>: the NOLF Source Code v1.003 release)
+make progress-update NOLF_SOURCE=<dir>   # record the score in progress/ and
+                  #   README.md
 make shell        # a shell in the build container, at /repo
 make clean        # remove out/ and every build output in the source tree
 make distclean    # clean, and remove the docker image
@@ -63,6 +70,11 @@ make distclean    # clean, and remove the docker image
 `make test` leaves each run in `out/play/test-<level>/`: `result.txt`,
 `wine.log`, `script.log`, the screenshots in `shots/` and a contact sheet
 `shots.png`.
+
+`make progress` scores what the last `make` built (it compiles nothing), so
+run `make` first; the retail images it compares against are extracted from
+disc 2 into `out/reference/` the first time. `progress/README.md` describes
+the scoring and the test.
 
 ## Running parts of the build
 
