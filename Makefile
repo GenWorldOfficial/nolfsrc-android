@@ -108,7 +108,7 @@ clean:
 	rm -rf out
 	rm -rf src/engine/*/Release src/lithshared/*/Release src/lithshared/out \
 	  src/game/*/Release src/game/*/Final_Release src/game/*/Debug \
-	  src/engine/launcher/res
+	  src/engine/launcher/res src/game/ClientRes/goty
 	rm -f src/engine/*/link/aliases.obj src/engine/*/link/vtables.obj \
 	  src/engine/*/link/ddraw7.lib src/engine/*/link/mss32dec.lib \
 	  src/engine/d3d/link/d3dviews.obj

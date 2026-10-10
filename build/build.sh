@@ -73,13 +73,29 @@ compile_list() {
     ( cd "$projdir" && run_cl "@$outdir/cl.rsp" )
 }
 
+# CRes.dll's resources: ClientRes.rc, plus what the retail Game of the Year
+# CRES.dll has and Monolith's v1.003 source of it lacks -- the GOTY content's
+# strings and its credits -- which build/all.sh extracts from the disc into
+# goty/ (tools/discextract.py goty). Compiled from goty/, where rc finds the
+# GOTY credits.txt before ClientRes.rc's own (rc looks in its working
+# directory first); everything else ClientRes.rc names comes from /i ..
+cres_rc() {  # cres_rc <outdir, relative to src/game/ClientRes>  (run in ClientRes)
+    if [ ! -f goty/goty.rc ] || [ ! -f goty/credits.txt ]; then
+        echo "error: src/game/ClientRes/goty/ is missing -- build/all.sh writes it" >&2
+        echo "       (or: python3 tools/discextract.py goty <isodir> src/game/ClientRes/goty)" >&2
+        return 1
+    fi
+    printf '#include "..\\ClientRes.rc"\r\n#include "goty.rc"\r\n' > goty/cres_goty.rc
+    ( cd goty && run_rc /l 0x409 /d NDEBUG /i .. /fo"..\\$1\\ClientRes.res" cres_goty.rc )
+}
+
 build_cres() {
     echo "==== ClientRes -> CRes.dll"
     local D="src/game/ClientRes" OUT=Release
     mkdir -p "$D/$OUT"
     ( cd "$D" &&
       run_cl /nologo /MT /W3 /GX /O2 /I "..\\shared" /D WIN32 /D NDEBUG /D _WINDOWS /Fo"$OUT/" /c main.cpp &&
-      run_rc /l 0x409 /d NDEBUG /fo"$OUT/ClientRes.res" ClientRes.rc &&
+      cres_rc "$OUT" &&
       run_link /nologo /subsystem:windows /dll /machine:I386 /out:"$OUT/CRes.dll" \
         "$OUT/main.obj" "$OUT/ClientRes.res" \
         kernel32.lib user32.lib gdi32.lib advapi32.lib )

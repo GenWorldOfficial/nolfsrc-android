@@ -104,6 +104,9 @@ python3 tools/discextract.py thirdparty "$ISOS" "$OUT"
 step "2b. launcher art: resources of the retail NOLF.exe on $ISOS -> src/engine/launcher/res/"
 python3 tools/discextract.py launcherres "$ISOS" src/engine/launcher/res
 
+step "2c. Game of the Year text: the retail CRES.dll on $ISOS -> src/game/ClientRes/goty/"
+python3 tools/discextract.py goty "$ISOS" src/game/ClientRes/goty
+
 step "3. clean: previous build outputs"
 rm -rf src/engine/*/Release src/lithshared/*/Release src/lithshared/out \
        src/game/*/Release src/game/*/Final_Release

@@ -22,6 +22,7 @@ This file says which is which; it is not legal advice and grants nothing.
 | `mss32.dll` and its `.flt`, `.m3d`, `.asi`, `.as6` providers | Miles Sound System, RAD Game Tools | `out/game/` (the only binaries in the game not built from source) |
 | `binkw32.dll` | Bink Video, RAD Game Tools | `out/game/` |
 | the launcher's bitmap, palette, music, icon and cursors | Monolith, from the retail `NOLF.exe`'s resources | `src/engine/launcher/res/` (gitignored), compiled into our `NOLF.exe` |
+| the Game of the Year strings and credits | Monolith, from the retail GOTY `CRES.dll`'s resources | `src/game/ClientRes/goty/` (gitignored), compiled into our `CRes.dll` |
 
 `make progress` also extracts the retail `lithtech.exe`, `server.dll`,
 `d3d.ren` and `NOLF.exe` into `out/reference/`, to compare our build against;

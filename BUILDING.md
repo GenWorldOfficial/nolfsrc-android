@@ -35,6 +35,7 @@ parts of it by hand.
 | 1. resources | game data off the discs: the four `.rez` archives, configs, text, movies -- with the retail game DLLs inside the archives overwritten with zeros | `out/game/` |
 | 2. third-party runtime | Miles Sound System (`mss32.dll` and its `.flt` / `.m3d` / `.asi` / `.as6` providers) and Bink (`binkw32.dll`) off the discs: licensed middleware with no source, which the engine imports | `out/game/` |
 | 2b. launcher art | the splash bitmap, palette, music, icon and cursors `launcher.rc` compiles into `NOLF.exe`, read out of the retail `NOLF.exe`'s resources on the disc | `src/engine/launcher/res/` |
+| 2c. Game of the Year text | the strings of the Game of the Year content (the "Rest and Relaxation" mission) and the GOTY credits, which Monolith's v1.003 source of `CRes.dll` lacks, read out of the retail GOTY `CRES.dll` on the disc; compiled into our `CRes.dll` beside `ClientRes.rc`, so its resources are the retail ones | `src/game/ClientRes/goty/` |
 | 3. clean | every object and image from a previous run is removed | |
 | 4. libraries | `build/libs.sh all` | `src/lithshared/out/*.lib` |
 | 5. game DLLs | `build/build.sh all final`: `CRes.dll`, `CShell.dll`, `Object.lto` | `src/game/*/Release`, `Final_Release` |
