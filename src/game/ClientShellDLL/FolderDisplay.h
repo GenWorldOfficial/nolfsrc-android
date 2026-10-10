@@ -107,7 +107,6 @@ private:
 	LTBOOL							m_bP1IntelFix;
 #endif
 
-
 };
 
 #endif // _FOLDER_DISPLAY_H_

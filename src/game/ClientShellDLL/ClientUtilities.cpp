@@ -69,7 +69,6 @@ CommandID g_CommandArray[] =
 	// M-P5-13: toggle zoom
 	{ IDS_P5_CONTROL_TOGGLE_ZOOM,	COMMAND_ID_TOGGLE_ZOOM,		IDS_P5_ACTIONSTRING_TOGGLE_ZOOM,	COM_VIEW },
 #endif
-
 #ifdef NOLFSRC_MODERN
 	// M-P2-03: the developer console
 	{ IDS_CONTROL_CONSOLE,			COMMAND_ID_TOGGLE_CONSOLE,	IDS_ACTIONSTRING_CONSOLE,			COM_MISC },
@@ -489,7 +488,6 @@ namespace
 		"Insert", VK_INSERT,
 		"Delete", VK_DELETE,
 #endif
-
 		"",-999,
 	};
 }

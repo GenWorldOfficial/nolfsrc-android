@@ -490,7 +490,6 @@ void GameBase::UpdateBoundingBox()
 	// M-P2-11: DisplayTriggers shows a trigger's box whatever ShowDims says
 	if (P2Server_ShowTriggerBox(this)) nVal = 4;
 #endif
-
 	if (nVal < 4)
 	{
 		switch (GetType())

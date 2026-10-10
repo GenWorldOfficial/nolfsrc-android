@@ -1014,7 +1014,6 @@ void CCheatMgr::Process( CheatCode nCheatCode )
 			break;
 	}
 #endif
-
 	// process cheat codes
 	switch ( nCheatCode )
 	{

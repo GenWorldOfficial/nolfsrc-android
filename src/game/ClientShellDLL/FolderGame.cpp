@@ -128,7 +128,6 @@ LTBOOL CFolderGame::Build()
 	pToggle->SetOnString(IDS_YES);
 	pToggle->SetOffString(IDS_NO);
 #endif
-
 	// Make sure to call the base class
 	if (! CBaseFolder::Build()) return LTFALSE;
 

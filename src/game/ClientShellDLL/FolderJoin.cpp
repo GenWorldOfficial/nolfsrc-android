@@ -401,7 +401,6 @@ LTBOOL CFolderJoin::Build()
 	rcStatusRect.top = rcStatusRect.bottom - nBarHeight;
 
     bFrameDelay = LTTRUE;
-
 #ifdef NOLFSRC_MODERN
 	// M-P3-06: from here on the column widths are used inside the lists'
 	// rows, in pixels: they scale with the menu page

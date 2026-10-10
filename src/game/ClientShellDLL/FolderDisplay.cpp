@@ -143,7 +143,6 @@ LTBOOL CFolderDisplay::Build()
 	pP1Windowed->SetOnString(IDS_ON);
 	pP1Windowed->SetOffString(IDS_OFF);
 #endif
-
 	CToggleCtrl *pToggle = AddToggle(IDS_DISPLAY_TEXTURE,IDS_HELP_TEXTUREDEPTH,175,&m_bTexture32);
 	pToggle->SetOnString(IDS_DISPLAY_32BIT);
 	pToggle->SetOffString(IDS_DISPLAY_16BIT);
@@ -263,7 +262,6 @@ void CFolderDisplay::BuildRendererArray()
 
 	// Build the list of render modes
     RMode *pRenderModes=g_pLTClient->GetRenderModes();
-
 #ifdef NOLFSRC_MODERN
 	// M-P1-07: the mode in use
 	RMode p1InUse;

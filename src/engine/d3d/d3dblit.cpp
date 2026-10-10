@@ -696,7 +696,6 @@ extern "C" LTBOOL __cdecl d3d_FillScreenRect(LTRect* pRect, uint32 nPixel)
 	return LTTRUE;
 }
 #endif
-
 // ---------------------------------------------------------------------- //
 //  SLOTS +0xe0 / +0xdc -- UnoptimizeSurface (0x10034510) and
 //  OptimizeSurface (0x10034580) are in w81_10034510_os.cpp: this file is

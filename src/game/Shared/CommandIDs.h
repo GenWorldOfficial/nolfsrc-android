@@ -77,7 +77,6 @@
 // M-P2-03: the developer console's key (the Modernizer's number, MODERN.md)
 #define COMMAND_ID_TOGGLE_CONSOLE	80
 #endif
-
 // Special command ids...
 
 #define COMMAND_ID_UNASSIGNED		99	// always leave this unassigned - used in input code

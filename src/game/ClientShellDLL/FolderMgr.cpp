@@ -578,7 +578,6 @@ void CFolderMgr::AddFolder(eFolderID folderID)
 		pFolder = P4_CreateJukeboxFolder();
 		break;
 #endif
-
 	}
 
 	if (pFolder)

@@ -46,18 +46,15 @@
 // P2: developer console, big head mode, speed-run block
 #include "cshell/p2_client.h"
 #endif
-
 #include <stdarg.h>
 #include <stdio.h>
 #ifdef NOLFSRC_MODERN
 #include "cshell/p6_multiplayer.h"
 #endif
-
 #ifdef NOLFSRC_MODERN
 // M-P1: timing, input, window and display options
 #include "cshell/p1_modern.h"
 #endif
-
 #ifdef NOLFSRC_MODERN
 // M-P5: gameplay fixes and features (quick switch, toggle zoom, shadows)
 #include "cshell/p5_gameplay.h"
@@ -1005,7 +1002,6 @@ uint32 CGameClientShell::OnEngineInitialized(RMode *pMode, LTGUID *pAppGuid)
 	// M-P1-01/03/08/10/12: P1's console variables, optimizesurfaces
 	P1Config_InitVars();
 #endif
-
     m_MoveMgr.Init();
 	m_editMgr.Init();
 	m_cheatMgr.Init();
@@ -1332,19 +1328,16 @@ uint32 CGameClientShell::OnEngineInitialized(RMode *pMode, LTGUID *pAppGuid)
 	// M-P2-01: the developer console and the rest of P2's client side
 	P2_OnEngineInitialized();
 #endif
-
 #ifdef NOLFSRC_MODERN
 	// M-P5-12, M-P5-13: QuickSwitch and the ToggleZoom action
 	P5_OnEngineInitialized();
 #endif
-
 	// Check for playdemo....
 
     if (hVar = g_pLTClient->GetConsoleVar("playdemo"))
 	{
         DoLoadWorld("", NULL, NULL, LOAD_NEW_GAME, NULL, g_pLTClient->GetVarValueString(hVar));
 	}
-
 #ifdef NOLFSRC_MODERN
 	// M-P1-08, M-P1-12: CursorCenter off, one-time config upgrade
 	P1Config_AfterInit();
@@ -1368,7 +1361,6 @@ void CGameClientShell::OnEngineTerm()
 	// M-P2-01: unhook the console from the engine before anything goes
 	P2_OnEngineTerm();
 #endif
-
     UnhookWindow();
 
 	if (m_hCamera)
@@ -1492,7 +1484,6 @@ void CGameClientShell::OnEvent(uint32 dwEventID, uint32 dwParam)
 	// M-P1-03, M-P1-06, M-P1-10: window placement, mouse capture, tint
 	P1_OnClientEvent(dwEventID);
 #endif
-
 	m_InterfaceMgr.OnEvent(dwEventID, dwParam);
 }
 
@@ -1584,7 +1575,6 @@ void CGameClientShell::OnEnterWorld()
 	m_vLastReverbPos.Init();
 
 	m_MoveMgr.OnEnterWorld();
-
 #ifdef NOLFSRC_MODERN
 	// M-P2-10: the server learns our BigHeadMode (single player / host)
 	P2_OnEnterWorld();
@@ -1690,7 +1680,6 @@ void CGameClientShell::Update()
 		m_bForceDisconnect = LTFALSE;
 		return;
 	}
-
 #ifdef NOLFSRC_MODERN
 	// M-P2-12: the speed-run block follows the mission and level
 	P2_Update();
@@ -1902,7 +1891,6 @@ void CGameClientShell::PostUpdate()
 
 
 	m_InterfaceMgr.PostUpdate();
-
 #ifdef NOLFSRC_MODERN
 	// M-P1-01: 60 fps frame limiter (FramerateLock; always in multiplayer)
 	P1Timing_EndFrame(IsMultiplayerGame() ? true : false);
@@ -4192,7 +4180,6 @@ void CGameClientShell::OnCommandOn(int command)
 	// M-P2-01: no game command while the developer console is open
 	if (P2_OnCommandOn(command)) return;
 #endif
-
 	// Let the interface handle the command first...
 
 	if (IsPlayerInWorld())
@@ -4309,7 +4296,6 @@ void CGameClientShell::OnCommandOn(int command)
 			}
 		}
 		break;
-
 #ifdef NOLFSRC_MODERN
 		// M-P5-13: toggle zoom -- a zoom-in step, or out after the last one
 		case COMMAND_ID_TOGGLE_ZOOM :
@@ -6813,7 +6799,6 @@ void CGameClientShell::FirstUpdate()
 	UpdateContainerFX();
 	ClearCurContainerCode();
 	UpdateContainerFX();
-
 #ifdef NOLFSRC_MODERN
 	// M-P5-14: undo shadows lost to a cinematic before a save or a quit
 	P5_OnWorldStarted();
@@ -7034,7 +7019,6 @@ void CGameClientShell::RenderCamera(LTBOOL bDrawInterface)
     g_pLTClient->Start3D();
     g_pLTClient->RenderCamera(m_hCamera);
     g_pLTClient->StartOptimized2D();
-
 #ifdef NOLFSRC_MODERN
 	// M-P1-10: the screen tint as an overlay (EnableScreenTinting 0)
 	m_ScreenTintMgr.P1DrawOverlay();
@@ -7426,7 +7410,6 @@ void CGameClientShell::InitMultiPlayer()
     hWrite = g_pLTClient->StartMessage(MID_PLAYER_INITVARS);
     g_pLTClient->WriteToMessageByte(hWrite, (uint8)pSettings->RunLock());
     g_pLTClient->EndMessage(hWrite);
-
 #ifdef NOLFSRC_MODERN
 	// M-P1-02: a hosting client paces its own server
 	P1Timing_SendDontLockServer(IsHosting() ? true : false);

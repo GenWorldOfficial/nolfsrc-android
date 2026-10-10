@@ -47,7 +47,6 @@ public:
 	void P1DrawOverlay();		// after the scene, before the interface
 	void P1Invalidate();		// the renderer was (re)initialised
 #endif
-
 private:
     LTVector m_avTints[NUM_TINT_EFFECTS];
     LTBOOL   m_bChanged;

@@ -129,7 +129,6 @@ void WriteNetHostSettings( );
 void FilterFormatChars( char *pszText );
 #endif
 
-
 #define DANGER(interface, engineer) \
 interface->CPrint("----------------------------"); \
 interface->CPrint("                            "); \

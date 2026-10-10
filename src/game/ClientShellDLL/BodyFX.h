@@ -65,7 +65,6 @@ class CBodyFX : public CSpecialFX
 		HOBJECT				m_hMarker;
 
 		LTAnimTracker		m_TwitchTracker;
-
 #ifdef NOLFSRC_MODERN
 		// M-P2-10: big head mode's node control is installed on this body
 		LTBOOL				m_bBigHeadControl;

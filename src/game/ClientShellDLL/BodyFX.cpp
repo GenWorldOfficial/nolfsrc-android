@@ -40,7 +40,6 @@ CBodyFX::CBodyFX()
 	m_fFaderTimer = 3.0f;
 
 	m_hMarker = LTNULL;
-
 #ifdef NOLFSRC_MODERN
 	// M-P2-10
 	m_bBigHeadControl = LTFALSE;
@@ -149,7 +148,6 @@ LTBOOL CBodyFX::Update()
 	{
 		UpdateMarker();
 	}
-
 #ifdef NOLFSRC_MODERN
 	// M-P2-10: bodies keep their big heads
 	P2BigHead_UpdateBody(m_hServerObject, &m_bBigHeadControl);

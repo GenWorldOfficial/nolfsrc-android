@@ -238,7 +238,6 @@ class CMoveMgr
 	CCharacterFX*	m_pCharFX;
 
 	CVehicleMgr*	m_pVehicleMgr;
-
 #ifdef NOLFSRC_MODERN
 	// M-P5-05: carried across frames the engine finds nothing underfoot
 	P5StandingOn	m_P5StandingOn;

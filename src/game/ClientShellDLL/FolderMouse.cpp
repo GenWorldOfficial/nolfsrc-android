@@ -142,7 +142,6 @@ void CFolderMouse::OnFocus(LTBOOL bFocus)
 		// M-P1-04: legacy mouse look
 		m_bP1OldMouseLook = P1Config_OldMouseLook();
 #endif
-
         UpdateData(LTFALSE);
 	}
 	else
@@ -163,7 +162,6 @@ void CFolderMouse::OnFocus(LTBOOL bFocus)
 		// M-P1-04: legacy mouse look
 		WriteConsoleInt("OldMouseLook",m_bP1OldMouseLook ? 1 : 0);
 #endif
-
 		// Just to be safe save the config incase anything changed...
 
         g_pLTClient->WriteConfigFile("autoexec.cfg");

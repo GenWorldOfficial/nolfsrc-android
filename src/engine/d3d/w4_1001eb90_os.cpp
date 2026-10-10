@@ -218,7 +218,6 @@ static float ModernHorPlusFovX(SceneDesc* pScene)
 	                          * g_fModernFovXScale);
 }
 #endif
-
 unsigned int sub_1001eb90(SceneDesc* pScene, void* pMem, unsigned long nMemSize)
 {
 	uint16          nCW;

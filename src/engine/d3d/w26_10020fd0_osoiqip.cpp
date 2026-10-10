@@ -363,7 +363,6 @@ void* sub_10020fd0(const char* pName)
 
 	if (strcmp(pName, "BACKBUFFER") == 0)
 		return g_pOffscreen;
-
 #ifdef NOLFSRC_MODERN
 	// M-P0-03: fast FillRect -- the renderer's colour fill (d3dblit.cpp)
 	if (strcmp(pName, "FillScreenRect") == 0)

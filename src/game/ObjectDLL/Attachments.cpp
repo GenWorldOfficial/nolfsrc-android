@@ -845,7 +845,6 @@ void CAttachments::AddRequirements(ModelId eModelId, ModelStyle eModelStyle)
 // prints __LINE__, and the release build must compile to the same bytes.)
 #include "object/p2_server.h"
 #endif
-
 // ----------------------------------------------------------------------- //
 //
 //	ROUTINE:	CAttachments::Update
@@ -869,7 +868,6 @@ void CAttachments::Update()
 		}
 	}
 #endif
-
 	/*	// Put all attachments in their place
 
 	{for ( int iAttachmentPosition = 0 ; iAttachmentPosition < m_cAttachmentPositions ; iAttachmentPosition++ )

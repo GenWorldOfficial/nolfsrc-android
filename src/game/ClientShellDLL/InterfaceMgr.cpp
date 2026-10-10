@@ -29,7 +29,6 @@
 // M-P1-03: raw mouse look
 #include "cshell/p1_modern.h"
 #endif
-
 #ifdef NOLFSRC_MODERN
 // M-P2-01: the developer console
 #include "cshell/p2_console.h"
@@ -2555,7 +2554,6 @@ LTBOOL CInterfaceMgr::OnKeyDown(int key, int rep)
 	// M-P2-01: the console key, and every key while the console is open
 	if (P2Console_OnKeyDown(key, rep)) return LTTRUE;
 #endif
-
 	if (m_MessageBox.IsVisible())
 		return m_MessageBox.HandleKeyDown(key,rep);
 
@@ -2779,7 +2777,6 @@ LTBOOL CInterfaceMgr::OnKeyUp(int key)
 void CInterfaceMgr::OnChar(char c)
 {
 	if (c < ' ') return;
-
 #ifdef NOLFSRC_MODERN
 	// M-P2-01: typing into the open console
 	if (P2Console_OnChar(c)) return;
@@ -4860,7 +4857,6 @@ void CInterfaceMgr::UpdateLetterBox()
 	rcDest.Init(0, dwHeight - nBorderSize, dwWidth, dwHeight);
  	g_pLTClient->ScaleSurfaceToSurfaceTransparent(hScreen, m_hLetterBoxSurface,
 	   &rcDest, &rcSrc, hTransColor);
-
 #ifdef NOLFSRC_MODERN
 	// M-P3-08: RestrictCinematicsTo4x3 covers the side margins too
 	if (P3_Cinematics4x3() && g_pInterfaceResMgr->GetXOffset() > 0)
@@ -4890,7 +4886,6 @@ LTBOOL CInterfaceMgr::AllowCameraMovement()
 	// M-P2-01: the camera stays put while the console is open
 	if (P2Console_IsVisible()) return LTFALSE;
 #endif
-
 	switch (m_eGameState)
 	{
 		case GS_DIALOGUE :

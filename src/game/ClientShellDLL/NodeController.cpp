@@ -1431,7 +1431,6 @@ void CNodeController::HandleNodeControl(HOBJECT hObj, HMODELNODE hNode, LTMatrix
 	{
 		*pGlobalMat = *pGlobalMat * pNode->matTransform;
 	}
-
 #ifdef NOLFSRC_MODERN
 	// M-P2-10: and the head, bigger
 	P2BigHead_ScaleNode(hObj, hNode, pGlobalMat);

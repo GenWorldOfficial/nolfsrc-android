@@ -414,7 +414,6 @@ int CLoadingScreen::RunThread()
 	// M-P1-01: no frame limiter while loading
 	P1Timing_SuspendFrameLimit(true);
 #endif
-
 	// The main rendering loop...  (i.e. keep drawing until someone tells us to stop)
 	while (WaitForSingleObject(m_hEventEnd, 0) == WAIT_TIMEOUT)
 	{
@@ -430,7 +429,6 @@ int CLoadingScreen::RunThread()
 		Sleep(100);
 #endif
 	}
-
 #ifdef NOLFSRC_MODERN
 	// M-P1-01: no frame limiter while loading
 	P1Timing_SuspendFrameLimit(false);
@@ -576,7 +574,6 @@ LTBOOL CLoadingScreen::Show(LTBOOL bRun)
 	// M-P2-03 / M-P2-12: a loading screen is up
 	P2_OnLoadingScreen(LTTRUE);
 #endif
-
 	// Update once so the screen's showing
 	Update();
 
@@ -652,7 +649,6 @@ LTBOOL CLoadingScreen::Hide()
 	// M-P2-03 / M-P2-12: and gone again
 	P2_OnLoadingScreen(LTFALSE);
 #endif
-
 	// Clean up
 	Term();
 

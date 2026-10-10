@@ -1201,7 +1201,6 @@ typedef void (*ModernConsoleOutputFn)(void* pUser, uint32 nColor, int nLevel,
 extern ModernConsoleOutputFn g_pfnModernConsoleOutput;
 extern void*                 g_pModernConsoleOutputUser;
 #endif
-
 void CConsoleView::Sub41d1c0(uint32 nColor, int nLevel, char* pText)
 {
 	char*             pEnd;
@@ -1212,7 +1211,6 @@ void CConsoleView::Sub41d1c0(uint32 nColor, int nLevel, char* pText)
 		return;
 
 	m_CS.Enter();
-
 #ifdef NOLFSRC_MODERN
 	// M-P0-02: every console line also goes to the game DLL's console
 	if (g_pfnModernConsoleOutput)

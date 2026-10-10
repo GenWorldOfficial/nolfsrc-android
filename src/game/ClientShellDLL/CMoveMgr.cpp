@@ -249,7 +249,6 @@ void CMoveMgr::InitWorldData()
     m_pCharFX               = LTNULL;
 
 	m_hZipcordSnd			= LTNULL;
-
 #ifdef NOLFSRC_MODERN
 	// M-P5-05
 	P5_ResetStandingOn(m_P5StandingOn);
@@ -667,7 +666,6 @@ void CMoveMgr::UpdateOnGround()
 
     LTVector vPos;
 	g_pLTClient->GetObjectPos(m_hObject, &vPos);
-
 #ifdef NOLFSRC_MODERN
 	// M-P5-05: over a seam between floor polygons the engine can report
 	// nothing underfoot for a frame, and the player is pushed back as if by

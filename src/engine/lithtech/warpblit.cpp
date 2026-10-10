@@ -1051,7 +1051,6 @@ static LTBOOL ci_ModernFillScreen(LTRectQ438* pRect, HLTCOLORQ40E hColor)
 	return fnFill(pRect, nPixel);
 }
 #endif
-
 LTRESULTQ40E ci_FillRectQ40E(CSurfaceQ40E* hDest, LTRectQ438* pRect,
                              HLTCOLORQ40E hColor)
 {
@@ -1081,7 +1080,6 @@ LTRESULTQ40E ci_FillRectQ40E(CSurfaceQ40E* hDest, LTRectQ438* pRect,
 		rect.right = pSurface->m_nWidth;
 		rect.bottom = pSurface->m_nHeight;
 	}
-
 #ifdef NOLFSRC_MODERN
 	// M-P0-03: fast FillRect
 	if (pSurface == &g_ScreenSurfaceQ40E && ci_ModernFillScreen(&rect, hColor))

@@ -569,7 +569,6 @@ LTFLOAT CCharacterHitBox::GetNodeRadius(ModelSkeleton eModelSkeleton,
 		fRadius *= P2Server_BigHeadFactor();
 	}
 #endif
-
 	return fRadius;
 }
 

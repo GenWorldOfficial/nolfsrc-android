@@ -34,12 +34,10 @@
 #ifdef NOLFSRC_MODERN
 #include "object/p6_master.h"
 #endif
-
 #ifdef NOLFSRC_MODERN
 // M-P1-02: 60 fps limiter on servers
 #include "object/p1_server.h"
 #endif
-
 #ifdef NOLFSRC_MODERN
 // P2: console commands from the host, big head mode, trigger boxes
 #include "object/p2_server.h"
@@ -125,7 +123,6 @@ IServerShell* CreateServerShell(ILTServer *pServerDE)
     g_NetFragScore.Init(g_pLTServer,"NetFragScore",LTNULL,1.0f);
 	g_NetAudioTaunts.Init(g_pLTServer,"NetAudioTaunts",LTNULL,1.0f);
 	g_NetArmorHealthPercent.Init(g_pLTServer, "NetArmorHealthPercent", LTNULL, 0.0f);
-
 #ifdef NOLFSRC_MODERN
 	// M-P2-10 / M-P2-11: BigHeadMode, DisplayTriggers
 	P2Server_Init();
@@ -847,7 +844,6 @@ void CGameServerShell::OnMessage(HCLIENT hSender, uint8 messageID, HMESSAGEREAD 
 		}
 		break;
 #endif
-
 		case MID_PLAYER_UPDATE :
 		{
 			HandleUpdatePlayerMsg(hSender, hMessage);
@@ -1280,7 +1276,6 @@ void CGameServerShell::OnMessage(HCLIENT hSender, uint8 messageID, HMESSAGEREAD 
 			HandleConsoleCmdMsg(hSender, hMessage);
 		}
 		break;
-
 #ifdef NOLFSRC_MODERN
 		// M-P2-08: a console line from the local player's console
 		case MID_CONSOLE_COMMAND_CLIENT :
@@ -2381,7 +2376,6 @@ void CGameServerShell::Update(LTFLOAT timeElapsed)
 	P2Server_Update();
 #endif
 
-
 	// Did the server want to say something?
 
 	char *pSay = m_SayTrack.GetStr("");
@@ -2419,7 +2413,6 @@ void CGameServerShell::Update(LTFLOAT timeElapsed)
 
 	// See if we should change worlds.
 	CheckMultiSwitchWorlds();
-
 #ifdef NOLFSRC_MODERN
 	// M-P1-02: 60 fps limiter on multiplayer servers
 	P1Server_EndUpdate(GetGameType() != SINGLE);

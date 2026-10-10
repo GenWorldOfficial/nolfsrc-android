@@ -22,11 +22,6 @@
 //  service was shut down in 2013, so there is no heartbeat, and \secure\
 //  (the master's challenge) gets no answer.
 //
-//  THE MODERN BUILD (NOLFSRC_MODERN, M-P6-02) does report to a master: a
-//  heartbeat every minute to the address the game sets with
-//  SetGameSpyAddr (default master.openspy.net), and the answer to its
-//  \secure\ challenge; see gsmaster.h.
-//
 // *********************************************************************** //
 
 #include <windows.h>
@@ -34,6 +29,10 @@
 #include <string.h>
 #include "GameSpyMgr.h"
 #ifdef NOLFSRC_MODERN
+//  THE MODERN BUILD (NOLFSRC_MODERN, M-P6-02) does report to a master: a
+//  heartbeat every minute to the address the game sets with
+//  SetGameSpyAddr (default master.openspy.net), and the answer to its
+//  \secure\ challenge; see gsmaster.h.
 #include "gsmaster.h"
 #endif
 
@@ -75,12 +74,10 @@ static BOOL GSM_GetMaster(const char* sAddr, char* sIP, int* pPort)
 	return(TRUE);
 }
 #endif
-
 BOOL CGameSpyMgr::Init(const char* sGameName, const char* sGameVer, const char* sGameKey,
                        int nGameLoc, int nGamePort, int nSpyPort, DWORD dwFlags)
 {
 	Term();
-
 #ifdef NOLFSRC_MODERN
 	// M-P6-02: name lookups need Winsock (the engine has it running
 	// already; this only takes a reference)

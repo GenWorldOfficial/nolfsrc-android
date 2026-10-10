@@ -832,7 +832,6 @@ void CFolderCustomControls::OnFocus(LTBOOL bFocus)
 	// M-P2-03: the console key is just another key to bind here
 	P2Console_SetLock(P2CONSOLE_LOCK_CONTROLS, bFocus);
 #endif
-
 	if (bFocus)
 	{
 		// Add the controls to the folder

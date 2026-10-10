@@ -101,7 +101,6 @@ void CLightScaleMgr::SetLightScale()
 		return;
 	}
 #endif
-
 	// go though looking for the first interface type
 
 	LS_EFFECT* pEffect = m_pEffects;

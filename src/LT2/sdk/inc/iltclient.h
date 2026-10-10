@@ -66,7 +66,6 @@
 	class ILTCursor;
 	class ILTClientSoundMgr;
 	class ILTDirectMusicMgr;
-
 #ifdef NOLFSRC_MODERN
 	// M-P0-02 / M-P2-04: callbacks for the modern build's ILTClient additions
 	typedef void (*ConsoleOutputFn)(void *pUser, uint32 nColor, int nLevel, const char *pText);
@@ -1135,7 +1134,6 @@
 		// (RegisterConsoleProgram) rather than built into the engine.
 		virtual LTRESULT EnumConsoleCommands(ConsoleCommandEnumFn pFn, void *pUser)=0;
 #endif
-
 
 		// Determines if we werw lobby launched.
 		LTRESULT (*IsLobbyLaunched)(char* sDriver);

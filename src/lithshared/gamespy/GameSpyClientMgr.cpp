@@ -20,11 +20,6 @@
 //  folder shows no servers. The server and player wrappers are complete
 //  but are never handed a server.
 //
-//  THE MODERN BUILD (NOLFSRC_MODERN, M-P6-02) does fill the list: from the
-//  master the game names with GameSpyClient_SetMasterServer (default
-//  master.openspy.net), then by querying each server; see gsmaster.h and
-//  the first #ifdef below.
-//
 // *********************************************************************** //
 
 #include <windows.h>
@@ -32,10 +27,13 @@
 #include <stdlib.h>
 #include "GameSpyClientMgr.h"
 #ifdef NOLFSRC_MODERN
+//  THE MODERN BUILD (NOLFSRC_MODERN, M-P6-02) does fill the list: from the
+//  master the game names with GameSpyClient_SetMasterServer (default
+//  master.openspy.net), then by querying each server; see gsmaster.h and
+//  the first #ifdef below.
 #include <stdio.h>
 #include "gsmaster.h"
 #endif
-
 
 #ifdef NOLFSRC_MODERN
 
@@ -852,8 +850,6 @@ CGameSpyServer* CGameSpyClientMgr::CreateGameSpyServer(GServer pGServer)
 	if (!m_CurServer.Init(pGServer)) return(NULL);
 	return(&m_CurServer);
 }
-
-
 #endif
 
 

@@ -2786,7 +2786,6 @@ void CPlayerStats::DrawScope(HSURFACE hScreen, int nLeft, int nTop, int nRight, 
 	// M-P3-02: the scope covers the 4:3 area; black out the world beside it
 	P3_DrawSideBars(hScreen, kBlack);
 #endif
-
 	int nRadius = (int)( g_vtScopeLRRadius.GetFloat() * (float)nScreenHeight );
 
     LTRect srect;
@@ -4333,7 +4332,6 @@ void CPlayerStats::P3DrawBoundWeapons(HSURFACE hScreen, float fScale)
 	}
 }
 #endif
-
 
 // --------------------------------------------------------------------------- //
 //

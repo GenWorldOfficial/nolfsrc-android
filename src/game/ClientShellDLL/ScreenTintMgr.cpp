@@ -112,7 +112,6 @@ void CScreenTintMgr::ClearAll()
 		Clear((eTintEffect)i);
 	}
 }
-
 #ifdef NOLFSRC_MODERN
 // ----------------------------------------------------------------------- //
 //

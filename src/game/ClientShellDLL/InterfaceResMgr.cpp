@@ -112,7 +112,6 @@ LTBOOL CInterfaceResMgr::Init(ILTClient* pClientDE, CGameClientShell* pClientShe
 
 	// Init the InterfaceSurfMgr class
     m_InterfaceSurfMgr.Init(g_pLTClient);
-
 #ifdef NOLFSRC_MODERN
 	// M-P3: the package's console variables
 	P3_InitVars();

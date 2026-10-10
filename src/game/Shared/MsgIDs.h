@@ -113,7 +113,6 @@
 // rate (the value the NOLF Modernizer uses)
 #define MID_DONT_LOCK_SERVER_FPS		250 // Client to server
 #endif
-
 // Object <-> Object messages...
 
 
