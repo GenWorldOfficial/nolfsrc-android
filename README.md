@@ -14,8 +14,13 @@ DLLs -- compiled from the source in this repository with the original
 
 The engine source in `src/engine/` is a reconstruction: Monolith never
 released it, so it was written to recompile to the retail machine code. The
-game code in `src/game/` is Monolith's own NOLF Source Code v1.003 release,
-unmodified. See `LICENSE-NOTES.md` for what is whose.
+game code in `src/game/` is Monolith's own NOLF Source Code v1.003 release;
+the release build compiles it unmodified (the modern build's changes to it
+sit inside `#ifdef NOLFSRC_MODERN` blocks). See `LICENSE-NOTES.md` for what is
+whose.
+
+This project, and its modern build in particular, is not made or supported by
+Monolith Productions.
 
 **No game data is included.** You need the two original CDs: the build reads
 the game's data (and the Miles and Bink sound/video runtime, the only

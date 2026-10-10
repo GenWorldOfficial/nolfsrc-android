@@ -23,6 +23,39 @@ CL_COMMON='/nologo /MT /W3 /GX /O2 /c'
 
 winpath() { echo "$WREPO\\${1//\//\\}"; }
 
+# The modern build (build/variant.sh modern*: NOLFSRC_MODERN among the
+# compile flags) also compiles the project's own new game code -- every .cpp
+# in src/modern/cshell/ into CShell.dll, src/modern/object/ into Object.lto --
+# finds headers under src/modern/ (#include "cshell/p1_input.h"), links
+# winmm.lib, and adds src/modern/cres/*.rc (new strings) to CRes.dll. A
+# release build has none of it: these are empty and its command lines are
+# the same as ever.
+MODERN=0
+case " ${NOLFSRC_CFLAGS:-} " in *NOLFSRC_MODERN*) MODERN=1 ;; esac
+MODERN_INCS=''
+MODERN_LIBS=''
+if [ $MODERN = 1 ]; then
+    MODERN_INCS=' /I ..\..\modern'
+    MODERN_LIBS=' winmm.lib'
+fi
+
+# modern_compile <projdir> <defines> <includes> <subdir>: compile
+# src/modern/<subdir>/*.cpp (modern build only) into <projdir>/$OUTDIR/modern/
+# and print the objects' paths, relative to <projdir>
+modern_compile() {
+    local projdir="$1" defines="$2" includes="$3" sub="$4" f files=()
+    [ $MODERN = 1 ] || return 0
+    for f in "$REPO/src/modern/$sub"/*.cpp; do
+        [ -f "$f" ] && files+=("..\\..\\modern\\$sub\\$(basename "$f")")
+    done
+    [ ${#files[@]} -gt 0 ] || return 0
+    mkdir -p "$projdir/$OUTDIR/modern"
+    ( cd "$projdir" && run_cl $CL_COMMON $defines $includes /Fo"$OUTDIR/modern/" "${files[@]}" ) >&2 || return 1
+    for f in "${files[@]}"; do
+        f="${f##*\\}"; echo "$OUTDIR/modern/${f%.cpp}.obj"
+    done
+}
+
 # Resolve a lithshared .lib: ours, built from src/lithshared by
 # build/libs.sh; a missing library stops the build here.
 # Paths are relative to the project dir (src/game/CShell, src/game/ObjectDLL).
@@ -86,6 +119,13 @@ cres_rc() {  # cres_rc <outdir, relative to src/game/ClientRes>  (run in ClientR
         return 1
     fi
     printf '#include "..\\ClientRes.rc"\r\n#include "goty.rc"\r\n' > goty/cres_goty.rc
+    # the modern build's new strings, one file per package (src/modern/cres/)
+    if [ $MODERN = 1 ]; then
+        local r
+        for r in "$REPO"/src/modern/cres/*.rc; do
+            [ -f "$r" ] && printf '#include "..\\..\\..\\modern\\cres\\%s"\r\n' "$(basename "$r")" >> goty/cres_goty.rc
+        done
+    fi
     ( cd goty && run_rc /l 0x409 /d NDEBUG /i .. /fo"..\\$1\\ClientRes.res" cres_goty.rc )
 }
 
@@ -105,7 +145,7 @@ build_cshell() {
     echo "==== ClientShellDLL -> CShell.dll"
     local D="src/game/ClientShellDLL" OUT=$OUTDIR
     local DEFS="/D NDEBUG /D _CLIENTBUILD /D WIN32 /D _WINDOWS /D _NOLFBUILD /D NO_PRAGMA_LIBS $FINAL_DEFS"
-    local INCS='/I ..\shared /I ..\..\LT2\sdk\inc /I ..\..\LT2\lithshared\incs /I .'
+    local INCS='/I ..\shared /I ..\..\LT2\sdk\inc /I ..\..\LT2\lithshared\incs /I .'"$MODERN_INCS"
     mkdir -p "$D/$OUT"
     check_libs StdLith CryptMgr LithFontMgr_LT2 ltguimgr_LT2 MFCStub ButeMgrNoMFC GameSpyClientMgr RegMgr
 
@@ -128,6 +168,9 @@ build_cshell() {
         local b="${f##*/}"; b="${b%.*}"
         objs+=("$OUT/$b.obj")
     done
+    local mobjs
+    mobjs=$(modern_compile "$D" "$DEFS" "$INCS" cshell) || exit 1
+    [ -n "$mobjs" ] && mapfile -t -O "${#objs[@]}" objs <<<"$mobjs"
     local resp="$D/$OUT/link.rsp"
     : > "$resp"
     {
@@ -137,7 +180,7 @@ build_cshell() {
         for l in StdLith CryptMgr LithFontMgr_LT2 ltguimgr_LT2 MFCStub ButeMgrNoMFC GameSpyClientMgr RegMgr; do
             echo "\"$(libpath $l)\""
         done
-        echo 'kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib'
+        echo 'kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib'"$MODERN_LIBS"
     } >> "$resp"
     ( cd "$D" && run_link "@$OUT/link.rsp" )
 }
@@ -147,7 +190,7 @@ build_object() {
     gen_parsers
     local D="src/game/ObjectDLL" OUT=$OUTDIR
     local DEFS="/D NDEBUG /D WIN32 /D _WINDOWS /D _NOLFBUILD /D NO_PRAGMA_LIBS $FINAL_DEFS"
-    local INCS='/I ..\..\LT2\sdk\inc /I ..\..\LT2\lithshared\incs /I ..\shared /I .'
+    local INCS='/I ..\..\LT2\sdk\inc /I ..\..\LT2\lithshared\incs /I ..\shared /I .'"$MODERN_INCS"
     mkdir -p "$D/$OUT"
     check_libs StdLith CryptMgr MFCStub ButeMgrNoMFC GameSpyMgr RegMgr
 
@@ -185,6 +228,9 @@ build_object() {
         local b="${f##*/}"; b="${b%.*}"
         objs+=("$OUT/$b.obj")
     done
+    local mobjs
+    mobjs=$(modern_compile "$D" "$DEFS" "$INCS" object) || exit 1
+    [ -n "$mobjs" ] && mapfile -t -O "${#objs[@]}" objs <<<"$mobjs"
     local lresp="$D/$OUT/link.rsp"
     : > "$lresp"
     {
@@ -194,7 +240,7 @@ build_object() {
         for l in StdLith CryptMgr MFCStub ButeMgrNoMFC GameSpyMgr RegMgr; do
             echo "\"$(libpath $l)\""
         done
-        echo 'kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib'
+        echo 'kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib'"$MODERN_LIBS"
     } >> "$lresp"
     ( cd "$D" && run_link "@$OUT/link.rsp" )
 }
