@@ -49,6 +49,9 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#ifdef NOLFSRC_MODERN
+#include "cshell/p6_multiplayer.h"
+#endif
 
 #ifdef NOLFSRC_MODERN
 // M-P1: timing, input, window and display options
@@ -1404,6 +1407,20 @@ void CGameClientShell::OnEvent(uint32 dwEventID, uint32 dwParam)
 
 		case LTEVENT_DISCONNECT :
 		{
+#ifdef NOLFSRC_MODERN
+			// M-P6-05: a timeout (typically at a level change): join the
+			// same server again instead of dropping to the menus
+			if (g_pGameClientShell->IsMultiplayerGame() &&
+				P6_RejoinAfterTimeout(m_szServerAddress, m_nServerPort))
+			{
+				m_szServerAddress[0]	= LTNULL;
+				m_nServerPort			= -1;
+				m_szServerName[0]		= LTNULL;
+				memset(m_fServerOptions, 0, sizeof(m_fServerOptions));
+				m_bInWorld = LTFALSE;
+				return;
+			}
+#endif
 			if (g_pGameClientShell->IsMultiplayerGame())
 			{
 				m_szServerAddress[0]	= LTNULL;
@@ -1533,6 +1550,10 @@ void CGameClientShell::OnEnterWorld()
 
 	m_bFirstUpdate = LTTRUE;
 	m_ePlayerState = PS_UNKNOWN;
+#ifdef NOLFSRC_MODERN
+	// M-P6-05: in a world again: the timeout rejoins are available again
+	P6_ResetRejoin();
+#endif
 
 	m_vShakeAmount.Init();
 
@@ -1681,6 +1702,10 @@ void CGameClientShell::Update()
 	{
 		m_fFrameTime = MAX_FRAME_DELTA;
 	}
+#ifdef NOLFSRC_MODERN
+	// M-P6-05: a rejoin scheduled by a timeout disconnect
+	P6_UpdateRejoin();
+#endif
 
 	// Update tint if applicable (always do this to make sure tinting
 	// gets finished)...
@@ -9155,11 +9180,21 @@ LTBOOL CGameClientShell::DoJoinGame(char* sIp)
 	int nRetries = GetConsoleInt("NetJoinRetry", 0);
 	while (nRetries >= 0)
 	{
+#ifdef NOLFSRC_MODERN
+		// M-P6-06: log each join attempt
+		P6_LogJoinAttempt(sIp, GetConsoleInt("NetJoinRetry", 0) - nRetries + 1, GetConsoleInt("NetJoinRetry", 0) + 1);
+#endif
 		// If successful, then we're done.
         if( g_pLTClient->StartGame( &req ) == LT_OK )
 		{
+#ifdef NOLFSRC_MODERN
+			P6_LogJoinResult(sIp, LTTRUE);
+#endif
             return(LTTRUE);
 		}
+#ifdef NOLFSRC_MODERN
+		P6_LogJoinResult(sIp, LTFALSE);
+#endif
 
 		// Wait a sec and try again.
 		Sleep(1000);

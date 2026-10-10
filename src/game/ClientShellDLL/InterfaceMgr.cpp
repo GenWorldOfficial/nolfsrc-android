@@ -42,6 +42,9 @@
 // M-P5-12: quick switch
 #include "cshell/p5_gameplay.h"
 #endif
+#ifdef NOLFSRC_MODERN
+#include "cshell/p6_multiplayer.h"
+#endif
 
 // TESTING DYNAMIC LIGHT IN INTERFACE
 /*
@@ -1541,6 +1544,11 @@ LTBOOL CInterfaceMgr::OnMessage(uint8 messageID, HMESSAGEREAD hMessage)
 		case MID_PLAYER_CONNECTED:
 		{
             HSTRING hstrName = g_pLTClient->ReadFromMessageHString (hMessage);
+#ifdef NOLFSRC_MODERN
+			// M-P6-01: a name from the server (perhaps a retail one) must
+			// not carry format characters into the console and messages
+			hstrName = P6_FilterNetString(hstrName);
+#endif
             uint32 nID = (uint32) g_pLTClient->ReadFromMessageFloat (hMessage);
             uint8 teamId = g_pLTClient->ReadFromMessageByte(hMessage);
 			int nTeam1Score = (int) g_pLTClient->ReadFromMessageFloat (hMessage);
@@ -1559,6 +1567,11 @@ LTBOOL CInterfaceMgr::OnMessage(uint8 messageID, HMESSAGEREAD hMessage)
 			if (!g_pGameClientShell->IsMultiplayerGame()) break;
 
             HSTRING hstrName = g_pLTClient->ReadFromMessageHString (hMessage);
+#ifdef NOLFSRC_MODERN
+			// M-P6-01: a name from the server (perhaps a retail one) must
+			// not carry format characters into the console and messages
+			hstrName = P6_FilterNetString(hstrName);
+#endif
             uint32 nID = (uint32) g_pLTClient->ReadFromMessageFloat (hMessage);
 			HOBJECT	hObj = g_pLTClient->ReadFromMessageObject(hMessage);
             int nFrags = (int) g_pLTClient->ReadFromMessageFloat (hMessage);
@@ -1862,6 +1875,10 @@ LTBOOL CInterfaceMgr::OnMessage(uint8 messageID, HMESSAGEREAD hMessage)
 
 			char szMessage[100];
 			hMessage->ReadStringFL(szMessage, sizeof(szMessage));
+#ifdef NOLFSRC_MODERN
+			// M-P6-01: (as for names) chat from the server
+			FilterFormatChars(szMessage);
+#endif
 
             g_pClientSoundMgr->PlayInterfaceSound("Interface\\Snd\\chat.wav");
 

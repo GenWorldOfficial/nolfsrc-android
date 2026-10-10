@@ -15,6 +15,9 @@
 
 #include "GameClientShell.h"
 extern CGameClientShell* g_pGameClientShell;
+#ifdef NOLFSRC_MODERN
+#include "cshell/p6_multiplayer.h"
+#endif
 
 extern VarTrack g_vtPlayerName;
 
@@ -151,7 +154,12 @@ CFolderJoin::CFolderJoin()
     m_pResort = LTNULL;
     m_pJoin = LTNULL;
 
+#ifdef NOLFSRC_MODERN
+	// M-P6-03: show only servers of our own version unless asked otherwise
+    g_vtNetVersionFilter.Init(g_pLTClient,"NetVersionFilter",LTNULL,1.0f);
+#else
     g_vtNetVersionFilter.Init(g_pLTClient,"NetVersionFilter",LTNULL,0.0f);
+#endif
     g_vtNetGameFilter.Init(g_pLTClient,"NetGameFilter",LTNULL,(float)m_nGameFilter);
     g_vtNetPopFilter.Init(g_pLTClient,"NetPopFilter",LTNULL,(float)m_nPopFilter);
     g_vtNetServerSortKey.Init(g_pLTClient,"NetServerSortKey",LTNULL,(float)m_nServerSort);
@@ -555,6 +563,10 @@ LTBOOL CFolderJoin::Render(HSURFACE hDestSurf)
 		else
 		{
 			// Init the GameSpy client manager...
+#ifdef NOLFSRC_MODERN
+			// M-P6-02: the master server to ask for the list
+			P6_SetBrowserMaster();
+#endif
 			BOOL bRet = GetGameSpyClientMgr()->Init(GAMESPY_GAME_NAME, GAMESPY_SECRET_KEY);
 			if (!bRet)
 			{
@@ -1058,8 +1070,15 @@ LTBOOL CFolderJoin::DoJoinGame(CGameSpyServer* pGame)
 	int nRetries = GetConsoleInt("NetJoinRetry", 0);
 	while (nRetries >= 0)
 	{
+#ifdef NOLFSRC_MODERN
+		// M-P6-06: log each join attempt
+		P6_LogJoinAttempt(sIp, GetConsoleInt("NetJoinRetry", 0) - nRetries + 1, GetConsoleInt("NetJoinRetry", 0) + 1);
+#endif
 		// If successful, then we're done.
 		nConnectError = g_pLTClient->StartGame( &req );
+#ifdef NOLFSRC_MODERN
+		P6_LogJoinResult(sIp, nConnectError == LT_OK);
+#endif
         if(nConnectError == LT_OK )
 		{
             return LTTRUE;
@@ -1350,7 +1369,14 @@ int CFolderJoin::AddServerCtrl(CGameSpyServer* pGame)
     pGroup->SetParam1((uint32)pGame->GetHandle());
 
 	char sTemp[128] = "";
+#ifdef NOLFSRC_MODERN
+	// M-P6-01: a server's name comes from the network: bound it and drop
+	// format characters
+	SAFE_STRCPY(sTemp,pGame->GetName());
+	FilterFormatChars(sTemp);
+#else
 	sprintf(sTemp,"%s",pGame->GetName());
+#endif
     CStaticTextCtrl *pCtrl = CreateStaticTextItem(sTemp,CMD_SELECT_SERVER,LTNULL,nGameWidth,pFont->GetHeight(),LTFALSE,pFont);
     pGroup->AddControl(pCtrl,pos,LTTRUE);
 	pos.x += nGameWidth+nGap;
@@ -1387,7 +1413,13 @@ int CFolderJoin::AddPlayerCtrl(CGameSpyPlayer* pPlr)
     pGroup->SetParam1((uint32)pPlr);
 
 	char sTemp[128] = "";
+#ifdef NOLFSRC_MODERN
+	// M-P6-01: (as for server names) player names in the browser
+	SAFE_STRCPY(sTemp, pPlr->GetName());
+	FilterFormatChars(sTemp);
+#else
 	strcpy(sTemp, pPlr->GetName());
+#endif
     CStaticTextCtrl *pCtrl = CreateStaticTextItem(sTemp,LTNULL,LTNULL,nNameWidth,pFont->GetHeight(),LTTRUE,pFont);
     pGroup->AddControl(pCtrl,pos,LTTRUE);
 	pos.x += nNameWidth+nGap;
@@ -1877,6 +1909,11 @@ void CFolderJoin::UpdateOptions(LTBOOL bForce)
 		case SO_TOGGLE:
 		case SO_CYCLE:
 			nVal = pGame->GetIntValue(pOpt->szVariable);
+#ifdef NOLFSRC_MODERN
+			// M-P6-02: the value comes from the network; keep the index
+			// inside the table
+			if (nVal < 0 || nVal >= SO_MAX_STRINGS) nVal = 0;
+#endif
 			nStringID = pOpt->nStringId[nVal];
 			AddOptionCtrl(pOpt->nNameId,nStringID);
 			break;

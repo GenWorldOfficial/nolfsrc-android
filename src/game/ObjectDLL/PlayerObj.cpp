@@ -3388,6 +3388,10 @@ void CPlayerObj::SetNetName(const char* sNetName)
 
 	strncpy(m_sNetName, sNetName, NET_NAME_LENGTH);
 	m_sNetName[NET_NAME_LENGTH-1] = '\0';
+#ifdef NOLFSRC_MODERN
+	// M-P6-01: no format characters in player names
+	FilterFormatChars(m_sNetName);
+#endif
 
 
 	// If our hclient is valid, we need to update the client data, since

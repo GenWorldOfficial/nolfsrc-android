@@ -24,6 +24,8 @@ in.
 * [`FACEOBJECT` normalises a zero vector](#faceobject-normalises-a-zero-vector)
 * [`CCharacterFX::InitLocalPlayer` indexes the style table unchecked](#ccharacterfxinitlocalplayer-indexes-the-style-table-unchecked)
 * [Player setup copies the skin and head settings into a 32-byte buffer](#player-setup-copies-the-skin-and-head-settings-into-a-32-byte-buffer)
+* [Player names and chat are used as printf format strings](#player-names-and-chat-are-used-as-printf-format-strings)
+* [The server browser indexes an option table with a value from the network](#the-server-browser-indexes-an-option-table-with-a-value-from-the-network)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -271,6 +273,20 @@ creates a surface ten thousand icons wide, which every later weapon then
 uses (cleared, drawn into and blitted, mostly off the screen's left edge)
 until the HUD is rebuilt.
 
+### A server's join password is sent to anyone who asks
+`0x100f4bb0` (Object.lto) · `src/game/ObjectDLL/MyGameSpyMgr.cpp`;
+`0x1001cc90` (CShell.dll) · `src/game/ClientShellDLL/FolderJoin.cpp`
+
+`CMyGameSpyMgr::OnRulesQuery` answers every GameSpy `\rules\` or
+`\status\` query with `\Password\<the password>` when the server has
+one, and the server never checks it: `CFolderJoin::JoinCurGame` compares
+what the player typed with that value and refuses the join itself. Anyone
+who can query the server (or the master server listing it) can read the
+password, and a client that skips the check joins anyway.
+
+Not fixed: a real check needs a handshake change, and the modern build
+keeps the 1.003 handshake (`MODERN.md`, M-P6-04).
+
 ---
 
 ## Crashes and corruption: checks that are missing
@@ -446,6 +462,47 @@ Both compare the position against `(uint16)m_Data.m_AllocSize`, a 16-bit
 truncation of a 32-bit field (`0x1002619e`, `0x10026102`), while
 `CPacket::WriteType` (`0x10013957`) compares the same field as a full 32-bit
 value. Only the `0x1000`-byte cap on packets keeps it from mattering.
+
+### Player names and chat are used as printf format strings
+`0x100d7be0`, `0x100d6d40` (Object.lto) · `src/game/ObjectDLL/GameServerShell.cpp`;
+`0x10103e10` (Object.lto) · `src/game/ObjectDLL/PlayerObj.cpp`;
+`0x100343d0` (CShell.dll) · `src/game/ClientShellDLL/InterfaceMgr.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`, M-P6-01):
+> `FilterFormatChars` (`src/game/Shared/CommonUtilities.cpp`) removes `%`
+> from player names and chat on the server (`GameServerShell.cpp`,
+> `PlayerObj.cpp`), from names and chat a client receives
+> (`InterfaceMgr.cpp`, `src/modern/cshell/p6_multiplayer.cpp`), from the
+> host's own session and player names (`FolderHost.cpp`, `FolderPlayer.cpp`)
+> and from server and player names in the browser (`FolderJoin.cpp`). The
+> release build keeps the retail code.
+
+`CGameServerShell::OnMessage` passes the chat line a client sent straight
+to `g_pLTServer->CPrint(szString)` as the format (`MID_PLAYER_MESSAGE`, the
+team and ghost variants alike), then relays it to every client, whose
+`CMessageMgr::AddLine` does `g_pLTClient->CPrint(pStr)` with it. Player
+names travel the same way: `CInterfaceMgr::OnMessage` formats them into
+the kill, score and join messages and prints the result with
+`CPrint(GetStringData(hStr))`. A `%n` in a name or chat line writes
+through whatever the stack holds, on the server and on every client: in
+the release build, a client named `Retail%n%s` joining and chatting
+`%n%n%n%n%s%s%s%s` crashed the host with a write access violation inside
+the engine's formatter (tested with two copies of the game on one docker
+network). This is the publicly documented LithTech format-string
+vulnerability.
+
+### The server browser indexes an option table with a value from the network
+`0x1001e330` (CShell.dll) · `src/game/ClientShellDLL/FolderJoin.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`, M-P6-02):
+> `CFolderJoin::UpdateOptions` treats a value outside the table as 0. The
+> release build keeps the retail code.
+
+For a toggle or cycle option, the value a server reports in its GameSpy
+reply is used as an index, `pOpt->nStringId[nVal]`, into a five-entry
+array (`SO_MAX_STRINGS`), and the string ID found there is loaded and
+shown. Any server, or anything answering the browser's query, can make the
+browser read past the array.
 
 ---
 

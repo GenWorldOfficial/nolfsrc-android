@@ -259,6 +259,10 @@ void ReadNetHostSettings( )
 	ButeToConsoleFloat( hostBute, "Host", "NetCANumLevels", "NetCANumLevels" );
 	ButeToConsoleFloat( hostBute, "Host", "NetNumLevels", "NetNumLevels" );
 	ButeToConsoleFloat( hostBute, "Host", "SendBandwidth", "SendBandwidth" );
+#ifdef NOLFSRC_MODERN
+	// M-P6-02: the master server a hosted game reports to
+	ButeToConsoleString( hostBute, "Host", "MasterServer", "MasterServer" );
+#endif
 
 	nVal = GetConsoleInt( "NetNumLevels", 0 );
 	while( nVal >= 0 )
@@ -311,6 +315,10 @@ void WriteNetHostSettings( )
 	ConsoleToButeFloat( hostBute, "Host", "NetCANumLevels", "NetCANumLevels" );
 	ConsoleToButeFloat( hostBute, "Host", "NetNumLevels", "NetNumLevels" );
 	ConsoleToButeFloat( hostBute, "Host", "SendBandwidth", "SendBandwidth" );
+#ifdef NOLFSRC_MODERN
+	// M-P6-02: (as in ReadNetHostSettings)
+	ConsoleToButeString( hostBute, "Host", "MasterServer", "MasterServer" );
+#endif
 
 	nVal = GetConsoleInt( "NetNumLevels", 0 );
 	while( nVal >= 0 )
@@ -345,3 +353,22 @@ void WriteNetHostSettings( )
 
 	hostBute.Save( "NetHost.txt" );
 }
+
+#ifdef NOLFSRC_MODERN
+// M-P6-01: player names, chat lines and server names are passed on to
+// CPrint and other printf-style functions as the format itself, so a '%'
+// typed by a player could read (or, with %n, write) memory on every server
+// and client that shows it. Drop the character entirely.
+void FilterFormatChars( char *pszText )
+{
+	if( !pszText ) return;
+
+	char *pszOut = pszText;
+	for( char *pszIn = pszText; *pszIn; pszIn++ )
+	{
+		if( *pszIn != '%' )
+			*pszOut++ = *pszIn;
+	}
+	*pszOut = '\0';
+}
+#endif
