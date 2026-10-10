@@ -304,6 +304,10 @@ static void EnsureConsoleAction()
 		        P2CONSOLE_DEFAULT_TRIGGER);
 		g_pLTClient->RunConsoleString(szCmd);
 	}
+
+	GetCommandKeyStr(COMMAND_ID_TOGGLE_CONSOLE, szCmd, sizeof(szCmd));
+	ModernLog("Console key: \"%s\" (virtual key %d)%s", szCmd,
+	          GetCommandKey(COMMAND_ID_TOGGLE_CONSOLE), bBound ? "" : ", the default");
 }
 
 void P2Console_Init()
@@ -553,7 +557,7 @@ LTBOOL P2Console_OnKeyDown(int nKey, int nRep)
 
 	if (!s_bVisible)
 	{
-		if (nKey == nConsoleKey && nKey > 0 && !nRep && CanOpen())
+		if (nKey == nConsoleKey && nKey > 0 && CanOpen())
 		{
 			Open();
 			return LTTRUE;
