@@ -1,0 +1,11 @@
+--- a/ATTRIBUTES/ATTACHMENTS.txt
++++ b/ATTRIBUTES/ATTACHMENTS.txt
+@@ -597,7 +597,7 @@
+ 
+ [Requirement3]
+ Model		= "Cosmonaut"
+-Style		= ""
++Style		= "Action"
+ Attachment	= "Cosmonaut Helmet"
+ Socket		= "Head"
+ 

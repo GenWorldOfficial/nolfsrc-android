@@ -1,0 +1,73 @@
+--- a/ATTRIBUTES/LAYOUT.txt
++++ b/ATTRIBUTES/LAYOUT.txt
+@@ -975,7 +975,7 @@
+ [FolderPlayer]
+ FontSize                = 0
+ PageRect			= (75,95,585,385)
+-CharAnim			= "UUW"
++CharAnim			= "LWF"
+ CharRotation		= -30.0
+ //CharPos				= <35.0,-15.0,100.0>
+ //CharScale			= 0.5
+@@ -1079,7 +1079,7 @@
+ PlayerWidth			= 88
+ PingWidth			= 45
+ TypeWidth			= 112
+-MapWidth			= 128
++MapWidth			= 256
+ NameWidth			= 184
+ ScoreWidth			= 80
+ OptionWidth			= 184
+@@ -1163,6 +1163,52 @@
+ ScaleName4			= "HelpTextBoxSpr2"
+ ScaleName5			= "InterfaceFlowerMod2"
+ ScaleName6			= "RoundSelectionSpr8"
++
++
++// M-P3-13 (modern build): the Interface options folder.
++[FolderInterface]
++PageRect			= (70,138,585,385)
++FontSize			= 0
++ColumnWidth			= 300
++SliderWidth			= 150
++ScaleName0			= "WeaponBackgroundSpr1"
++ScaleName1			= "GreenTextBoxMod1"
++ScaleName2			= "GreenTextBoxMod2"
++ScaleName3			= "HorzBarTMod1"
++ScaleName4			= "HorzBarBMod1"
++ScaleName5			= "HelpTextBoxSpr1"
++ScaleName6			= "HelpTextBoxSpr2"
++ScaleName7			= "RoundSelectionSpr6"
++ScaleName8			= "RoundyMovingMod3"
++ScaleName9			= "RoundyMovingMod4"
++
++
++/***********************************************************
++**
++**	FolderJukebox (modern build, M-P4-02)
++**
++**	PageRect is the theme column. PieceRect (Rect) holds the
++**	shown theme's name and, under it, the list of its pieces.
++**	NowPlayingPos (Point) and NowPlayingWidth (Integer) place
++**	the "now playing" line; ArrowWidth and TextIndent as in
++**	FolderHostLevels.
++**
++************************************************************/
++
++[FolderJukebox]
++PageRect			= (60,104,300,360)
++FontSize			= 1
++PieceRect			= (330,78,610,360)
++NowPlayingPos		= (60,380)
++NowPlayingWidth		= 540
++TextIndent			= 4
++ArrowWidth			= 24
++ScaleName0			= "WeaponBackgroundSpr1"
++ScaleName1			= "HorzBarTMod1"
++ScaleName2			= "HorzBarBMod1"
++ScaleName3			= "HelpTextBoxSpr1"
++ScaleName4			= "HelpTextBoxSpr2"
++ScaleName5			= "InterfaceFlowerMod2"
+ 
+ 
+ [LoadScreenSingle]

@@ -1,0 +1,11 @@
+--- a/ATTRIBUTES/WEAPONS.txt
++++ b/ATTRIBUTES/WEAPONS.txt
+@@ -4418,7 +4418,7 @@
+ [Weapon32]
+ 
+ Name				= "SMG_Skydive"
+-NameId              = 4012
++NameId              = 31320
+ DescriptionId		= 4062
+ Gadget				= 0
+ AniType				= 0

@@ -1,0 +1,146 @@
+/*
+** Jukebox.txt -- the modern build's jukebox (Options -> Jukebox).
+** Written for this project; see MODERN.md, M-P4-02.
+**
+** [Theme<n>]     n = 0, 1, 2, ... in the order listed; the list ends at the
+**                first missing number.
+**
+**   NameId       CRes string with the theme's name (src/modern/cres/p4.rc);
+**                Name = "..." gives the text directly instead.
+**   Directory    the theme's directory under Music\.
+**   ControlFile  its DirectMusic control file. A theme whose control file is
+**                not in the game's data is not listed (the Game of the Year
+**                theme needs nolfgoty.rez).
+**
+**   Intensity<k> the pieces offered, k = 0, 1, 2, ... in list order: an
+**   Label<k>     INTENSITY number of the control file and what to call it.
+**                Silence and the short one-shot stings ("bumpers") are left
+**                out, and so are intensities the control file only reaches
+**                from another one listed here.
+*/
+
+[Theme0]
+NameId			= 31310
+Directory		= "AMBUSH"
+ControlFile		= "AMBUSH.txt"
+Intensity0		= 2
+Label0			= "Low hum"
+Intensity1		= 3
+Label1			= "Uneasy"
+Intensity2		= 4
+Label2			= "Creeping"
+Intensity3		= 5
+Label3			= "Attack, then battle"
+Intensity4		= 7
+Label4			= "Behind the wheel"
+Intensity5		= 8
+Label5			= "Theremin"
+Intensity6		= 9
+Label6			= "Low hum, second take"
+Intensity7		= 10
+Label7			= "Railway"
+
+[Theme1]
+NameId			= 31311
+Directory		= "BADEDUM"
+ControlFile		= "BADEDUM.txt"
+Intensity0		= 2
+Label0			= "Low hum"
+Intensity1		= 3
+Label1			= "Slow"
+Intensity2		= 21
+Label2			= "Slow, no voices"
+Intensity3		= 4
+Label3			= "Slow with drums"
+Intensity4		= 22
+Label4			= "Slow with drums, no voices"
+Intensity5		= 5
+Label5			= "Medium, marimba"
+Intensity6		= 17
+Label6			= "Medium, vibraphone"
+Intensity7		= 23
+Label7			= "Medium, vibraphone, no voices"
+Intensity8		= 6
+Label8			= "Medium with drums"
+Intensity9		= 24
+Label9			= "Medium with drums, no voices"
+Intensity10		= 7
+Label10			= "Fast"
+Intensity11		= 25
+Label11			= "Fast, no voices"
+Intensity12		= 8
+Label12			= "Fast hum"
+Intensity13		= 20
+Label13			= "Tiptoe"
+Intensity14		= 11
+Label14			= "Orchestra, quiet"
+Intensity15		= 10
+Label15			= "Orchestra, medium"
+Intensity16		= 18
+Label16			= "Orchestra, full"
+Intensity17		= 26
+Label17			= "Oom-pah band"
+
+[Theme2]
+NameId			= 31312
+Directory		= "BADGUY"
+ControlFile		= "BADGUY.txt"
+Intensity0		= 2
+Label0			= "Low hum"
+Intensity1		= 4
+Label1			= "Brooding"
+Intensity2		= 6
+Label2			= "Swing"
+Intensity3		= 9
+Label3			= "Faster"
+Intensity4		= 14
+Label4			= "Frenzy"
+
+[Theme3]
+NameId			= 31313
+Directory		= "NOLFORCH"
+ControlFile		= "NOLFORCH.txt"
+Intensity0		= 5
+Label0			= "Calm"
+Intensity1		= 4
+Label1			= "Suspense"
+Intensity2		= 6
+Label2			= "Adventure"
+Intensity3		= 2
+Label3			= "All-out action"
+
+[Theme4]
+NameId			= 31314
+Directory		= "NOLFTHEME"
+ControlFile		= "NOLFTHEME.txt"
+Intensity0		= 2
+Label0			= "Low hum"
+Intensity1		= 3
+Label1			= "Quiet"
+Intensity2		= 12
+Label2			= "Quiet, vibraphone"
+Intensity3		= 4
+Label3			= "Slow, with organ"
+Intensity4		= 5
+Label4			= "Medium"
+Intensity5		= 6
+Label5			= "The theme, full band"
+Intensity6		= 14
+Label6			= "Tiptoe"
+
+[Theme5]
+NameId			= 31315
+Directory		= "GOTY"
+ControlFile		= "GOTY.txt"
+Intensity0		= 1
+Label0			= "Easygoing"
+Intensity1		= 2
+Label1			= "Quiet"
+Intensity2		= 3
+Label2			= "On the lookout"
+Intensity3		= 5
+Label3			= "Private eye"
+Intensity4		= 6
+Label4			= "Private eye, second take"
+Intensity5		= 7
+Label5			= "Fight"
