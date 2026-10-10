@@ -103,10 +103,73 @@ commands. The engine targets in order, and the compiler each uses, are in
 The `verify` and `*-one` targets are the reconstruction loop:
 `guides/02-the-loop.md` explains it, and `guides/` the rest of the method.
 
+## The debug build
+
+`make debug` builds the same game into `out/game-debug/` with debug symbols
+and the project's debug-only diagnostics compiled in, for finding out why
+something misbehaves or crashes. It is never scored: progress is measured on
+the release build only, and the debug build cannot change it (it builds a copy
+of the source in `out/debug/` and leaves `src/*/Release`, `out/game/` and
+the release command lines exactly as they were). The first run also
+extracts the game data again (about 1.1 GB); later runs take about three
+minutes.
+
+What differs from the release build: every compile adds `/Z7 /Oy-
+/D NOLFSRC_DEBUG` (debug information, frame pointers kept so a backtrace can
+walk the stack, and the project's debug define; every other flag, the
+optimisation included, is the release one), and every link adds `/DEBUG
+/OPT:REF /INCREMENTAL:NO`. Each binary's `.pdb` and `.map` are put beside
+it.
+
+In the source, use `src/nolfsrc/nolfsrc_debug.h` (on every compiler's include
+path, so any file of any target can include it):
+
+```cpp
+#include "nolfsrc_debug.h"
+
+NOLFSRC_LOG(("loading world %s, %d objects", pName, nObjects));  // note (( ))
+NOLFSRC_ASSERT(pObj != NULL);
+#ifdef NOLFSRC_DEBUG
+    // ... anything else that must exist only in the debug build ...
+#endif
+```
+
+Without `NOLFSRC_DEBUG` the macros expand to nothing, arguments included, so
+they can stay in the source; never put a side effect in their arguments. Log
+lines go to `nolfsrc.log` in the game's working directory (`$NOLFSRC_LOG`
+names another file), stamped with the time and source position, and to
+`OutputDebugString` (`WINEDEBUG=+debugstr` shows them).
+
+`lithtech.exe` installs a crash handler in the debug build
+(`src/nolfsrc/nolfsrc_crash.h`, from `WinMain`): an unhandled exception
+anywhere in the process -- engine, renderer or game DLLs -- writes a
+backtrace to `nolfsrc.log`, for example
+
+```
+[ 450171572] crash: CRASH: exception 0xc0000005 at 0x025a6d1c
+[ 450171940] crash:   #0  0x025a6d1c d3d.ren+0x36d1c  (0x10036d1c in its .map)
+[ 450171970] crash:   #1  0x0041ac50 lithtech.exe!r_InitRender+0x130  [clientrender.cpp:1207]
+[ 450171971] crash:   #2  0x00409eef lithtech.exe!ci_SetRenderMode+0x9f  [clientdsi.cpp:398]
+[ 450171998] crash:   #3  0x01a8481f cshell.dll!CGameClientShell::OnEngineInitialized+0x1a0f  [GameClientShell.cpp:1037]
+```
+
+and the crash then goes on as it would have (Wine's own crash dialog, or the
+playtest's CRASHED). A frame with no name is in code without debug
+information -- the static C runtime, or a `d3d.ren` file compiled with
+`/Qip`, for which Intel C/C++ 4.0 writes none -- and is given at the
+binary's preferred base; `tools/mapaddr.py out/game-debug/d3d.map
+0x10036d1c` names it from the map.
+
+Play it as the release game: `out/game-debug/run.sh`, or
+`tools/playtest.sh out/game-debug 'Worlds\T01S01'` in `make shell` (the
+playtest runs the game in `out/play/<name>/`, so its `nolfsrc.log` is there).
+
 ## Notes
 
 * The build is deterministic for a given checkout: rebuilding gives the same
-  bytes except for the timestamps the linker writes.
+  bytes except for the timestamps the linker writes. (The game DLLs also
+  vary by a few bytes between builds made at different times; the engine
+  binaries do not.)
 * The game DLLs are the `Final_Release` configuration (`_REZFILE`, `_FINAL`),
   which reading data from `.rez` archives requires.
 * `out/game/nolfcmds.txt` is the command file `run.sh` and the playtest

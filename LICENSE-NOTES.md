@@ -12,7 +12,7 @@ This file says which is which; it is not legal advice and grants nothing.
 | `src/MONOLITH-README.txt` | Monolith's readme for that release | as `src/game/` |
 | `src/lithshared/` | the LithTech shared libraries. Much of it (`stdlith/`, `CryptMgr/`, `RegMgr/`, `MFCStub/`, the `ButeMgr/` parser, `lith/`) is adapted from Monolith's later public source release for *No One Lives Forever 2*; the rest was written or reconstructed for this project, including `ztools/`, `rezmgr/` and `gamespy/` (a stand-in for the GameSpy middleware). `zlib/` is zlib | Monolith's code under the terms of the release it came from; zlib under the zlib licence; the rest as `src/engine/` |
 | `src/engine/` | the LithTech engine (`lithtech.exe`, `server.dll`, `d3d.ren`), the `NOLF.exe` launcher, `ltmsg.dll` and `sres.dll`: written for this project, reconstructed from the retail binaries so that it compiles back to them. It implements Monolith's engine and interfaces, and `launcher.rc` / `ltmsg.rc` reproduce the retail resource scripts (dialogs and strings) | written for this project; no licence is declared |
-| `build/`, `tools/`, `docker/`, `progress/`, `Makefile`, the documentation | written for this project | no licence is declared |
+| `src/nolfsrc/`, `build/`, `tools/`, `docker/`, `progress/`, `Makefile`, the documentation | written for this project | no licence is declared |
 
 ## Not in this repository, taken from your discs at build time
 

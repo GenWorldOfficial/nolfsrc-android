@@ -11,6 +11,7 @@
 | `lithshared/` | the static libraries the above link | `build/libs.sh all` |
 | `game/` | `CRes.dll`, `CShell.dll`, `Object.lto` (Monolith's NOLF v1.003 source) | `build/build.sh all final` |
 | `LT2/` | headers only: the LithTech SDK (`sdk/inc`) and shared-library headers (`lithshared/`) | |
+| `nolfsrc/` | headers only, ours: the debug build's logging (`nolfsrc_debug.h`) and crash handler (`nolfsrc_crash.h`); on every compiler's include path, and empty in a release build | `make debug` |
 
 `engine/*/link/` holds each image's committed link inputs (see
 `build/engine.sh`). The four source trees sit side by side because the

@@ -159,14 +159,17 @@ install_built src/engine/sres/Release/sres.dll           custom/sres.dll
 step "8. audit: every PE file in $OUT"
 python3 tools/discextract.py audit "$OUT"
 
-step "9. package: $OUT -> ${OUT%/*}/nolf-game.tar"
-# One file to copy to the machine that plays it: unpack anywhere, ./run.sh.
-# Links are stored as the files they point to (-h); the per-machine state
-# run.sh / run-launcher.sh create is left out.
-PKG="${OUT%/*}/nolf-game.tar"
-tar -C "$(dirname "$OUT")" -h -cf "$PKG.part" \
-    --exclude=run-cmds.txt --exclude=cd --exclude='*.part' "$(basename "$OUT")"
-mv "$PKG.part" "$PKG"
-echo "   $PKG: $(du -h "$PKG" | cut -f1) (unpacks to $(basename "$OUT")/)"
+# (NOLF_PACKAGE=0 skips it: build/debug.sh makes no tar)
+if [ "${NOLF_PACKAGE:-1}" = 1 ]; then
+    step "9. package: $OUT -> ${OUT%/*}/nolf-game.tar"
+    # One file to copy to the machine that plays it: unpack anywhere, ./run.sh.
+    # Links are stored as the files they point to (-h); the per-machine state
+    # run.sh / run-launcher.sh create is left out.
+    PKG="${OUT%/*}/nolf-game.tar"
+    tar -C "$(dirname "$OUT")" -h -cf "$PKG.part" \
+        --exclude=run-cmds.txt --exclude=cd --exclude='*.part' "$(basename "$OUT")"
+    mv "$PKG.part" "$PKG"
+    echo "   $PKG: $(du -h "$PKG" | cut -f1) (unpacks to $(basename "$OUT")/)"
+fi
 
 step "done: $OUT ($(( $(date +%s) - T0 ))s) -- play it with $OUT/run.sh, or test it with make test"

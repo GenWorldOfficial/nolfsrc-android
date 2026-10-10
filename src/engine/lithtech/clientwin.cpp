@@ -93,6 +93,7 @@
 #include <setjmp.h>
 #include "ltbasedefs.h"
 #include "ltlink.h"
+#include "nolfsrc_crash.h"     // debug build only: crash backtraces (src/nolfsrc/)
 
 // windows.h renames engine methods out from under the SDK headers.
 #undef PostMessage
@@ -1533,6 +1534,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	CluCommandLineArgs args;
 	int                nRet;
 	int                i;
+
+	NOLFSRC_INSTALL_CRASH_HANDLER();   // debug build only
 
 	args.m_pArgs = NULL;
 	args.m_nArgs = 0;

@@ -80,6 +80,8 @@ You need Linux with Docker, the two disc images, and the compilers:
 make            # -> out/game/ and out/nolf-game.tar  (about 3 minutes,
                 #    plus about 3 for the docker image the first time)
 make test       # optional: plays two levels under Xvfb with scripted input
+make debug      # optional: the same game with symbols and debug logging,
+                #    in out/game-debug/ (BUILDING.md, "The debug build")
 make progress   # optional: how much of it matches the retail binaries
 ```
 
