@@ -1,0 +1,111 @@
+// ltmsg.dll resources — engine error messages and leftover dev-era network
+// dialogs, reconstructed from the shipped v1.003 ltmsg.dll resource section.
+// String IDs are the error codes lithtech.exe passes to FormatMessage.
+
+#include "winres.h"
+
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+130 DIALOG DISCARDABLE  0, 0, 268, 212
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Service Provider"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",1,211,7,50,14
+    PUSHBUTTON      "Cancel",2,211,24,50,14
+    LISTBOX         1000,7,17,160,55,LBS_SORT | LBS_NOINTEGRALHEIGHT |
+                    WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Please choose a network type",-1,7,7,160,10
+    GROUPBOX        "Gradwohl's Mom",-1,75,80,65,60
+    CONTROL         "Radio1",1001,"Button",BS_AUTORADIOBUTTON,15,95,39,10
+    CONTROL         "Radio2",1003,"Button",BS_AUTORADIOBUTTON,15,110,39,10
+    CONTROL         "Radio3",1004,"Button",BS_AUTORADIOBUTTON,15,125,39,10
+    GROUPBOX        "Frame Control",-1,10,80,53,60
+    CONTROL         "Check2",1005,"Button",BS_AUTOCHECKBOX | WS_GROUP |
+                    WS_TABSTOP,80,95,41,10
+    CONTROL         "Check2",1006,"Button",BS_AUTOCHECKBOX | WS_GROUP |
+                    WS_TABSTOP,80,110,41,10
+    EDITTEXT        1007,75,145,90,15,ES_AUTOHSCROLL
+    RTEXT           "Edit Control:",-1,10,150,60,10
+    LTEXT           "Static Text",-1,10,170,85,10
+END
+
+131 DIALOG DISCARDABLE  0, 0, 240, 202
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Connect"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",1,183,7,50,14
+    PUSHBUTTON      "Cancel",2,183,24,50,14
+    LISTBOX         1001,10,15,160,50,LBS_SORT | LBS_NOINTEGRALHEIGHT |
+                    WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Choose a network type",-1,5,5,170,90
+    PUSHBUTTON      "&Select",1002,50,70,70,20
+    GROUPBOX        "Choose a game to join",1006,5,105,170,90,WS_DISABLED
+    LISTBOX         1003,10,115,160,75,LBS_SORT | LBS_NOINTEGRALHEIGHT |
+                    WS_VSCROLL | WS_DISABLED | WS_TABSTOP
+END
+
+139 DIALOG DISCARDABLE  0, 0, 272, 95
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+FONT 8, "MS Sans Serif"
+BEGIN
+    EDITTEXT        1009,30,35,210,15,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",1,7,74,50,14
+    PUSHBUTTON      "Cancel",2,215,74,50,14
+    LTEXT           "",1010,30,20,210,10
+END
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    1				"Internal DirectEngine error: %1!d!."
+    2				"Missing WorldModel: %1!s!."
+    3				"Can't load game resources in %1!s!."
+    4				"Can't initialize DirectInput."
+    5				"Unable to restore video mode."
+    6				"User canceled."
+    7				"%1!s! is an invalid world file."
+    8				"Missing model file %1!s!."
+    9				"%1!s! is an invalid model file."
+    10				"Missing sprite file %1!s!."
+    11				"%1!s! is an invalid sprite file."
+    12				"No game resources specified."
+    13				"Missing world file %1!s!."
+    14				"Unable to restore object (class %1!s!)."
+    15				"Server error: %1!s!."
+    16				"Error loading render DLL %1!s!."
+    17				"Error copying file %1!s!."
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    42				"Unable to create server shell."
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    66				"Object DLL %1!s! is an invalid version (%2!d!).  Current version is %3!d!."
+    76				"Invalid shell DLL %1!s!."
+    77				"Invalid shell DLL version for %1!s!.  DLL version is %2!d!, current version is %3!d!."
+    78				"Missing shell DLL %1!s!."
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    82				"Can't create client shell."
+    89				"Unable to initialize sound system."
+    92				"Got an invalid server packet."
+    93				"Missing class: %1!s!."
+    94				"Unable to initialize network driver %1!s!."
+    95				"Network protocol version mismatch - your version: %1!d!, server's version: %2!d!."
+END
