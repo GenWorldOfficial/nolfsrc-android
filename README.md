@@ -102,6 +102,14 @@ it and run `game/run.sh`. `game/run-launcher.sh` starts the game through the
 `NOLF.exe` launcher instead. Both scripts document their options in their
 headers. Sound needs Wine's audio to work on that machine.
 
+## Contributing
+
+The remaining work is functions that are written but not yet byte-identical,
+and functions not written yet. `guides/` explains the method, from reading the
+retail machine code to the compiler quirks that decide the last few bytes;
+`make progress` (after `make`) shows where things stand and catches a change
+that breaks a function that matched before.
+
 ## Layout
 
 | Path | What |
@@ -111,7 +119,8 @@ headers. Sound needs Wine's audio to work on that machine.
 | `src/game/` | Monolith's NOLF Source Code v1.003 (client, server and resource DLLs) |
 | `src/LT2/` | the LithTech SDK and shared-library headers from the same release |
 | `build/` | the build scripts (`all.sh` is the whole build) |
-| `tools/` | the extraction and link helpers the build uses, and the playtest |
+| `tools/` | the build's helpers, the playtest, and the tools for reading the retail code and comparing ours with it |
+| `guides/` | how to reconstruct a function so it compiles to the retail bytes: start here to contribute |
 | `progress/` | the record of what is byte-identical so far, and what `make progress` checks against it |
 | `docker/` | the build image (Ubuntu 24.04 + Wine) |
 | `ISOS/` | where the disc images go, and their checksums |

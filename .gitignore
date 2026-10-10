@@ -5,10 +5,13 @@
 # The compilers (see toolchain/README.md, which is tracked)
 /toolchain/*
 !/toolchain/README.md
+!/toolchain/COMPILERS.md
 !/toolchain/fetch.sh
 
 # Everything the build writes
 /out/
+# worktrees made by tools/agentwt.sh
+/.worktrees/
 src/engine/*/Release/
 src/lithshared/*/Release/
 src/lithshared/out/

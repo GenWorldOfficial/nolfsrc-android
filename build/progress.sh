@@ -20,7 +20,6 @@
 #           record a run that lost functions)
 set -e
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
-source build/isos.sh
 
 mode="${1:-check}"
 case "$mode" in
@@ -28,10 +27,10 @@ case "$mode" in
     *) echo "usage: build/progress.sh check|update" >&2; exit 2 ;;
 esac
 
-for f in lithtech.exe server.dll d3d.ren NOLF.exe; do
+for f in lithtech.exe server.dll d3d.ren NOLF.exe ltmsg.dll; do
     if [ ! -f "out/reference/$f" ]; then
         echo "== retail images -> out/reference/ (for scoring only)"
-        python3 tools/discextract.py reference "$(iso_dir)" out/reference
+        bash build/reference.sh
         break
     fi
 done

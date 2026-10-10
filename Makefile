@@ -93,7 +93,7 @@ progress-update: check-isos image
 shell: image
 	docker run --rm -it --init --name $(CONTAINER)-shell \
 	  -u $(shell id -u):$(shell id -g) -e HOME=/tmp/home \
-	  -v $(CURDIR):/repo -w /repo $(ISO_MOUNTS) $(IMAGE) bash
+	  -v $(CURDIR):/repo -w /repo $(ISO_MOUNTS) $(SRC_MOUNT) $(IMAGE) bash
 
 clean:
 	rm -rf out

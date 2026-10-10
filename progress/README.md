@@ -96,9 +96,15 @@ the libraries are skipped with a note; `make progress-update` needs them.
 | `*-screen-exclude.csv` | per image: enumerated addresses examined by hand. A reason that starts `NOT A FUNCTION` or `NOT GAME CODE` removes the row from the count (an operand byte, a jump target inside another function, padding); any other reason only marks the address as `attempted` |
 | `extent-splits.csv` | function starts the enumeration misses (a function hidden behind a thunk), with the evidence |
 | `lithtech-decoded-map.csv` | `lithtech.exe` addresses a function of ours has been mapped to, marking them `attempted` |
+| `*-enum-suspect.csv` | per image: enumerated rows judged wrong (`addr,severity,reason`); `bogus` rows are not functions, and `tools/uncovered.py`, `decoded.py` and `d3dwork.py` leave them off their worklists. Not read by the scoring |
+| `decoded-extents.csv`, `decoded-moved.csv` | for `tools/decoded.py`: the true extents of large functions whose enumerated row is wrong, and `d3d.ren` reconstructions moved out of their `big<addr>.cpp` file |
 
 The CSVs change what is counted, so a change to them is a change to the
 denominator: give the evidence in the reason, as the existing rows do.
+
+The per-image function and vtable tables the reconstruction tools read
+(`out/reference/<image>-functions.csv`, `-vtables.csv`) are not kept here:
+`build/reference.sh` derives them from the retail images.
 
 Per run, in `out/progress/`: `functions.csv` (every retail function and its
 status) and `summary.json`. `tools/progress.py --nears` lists the near

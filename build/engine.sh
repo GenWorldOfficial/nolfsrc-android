@@ -24,10 +24,50 @@
 # src/engine/launcher/libs/mss32.def). Each link's report is
 # src/engine/<target>/Release/<target>-link.txt.
 #
-# Usage: build/engine.sh <target>   (run inside the build container)
+# Each target can also be checked against the retail binaries, function by
+# function (tools/exematch.py), which is the reconstruction loop of guides/:
+#   build/engine.sh server verify          compile, then match every object
+#   build/engine.sh server-one smgr.cpp [symbol]
+#                                          recompile ONE file and match it
+#                                          (also lithtech-one, d3d-one)
+#   build/engine.sh server-link test       link, then load it under Wine
+# The checks read the retail images from out/reference/ (build/reference.sh);
+# building never does.
+#
+# src/engine/server/*.cpp is compiled into BOTH server.dll and lithtech.exe:
+# after changing one, rebuild both (`server`, `lithtech`, or both *-one
+# loops), or lithtech.exe's objects go stale.
+#
+# Usage: build/engine.sh <target> [verify|link|test]   (in the build container)
 set -e
 source "$(dirname "$0")/env.sh"
 cd "$REPO"
+
+# The retail images the checks compare against (build/reference.sh).
+REF="${NOLF_REFERENCE:-out/reference}"
+ref() {  # ref <file> -> its path under $REF, or a loud error
+    if [ ! -f "$REF/$1" ]; then
+        echo "error: $REF/$1 missing -- run build/reference.sh" >&2
+        return 1
+    fi
+    echo "$REF/$1"
+}
+
+# match <image> <obj|lib>... [-- symbol-filter]: tools/exematch.py, its report
+# optionally narrowed to the lines naming one symbol (and the totals)
+match() {
+    local img="$1"; shift
+    local args=() filter=""
+    while [ $# -gt 0 ]; do
+        if [ "$1" = "--" ]; then filter="${2:-}"; break; fi
+        args+=("$1"); shift
+    done
+    if [ -n "$filter" ]; then
+        python3 tools/exematch.py "$img" "${args[@]}" | grep -Ei "${filter}|^matched"
+    else
+        python3 tools/exematch.py "$img" "${args[@]}"
+    fi
+}
 
 CL_COMMON='/nologo /MT /W3 /GX /O2 /D WIN32 /D NDEBUG /D _WINDOWS /c'
 
@@ -41,6 +81,13 @@ build_ltmsg() {
       run_link /nologo /subsystem:windows /dll /machine:I386 \
           /out:"$OUT/ltmsg.dll" /map:"$OUT/ltmsg.map" \
           "$OUT/ltmsg.obj" "$OUT/ltmsg.res" kernel32.lib )
+}
+
+# ltmsg.dll is resources around an empty DllMain: the resources are compared
+# payload for payload, the code as a whole (both relocation-normalised).
+verify_ltmsg() {
+    python3 tools/bindiff.py src/engine/ltmsg/Release/ltmsg.dll "$(ref ltmsg.dll)"
+    python3 tools/rsrcdiff.py src/engine/ltmsg/Release/ltmsg.dll "$(ref ltmsg.dll)"
 }
 
 build_launcher() {
@@ -73,6 +120,17 @@ link_launcher() {
           kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib \
           comdlg32.lib winmm.lib ole32.lib oleaut32.lib uuid.lib \
           odbc32.lib odbccp32.lib )
+}
+
+# Every launcher function, matched in the retail NOLF.exe. The whole-exe link
+# is refreshed first: tools/progress.py uses it as a second, unmasked check.
+verify_launcher() {
+    local D=src/engine/launcher/Release
+    python3 tools/exematch.py "$(ref NOLF.exe)" \
+        $D/launcher.obj $D/gamedlg.obj $D/gamehelp.obj $D/dlgconfig.obj $D/dlgcustom.obj \
+        $D/dlghelp.obj $D/dlgsound.obj $D/dlgdisplay.obj $D/preview.obj $D/cdcheck.obj \
+        $D/dib.obj $D/dibmgr.obj $D/dibpal.obj $D/RezFind.obj $D/Utils.obj \
+        src/lithshared/out/RegMgr.lib
 }
 
 mss32_implib() {
@@ -149,19 +207,54 @@ D3D_QIP_OS_OI_SF_TUS="$(_d3dw 'w[0-9]*_osoiqipsf.cpp')"
 D3D_QIP_SF_TUS="$(_d3dw 'w[0-9]*_qipsf.cpp')"
 D3D_QIP_NI_SF_TUS="$D3D_QIP_NI_SF_TUS"$'\n'"$(_d3dw 'w[0-9]*_qipnisf.cpp')"
 D3D_QIP_OS_OI_NI_TUS="$(_d3dw 'w[0-9]*_osoiqipni.cpp')"
+d3d_flags() {  # d3d_flags <tu.cpp> -> the icl optimisation flags that file is built with
+    local t="$1"
+    if   grep -qxF "$t" <<<"$D3D_OS_G5_TUS";        then echo "/Os /G5"
+    elif grep -qxF "$t" <<<"$D3D_OS_SF_TUS";        then echo "/Os /Qsfalign16"
+    elif grep -qxF "$t" <<<"$D3D_QIP_OS_OI_SF_TUS"; then echo "/Os /Oi- /Qip /Qsfalign16"
+    elif grep -qxF "$t" <<<"$D3D_QIP_SF_TUS";       then echo "/O2 /Qip /Qsfalign16"
+    elif grep -qxF "$t" <<<"$D3D_QIP_NI_SF_TUS";    then echo "/O2 /Qip /Qip_no_inlining /Qsfalign16"
+    elif grep -qxF "$t" <<<"$D3D_QIP_OS_OI_NI_TUS"; then echo "/Os /Oi- /Qip /Qip_no_inlining"
+    elif grep -qxF "$t" <<<"$D3D_QIP_OS_OI_TUS";    then echo "/Os /Oi- /Qip"
+    elif grep -qxF "$t" <<<"$D3D_QIP_OS_NI_TUS";    then echo "/Os /Qip /Qip_no_inlining"
+    elif grep -qxF "$t" <<<"$D3D_RCD_TUS";          then echo "/O2 /Qrcd"
+    elif grep -qxF "$t" <<<"$D3D_OI_TUS";           then echo "/O2 /Oi-"
+    elif grep -qxF "$t" <<<"$D3D_QIP_OI_TUS";       then echo "/O2 /Oi- /Qip /Qip_no_inlining"
+    elif grep -qxF "$t" <<<"$D3D_OS_OI_TUS";        then echo "/Os /Oi-"
+    elif grep -qxF "$t" <<<"$D3D_QIP_NI_TUS";       then echo "/O2 /Qip /Qip_no_inlining"
+    elif grep -qxF "$t" <<<"$D3D_OS_TUS";           then echo "/Os"
+    elif grep -qxF "$t" <<<"$D3D_QIP_TUS";          then echo "/O2 /Qip"
+    elif grep -qxF "$t" <<<"$D3D_QIP_OS_TUS";       then echo "/Os /Qip"
+    else echo "/O2"; fi
+}
 
 case "${1:-}" in
-    ltmsg) build_ltmsg ;;
+    ltmsg) build_ltmsg; [ "${2:-}" = verify ] && verify_ltmsg ;;
     sres)  build_sres ;;
     launcher) build_launcher
               case "${2:-}" in
                   link)   link_launcher ;;
+                  verify) link_launcher; verify_launcher ;;
               esac ;;
     server)   export CL_REV="${CL_REV:-8447}"; source "$(dirname "$0")/env.sh"
               build_engine_scaffold server "/I ..\\..\\LT2\\sdk\\inc /I ." server.cpp servermgr.cpp servermsg.cpp netmgr.cpp servermath.cpp commonphysics.cpp commonmodel.cpp sharedcommon.cpp servermodel.cpp serverlightanim.cpp servercommon.cpp servermessage.cpp packet.cpp lthread.cpp smgr.cpp counter.cpp dalloc.cpp modelanim.cpp streamsim.cpp fsstream.cpp basestream.cpp objbank.cpp objtypes.cpp collection.cpp worldbsp.cpp worldmodels.cpp saveio.cpp worldsim.cpp serverengine.cpp ltobject.cpp lmessage.cpp spritecontrol.cpp tcpdriver.cpp stringbank.cpp dsi.cpp genericprop.cpp dhash.cpp filemgr.cpp console.cpp structbank.cpp csbase.cpp sdkforce.cpp netobj.cpp savrest.cpp shade.cpp smgrnew.cpp modelnew.cpp objmover.cpp smgrmisc.cpp svnew.cpp svlast.cpp svtiny.cpp worldtree.cpp
               build_engine_scaffold_os server "/I ..\\..\\LT2\\sdk\\inc /I ." $OS_TUS
               cp -u src/lithshared/rezmgr/Release/*.obj src/engine/server/Release/ 2>/dev/null || true
+              [ "${2:-}" = verify ] && match "$(ref server.dll)" src/engine/server/Release/*.obj
               ;;
+    # The reconstruction loop: recompile ONE file, match only its object.
+    #   build/engine.sh server-one smgr.cpp PlaySound
+    server-one)
+              export CL_REV="${CL_REV:-8447}"; source "$(dirname "$0")/env.sh"
+              TU="${2:?usage: engine.sh server-one <tu.cpp> [symbol-filter]}"
+              # a failed compile under Wine can exit 0 and leave the old
+              # object in place, so a broken edit would measure as no change
+              rm -f "src/engine/server/Release/${TU%.cpp}.obj"
+              case " $OS_TUS " in
+                  *" $TU "*) build_engine_scaffold_os server "/I ..\\..\\LT2\\sdk\\inc /I ." "$TU" || exit 1 ;;
+                  *)         build_engine_scaffold server "/I ..\\..\\LT2\\sdk\\inc /I ." "$TU" || exit 1 ;;
+              esac
+              match "$(ref server.dll)" "src/engine/server/Release/${TU%.cpp}.obj" -- "${3:-}" ;;
     d3d-link)
               export CL_REV="${CL_REV:-8168}"; source "$(dirname "$0")/env.sh"
               python3 tools/mkaliasobj.py src/engine/d3d/link/aliases.rsp src/engine/d3d/link/aliases.obj
@@ -174,7 +267,19 @@ case "${1:-}" in
                     link/aliases.obj link/d3dviews.obj $objs ..\\..\\lithshared\\out\\StdLith.lib \
                     libcmt.lib kernel32.lib user32.lib winmm.lib ddraw.lib link/ddraw7.lib dxguid.lib \
                     > Release/d3d-link.txt 2>&1 || true ) &&
-              grep -o "unresolved external symbol .*" src/engine/d3d/Release/d3d-link.txt | sort -u | wc -l | sed 's/^/unresolved externals: /' ;;
+              grep -o "unresolved external symbol .*" src/engine/d3d/Release/d3d-link.txt | sort -u | wc -l | sed 's/^/unresolved externals: /'
+              # "d3d-link test": load the linked d3d.ren under Wine with its
+              # preferred base occupied (so the loader relocates it), list the
+              # display modes and have RenderDLLSetup fill a RenderStruct
+              if [ "${2:-}" = test ]; then
+                  ren=src/engine/d3d/Release/d3d.ren
+                  [ -f "$ren" ] || { echo "no $ren (the link did not complete)"; exit 1; }
+                  mkdir -p out/d3dtest
+                  cp tools/d3dloadtest.c out/d3dtest/ && cp "$ren" out/d3dtest/d3d.ren
+                  ( cd out/d3dtest && run_cl /nologo /O1 d3dloadtest.c \
+                        /link /out:d3dloadtest.exe kernel32.lib user32.lib >/dev/null &&
+                    "$WINE" d3dloadtest.exe d3d.ren rebase 2>/dev/null ) || exit 1
+              fi ;;
     lithtech-link)
               export CL_REV="${CL_REV:-8447}"; source "$(dirname "$0")/env.sh"
               python3 tools/mkaliasobj.py src/engine/lithtech/link/aliases.rsp src/engine/lithtech/link/aliases.obj
@@ -199,7 +304,18 @@ case "${1:-}" in
                     /export:CreateServer /export:DeleteServer link/aliases.obj $objs \
                     ..\\..\\lithshared\\out\\RezMgr.lib ..\\..\\lithshared\\out\\StdLith.lib ..\\..\\lithshared\\out\\Lith.lib \
                     libcmt.lib kernel32.lib user32.lib winmm.lib ole32.lib wsock32.lib > Release/server-link.txt 2>&1 || true ) &&
-              grep -o "unresolved external symbol .*" src/engine/server/Release/server-link.txt | sort -u | wc -l | sed 's/^/unresolved externals: /' ;;
+              grep -o "unresolved external symbol .*" src/engine/server/Release/server-link.txt | sort -u | wc -l | sed 's/^/unresolved externals: /'
+              # "server-link test": load the linked DLL under Wine with its
+              # preferred base occupied (so the loader relocates it), then
+              # CreateServer and DeleteServer (needs `engine.sh ltmsg` first)
+              if [ "${2:-}" = test ]; then
+                  mkdir -p out/linktest
+                  cp tools/loadtest.c src/engine/server/Release/server.dll out/linktest/
+                  cp src/engine/ltmsg/Release/ltmsg.dll out/linktest/ || exit 1
+                  ( cd out/linktest && run_cl /nologo /O1 loadtest.c \
+                        /link /out:loadtest.exe kernel32.lib user32.lib ole32.lib >/dev/null &&
+                    "$WINE" loadtest.exe server.dll rebase 2>/dev/null ) || exit 1
+              fi ;;
     d3d)
               export CL_REV="${CL_REV:-8168}"; source "$(dirname "$0")/env.sh"
               D=src/engine/d3d
@@ -239,7 +355,18 @@ case "${1:-}" in
                   /D NO_PRAGMA_LIBS /I ..\\..\\LT2\\sdk\\inc /I . /c /FoRelease/ $D3D_QIP_NI_SF_TUS )
               [ -n "$D3D_QIP_OS_OI_NI_TUS" ] && ( cd "$D" && run_icl /nologo /MT /W3 /Os /Oi- /Qip /Qip_no_inlining /D WIN32 /D NDEBUG /D _WINDOWS \
                   /D NO_PRAGMA_LIBS /I ..\\..\\LT2\\sdk\\inc /I . /c /FoRelease/ $D3D_QIP_OS_OI_NI_TUS )
+              [ "${2:-}" = verify ] && match "$(ref d3d.ren)" src/engine/d3d/Release/*.obj
               ;;
+    # One file, with the flags its group gives it.
+    #   build/engine.sh d3d-one d3d.cpp RenderDLLSetup
+    d3d-one)
+              export CL_REV="${CL_REV:-8168}"; source "$(dirname "$0")/env.sh"
+              TU="${2:?usage: engine.sh d3d-one <tu.cpp> [symbol-filter]}"
+              FLAGS=$(d3d_flags "$TU"); echo "==== $TU ($FLAGS)"
+              rm -f "src/engine/d3d/Release/${TU%.cpp}.obj"
+              ( cd src/engine/d3d && run_icl /nologo /MT /W3 $FLAGS /D WIN32 /D NDEBUG /D _WINDOWS \
+                  /D NO_PRAGMA_LIBS /I ..\\..\\LT2\\sdk\\inc /I . /c /FoRelease/ "$TU" ) || exit 1
+              match "$(ref d3d.ren)" "src/engine/d3d/Release/${TU%.cpp}.obj" -- "${3:-}" ;;
     lithtech) export CL_REV="${CL_REV:-8447}"; source "$(dirname "$0")/env.sh"
               D=src/engine/lithtech
               echo "==== $D -> objects (cl 8447 /O2; shared engine sources)"
@@ -254,8 +381,32 @@ case "${1:-}" in
               ( cd "$D" && run_cl /nologo /MT /W3 $GX_FLAGS /D WIN32 /D NDEBUG /D _WINDOWS \
                   /D NO_PRAGMA_LIBS /I ..\\..\\LT2\\sdk\\inc /I ..\\server /I . /c /FoRelease/ $GX_TUS )
               cp -u src/lithshared/rezmgr/Release/*.obj src/engine/lithtech/Release/ 2>/dev/null || true
+              [ "${2:-}" = verify ] && match "$(ref lithtech.exe)" src/engine/lithtech/Release/*.obj
               ;;
-    *) echo "usage: $0 ltmsg | sres | launcher [link] | server | server-link |"
-       echo "          lithtech | lithtech-link | d3d | d3d-link"; exit 1 ;;
+    # One file (a bare name not in src/engine/lithtech resolves against
+    # src/engine/server), with the flags its group gives it.
+    #   build/engine.sh lithtech-one smgr.cpp PlaySound
+    lithtech-one)
+              export CL_REV="${CL_REV:-8447}"; source "$(dirname "$0")/env.sh"
+              TU="${2:?usage: engine.sh lithtech-one <tu.cpp> [symbol-filter]}"
+              SRC="$TU"; [ -f "src/engine/lithtech/$TU" ] || SRC="..\\server\\$TU"
+              rm -f "src/engine/lithtech/Release/${TU%.cpp}.obj"   # see server-one
+              case " $NOPOOL_TUS " in
+                  *" $TU "*) FLAGS="$NOPOOL_FLAGS" ;;
+                  *)         case " $OD_TUS " in
+                                 *"\\$TU "*) FLAGS="$OD_FLAGS" ;;
+                                 *)           case " $GX_TUS " in
+                                                  *" $TU "*) FLAGS="$GX_FLAGS" ;;
+                                                  *)         FLAGS="/O2" ;;
+                                              esac ;;
+                             esac ;;
+              esac
+              ( cd src/engine/lithtech && run_cl /nologo /MT /W3 $FLAGS /D WIN32 /D NDEBUG /D _WINDOWS \
+                  /D NO_PRAGMA_LIBS /I ..\\..\\LT2\\sdk\\inc /I ..\\server /I . /c /FoRelease/ "$SRC" ) || exit 1
+              match "$(ref lithtech.exe)" "src/engine/lithtech/Release/${TU%.cpp}.obj" -- "${3:-}" ;;
+    *) echo "usage: $0 ltmsg [verify] | sres | launcher [link|verify]"
+       echo "       $0 server|lithtech|d3d [verify]"
+       echo "       $0 server-link [test] | lithtech-link | d3d-link [test]"
+       echo "       $0 server-one|lithtech-one|d3d-one <file.cpp> [symbol]"; exit 1 ;;
 esac
 echo "==== done"

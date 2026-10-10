@@ -1,0 +1,964 @@
+addr,severity,reason
+0x00408756,bogus,"enumcheck: an instruction straddles it, so it is an operand byte inside the function at 0x00408510"
+0x004088f0,bogus,"enumcheck: an instruction straddles it, so it is an operand byte inside the function at 0x00408756"
+0x00410018,bogus,"enumcheck: an instruction straddles it, so it is an operand byte inside the function at 0x0040fd90"
+0x0041002e,bogus,"enumcheck: an instruction straddles it, so it is an operand byte inside the function at 0x00410020"
+0x00410035,bogus,"enumcheck: an instruction straddles it, so it is an operand byte inside the function at 0x00410030"
+0x00410082,bogus,"enumcheck: an instruction straddles it, so it is an operand byte inside the function at 0x00410035"
+0x00416570,bogus,"enumcheck: an instruction straddles it, so it is an operand byte inside the function at 0x00416560"
+0x0041676e,bogus,"enumcheck: an instruction straddles it, so it is an operand byte inside the function at 0x004165c0"
+0x0041786f,bogus,"enumcheck: an instruction straddles it, so it is an operand byte inside the function at 0x00417845"
+0x0041f911,bogus,"hand-confirmed: a jne target inside ILTCSBase::SetupEuler, whose entry is 0x0041f8d0"
+0x0042002e,bogus,"enumcheck: an instruction straddles it, so it is an operand byte inside the function at 0x00420020"
+0x00420034,bogus,"hand-confirmed: inside tm_FreeAllTextures (0x00420020, ret at 0x00420050)"
+0x00424242,bogus,"enumcheck: an instruction straddles it, so it is an operand byte inside the function at 0x00423e10"
+0x00425096,bogus,"hand-confirmed: inside CWorldModelHost::AttachWorldModel (0x00424f20, 439 bytes)"
+0x00427cac,bogus,"enumcheck: an instruction straddles it, so it is an operand byte inside the function at 0x00427ca0"
+0x0042e8bd,bogus,hand-confirmed: inside the function at 0x0042e8a0
+0x0042ebf7,bogus,hand-confirmed: inside dtx_Create (0x0042eab0..0x0042edc1)
+0x0042f5a2,bogus,"hand-confirmed: the real entry is 0x0042f5a0 (push %esi; push %edi), reached from 0x0042e40e"
+0x00430001,bogus,"hand-confirmed: inside the function at 0x0042ffe0, which runs to its ret at 0x00430073"
+0x0043000f,bogus,hand-confirmed: inside the function at 0x0042ffe0
+0x0043001a,bogus,hand-confirmed: inside the function at 0x0042ffe0
+0x00430028,bogus,hand-confirmed: inside the function at 0x0042ffe0
+0x00430046,bogus,hand-confirmed: inside the function at 0x0042ffe0
+0x004359e7,bogus,"hand-confirmed: inside the function at 0x004359c0, whose real extent is 0x004359c0..0x00435acf"
+0x00439f1c,bogus,"hand-confirmed: a je target inside 0x00439ec0, whose real extent is 0x00439ec0..0x00439f7f"
+0x00440020,bogus,"enumcheck: an instruction straddles it, so it is an operand byte inside the function at 0x0044001d"
+0x0044002f,bogus,"enumcheck: an instruction straddles it, so it is an operand byte inside the function at 0x00440020"
+0x00443374,bogus,hand-confirmed: four bytes of nop between functions
+0x00444553,bogus,"enumcheck: an instruction straddles it, so it is an operand byte inside the function at 0x004444e4"
+0x00444554,bogus,"enumcheck: an instruction straddles it, so it is an operand byte inside the function at 0x00444553"
+0x00444c52,bogus,"enumcheck: an instruction straddles it, so it is an operand byte inside the function at 0x00444c40"
+0x00445055,bogus,"enumcheck: an instruction straddles it, so it is an operand byte inside the function at 0x00445030"
+0x00447904,bogus,"enumcheck: an instruction straddles it, so it is an operand byte inside the function at 0x004478c0"
+0x00450058,bogus,"enumcheck: an instruction straddles it, so it is an operand byte inside the function at 0x00450056"
+0x00454c49,bogus,"enumcheck: an instruction straddles it, so it is an operand byte inside the function at 0x00454a40"
+0x00455a49,bogus,"enumcheck: an instruction straddles it, so it is an operand byte inside the function at 0x00455790"
+0x00458904,bogus,"enumcheck: an instruction straddles it, so it is an operand byte inside the function at 0x00458894"
+0x00460018,bogus,"enumcheck: an instruction straddles it, so it is an operand byte inside the function at 0x00460001"
+0x0046006c,bogus,"enumcheck: an instruction straddles it, so it is an operand byte inside the function at 0x00460067"
+0x00461550,bogus,"enumcheck: an instruction straddles it, so it is an operand byte inside the function at 0x00461270"
+0x00461c77,bogus,"enumcheck: an instruction straddles it, so it is an operand byte inside the function at 0x004619a0"
+0x004654f2,bogus,"enumcheck: an instruction straddles it, so it is an operand byte inside the function at 0x00465300"
+0x00474e4f,bogus,"enumcheck: an instruction straddles it, so it is an operand byte inside the function at 0x00474da0"
+0x00480020,bogus,"enumcheck: an instruction straddles it, so it is an operand byte inside the function at 0x00480000"
+0x00480026,bogus,hand-confirmed: inside the function ending at 0x00480085; not an instruction boundary
+0x00480048,bogus,hand-confirmed: inside the function ending at 0x00480085
+0x0048009b,bogus,"hand-confirmed: inside CSoundMgr::Term, whose entry is 0x00480090"
+0x00480564,bogus,"hand-confirmed: inside SetProvider, whose entry is 0x00480550"
+0x004825c7,bogus,"hand-confirmed: inside GetSound3DProviderLists, whose entry is 0x004825a0"
+0x00482640,bogus,"hand-confirmed: inside ReleaseSound3DProviderList, whose entry is 0x00482630"
+0x0048406f,bogus,"hand-confirmed: inside CFileStream::SeekTo, whose real extent is 0x00484060..0x00484088"
+0x00484341,bogus,"enumcheck: an instruction straddles it, so it is an operand byte inside the function at 0x00484280"
+0x00484869,bogus,hand-confirmed: inside sb_CreateStringRaw
+0x004848f9,bogus,hand-confirmed: inside sb_CreateString
+0x00486459,bogus,hand-confirmed: inside JoinSession(sockaddr_in*)
+0x00490001,bogus,"enumcheck: an instruction straddles it, so it is an operand byte inside the function at 0x0048ff00"
+0x00490011,bogus,"enumcheck: an instruction straddles it, so it is an operand byte inside the function at 0x00490010"
+0x00490020,bogus,"enumcheck: an instruction straddles it, so it is an operand byte inside the function at 0x0049001b"
+0x00490029,bogus,"enumcheck: an instruction straddles it, so it is an operand byte inside the function at 0x00490020"
+0x00401650,suspect,"does not end in a terminator | last is `jae`; next start 0x00401679 is a clean boundary, so a start is missing inside this row or the size is short"
+0x004016b0,suspect,contains an interior ret then a prologue | start missing at 0x004016c4 (+20); this row spans two functions
+0x00401710,suspect,contains an interior ret then a prologue | start missing at 0x00401751 (+65); this row spans two functions
+0x004018a7,suspect,contains an interior ret then a prologue | start missing at 0x004019e0 (+313); this row spans two functions
+0x00401dd0,suspect,contains an interior ret then a prologue | start missing at 0x00401ff2 (+546); this row spans two functions
+0x00402200,suspect,contains an interior ret then a prologue | start missing at 0x00402285 (+133); this row spans two functions
+0x00402540,suspect,contains an interior ret then a prologue | start missing at 0x004025e1 (+161); this row spans two functions
+0x00402620,suspect,contains an interior ret then a prologue | start missing at 0x0040263b (+27); this row spans two functions
+0x00402950,suspect,contains an interior ret then a prologue | start missing at 0x004029d8 (+136); this row spans two functions
+0x00402a50,suspect,contains an interior ret then a prologue | start missing at 0x00402bce (+382); this row spans two functions
+0x00403330,suspect,"does not end in a terminator | last is `add`; next start 0x004039f0 is a clean boundary, so a start is missing inside this row or the size is short"
+0x00403330,suspect,contains an interior ret then a prologue | start missing at 0x00403664 (+820); this row spans two functions
+0x00404280,suspect,contains an interior ret then a prologue | start missing at 0x00404316 (+150); this row spans two functions
+0x00404890,suspect,contains an interior ret then a prologue | start missing at 0x0040489b (+11); this row spans two functions
+0x00404950,suspect,contains an interior ret then a prologue | start missing at 0x0040499a (+74); this row spans two functions
+0x00404af0,suspect,contains an interior ret then a prologue | start missing at 0x00404b38 (+72); this row spans two functions
+0x00404d10,suspect,contains an interior ret then a prologue | start missing at 0x00404d51 (+65); this row spans two functions
+0x00404d90,suspect,contains an interior ret then a prologue | start missing at 0x00404dd1 (+65); this row spans two functions
+0x00404f30,suspect,contains an interior ret then a prologue | start missing at 0x00404fb5 (+133); this row spans two functions
+0x00405000,suspect,contains an interior ret then a prologue | start missing at 0x00405115 (+277); this row spans two functions
+0x00405230,suspect,contains an interior ret then a prologue | start missing at 0x004052a9 (+121); this row spans two functions
+0x00405350,suspect,contains an interior ret then a prologue | start missing at 0x0040544d (+253); this row spans two functions
+0x004054b0,suspect,contains an interior ret then a prologue | start missing at 0x0040555f (+175); this row spans two functions
+0x004055b0,suspect,contains an interior ret then a prologue | start missing at 0x00405646 (+150); this row spans two functions
+0x004056b0,suspect,contains an interior ret then a prologue | start missing at 0x00405737 (+135); this row spans two functions
+0x00405cf0,suspect,contains an interior ret then a prologue | start missing at 0x00405d77 (+135); this row spans two functions
+0x00405f77,suspect,contains an interior ret then a prologue | start missing at 0x00405fb9 (+66); this row spans two functions
+0x00406017,suspect,contains an interior ret then a prologue | start missing at 0x00406059 (+66); this row spans two functions
+0x00406070,suspect,contains an interior ret then a prologue | start missing at 0x00406102 (+146); this row spans two functions
+0x00406140,suspect,contains an interior ret then a prologue | start missing at 0x004061d2 (+146); this row spans two functions
+0x00406210,suspect,contains an interior ret then a prologue | start missing at 0x004062a4 (+148); this row spans two functions
+0x004062e0,suspect,contains an interior ret then a prologue | start missing at 0x004063e0 (+256); this row spans two functions
+0x00406460,suspect,contains an interior ret then a prologue | start missing at 0x0040649c (+60); this row spans two functions
+0x00406610,suspect,contains an interior ret then a prologue | start missing at 0x00406666 (+86); this row spans two functions
+0x00406720,suspect,contains an interior ret then a prologue | start missing at 0x0040674d (+45); this row spans two functions
+0x00406950,suspect,contains an interior ret then a prologue | start missing at 0x0040696d (+29); this row spans two functions
+0x00406a00,suspect,contains an interior ret then a prologue | start missing at 0x00406a23 (+35); this row spans two functions
+0x00406ab0,suspect,contains an interior ret then a prologue | start missing at 0x00406af5 (+69); this row spans two functions
+0x00406b60,suspect,contains an interior ret then a prologue | start missing at 0x00406bb1 (+81); this row spans two functions
+0x00406c90,suspect,"does not end in a terminator | last is `pop`; next start 0x00406dcc is a clean boundary, so a start is missing inside this row or the size is short"
+0x00406dcc,suspect,contains an interior ret then a prologue | start missing at 0x00406e57 (+139); this row spans two functions
+0x00406f50,suspect,contains an interior ret then a prologue | start missing at 0x00406f71 (+33); this row spans two functions
+0x00406fb0,suspect,contains an interior ret then a prologue | start missing at 0x00406fda (+42); this row spans two functions
+0x00407020,suspect,contains an interior ret then a prologue | start missing at 0x0040704e (+46); this row spans two functions
+0x00407090,suspect,contains an interior ret then a prologue | start missing at 0x004070ba (+42); this row spans two functions
+0x00407100,suspect,contains an interior ret then a prologue | start missing at 0x00407122 (+34); this row spans two functions
+0x00407160,suspect,contains an interior ret then a prologue | start missing at 0x00407190 (+48); this row spans two functions
+0x004073a0,suspect,contains an interior ret then a prologue | start missing at 0x004073d4 (+52); this row spans two functions
+0x00407410,suspect,contains an interior ret then a prologue | start missing at 0x00407457 (+71); this row spans two functions
+0x00407590,suspect,contains an interior ret then a prologue | start missing at 0x004075cd (+61); this row spans two functions
+0x00407b60,suspect,contains an interior ret then a prologue | start missing at 0x00407be6 (+134); this row spans two functions
+0x00407f90,suspect,contains an interior ret then a prologue | start missing at 0x0040802a (+154); this row spans two functions
+0x00408070,suspect,contains an interior ret then a prologue | start missing at 0x004080d9 (+105); this row spans two functions
+0x004081e0,suspect,contains an interior ret then a prologue | start missing at 0x0040821f (+63); this row spans two functions
+0x00408240,suspect,contains an interior ret then a prologue | start missing at 0x0040827f (+63); this row spans two functions
+0x004082c0,suspect,contains an interior ret then a prologue | start missing at 0x004082e0 (+32); this row spans two functions
+0x00408510,suspect,"the NEXT start is spurious | last is `subb`; an instruction straddles 0x00408756, so that row is an operand byte and this function runs past it"
+0x00408f22,suspect,contains an interior ret then a prologue | start missing at 0x00408f4c (+42); this row spans two functions
+0x00409012,suspect,contains an interior ret then a prologue | start missing at 0x0040904e (+60); this row spans two functions
+0x004093d0,suspect,contains an interior ret then a prologue | start missing at 0x00409475 (+165); this row spans two functions
+0x00409550,suspect,contains an interior ret then a prologue | start missing at 0x004095e0 (+144); this row spans two functions
+0x00409640,suspect,contains an interior ret then a prologue | start missing at 0x00409780 (+320); this row spans two functions
+0x004097c0,suspect,contains an interior ret then a prologue | start missing at 0x00409850 (+144); this row spans two functions
+0x0040a230,suspect,contains an interior ret then a prologue | start missing at 0x0040a314 (+228); this row spans two functions
+0x0040a400,suspect,contains an interior ret then a prologue | start missing at 0x0040a44f (+79); this row spans two functions
+0x0040a865,suspect,contains an interior ret then a prologue | start missing at 0x0040a8c0 (+91); this row spans two functions
+0x0040a8e0,suspect,contains an interior ret then a prologue | start missing at 0x0040a8ef (+15); this row spans two functions
+0x0040ae30,suspect,contains an interior ret then a prologue | start missing at 0x0040ae4b (+27); this row spans two functions
+0x0040ae90,suspect,contains an interior ret then a prologue | start missing at 0x0040aee7 (+87); this row spans two functions
+0x0040b040,suspect,contains an interior ret then a prologue | start missing at 0x0040b253 (+531); this row spans two functions
+0x0040b4f0,suspect,contains an interior ret then a prologue | start missing at 0x0040b53d (+77); this row spans two functions
+0x0040b5b0,suspect,contains an interior ret then a prologue | start missing at 0x0040b605 (+85); this row spans two functions
+0x0040b8d0,suspect,contains an interior ret then a prologue | start missing at 0x0040b905 (+53); this row spans two functions
+0x0040b970,suspect,contains an interior ret then a prologue | start missing at 0x0040b9e6 (+118); this row spans two functions
+0x0040ba30,suspect,contains an interior ret then a prologue | start missing at 0x0040ba97 (+103); this row spans two functions
+0x0040bb20,suspect,contains an interior ret then a prologue | start missing at 0x0040bb82 (+98); this row spans two functions
+0x0040bc00,suspect,contains an interior ret then a prologue | start missing at 0x0040bc3c (+60); this row spans two functions
+0x0040bc80,suspect,contains an interior ret then a prologue | start missing at 0x0040bcd9 (+89); this row spans two functions
+0x0040bd20,suspect,contains an interior ret then a prologue | start missing at 0x0040be8e (+366); this row spans two functions
+0x0040c260,suspect,contains an interior ret then a prologue | start missing at 0x0040c285 (+37); this row spans two functions
+0x0040c5f0,suspect,contains an interior ret then a prologue | start missing at 0x0040c6b5 (+197); this row spans two functions
+0x0040c6f0,suspect,contains an interior ret then a prologue | start missing at 0x0040c7bb (+203); this row spans two functions
+0x0040ca50,suspect,contains an interior ret then a prologue | start missing at 0x0040caba (+106); this row spans two functions
+0x0040cf30,suspect,contains an interior ret then a prologue | start missing at 0x0040cf70 (+64); this row spans two functions
+0x0040d010,suspect,contains an interior ret then a prologue | start missing at 0x0040d160 (+336); this row spans two functions
+0x0040d290,suspect,contains an interior ret then a prologue | start missing at 0x0040d612 (+898); this row spans two functions
+0x0040d99e,suspect,contains an interior ret then a prologue | start missing at 0x0040daca (+300); this row spans two functions
+0x0040dcc0,suspect,contains an interior ret then a prologue | start missing at 0x0040df7b (+699); this row spans two functions
+0x0040e120,suspect,contains an interior ret then a prologue | start missing at 0x0040e2e5 (+453); this row spans two functions
+0x0040e330,suspect,contains an interior ret then a prologue | start missing at 0x0040e370 (+64); this row spans two functions
+0x0040e3b0,suspect,contains an interior ret then a prologue | start missing at 0x0040e3f0 (+64); this row spans two functions
+0x0040e4d0,suspect,contains an interior ret then a prologue | start missing at 0x0040e942 (+1138); this row spans two functions
+0x0040ea30,suspect,contains an interior ret then a prologue | start missing at 0x0040ec33 (+515); this row spans two functions
+0x0040ed50,suspect,contains an interior ret then a prologue | start missing at 0x0040ed77 (+39); this row spans two functions
+0x0040ef30,suspect,contains an interior ret then a prologue | start missing at 0x0040f021 (+241); this row spans two functions
+0x0040f8d0,suspect,contains an interior ret then a prologue | start missing at 0x0040fa80 (+432); this row spans two functions
+0x0040fd90,suspect,"the NEXT start is spurious | last is `.byte`; an instruction straddles 0x00410018, so that row is an operand byte and this function runs past it"
+0x00410020,suspect,"the NEXT start is spurious | last is `.byte`; an instruction straddles 0x0041002e, so that row is an operand byte and this function runs past it"
+0x00410030,suspect,"the NEXT start is spurious | last is `add`; an instruction straddles 0x00410035, so that row is an operand byte and this function runs past it"
+0x00410380,suspect,contains an interior ret then a prologue | start missing at 0x004103ed (+109); this row spans two functions
+0x00411440,suspect,"does not end in a terminator | last is `je`; next start 0x00411473 is a clean boundary, so a start is missing inside this row or the size is short"
+0x004155f0,suspect,contains an interior ret then a prologue | start missing at 0x0041564f (+95); this row spans two functions
+0x004159f0,suspect,contains an interior ret then a prologue | start missing at 0x00415b0d (+285); this row spans two functions
+0x00415bf0,suspect,size is not an instruction boundary | stream ends at 0x00415c99
+0x00416560,suspect,"the NEXT start is spurious | last is `pop`; an instruction straddles 0x00416570, so that row is an operand byte and this function runs past it"
+0x004165c0,suspect,"the NEXT start is spurious | last is `.byte`; an instruction straddles 0x0041676e, so that row is an operand byte and this function runs past it"
+0x00416de0,suspect,"does not end in a terminator | last is `mov`; next start 0x00416e6f is a clean boundary, so a start is missing inside this row or the size is short"
+0x00416e6f,suspect,"does not end in a terminator | last is `mov`; next start 0x00416f66 is a clean boundary, so a start is missing inside this row or the size is short"
+0x00416f66,suspect,"does not end in a terminator | last is `fsqrt`; next start 0x0041726f is a clean boundary, so a start is missing inside this row or the size is short"
+0x00417840,suspect,"does not end in a terminator | last is `push`; next start 0x00417845 is a clean boundary, so a start is missing inside this row or the size is short"
+0x00417845,suspect,"the NEXT start is spurious | last is `pop`; an instruction straddles 0x0041786f, so that row is an operand byte and this function runs past it"
+0x0041af00,suspect,contains an interior ret then a prologue | start missing at 0x0041af42 (+66); this row spans two functions
+0x0041af60,suspect,contains an interior ret then a prologue | start missing at 0x0041af9f (+63); this row spans two functions
+0x0041b420,suspect,contains an interior ret then a prologue | start missing at 0x0041b447 (+39); this row spans two functions
+0x0041bba0,suspect,contains an interior ret then a prologue | start missing at 0x0041bbb4 (+20); this row spans two functions
+0x0041bea0,suspect,"does not end in a terminator | last is `push`; next start 0x0041c010 is a clean boundary, so a start is missing inside this row or the size is short"
+0x0041bea0,suspect,contains an interior ret then a prologue | start missing at 0x0041bf37 (+151); this row spans two functions
+0x0041c5a0,suspect,contains an interior ret then a prologue | start missing at 0x0041c6f4 (+340); this row spans two functions
+0x0041d3a0,suspect,"does not end in a terminator | last is `.byte`; next start 0x0041d520 is a clean boundary, so a start is missing inside this row or the size is short"
+0x0041d3a0,suspect,contains an interior ret then a prologue | start missing at 0x0041d3ea (+74); this row spans two functions
+0x0041d870,suspect,contains an interior ret then a prologue | start missing at 0x0041d9f7 (+391); this row spans two functions
+0x0041e0b0,suspect,contains an interior ret then a prologue | start missing at 0x0041e11b (+107); this row spans two functions
+0x0041e3d0,suspect,contains an interior ret then a prologue | start missing at 0x0041e3eb (+27); this row spans two functions
+0x0041e4b0,suspect,contains an interior ret then a prologue | start missing at 0x0041e4d7 (+39); this row spans two functions
+0x0041e590,suspect,contains an interior ret then a prologue | start missing at 0x0041e5a9 (+25); this row spans two functions
+0x0041e5f0,suspect,contains an interior ret then a prologue | start missing at 0x0041e637 (+71); this row spans two functions
+0x0041e9b0,suspect,contains an interior ret then a prologue | start missing at 0x0041e9f5 (+69); this row spans two functions
+0x0041ee20,suspect,contains an interior ret then a prologue | start missing at 0x0041ee39 (+25); this row spans two functions
+0x0041ee80,suspect,contains an interior ret then a prologue | start missing at 0x0041ee99 (+25); this row spans two functions
+0x0041eee0,suspect,contains an interior ret then a prologue | start missing at 0x0041eef9 (+25); this row spans two functions
+0x0041ef40,suspect,contains an interior ret then a prologue | start missing at 0x0041ef59 (+25); this row spans two functions
+0x0041f2b0,suspect,contains an interior ret then a prologue | start missing at 0x0041f2c9 (+25); this row spans two functions
+0x0041f300,suspect,contains an interior ret then a prologue | start missing at 0x0041f319 (+25); this row spans two functions
+0x0041f350,suspect,contains an interior ret then a prologue | start missing at 0x0041f369 (+25); this row spans two functions
+0x0041f3a0,suspect,contains an interior ret then a prologue | start missing at 0x0041f3b9 (+25); this row spans two functions
+0x0041f490,suspect,contains an interior ret then a prologue | start missing at 0x0041f4a9 (+25); this row spans two functions
+0x0041f640,suspect,contains an interior ret then a prologue | start missing at 0x0041f675 (+53); this row spans two functions
+0x0041f6b0,suspect,contains an interior ret then a prologue | start missing at 0x0041f6e6 (+54); this row spans two functions
+0x0041f720,suspect,contains an interior ret then a prologue | start missing at 0x0041f747 (+39); this row spans two functions
+0x0041f780,suspect,contains an interior ret then a prologue | start missing at 0x0041f7bc (+60); this row spans two functions
+0x0041f7d0,suspect,contains an interior ret then a prologue | start missing at 0x0041f80c (+60); this row spans two functions
+0x0041f820,suspect,contains an interior ret then a prologue | start missing at 0x0041f85c (+60); this row spans two functions
+0x0041f870,suspect,contains an interior ret then a prologue | start missing at 0x0041f897 (+39); this row spans two functions
+0x0041f930,suspect,contains an interior ret then a prologue | start missing at 0x0041f962 (+50); this row spans two functions
+0x0041f9a0,suspect,contains an interior ret then a prologue | start missing at 0x0041f9ca (+42); this row spans two functions
+0x0041fa00,suspect,contains an interior ret then a prologue | start missing at 0x0041fa1f (+31); this row spans two functions
+0x0041fa60,suspect,contains an interior ret then a prologue | start missing at 0x0041fa7f (+31); this row spans two functions
+0x0041fac0,suspect,contains an interior ret then a prologue | start missing at 0x0041fadf (+31); this row spans two functions
+0x0041fb20,suspect,contains an interior ret then a prologue | start missing at 0x0041fb3f (+31); this row spans two functions
+0x0041fb80,suspect,contains an interior ret then a prologue | start missing at 0x0041fbaa (+42); this row spans two functions
+0x00420020,suspect,"the NEXT start is spurious | last is `.byte`; an instruction straddles 0x0042002e, so that row is an operand byte and this function runs past it"
+0x00420b70,suspect,contains an interior ret then a prologue | start missing at 0x00420ba9 (+57); this row spans two functions
+0x00420ec0,suspect,contains an interior ret then a prologue | start missing at 0x00420f2a (+106); this row spans two functions
+0x004212d0,suspect,contains an interior ret then a prologue | start missing at 0x004213b6 (+230); this row spans two functions
+0x00421670,suspect,contains an interior ret then a prologue | start missing at 0x004216c4 (+84); this row spans two functions
+0x00421750,suspect,contains an interior ret then a prologue | start missing at 0x004217b0 (+96); this row spans two functions
+0x004221f0,suspect,contains an interior ret then a prologue | start missing at 0x004221fe (+14); this row spans two functions
+0x00423e10,suspect,"the NEXT start is spurious | last is `.byte`; an instruction straddles 0x00424242, so that row is an operand byte and this function runs past it"
+0x004250e0,suspect,contains an interior ret then a prologue | start missing at 0x004253cc (+748); this row spans two functions
+0x00425a60,suspect,contains an interior ret then a prologue | start missing at 0x00425abc (+92); this row spans two functions
+0x00427920,suspect,"does not end in a terminator | last is `mov`; next start 0x00427a56 is a clean boundary, so a start is missing inside this row or the size is short"
+0x00427ca0,suspect,"the NEXT start is spurious | last is `.byte`; an instruction straddles 0x00427cac, so that row is an operand byte and this function runs past it"
+0x0042c050,suspect,contains an interior ret then a prologue | start missing at 0x0042c07e (+46); this row spans two functions
+0x0042c130,suspect,contains an interior ret then a prologue | start missing at 0x0042c275 (+325); this row spans two functions
+0x0042d560,suspect,contains an interior ret then a prologue | start missing at 0x0042d579 (+25); this row spans two functions
+0x0042d770,suspect,contains an interior ret then a prologue | start missing at 0x0042d846 (+214); this row spans two functions
+0x0042da50,suspect,contains an interior ret then a prologue | start missing at 0x0042dc63 (+531); this row spans two functions
+0x0042df40,suspect,contains an interior ret then a prologue | start missing at 0x0042dfd7 (+151); this row spans two functions
+0x0042e230,suspect,contains an interior ret then a prologue | start missing at 0x0042e422 (+498); this row spans two functions
+0x0042e560,suspect,"does not end in a terminator | last is `call`; next start 0x0042e570 is a clean boundary, so a start is missing inside this row or the size is short"
+0x0042f5a0,suspect,"does not end in a terminator | last is `push`; next start 0x0042f5a2 is a clean boundary, so a start is missing inside this row or the size is short"
+0x0042f950,suspect,contains an interior ret then a prologue | start missing at 0x0042f986 (+54); this row spans two functions
+0x0042f9d0,suspect,contains an interior ret then a prologue | start missing at 0x0042fa05 (+53); this row spans two functions
+0x0042fa50,suspect,contains an interior ret then a prologue | start missing at 0x0042fb77 (+295); this row spans two functions
+0x0042fd10,suspect,contains an interior ret then a prologue | start missing at 0x0042fd21 (+17); this row spans two functions
+0x0042ffe0,suspect,size is not an instruction boundary | stream ends at 0x00430000
+0x004301c0,suspect,contains an interior ret then a prologue | start missing at 0x0043023e (+126); this row spans two functions
+0x004303c0,suspect,contains an interior ret then a prologue | start missing at 0x004304e5 (+293); this row spans two functions
+0x00432200,suspect,contains an interior ret then a prologue | start missing at 0x0043245c (+604); this row spans two functions
+0x00432740,suspect,contains an interior ret then a prologue | start missing at 0x00432dea (+1706); this row spans two functions
+0x004331f0,suspect,contains an interior ret then a prologue | start missing at 0x00433375 (+389); this row spans two functions
+0x004333a0,suspect,contains an interior ret then a prologue | start missing at 0x0043345e (+190); this row spans two functions
+0x004334a0,suspect,contains an interior ret then a prologue | start missing at 0x00433527 (+135); this row spans two functions
+0x004342b0,suspect,"does not end in a terminator | last is `lea`; next start 0x00434465 is a clean boundary, so a start is missing inside this row or the size is short"
+0x00434465,suspect,size is not an instruction boundary | stream ends at 0x00434473
+0x00434920,suspect,contains an interior ret then a prologue | start missing at 0x00434989 (+105); this row spans two functions
+0x00434cd0,suspect,contains an interior ret then a prologue | start missing at 0x00434d4a (+122); this row spans two functions
+0x00434f00,suspect,contains an interior ret then a prologue | start missing at 0x00434f2b (+43); this row spans two functions
+0x00434f70,suspect,contains an interior ret then a prologue | start missing at 0x00434f9b (+43); this row spans two functions
+0x00435090,suspect,contains an interior ret then a prologue | start missing at 0x00435148 (+184); this row spans two functions
+0x004351c0,suspect,contains an interior ret then a prologue | start missing at 0x004351eb (+43); this row spans two functions
+0x004361e0,suspect,contains an interior ret then a prologue | start missing at 0x0043627c (+156); this row spans two functions
+0x00436370,suspect,contains an interior ret then a prologue | start missing at 0x004363a9 (+57); this row spans two functions
+0x00436710,suspect,contains an interior ret then a prologue | start missing at 0x00436730 (+32); this row spans two functions
+0x00436b40,suspect,contains an interior ret then a prologue | start missing at 0x00436b8c (+76); this row spans two functions
+0x00436e80,suspect,contains an interior ret then a prologue | start missing at 0x00437028 (+424); this row spans two functions
+0x00437040,suspect,contains an interior ret then a prologue | start missing at 0x0043709a (+90); this row spans two functions
+0x00437f50,suspect,contains an interior ret then a prologue | start missing at 0x00437f74 (+36); this row spans two functions
+0x00438000,suspect,contains an interior ret then a prologue | start missing at 0x00438030 (+48); this row spans two functions
+0x004381a0,suspect,contains an interior ret then a prologue | start missing at 0x00438206 (+102); this row spans two functions
+0x00438bb0,suspect,contains an interior ret then a prologue | start missing at 0x00438bf6 (+70); this row spans two functions
+0x00439090,suspect,contains an interior ret then a prologue | start missing at 0x00439239 (+425); this row spans two functions
+0x00439270,suspect,contains an interior ret then a prologue | start missing at 0x004394bb (+587); this row spans two functions
+0x004395a0,suspect,size is not an instruction boundary | stream ends at 0x00439a2f
+0x00439ec0,suspect,contains an interior ret then a prologue | start missing at 0x00439ed5 (+21); this row spans two functions
+0x0043bdb0,suspect,contains an interior ret then a prologue | start missing at 0x0043bdc6 (+22); this row spans two functions
+0x0043d580,suspect,contains an interior ret then a prologue | start missing at 0x0043d5ee (+110); this row spans two functions
+0x0043d6e0,suspect,contains an interior ret then a prologue | start missing at 0x0043d772 (+146); this row spans two functions
+0x0043dcd0,suspect,contains an interior ret then a prologue | start missing at 0x0043dd0c (+60); this row spans two functions
+0x0043dd60,suspect,contains an interior ret then a prologue | start missing at 0x0043dd9d (+61); this row spans two functions
+0x0043df40,suspect,contains an interior ret then a prologue | start missing at 0x0043dfa9 (+105); this row spans two functions
+0x0043ebd0,suspect,contains an interior ret then a prologue | start missing at 0x0043ebf1 (+33); this row spans two functions
+0x0043ed80,suspect,contains an interior ret then a prologue | start missing at 0x0043ed9e (+30); this row spans two functions
+0x0043f920,suspect,contains an interior ret then a prologue | start missing at 0x0043f992 (+114); this row spans two functions
+0x0043fcd0,suspect,"does not end in a terminator | last is `call`; next start 0x0044001d is a clean boundary, so a start is missing inside this row or the size is short"
+0x0043fcd0,suspect,contains an interior ret then a prologue | start missing at 0x0043fecb (+507); this row spans two functions
+0x0044001d,suspect,"the NEXT start is spurious | last is `.byte`; an instruction straddles 0x00440020, so that row is an operand byte and this function runs past it"
+0x00440065,suspect,"does not end in a terminator | last is `mov`; next start 0x00440218 is a clean boundary, so a start is missing inside this row or the size is short"
+0x00440065,suspect,contains an interior ret then a prologue | start missing at 0x0044019c (+311); this row spans two functions
+0x00440480,suspect,contains an interior ret then a prologue | start missing at 0x004404d4 (+84); this row spans two functions
+0x00440620,suspect,contains an interior ret then a prologue | start missing at 0x004406f1 (+209); this row spans two functions
+0x00441190,suspect,size is not an instruction boundary | stream ends at 0x00441393
+0x004413a0,suspect,contains an interior ret then a prologue | start missing at 0x004414e4 (+324); this row spans two functions
+0x00441610,suspect,contains an interior ret then a prologue | start missing at 0x00441749 (+313); this row spans two functions
+0x004422e0,suspect,size is not an instruction boundary | stream ends at 0x00442337
+0x004425b0,suspect,size is not an instruction boundary | stream ends at 0x004425de
+0x004426e0,suspect,size is not an instruction boundary | stream ends at 0x0044278b
+0x00442790,suspect,contains an interior ret then a prologue | start missing at 0x0044279f (+15); this row spans two functions
+0x00442f20,suspect,contains an interior ret then a prologue | start missing at 0x00442f7d (+93); this row spans two functions
+0x004432b0,suspect,contains an interior ret then a prologue | start missing at 0x004432d8 (+40); this row spans two functions
+0x00444210,suspect,contains an interior ret then a prologue | start missing at 0x00444237 (+39); this row spans two functions
+0x0044430b,suspect,contains an interior ret then a prologue | start missing at 0x004443b9 (+174); this row spans two functions
+0x004444e4,suspect,"the NEXT start is spurious | last is `.byte`; an instruction straddles 0x00444553, so that row is an operand byte and this function runs past it"
+0x004445e0,suspect,contains an interior ret then a prologue | start missing at 0x0044466d (+141); this row spans two functions
+0x00444c40,suspect,"the NEXT start is spurious | last is `.byte`; an instruction straddles 0x00444c52, so that row is an operand byte and this function runs past it"
+0x00444e40,suspect,"does not end in a terminator | last is `fchs`; next start 0x00444e55 is a clean boundary, so a start is missing inside this row or the size is short"
+0x00445030,suspect,"the NEXT start is spurious | last is `.byte`; an instruction straddles 0x00445055, so that row is an operand byte and this function runs past it"
+0x004471b0,suspect,"does not end in a terminator | last is `add`; next start 0x00447646 is a clean boundary, so a start is missing inside this row or the size is short"
+0x004478c0,suspect,"the NEXT start is spurious | last is `sub`; an instruction straddles 0x00447904, so that row is an operand byte and this function runs past it"
+0x0044ddc0,suspect,"does not end in a terminator | last is `mov`; next start 0x0044dfbd is a clean boundary, so a start is missing inside this row or the size is short"
+0x0044e4e0,suspect,contains an interior ret then a prologue | start missing at 0x0044e52c (+76); this row spans two functions
+0x0044e550,suspect,contains an interior ret then a prologue | start missing at 0x0044e5bc (+108); this row spans two functions
+0x0044e8f0,suspect,contains an interior ret then a prologue | start missing at 0x0044e964 (+116); this row spans two functions
+0x0044e9f0,suspect,contains an interior ret then a prologue | start missing at 0x0044ea64 (+116); this row spans two functions
+0x0044eaf0,suspect,contains an interior ret then a prologue | start missing at 0x0044eb66 (+118); this row spans two functions
+0x0044ebf0,suspect,contains an interior ret then a prologue | start missing at 0x0044ec66 (+118); this row spans two functions
+0x0044ecf0,suspect,contains an interior ret then a prologue | start missing at 0x0044ed25 (+53); this row spans two functions
+0x0044ed60,suspect,contains an interior ret then a prologue | start missing at 0x0044edcc (+108); this row spans two functions
+0x0044ee10,suspect,contains an interior ret then a prologue | start missing at 0x0044f1dd (+973); this row spans two functions
+0x0044f3d0,suspect,contains an interior ret then a prologue | start missing at 0x0044f7ec (+1052); this row spans two functions
+0x0044f840,suspect,contains an interior ret then a prologue | start missing at 0x0044f862 (+34); this row spans two functions
+0x0044f8a0,suspect,contains an interior ret then a prologue | start missing at 0x0044f8c0 (+32); this row spans two functions
+0x0044fb20,suspect,contains an interior ret then a prologue | start missing at 0x0044fb95 (+117); this row spans two functions
+0x0044fc20,suspect,contains an interior ret then a prologue | start missing at 0x0044fc84 (+100); this row spans two functions
+0x0044fee0,suspect,contains an interior ret then a prologue | start missing at 0x0044ff0f (+47); this row spans two functions
+0x00450020,suspect,size is not an instruction boundary | stream ends at 0x0045002d
+0x0045002e,suspect,"does not end in a terminator | last is `add`; next start 0x00450056 is a clean boundary, so a start is missing inside this row or the size is short"
+0x0045002e,suspect,contains an interior ret then a prologue | start missing at 0x00450047 (+25); this row spans two functions
+0x00450056,suspect,"the NEXT start is spurious | last is `clc`; an instruction straddles 0x00450058, so that row is an operand byte and this function runs past it"
+0x00452cd0,size-wrong,"REAL START, WRONG SIZE. The row says 2593; the function is wm_PushWorldModel at 0x00452cd0..0x00453ed5 = 4613 bytes. One external entry (call from 0x00451a1f) and jmp 0x004534af -> 0x004536f1 crosses the claimed boundary. Already written at commonphysics.cpp:2920. Tagged suspect not bogus, so uncovered.py kept offering it."
+0x00453f20,suspect,contains an interior ret then a prologue | start missing at 0x00453f7a (+90); this row spans two functions
+0x00454530,suspect,size is not an instruction boundary | stream ends at 0x00454658
+0x00454a40,suspect,"the NEXT start is spurious | last is `.byte`; an instruction straddles 0x00454c49, so that row is an operand byte and this function runs past it"
+0x00454fb0,suspect,contains an interior ret then a prologue | start missing at 0x00454ff4 (+68); this row spans two functions
+0x00455410,suspect,"does not end in a terminator | last is `mov`; next start 0x00455441 is a clean boundary, so a start is missing inside this row or the size is short"
+0x00455640,suspect,contains an interior ret then a prologue | start missing at 0x0045567f (+63); this row spans two functions
+0x00455790,suspect,"the NEXT start is spurious | last is `pop`; an instruction straddles 0x00455a49, so that row is an operand byte and this function runs past it"
+0x00456400,suspect,size is not an instruction boundary | stream ends at 0x00457837
+0x00458180,suspect,contains an interior ret then a prologue | start missing at 0x004581b3 (+51); this row spans two functions
+0x00458894,suspect,"the NEXT start is spurious | last is `adc`; an instruction straddles 0x00458904, so that row is an operand byte and this function runs past it"
+0x00458b10,suspect,"does not end in a terminator | last is `mov`; next start 0x00458b17 is a clean boundary, so a start is missing inside this row or the size is short"
+0x00458b17,suspect,contains an interior ret then a prologue | start missing at 0x00458b36 (+31); this row spans two functions
+0x00458e7c,suspect,contains an interior ret then a prologue | start missing at 0x00459482 (+1542); this row spans two functions
+0x004598d0,suspect,contains an interior ret then a prologue | start missing at 0x00459984 (+180); this row spans two functions
+0x00459f80,suspect,contains an interior ret then a prologue | start missing at 0x00459fb3 (+51); this row spans two functions
+0x0045b720,suspect,size is not an instruction boundary | stream ends at 0x0045b761
+0x0045bcf0,suspect,contains an interior ret then a prologue | start missing at 0x0045bd9d (+173); this row spans two functions
+0x0045c680,suspect,size is not an instruction boundary | stream ends at 0x0045c6a2
+0x0045cfb0,suspect,contains an interior ret then a prologue | start missing at 0x0045d00f (+95); this row spans two functions
+0x0045da30,suspect,contains an interior ret then a prologue | start missing at 0x0045da5a (+42); this row spans two functions
+0x0045ddf0,suspect,contains an interior ret then a prologue | start missing at 0x0045dead (+189); this row spans two functions
+0x0045e160,suspect,contains an interior ret then a prologue | start missing at 0x0045e18a (+42); this row spans two functions
+0x0045e2f0,suspect,contains an interior ret then a prologue | start missing at 0x0045e3b1 (+193); this row spans two functions
+0x0045e4f0,suspect,contains an interior ret then a prologue | start missing at 0x0045e5ac (+188); this row spans two functions
+0x0045e680,suspect,contains an interior ret then a prologue | start missing at 0x0045e73f (+191); this row spans two functions
+0x0045e820,suspect,contains an interior ret then a prologue | start missing at 0x0045e84a (+42); this row spans two functions
+0x0045f3d0,suspect,contains an interior ret then a prologue | start missing at 0x0045f3ed (+29); this row spans two functions
+0x0045f430,suspect,"does not end in a terminator | last is `je`; next start 0x0045f496 is a clean boundary, so a start is missing inside this row or the size is short"
+0x0045f6a0,suspect,"does not end in a terminator | last is `or`; next start 0x00460001 is a clean boundary, so a start is missing inside this row or the size is short"
+0x00460001,suspect,"the NEXT start is spurious | last is `.byte`; an instruction straddles 0x00460018, so that row is an operand byte and this function runs past it"
+0x00460020,suspect,"does not end in a terminator | last is `or`; next start 0x00460067 is a clean boundary, so a start is missing inside this row or the size is short"
+0x00460067,suspect,"the NEXT start is spurious | last is `push`; an instruction straddles 0x0046006c, so that row is an operand byte and this function runs past it"
+0x00461270,suspect,"the NEXT start is spurious | last is `mov`; an instruction straddles 0x00461550, so that row is an operand byte and this function runs past it"
+0x004619a0,suspect,"the NEXT start is spurious | last is `dec`; an instruction straddles 0x00461c77, so that row is an operand byte and this function runs past it"
+0x00461e30,suspect,contains an interior ret then a prologue | start missing at 0x00461e84 (+84); this row spans two functions
+0x00462080,suspect,contains an interior ret then a prologue | start missing at 0x004620b1 (+49); this row spans two functions
+0x004623d0,suspect,contains an interior ret then a prologue | start missing at 0x004623f0 (+32); this row spans two functions
+0x00462b80,suspect,contains an interior ret then a prologue | start missing at 0x00462e9f (+799); this row spans two functions
+0x00463d60,suspect,contains an interior ret then a prologue | start missing at 0x00463da9 (+73); this row spans two functions
+0x00464310,suspect,contains an interior ret then a prologue | start missing at 0x00464372 (+98); this row spans two functions
+0x0046486d,suspect,contains an interior ret then a prologue | start missing at 0x004649ba (+333); this row spans two functions
+0x00464f60,suspect,contains an interior ret then a prologue | start missing at 0x0046508f (+303); this row spans two functions
+0x00465300,suspect,"the NEXT start is spurious | last is `mov`; an instruction straddles 0x004654f2, so that row is an operand byte and this function runs past it"
+0x00465610,suspect,contains an interior ret then a prologue | start missing at 0x00465e00 (+2032); this row spans two functions
+0x00466100,suspect,"does not end in a terminator | last is `je`; next start 0x00466114 is a clean boundary, so a start is missing inside this row or the size is short"
+0x00466700,suspect,contains an interior ret then a prologue | start missing at 0x00466825 (+293); this row spans two functions
+0x004669a0,suspect,"does not end in a terminator | last is `call`; next start 0x004669aa is a clean boundary, so a start is missing inside this row or the size is short"
+0x00466b90,suspect,"does not end in a terminator | last is `je`; next start 0x00466ba5 is a clean boundary, so a start is missing inside this row or the size is short"
+0x00467250,suspect,contains an interior ret then a prologue | start missing at 0x00467297 (+71); this row spans two functions
+0x004675ee,suspect,contains an interior ret then a prologue | start missing at 0x00467ea5 (+2231); this row spans two functions
+0x00468900,suspect,contains an interior ret then a prologue | start missing at 0x00468de6 (+1254); this row spans two functions
+0x00469390,suspect,contains an interior ret then a prologue | start missing at 0x00469410 (+128); this row spans two functions
+0x00469b80,suspect,contains an interior ret then a prologue | start missing at 0x00469c2a (+170); this row spans two functions
+0x0046a790,suspect,contains an interior ret then a prologue | start missing at 0x0046a97b (+491); this row spans two functions
+0x0046aac0,suspect,contains an interior ret then a prologue | start missing at 0x0046ab5e (+158); this row spans two functions
+0x0046adf0,suspect,contains an interior ret then a prologue | start missing at 0x0046ae5a (+106); this row spans two functions
+0x0046af70,suspect,contains an interior ret then a prologue | start missing at 0x0046afa7 (+55); this row spans two functions
+0x0046b330,suspect,contains an interior ret then a prologue | start missing at 0x0046b479 (+329); this row spans two functions
+0x0046b540,suspect,contains an interior ret then a prologue | start missing at 0x0046b587 (+71); this row spans two functions
+0x0046b5c0,suspect,contains an interior ret then a prologue | start missing at 0x0046b607 (+71); this row spans two functions
+0x0046b890,suspect,contains an interior ret then a prologue | start missing at 0x0046b8cc (+60); this row spans two functions
+0x0046bd00,suspect,contains an interior ret then a prologue | start missing at 0x0046bda5 (+165); this row spans two functions
+0x0046bec0,suspect,contains an interior ret then a prologue | start missing at 0x0046bf01 (+65); this row spans two functions
+0x0046bf20,suspect,contains an interior ret then a prologue | start missing at 0x0046c072 (+338); this row spans two functions
+0x0046c190,suspect,contains an interior ret then a prologue | start missing at 0x0046c1d9 (+73); this row spans two functions
+0x0046c440,suspect,contains an interior ret then a prologue | start missing at 0x0046c63d (+509); this row spans two functions
+0x0046c6d0,suspect,contains an interior ret then a prologue | start missing at 0x0046c71f (+79); this row spans two functions
+0x0046c780,suspect,contains an interior ret then a prologue | start missing at 0x0046c807 (+135); this row spans two functions
+0x0046c850,suspect,contains an interior ret then a prologue | start missing at 0x0046c917 (+199); this row spans two functions
+0x0046c960,suspect,contains an interior ret then a prologue | start missing at 0x0046ca27 (+199); this row spans two functions
+0x0046ca70,suspect,contains an interior ret then a prologue | start missing at 0x0046cb4c (+220); this row spans two functions
+0x0046cbd0,suspect,contains an interior ret then a prologue | start missing at 0x0046ccac (+220); this row spans two functions
+0x0046cd30,suspect,contains an interior ret then a prologue | start missing at 0x0046ce1a (+234); this row spans two functions
+0x0046cea0,suspect,contains an interior ret then a prologue | start missing at 0x0046cf7c (+220); this row spans two functions
+0x0046d000,suspect,contains an interior ret then a prologue | start missing at 0x0046d0bb (+187); this row spans two functions
+0x0046d140,suspect,contains an interior ret then a prologue | start missing at 0x0046d21c (+220); this row spans two functions
+0x0046d2a0,suspect,contains an interior ret then a prologue | start missing at 0x0046d36e (+206); this row spans two functions
+0x0046d770,suspect,contains an interior ret then a prologue | start missing at 0x0046d7cc (+92); this row spans two functions
+0x0046dd50,suspect,contains an interior ret then a prologue | start missing at 0x0046dfec (+668); this row spans two functions
+0x0046e030,suspect,contains an interior ret then a prologue | start missing at 0x0046e2d8 (+680); this row spans two functions
+0x0046e320,suspect,contains an interior ret then a prologue | start missing at 0x0046e352 (+50); this row spans two functions
+0x0046e400,suspect,contains an interior ret then a prologue | start missing at 0x0046e4ce (+206); this row spans two functions
+0x0046e540,suspect,contains an interior ret then a prologue | start missing at 0x0046e616 (+214); this row spans two functions
+0x0046e680,suspect,contains an interior ret then a prologue | start missing at 0x0046e755 (+213); this row spans two functions
+0x0046ea30,suspect,contains an interior ret then a prologue | start missing at 0x0046ea40 (+16); this row spans two functions
+0x0046eec0,suspect,contains an interior ret then a prologue | start missing at 0x0046ef01 (+65); this row spans two functions
+0x0046ef10,suspect,contains an interior ret then a prologue | start missing at 0x0046ef51 (+65); this row spans two functions
+0x0046efb0,suspect,contains an interior ret then a prologue | start missing at 0x0046f003 (+83); this row spans two functions
+0x0046f140,suspect,contains an interior ret then a prologue | start missing at 0x0046f17d (+61); this row spans two functions
+0x0046f320,suspect,size is not an instruction boundary | stream ends at 0x0046f497
+0x0046f4c0,suspect,contains an interior ret then a prologue | start missing at 0x0046f6cc (+524); this row spans two functions
+0x0046f710,suspect,contains an interior ret then a prologue | start missing at 0x0046f758 (+72); this row spans two functions
+0x0046f7a0,suspect,contains an interior ret then a prologue | start missing at 0x0046f7d9 (+57); this row spans two functions
+0x0046f820,suspect,contains an interior ret then a prologue | start missing at 0x0046f861 (+65); this row spans two functions
+0x0046f8a0,suspect,contains an interior ret then a prologue | start missing at 0x0046f8ed (+77); this row spans two functions
+0x0046fbd0,suspect,contains an interior ret then a prologue | start missing at 0x0046fc10 (+64); this row spans two functions
+0x00470110,suspect,contains an interior ret then a prologue | start missing at 0x00470119 (+9); this row spans two functions
+0x00470600,suspect,contains an interior ret then a prologue | start missing at 0x00470695 (+149); this row spans two functions
+0x00470b10,suspect,contains an interior ret then a prologue | start missing at 0x00470b68 (+88); this row spans two functions
+0x00470c40,suspect,contains an interior ret then a prologue | start missing at 0x00470f20 (+736); this row spans two functions
+0x00470f90,suspect,contains an interior ret then a prologue | start missing at 0x0047102b (+155); this row spans two functions
+0x004710f0,suspect,contains an interior ret then a prologue | start missing at 0x00471110 (+32); this row spans two functions
+0x00471200,suspect,contains an interior ret then a prologue | start missing at 0x0047123f (+63); this row spans two functions
+0x00471290,suspect,contains an interior ret then a prologue | start missing at 0x004712b1 (+33); this row spans two functions
+0x004712f0,suspect,contains an interior ret then a prologue | start missing at 0x0047132f (+63); this row spans two functions
+0x00471630,suspect,contains an interior ret then a prologue | start missing at 0x00471639 (+9); this row spans two functions
+0x004717f0,suspect,contains an interior ret then a prologue | start missing at 0x00471813 (+35); this row spans two functions
+0x00471880,suspect,contains an interior ret then a prologue | start missing at 0x00471a91 (+529); this row spans two functions
+0x00471ad0,suspect,contains an interior ret then a prologue | start missing at 0x00471b66 (+150); this row spans two functions
+0x00471cb0,suspect,contains an interior ret then a prologue | start missing at 0x00471d0b (+91); this row spans two functions
+0x00471ea0,suspect,contains an interior ret then a prologue | start missing at 0x00471f2e (+142); this row spans two functions
+0x00471f80,suspect,contains an interior ret then a prologue | start missing at 0x0047207c (+252); this row spans two functions
+0x00472270,suspect,contains an interior ret then a prologue | start missing at 0x004722b7 (+71); this row spans two functions
+0x004723c0,suspect,contains an interior ret then a prologue | start missing at 0x00472573 (+435); this row spans two functions
+0x004726e0,suspect,contains an interior ret then a prologue | start missing at 0x00472709 (+41); this row spans two functions
+0x00472750,suspect,contains an interior ret then a prologue | start missing at 0x0047278f (+63); this row spans two functions
+0x004727c0,suspect,contains an interior ret then a prologue | start missing at 0x00472885 (+197); this row spans two functions
+0x00472b10,suspect,contains an interior ret then a prologue | start missing at 0x00472bcb (+187); this row spans two functions
+0x00472c10,suspect,contains an interior ret then a prologue | start missing at 0x00472c70 (+96); this row spans two functions
+0x00472cc0,suspect,contains an interior ret then a prologue | start missing at 0x00472d92 (+210); this row spans two functions
+0x00473b50,suspect,"does not end in a terminator | last is `je`; next start 0x00473b60 is a clean boundary, so a start is missing inside this row or the size is short"
+0x00474810,suspect,contains an interior ret then a prologue | start missing at 0x00474934 (+292); this row spans two functions
+0x00474ab0,suspect,contains an interior ret then a prologue | start missing at 0x00474b72 (+194); this row spans two functions
+0x00474da0,suspect,"the NEXT start is spurious | last is `.byte`; an instruction straddles 0x00474e4f, so that row is an operand byte and this function runs past it"
+0x00475302,suspect,contains an interior ret then a prologue | start missing at 0x0047532b (+41); this row spans two functions
+0x004753b0,suspect,contains an interior ret then a prologue | start missing at 0x004753f5 (+69); this row spans two functions
+0x00475c80,suspect,contains an interior ret then a prologue | start missing at 0x00475c9d (+29); this row spans two functions
+0x00475e00,suspect,contains an interior ret then a prologue | start missing at 0x00475ed1 (+209); this row spans two functions
+0x00476150,suspect,contains an interior ret then a prologue | start missing at 0x004761a2 (+82); this row spans two functions
+0x004763a0,suspect,contains an interior ret then a prologue | start missing at 0x004763e8 (+72); this row spans two functions
+0x00476450,suspect,"does not end in a terminator | last is `je`; next start 0x00476468 is a clean boundary, so a start is missing inside this row or the size is short"
+0x00476ac0,suspect,size is not an instruction boundary | stream ends at 0x00476cbf
+0x00476cc0,suspect,"does not end in a terminator | last is `jb`; next start 0x00476cf2 is a clean boundary, so a start is missing inside this row or the size is short"
+0x00476e40,suspect,"does not end in a terminator | last is `je`; next start 0x00476e5a is a clean boundary, so a start is missing inside this row or the size is short"
+0x00476e80,suspect,contains an interior ret then a prologue | start missing at 0x00476edb (+91); this row spans two functions
+0x004770e0,suspect,contains an interior ret then a prologue | start missing at 0x0047713a (+90); this row spans two functions
+0x00477180,suspect,contains an interior ret then a prologue | start missing at 0x004772f3 (+371); this row spans two functions
+0x00477440,suspect,contains an interior ret then a prologue | start missing at 0x00477558 (+280); this row spans two functions
+0x00477b80,suspect,contains an interior ret then a prologue | start missing at 0x00477c97 (+279); this row spans two functions
+0x00477dc0,suspect,contains an interior ret then a prologue | start missing at 0x00477de1 (+33); this row spans two functions
+0x004780b0,suspect,contains an interior ret then a prologue | start missing at 0x004781d0 (+288); this row spans two functions
+0x00478320,suspect,"does not end in a terminator | last is `jne`; next start 0x00478842 is a clean boundary, so a start is missing inside this row or the size is short"
+0x00478320,suspect,contains an interior ret then a prologue | start missing at 0x00478489 (+361); this row spans two functions
+0x00478842,suspect,contains an interior ret then a prologue | start missing at 0x00478873 (+49); this row spans two functions
+0x00478a50,suspect,contains an interior ret then a prologue | start missing at 0x00478b2f (+223); this row spans two functions
+0x00478b40,suspect,"does not end in a terminator | last is `mov`; next start 0x00478b4a is a clean boundary, so a start is missing inside this row or the size is short"
+0x00478b4a,suspect,contains an interior ret then a prologue | start missing at 0x00479106 (+1468); this row spans two functions
+0x0047ac40,suspect,contains an interior ret then a prologue | start missing at 0x0047ac80 (+64); this row spans two functions
+0x0047ad20,suspect,contains an interior ret then a prologue | start missing at 0x0047aeca (+426); this row spans two functions
+0x0047af20,suspect,contains an interior ret then a prologue | start missing at 0x0047b32d (+1037); this row spans two functions
+0x0047b380,suspect,contains an interior ret then a prologue | start missing at 0x0047b4e4 (+356); this row spans two functions
+0x0047b520,suspect,contains an interior ret then a prologue | start missing at 0x0047b6b6 (+406); this row spans two functions
+0x0047bc50,suspect,contains an interior ret then a prologue | start missing at 0x0047bc85 (+53); this row spans two functions
+0x0047bcd0,suspect,contains an interior ret then a prologue | start missing at 0x0047bcdd (+13); this row spans two functions
+0x0047bdd0,suspect,contains an interior ret then a prologue | start missing at 0x0047be1a (+74); this row spans two functions
+0x0047be30,suspect,contains an interior ret then a prologue | start missing at 0x0047be8f (+95); this row spans two functions
+0x0047c020,suspect,contains an interior ret then a prologue | start missing at 0x0047c0c8 (+168); this row spans two functions
+0x0047c8c0,suspect,contains an interior ret then a prologue | start missing at 0x0047c914 (+84); this row spans two functions
+0x0047cd90,suspect,contains an interior ret then a prologue | start missing at 0x0047cdab (+27); this row spans two functions
+0x0047cec0,suspect,contains an interior ret then a prologue | start missing at 0x0047cf1a (+90); this row spans two functions
+0x0047d160,suspect,contains an interior ret then a prologue | start missing at 0x0047d16d (+13); this row spans two functions
+0x0047d860,suspect,contains an interior ret then a prologue | start missing at 0x0047d8c6 (+102); this row spans two functions
+0x0047dd50,suspect,contains an interior ret then a prologue | start missing at 0x0047ddd7 (+135); this row spans two functions
+0x0047df30,suspect,contains an interior ret then a prologue | start missing at 0x0047df8d (+93); this row spans two functions
+0x0047f9e0,suspect,"does not end in a terminator | last is `mov`; next start 0x00480000 is a clean boundary, so a start is missing inside this row or the size is short"
+0x00480000,suspect,"the NEXT start is spurious | last is `.byte`; an instruction straddles 0x00480020, so that row is an operand byte and this function runs past it"
+0x00480090,suspect,"does not end in a terminator | last is `cmp`; next start 0x0048009b is a clean boundary, so a start is missing inside this row or the size is short"
+0x00480d40,suspect,"does not end in a terminator | last is `call`; next start 0x004812dc is a clean boundary, so a start is missing inside this row or the size is short"
+0x00481ca0,suspect,contains an interior ret then a prologue | start missing at 0x00481cb4 (+20); this row spans two functions
+0x00481f70,suspect,contains an interior ret then a prologue | start missing at 0x00481f81 (+17); this row spans two functions
+0x00481fc0,suspect,contains an interior ret then a prologue | start missing at 0x00481fd1 (+17); this row spans two functions
+0x004822f0,suspect,contains an interior ret then a prologue | start missing at 0x004823c2 (+210); this row spans two functions
+0x004823f0,suspect,contains an interior ret then a prologue | start missing at 0x00482458 (+104); this row spans two functions
+0x00482540,suspect,contains an interior ret then a prologue | start missing at 0x0048255c (+28); this row spans two functions
+0x004826b0,suspect,contains an interior ret then a prologue | start missing at 0x004826f1 (+65); this row spans two functions
+0x00482750,suspect,contains an interior ret then a prologue | start missing at 0x00482791 (+65); this row spans two functions
+0x004827f0,suspect,contains an interior ret then a prologue | start missing at 0x00482831 (+65); this row spans two functions
+0x00482890,suspect,contains an interior ret then a prologue | start missing at 0x004828d1 (+65); this row spans two functions
+0x00482930,suspect,contains an interior ret then a prologue | start missing at 0x00482971 (+65); this row spans two functions
+0x004829d0,suspect,contains an interior ret then a prologue | start missing at 0x00482a11 (+65); this row spans two functions
+0x00482b30,suspect,contains an interior ret then a prologue | start missing at 0x00482b7b (+75); this row spans two functions
+0x00482c30,suspect,contains an interior ret then a prologue | start missing at 0x00482cc2 (+146); this row spans two functions
+0x00482d80,suspect,contains an interior ret then a prologue | start missing at 0x00482e4b (+203); this row spans two functions
+0x00482ee0,suspect,contains an interior ret then a prologue | start missing at 0x00482f29 (+73); this row spans two functions
+0x00482fd0,suspect,contains an interior ret then a prologue | start missing at 0x0048308e (+190); this row spans two functions
+0x004830d0,suspect,contains an interior ret then a prologue | start missing at 0x0048321e (+334); this row spans two functions
+0x00483260,suspect,contains an interior ret then a prologue | start missing at 0x00483379 (+281); this row spans two functions
+0x004836f0,suspect,contains an interior ret then a prologue | start missing at 0x004838b9 (+457); this row spans two functions
+0x00483900,suspect,contains an interior ret then a prologue | start missing at 0x00483a22 (+290); this row spans two functions
+0x00483e60,suspect,contains an interior ret then a prologue | start missing at 0x00483ec5 (+101); this row spans two functions
+0x00483fa0,suspect,contains an interior ret then a prologue | start missing at 0x00483fbc (+28); this row spans two functions
+0x00484000,suspect,contains an interior ret then a prologue | start missing at 0x0048401a (+26); this row spans two functions
+0x00484090,suspect,contains an interior ret then a prologue | start missing at 0x004840a9 (+25); this row spans two functions
+0x004840d0,suspect,contains an interior ret then a prologue | start missing at 0x004840ed (+29); this row spans two functions
+0x00484280,suspect,"the NEXT start is spurious | last is `.byte`; an instruction straddles 0x00484341, so that row is an operand byte and this function runs past it"
+0x00484630,suspect,contains an interior ret then a prologue | start missing at 0x0048465a (+42); this row spans two functions
+0x00484d50,suspect,contains an interior ret then a prologue | start missing at 0x00484dbb (+107); this row spans two functions
+0x00485050,suspect,"does not end in a terminator | last is `incl`; next start 0x004852ef is a clean boundary, so a start is missing inside this row or the size is short"
+0x004852ef,suspect,contains an interior ret then a prologue | start missing at 0x0048535b (+108); this row spans two functions
+0x00485490,suspect,contains an interior ret then a prologue | start missing at 0x004854fd (+109); this row spans two functions
+0x00485d70,suspect,contains an interior ret then a prologue | start missing at 0x00485dc8 (+88); this row spans two functions
+0x00486040,suspect,"does not end in a terminator | last is `call`; next start 0x0048618f is a clean boundary, so a start is missing inside this row or the size is short"
+0x0048618f,suspect,"does not end in a terminator | last is `mov`; next start 0x00486459 is a clean boundary, so a start is missing inside this row or the size is short"
+0x004869a0,suspect,contains an interior ret then a prologue | start missing at 0x0048708f (+1775); this row spans two functions
+0x00487160,suspect,contains an interior ret then a prologue | start missing at 0x0048719e (+62); this row spans two functions
+0x00488280,suspect,contains an interior ret then a prologue | start missing at 0x004884c9 (+585); this row spans two functions
+0x00488720,suspect,contains an interior ret then a prologue | start missing at 0x0048887d (+349); this row spans two functions
+0x004888c0,suspect,contains an interior ret then a prologue | start missing at 0x0048890e (+78); this row spans two functions
+0x00488a60,suspect,contains an interior ret then a prologue | start missing at 0x00488aab (+75); this row spans two functions
+0x00489bc0,suspect,contains an interior ret then a prologue | start missing at 0x00489bce (+14); this row spans two functions
+0x0048a770,suspect,contains an interior ret then a prologue | start missing at 0x0048a7d5 (+101); this row spans two functions
+0x0048a937,suspect,contains an interior ret then a prologue | start missing at 0x0048a9f8 (+193); this row spans two functions
+0x0048ada0,suspect,contains an interior ret then a prologue | start missing at 0x0048afbd (+541); this row spans two functions
+0x0048b000,suspect,contains an interior ret then a prologue | start missing at 0x0048b0b9 (+185); this row spans two functions
+0x0048b2d0,suspect,contains an interior ret then a prologue | start missing at 0x0048b355 (+133); this row spans two functions
+0x0048b820,suspect,contains an interior ret then a prologue | start missing at 0x0048b8a4 (+132); this row spans two functions
+0x0048d3a0,suspect,contains an interior ret then a prologue | start missing at 0x0048d4a9 (+265); this row spans two functions
+0x0048db40,suspect,"does not end in a terminator | last is `incl`; next start 0x0048de00 is a clean boundary, so a start is missing inside this row or the size is short"
+0x0048e980,suspect,"does not end in a terminator | last is `add`; next start 0x0048ec46 is a clean boundary, so a start is missing inside this row or the size is short"
+0x0048f380,suspect,"does not end in a terminator | last is `mov`; next start 0x0048f8aa is a clean boundary, so a start is missing inside this row or the size is short"
+0x0048fd00,suspect,contains an interior ret then a prologue | start missing at 0x0048fe1f (+287); this row spans two functions
+0x0048ff00,suspect,"the NEXT start is spurious | last is `.byte`; an instruction straddles 0x00490001, so that row is an operand byte and this function runs past it"
+0x00490010,suspect,"the NEXT start is spurious | last is `.byte`; an instruction straddles 0x00490011, so that row is an operand byte and this function runs past it"
+0x0049001b,suspect,"the NEXT start is spurious | last is `addb`; an instruction straddles 0x00490020, so that row is an operand byte and this function runs past it"
+0x00490050,suspect,"does not end in a terminator | last is `push`; next start 0x00490065 is a clean boundary, so a start is missing inside this row or the size is short"
+0x00490065,suspect,"does not end in a terminator | last is `mov`; next start 0x00490080 is a clean boundary, so a start is missing inside this row or the size is short"
+0x00490a10,suspect,contains an interior ret then a prologue | start missing at 0x00490a98 (+136); this row spans two functions
+0x00490ac0,suspect,contains an interior ret then a prologue | start missing at 0x00490ad3 (+19); this row spans two functions
+0x00491270,suspect,contains an interior ret then a prologue | start missing at 0x004912d0 (+96); this row spans two functions
+0x00491f60,suspect,contains an interior ret then a prologue | start missing at 0x00491f8e (+46); this row spans two functions
+0x00493612,suspect,"does not end in a terminator | last is `lea`; next start 0x00493660 is a clean boundary, so a start is missing inside this row or the size is short"
+0x00493960,suspect,contains an interior ret then a prologue | start missing at 0x00493979 (+25); this row spans two functions
+0x00493ffa,suspect,contains an interior ret then a prologue | start missing at 0x00494018 (+30); this row spans two functions
+0x004943eb,suspect,"does not end in a terminator | last is `call`; next start 0x004943f6 is a clean boundary, so a start is missing inside this row or the size is short"
+0x00494750,suspect,"does not end in a terminator | last is `call`; next start 0x0049476d is a clean boundary, so a start is missing inside this row or the size is short"
+0x00494cc1,suspect,"does not end in a terminator | last is `call`; next start 0x00494daa is a clean boundary, so a start is missing inside this row or the size is short"
+0x00494dbe,suspect,"does not end in a terminator | last is `call`; next start 0x00494dc9 is a clean boundary, so a start is missing inside this row or the size is short"
+0x004950f8,suspect,"does not end in a terminator | last is `call`; next start 0x00495110 is a clean boundary, so a start is missing inside this row or the size is short"
+0x00495d73,suspect,contains an interior ret then a prologue | start missing at 0x00495d9b (+40); this row spans two functions
+0x00496b1b,suspect,size is not an instruction boundary | stream ends at 0x0049725b
+0x00497bbd,suspect,contains an interior ret then a prologue | start missing at 0x00497bdb (+30); this row spans two functions
+0x00497d46,suspect,contains an interior ret then a prologue | start missing at 0x00497dd9 (+147); this row spans two functions
+0x0049854a,suspect,contains an interior ret then a prologue | start missing at 0x004985b5 (+107); this row spans two functions
+0x00498a70,suspect,"does not end in a terminator | last is `mov`; next start 0x00498a80 is a clean boundary, so a start is missing inside this row or the size is short"
+0x00498a70,suspect,"tail-jump forwarder, row continues past it | start missing at 0x00498a77 (+7); the function here is 7 bytes"
+0x0049a48b,suspect,"does not end in a terminator | last is `xor`; next start 0x0049a4d0 is a clean boundary, so a start is missing inside this row or the size is short"
+0x0049a6ed,suspect,"does not end in a terminator | last is `fxch`; next start 0x0049a6ef is a clean boundary, so a start is missing inside this row or the size is short"
+0x0049a756,suspect,"does not end in a terminator | last is `jg`; next start 0x0049a769 is a clean boundary, so a start is missing inside this row or the size is short"
+0x0049aa33,suspect,"does not end in a terminator | last is `andb`; next start 0x0049aa3a is a clean boundary, so a start is missing inside this row or the size is short"
+0x0049b1a9,suspect,contains an interior ret then a prologue | start missing at 0x0049b1bc (+19); this row spans two functions
+0x0049b96b,suspect,"does not end in a terminator | last is `jne`; next start 0x0049b992 is a clean boundary, so a start is missing inside this row or the size is short"
+0x0049b992,suspect,"tail-jump forwarder, row continues past it | start missing at 0x0049b999 (+7); the function here is 7 bytes"
+0x0049c935,suspect,"does not end in a terminator | last is `mov`; next start 0x0049c93b is a clean boundary, so a start is missing inside this row or the size is short"
+0x0049cca8,suspect,"does not end in a terminator | last is `call`; next start 0x0049ccb8 is a clean boundary, so a start is missing inside this row or the size is short"
+0x0049ccfe,suspect,"does not end in a terminator | last is `call`; next start 0x0049cd0e is a clean boundary, so a start is missing inside this row or the size is short"
+0x0049cf82,suspect,contains an interior ret then a prologue | start missing at 0x0049cf9e (+28); this row spans two functions
+0x0049dfbd,suspect,"does not end in a terminator | last is `pop`; next start 0x0049e014 is a clean boundary, so a start is missing inside this row or the size is short"
+0x0049e014,suspect,size is not an instruction boundary | stream ends at 0x0049e48d
+0x0049ef9c,suspect,"does not end in a terminator | last is `call`; next start 0x0049efc0 is a clean boundary, so a start is missing inside this row or the size is short"
+0x0049f11a,suspect,"does not end in a terminator | last is `mov`; next start 0x0049f295 is a clean boundary, so a start is missing inside this row or the size is short"
+0x0049fcbb,suspect,contains an interior ret then a prologue | start missing at 0x0049fcc8 (+13); this row spans two functions
+0x004a0010,suspect,"does not end in a terminator | last is `je`; next start 0x004a0034 is a clean boundary, so a start is missing inside this row or the size is short"
+0x004a0034,suspect,"does not end in a terminator | last is `pop`; next start 0x004a0079 is a clean boundary, so a start is missing inside this row or the size is short"
+0x00401679,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004018a7,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004022e0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00402540,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00403dcf,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00404280,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00405690,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00405f77,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00406017,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00406f23,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00407f90,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00408070,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004081c0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004081e0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00408240,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004082c0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00408360,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004083c0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00408440,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00408b60,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00408b9e,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00408bb0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00408cd0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00408cf0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00408f22,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00409012,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00409262,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00409302,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004093d0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004094b0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004094d0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00409550,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00409640,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004097c0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00409f20,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040a000,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040a150,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040a230,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040a400,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040a470,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040a4f0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040a5d0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040a640,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040a6a0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040a7b0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040a835,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040a865,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040a8e0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040a920,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040aa70,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040abc0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040ac50,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040ac80,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040ace0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040ae30,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040ae90,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040af20,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040af40,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040af60,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040af80,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040afa0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040afd0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040b010,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040b040,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040b2d0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040b310,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040b3b0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040b420,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040b470,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040b4b0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040b4f0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040b5b0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040b640,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040b690,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040b7a0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040b880,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040b8d0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040b940,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040b970,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040ba30,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040bb20,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040bc00,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040bc80,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040bd20,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040bef0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040bf30,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040bf70,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040c5f0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040c6f0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040ca50,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040cd40,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040cdf0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040ce70,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040cfb0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040cfc0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040cfd0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040d010,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040d99e,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040e000,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040e9d0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040ea30,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040ec70,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040ecc0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040ed50,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0040f6d8,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00411473,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004131af,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00413d20,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00413f1f,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0041b4db,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0041b9c0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0041ba31,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0041ba86,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0041bae6,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0041c0bd,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0041c2a0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0041c390,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0041cd50,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0041d06d,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0041ec30,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004222a0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00423c23,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00428e8f,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00428fdd,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00429830,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00429cae,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00429dee,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00429e7a,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0042cbf0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0042cc00,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0042cc70,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0042ccb0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0042ccd0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0042cd20,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0042cd60,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0042ce3d,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0042d30a,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0042de00,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0042df20,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0042df40,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004308f0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00435720,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00435730,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00436370,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004364d0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00436710,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0043ce00,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0043ce50,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0043ceb0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0043d510,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00440278,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00442947,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004429ed,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00442ab7,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00442bed,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0044430b,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00444480,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004444e4,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0044535a,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0044597a,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00447a51,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0044811f,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0044a2af,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0044b5d7,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0044b897,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0044c7ef,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0044c98e,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0044caff,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0044cb3f,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0044cc8e,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0044e79b,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00452506,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00454f70,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00455752,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004563a3,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00458894,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00458b17,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00458e7c,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0045a1f2,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0045f418,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0045f496,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00462240,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00462270,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00462290,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004622b0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004622d0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00462310,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00462330,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00462350,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004623c0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00463cf0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0046486d,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00464ed0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00466114,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004669aa,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00466ba5,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00466fca,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004675ee,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00468f8b,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004690a0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00469390,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004694b0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0046a790,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0046d522,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0046d743,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0046d9fd,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0046dd09,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0046fcb0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0046fed0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0046ff50,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00470020,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00470080,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00470110,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00470600,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004706d0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00470730,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004707f0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004708b0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00470960,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004709a0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004709d0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00470a00,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00470a30,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00470a60,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00470ac0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00470b10,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00470c10,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00470c20,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00470c40,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00470f50,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00470f90,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004710b0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00471140,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00471200,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00471250,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00471270,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00471290,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004712f0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00471340,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00471380,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004713b0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004713d0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00471400,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00471420,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00471440,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00471470,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004714d0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00471520,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00471540,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00471550,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00471580,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00471600,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00471630,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00471650,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00471690,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004716e5,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004717f0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00471850,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00471880,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00471ad0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00471cb0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00471f70,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00471f80,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004720c0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00472110,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00472160,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00472180,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004721f0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00472210,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00472270,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004722f0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00472320,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004726e0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00472750,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004727a0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004727c0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004728d0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004728f0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00472a80,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00472ab0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00472af0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00472b10,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00472c10,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00472cc0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00472dd0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00472df0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00472ea0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00472f00,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00473b60,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00475302,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00476468,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00476770,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004767fb,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00476a30,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00476a80,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00476cf2,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00476e5a,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00477180,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0047773b,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00477f4c,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004780b0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00478300,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00478b4a,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0047a1f0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0047a480,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0047a4e0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0047a790,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0047a7d0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0047a970,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0047ac40,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0047ad20,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0047af20,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0047b380,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0047b520,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0047b700,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0047e4e2,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0047f045,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00484c10,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00488a60,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00488b10,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00488b80,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00488bd0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00488c20,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00488cb0,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00489440,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0048a534,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0048a54b,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0048a937,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0048b440,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0048b820,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0048bc50,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0048f9cd,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0049018d,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004920ba,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00492850,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00492b1e,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00493583,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004935ab,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x004935d6,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00493601,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00494147,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00494cc1,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00494ea3,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00494f2d,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00495008,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0049595c,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00495a1d,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00495a6b,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00495a83,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x00495d73,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0049a58d,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0049a8b5,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0049ac7a,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0049acf7,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0049d753,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0049d905,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0049df40,suspect,extent found by elimination (source=gap) | boundaries are unreferenced; confirm before trusting the size
+0x0044e79b,bogus,"NOT a function start: the enumeration split CModelLoadState::sub_1001cec1 into 0x0044e790 (11 b) + this (339 b). The real function is 0x0044e790..0x0044e8ee, 350 bytes -- 0x0044e790 opens `cmpl $1,0x20(%ecx); jae 0x0044e79b; xor eax,eax; ret $4`, so this address is the fall-through of its own entry test. The mapping harvest flagged it as a 32x size outlier; the cluster decode proved the extent."
+0x0044dfbd,bogus,"NOT a function start: the shared `fail:` block of the function at 0x0044ddc0 (Model::LoadChildModels). 0x0044de3e and 0x0044de55 both branch INTO it. True extent of the real function is 0x0044ddc0..0x0044e4d4, 1,812 bytes with 52 calls; extentcheck's three rets there are its three `add $0x94,%esp; ret $4` epilogues."
+0x004018a7,bogus,"NOT a function start: the SUCCESS arm of BinkVideoMgr::Init at 0x00401850. The `jne 0x004018a7` at 0x00401863 is the LoadLibrary-succeeded branch; the FAILURE arm is the fall-through and ends at 0x004018a6 with `mov $0x16,%eax; pop %esi; ret`, so the next byte looks like a prologue. True extent 0x00401850..0x00401a43, 500 bytes. Confirmed three ways: extentcheck clean over the joined range, and a full-image scan finds ZERO rel32 and zero absolute references to 0x004018a7."
+0x00405f77,bogus,"NOT a function start: the fall-through of LVideoMgr::StartOnScreenVideo's FIRST guard at 0x00405f30. `jne 0x00405f77` at 0x00405f3b skips the failure arm, which falls through and ends in `ret $0xc`, so the next byte looks like a prologue. True extent 0x00405f30..0x00405fcd, 157 bytes. Defect shape (c), the entry-test fall-through"
+0x00406017,bogus,"NOT a function start: the same defect one function later -- the fall-through of LVideoMgr::StartTextureVideo's first guard at 0x00405fd0. True extent 0x00405fd0..0x0040606e, 158 bytes"
+0x00403dcf,bogus,"NOT a function start: shape (a), the SUCCESS arm of the -cmdfile reader at 0x00403da0. The failure arm (fopen fails -> MessageBoxA 'Could not parse cmdfile.') is the fall-through and ends `xor %al,%al; pop; ret` at 0x00403dce, so the next byte -- the target of the `75 16` at 0x00403db7, opening `push %ebx; push %edi` -- looks like a prologue. True extent 0x00403da0..0x00403e2e, 143 bytes, 10 calls, and extentcheck collapses to one body over that range"
+0x0048db40,bogus,"NOT CODE AT ALL: 704 bytes of DATA -- dinput.lib's c_dfDIJoystick.rgodf. The five dwords before the pointer at 0x004a3928 are a literal DIDATAFORMAT {0x18, 0x10, 1 (DIDF_ABSAXIS), 0x50 (sizeof DIJOYSTATE), 0x2c (44 objects), &0x0048db40} and 44 x 16 = 704 to the byte. The records decode as 8 axes, 4 POVs and 32 buttons against the dxguid GUID pool at 0x004a3a7c..0x004a3b2c; 0x00436ff8 pushes 0x004a3914 into IDirectInputDevice::SetDataFormat. tools/extentcheck.py flags it (0 rets, 4 bogus branch targets)"
+0x0048db30,note,"a 5-byte import thunk: jmp *0x004a1000 = DINPUT.dll!DirectInputCreateA. Marks the seam where the world-tree module ends and linked library code begins"
+0x0048e980,note,"true size is 759 bytes (0x0048e980..0x0048ec76), not the enumerated 710: extentcheck flags six branch targets past the stated end and the next function starts at 0x0048ec80. CRezDir::ReadDirBlock"
+0x00490650,note,"true size 119 bytes (0x00490650..0x004906c6), not the enumerated 135. The remaining 16 bytes are padding plus a SEPARATE 7-byte function at 0x004906d0 (movl $0x4a3b8c,(%ecx); ret) = CVirtBaseList::~CVirtBaseList, emitted out of line only because an EH unwind funclet needs its address"
+0x0048f8aa,bogus,"NOT a function: the shared loop tail of CRezMgr::ReadEmulationDirectory at 0x0048f380. extentcheck reports seven branch targets leaving the 0x0048f380 row and SIX land exactly here (0x0048f4d6, 0x0048f510, 0x0048f619, 0x0048f63f, 0x0048f82d, 0x0048f84f -- every `continue`); the block then branches BACKWARDS to 0x0048f4a2. Shape (b). Real function 0x0048f380..0x0048f8f8, 1,400 bytes"
+0x0048f9cd,bogus,"NOT a function: the non-NULL arm of CRezMgr::StrToType at 0x0048f9c0, whose NULL arm falls through to `xor %eax,%eax; ret $4` five bytes earlier. Shape (a). Real function 0x0048f9c0..0x0048fa18, 88 bytes"
+0x00490080,bogus,"NOT a function: the back half of CRezItmHashTableByName::Find at 0x00490050, which branches out to 0x0049007a. Real function 0x00490050..0x00490101, 177 bytes"
+0x0048ff00,note,"true size 259 bytes, not 257: the enumeration cut `add $8,%esp` in half and the ret is the byte after"
+0x0048f900,note,"a function the enumeration MISSED entirely: CRezMgr::Close(BOOL), 9 calls. Five more missed starts in the same range: 0x0048f9b0, 0x0048fac0, 0x0048fe80, 0x0048fea0, 0x0048fec0"
+0x00429cae,bogus,"the function is 0x00429ca0..0x00429d2e; an early ret sits at 0x00429cad and this is the next byte"
+0x00429e7a,bogus,"the function is 0x00429e60..0x00429fcd; this is the jne target of the entry guard (this+0x20 == 0), the fall-through-of-an-entry-test shape"
+0x00478842,bogus,"an interior block of the function at 0x00478510..0x00478924 (id 8, OnUpdatePacket): 0x004787b4, 0x004787f6 and 0x00478826 all jump INTO it and 0x00478858 branches out to 0x00478578"
+0x00416f66,bogus,"ASCII ACCIDENT in the PE import name table: 0x004a5e7c sits inside ""GetStartupInfoA\0"" and the dword there is 'f','o','A',0 = 0x00416f66. No call targets it; it is an interior block of the function at 0x00416de0"
+0x0041726f,bogus,"ASCII ACCIDENT in the PE import name table: 0x004a5190 sits inside ""LoadCursorA\0"" and the dword there is 'o','r','A',0 = 0x0041726f. No call targets it; interior block of 0x00416de0"
+0x004536f1,bogus,"interior basic block of wm_PushWorldModel (0x00452cd0..0x00453ed5): je 0x004536f1 from 0x004534af, and jl 0x00452d54 at 0x00453ec2 crosses the other way. Its init provenance was an enumeration artefact"
+0x0045c6a3,bogus,"0x22 bytes into the function at 0x0045c680 and CUTS AN INSTRUCTION IN HALF -- the 10-byte movl $0,0x1e8(%esi) spans 0x0045c69b..0x0045c6a4. Real extent 0x0045c680..0x0045c77c, 252 bytes"
+0x0044dfbd,bogus,"unaligned; 0x0044ddc0 + 509 lands exactly on it. 0x0044ddc0 is a single 1812-byte Model::LoadChildModels"
+0x0045d120,bogus,"the 5-byte jmp thunk in front of the .CRT$XCU initialiser at 0x0045d130. 29 of the 53 XCU entries have this identical jmp-16-bytes-forward shape -- compiler-emitted, not source-reachable"

@@ -28,6 +28,9 @@ four compiler executables exist before it starts.
 
 About 450 MB in all.
 
+Which revision built which retail binary, and the evidence for each, is in
+[`COMPILERS.md`](COMPILERS.md).
+
 `build/env.sh` is the one place these paths are spelled; it fails with a
 clear message if `msvc600` is missing, and `run_icl` does the same for
 `icl-4.0`. The revisions are not interchangeable: each binary is compiled

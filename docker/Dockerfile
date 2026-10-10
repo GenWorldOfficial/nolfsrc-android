@@ -1,7 +1,8 @@
 # The build image: Ubuntu 24.04 with its distro Wine (32-bit), Python 3, and
 # what the scripted playtest needs (Xvfb, xdotool, xwd, ImageMagick, Mesa),
-# and what toolchain/fetch.sh needs to download and unpack the compilers'
-# original media (curl, bsdtar, 7z, cabextract, unar, unshield).
+# what toolchain/fetch.sh needs to download and unpack the compilers'
+# original media (curl, bsdtar, 7z, cabextract, unar, unshield), and objdump
+# (binutils), which the reconstruction tools disassemble with.
 #
 # The Makefile builds it as `nolfsrc-build` and runs every step in a
 # throwaway container with the checkout mounted at /repo, as the invoking
@@ -18,7 +19,7 @@ RUN dpkg --add-architecture i386 \
  && apt-get update -qq \
  && apt-get install -y -qq \
         wine wine32:i386 \
-        python3 \
+        python3 binutils \
         xvfb xauth xdotool x11-apps imagemagick \
         libgl1:i386 libglu1-mesa:i386 libgl1-mesa-dri:i386 \
         procps \

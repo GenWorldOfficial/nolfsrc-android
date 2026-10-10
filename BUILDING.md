@@ -86,6 +86,10 @@ build/build.sh cshell final           # one game DLL (cres | cshell | object | a
 build/engine.sh server                # one engine target's objects ...
 build/engine.sh server-link           # ... and its link
 build/all.sh                          # the whole thing
+build/reference.sh                    # the retail images, into out/reference/
+build/engine.sh server verify         # compile, then match every function
+                                      #   against the retail server.dll
+build/engine.sh server-one smgr.cpp PlaySound   # recompile one file, match it
 tools/playtest.sh out/game 'Worlds\M01S01' 60   # idle for 60 s on a level
 ```
 
@@ -95,6 +99,9 @@ commands. The engine targets in order, and the compiler each uses, are in
 `build/engine.sh`'s header. `src/engine/server/` is compiled into both
 `server.dll` and `lithtech.exe`, so after changing it rebuild both (`server`,
 `server-link`, `lithtech`, `lithtech-link`).
+
+The `verify` and `*-one` targets are the reconstruction loop:
+`guides/02-the-loop.md` explains it, and `guides/` the rest of the method.
 
 ## Notes
 
