@@ -40,13 +40,14 @@ INCLUDE="$INCLUDE;$WNOLFSRC"
 # build's command lines are then exactly what they always were.
 NOLFSRC_CFLAGS="${NOLFSRC_CFLAGS:-}"
 NOLFSRC_LDFLAGS="${NOLFSRC_LDFLAGS:-}"
+NOLFSRC_RCFLAGS="${NOLFSRC_RCFLAGS:-}"    # resource scripts: /d NAME
 # They are only allowed in the trees build/variant.sh makes (out/build-*/):
 # anywhere else they would put NOLFSRC_DEBUG or NOLFSRC_MODERN code into the
 # objects `make progress` scores, which must only ever be the release build.
-if [ -n "$NOLFSRC_CFLAGS$NOLFSRC_LDFLAGS" ]; then
+if [ -n "$NOLFSRC_CFLAGS$NOLFSRC_LDFLAGS$NOLFSRC_RCFLAGS" ]; then
     case "$REPO" in
         */out/build-*) ;;
-        *) echo "error: NOLFSRC_CFLAGS / NOLFSRC_LDFLAGS are set, but this is not a" >&2
+        *) echo "error: NOLFSRC_CFLAGS / LDFLAGS / RCFLAGS are set, but this is not a" >&2
            echo "       build/variant.sh tree ($REPO). Unset them; use make debug/modern." >&2
            return 1 2>/dev/null || exit 1 ;;
     esac
@@ -103,4 +104,4 @@ run_icl() {
 
 run_link() { "$WINE" "$MSVC/VC98/Bin/LINK.EXE" $NOLFSRC_LDFLAGS "$@"; }
 run_lib()  { "$WINE" "$MSVC/VC98/Bin/LIB.EXE"  "$@"; }
-run_rc()   { "$WINE" "$MSVC/Common/MSDev98/Bin/RC.EXE" "$@"; }
+run_rc()   { "$WINE" "$MSVC/Common/MSDev98/Bin/RC.EXE" $NOLFSRC_RCFLAGS "$@"; }

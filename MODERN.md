@@ -1,0 +1,317 @@
+# The modern build
+
+`NOLFSRC_MODERN` is the project's define for everything that departs from the
+retail game: bug fixes and new features. It is set only in the modern build
+(`make modern`, `make modern-debug`; see `BUILDING.md`, "Variant builds"),
+never in the release build, which stays byte-for-byte the retail game and is
+the only build `make progress` scores. Every change goes behind
+`#ifdef NOLFSRC_MODERN` with the retail code kept, unchanged, in the `#else`.
+
+The first goal of the modern build is to bring in the fixes and features of
+**NOLF Modernizer** by HeyThereCoffeee (haekb) --
+<https://github.com/haekb/nolf1-modernizer>,
+<https://haekb.itch.io/nolf-modernizer> -- version 1.006 Patch 4. This file is
+the inventory of everything it changes, and the work plan for doing the same
+here. Credit for finding these problems, and for the design of the features,
+belongs to the Modernizer; each item below names the Modernizer change it
+comes from.
+
+## Rules for this work
+
+* **Reimplement, never copy.** The Modernizer's repository carries no licence
+  of its own (its readme says the code remains under Monolith's v1.003 source
+  EULA), so none of its code is copied into this repository. Read it to learn
+  *what* changes and *why*; write the implementation yourself, in this
+  project's style. Commit hashes below are for traceability and credit only.
+* **The 2000-era compilers.** The modern build uses the same toolchain as the
+  release build (VC6 cl 8447 for the game DLLs' compiler settings, Intel
+  C/C++ 4.0 for `d3d.ren`). The Modernizer was built with Visual Studio 2019,
+  SDL2, Microsoft Detours and C++11 (`std::string`, `std::vector`,
+  `unordered_map`, `std::regex`, lambdas, `auto`, `strcpy_s`, brace
+  initialisers). None of that is available or wanted here:
+  * SDL2 window/mouse/timer use becomes Win32: raw mouse input through
+    `WM_INPUT` (declare `RAWINPUTDEVICE`, `RAWINPUT`, `RegisterRawInputDevices`
+    and `GetRawInputData` by hand -- VC6's headers predate them -- and load the
+    two functions with `GetProcAddress` from `user32.dll`), window placement
+    with `SetWindowPos`/`MoveWindow`/`SetWindowLong`, timing with
+    `QueryPerformanceCounter`. `SDL_Log` becomes the modern build's own log
+    (see M-P2-07).
+  * Detours hooks into `lithtech.exe` become direct changes in our engine
+    source (`src/engine/`), because we own it.
+  * Containers become fixed arrays, `CMoArray`, or plain C strings.
+* **Game data comes from the discs.** No game data is committed. A data change
+  is a recipe in `src/modern/data/` (`src/modern/data/README.md`): a unified
+  diff against the retail file, or a new file we wrote ourselves. Modernizer-
+  authored art, models, fonts and music are not ported; where a retail file
+  can stand in, or an asset can be generated, the item says so.
+* **Release unchanged.** After every change: the release build's objects for
+  that file still match (`build/engine.sh <target>-one <file>` for the engine;
+  `make progress` for everything), and `make modern` builds and plays
+  (`tools/playtest.sh out/game-modern ...`).
+
+## Status legend
+
+| Status | Meaning |
+|---|---|
+| todo | not started |
+| in progress | someone is on it (name the branch, e.g. `wt/p3`) |
+| done | implemented behind `NOLFSRC_MODERN`, release verified unchanged, modern build tested |
+| not ported | deliberately left out; the reason is given |
+| decided | a question settled rather than code to write; the decision is given |
+
+When an item is done, change its status here in the same change, and if it
+fixes a retail bug, add or update the entry in `RETAIL_BUGS.md`.
+
+## New console / config variables
+
+All are created with `VarTrack` (so they are console variables and are saved
+in `autoexec.cfg`), client-side unless noted.
+
+| Variable | Type | Default | Meaning | Item |
+|---|---|---|---|---|
+| `FramerateLock` | int | 1 | cap the client frame rate at 60 (always capped in multiplayer) | M-P1-01 |
+| `ShowFramerate` | int | 0 | draw an averaged frame-rate counter in the bottom-left corner | M-P3-14 |
+| `OldMouseLook` | int | 0 | use the retail mouse-look path instead of raw input | M-P1-03 |
+| `NoRawInput` | int | 0 | keep the new mouse look but read the mouse without raw input | M-P1-03 |
+| `NoFunMenus` | int | 0 | always use the plain main menu (no seasonal variants) | M-P3-11 |
+| `RestrictCinematicsTo4x3` | int | 0 | black side bars on cinematics at non-4:3 resolutions | M-P3-08 |
+| `QuickSwitch` | int | 0 | next/previous weapon switches immediately | M-P5-12 |
+| `UIScale` | float | 0.5 | HUD element scale, multiplied by the screen's height ratio | M-P3-12 |
+| `UseGotyMenu` | int | 1 (GOTY install) | main menu art: Game of the Year (1) or original (0) | M-P3-10 |
+| `ConsoleBackdrop` | int | 0 | developer console background (see M-P2-05) | M-P2-05 |
+| `BigHeadMode` | float | 0 | head scale multiplier for characters (0 = off; forced off in multiplayer); also a server variable | M-P2-10 |
+| `DisplayTriggers` | int | 0 | server: draw trigger volumes as yellow boxes | M-P2-11 |
+| `EnableScreenTinting` | int | 1 | 0 = draw screen tints with a 2D overlay instead of the engine's (Intel fix) | M-P1-10 |
+| `EnableLightScale` | int | 1 | 0 = never apply interface light scaling (Intel fix) | M-P1-10 |
+| `ModPatchNum` | float | 0 | last modern-build config version seen; drives one-time upgrades | M-P1-12 |
+| `Windowed` | int | (engine) | existing engine variable, now toggled from Display options | M-P1-06 |
+| `Anisotropic`, `Bilinear`, `Trilinear` | int | (engine) | existing `d3d.ren` variables (retail `d3d.ren` reads `Anisotropic`), now set from Advanced Display | M-P1-09 |
+
+## Work packages
+
+Seven packages. Each is meant for one worker in its own worktree
+(`tools/agentwt.sh add p<N>`, branch `wt/p<N>`), merged in the order P0, P1,
+P2, ..., P6.
+
+| Package | Theme | Items | Owns (files nobody else edits) |
+|---|---|---|---|
+| P0 | engine | 3 | `src/engine/d3d/w4_1001eb90_os.cpp`, `src/engine/d3d/big1ef30.cpp`, `src/engine/lithtech/clientconsole.cpp`, any other `src/engine/` file |
+| P1 | timing, input, window, display options | 13 | `WinUtil.cpp`, `FolderDisplay.*`, `FolderAdvDisplay.*`, `FolderMouse.*`, `LightScaleMgr.cpp`, `ScreenTintMgr.*`, `LoadingScreen.*` (timing parts) |
+| P2 | developer console, logging, cheats, debug toggles | 13 | new `ConsoleMgr.*` (our own), `MessageMgr.*` (cheats), `GameBase.cpp`, `Attachments.cpp`, `CharacterHitBox.cpp`, `BodyFX.*`, `NodeController.cpp`, `SpecialFX.h` |
+| P3 | menus and HUD at any resolution | 20 | `BaseFolder.*`, `BaseSelectionFolder.cpp`, all `Folder*.cpp` not listed elsewhere, new `FolderInterface.*` (our name for the HUD/Interface options folder), `InterfaceResMgr.*`, `PlayerStats.*`, `LayoutMgr.*`, `ListCtrl.*`, `PopupText.cpp`, `ClientInfoMgr.cpp`, new fill-rect cache file |
+| P4 | jukebox, game data, strings | 11 | new `FolderJukebox.*`, new `JukeboxButeMgr.*`, `src/modern/data/**`, `tools/moddata.py` (recipe extensions), `ClientRes.rc`/`ClientRes.h` string tables (see the string rule below) |
+| P5 | gameplay, AI, physics and crash fixes | 16 | `CMoveMgr.*`, `AIMovement.cpp`, `AIPathMgr.cpp`, `Door.cpp`, `PlayerObj.cpp`, `CharacterFX.cpp`, `ModelButeMgr.cpp`, `WeaponModel.*`, `WeaponChooser.cpp`, `FolderSummary.cpp`, `FolderPlayer.cpp` (crash part), `src/lithshared/ButeMgr/butemgr.cpp` |
+| P6 | multiplayer | 9 | `FolderJoin.*`, `FolderHost.cpp`, `CommonUtilities.*`, `src/lithshared/gamespy/**`, `ClientServerShared.h`, `VersionMgr.*` |
+
+### Hot-spot files and how to share them
+
+These files are edited by several packages. To keep merges mechanical:
+
+* Every change in a hot-spot file goes in its own `#ifdef NOLFSRC_MODERN`
+  block, opened with a one-line comment naming the item (`// M-P1-01: frame
+  limiter`). Never reformat, reorder or re-indent surrounding retail code.
+* Prefer one *call* into a package's own file over inline logic in the hot
+  spot (e.g. `ModernFrameLimiter_EndFrame();` in `GameClientShell.cpp`, with
+  the body in a P1-owned file).
+* Merge order is P0 → P6; a later package rebases on the earlier ones.
+
+| Hot spot | Packages | Rule |
+|---|---|---|
+| `src/game/ClientShellDLL/GameClientShell.cpp` / `.h` | P1, P2, P3, P5, P6 | call-outs only; new members grouped at the end of the class in one `#ifdef` block per package |
+| `src/game/ClientShellDLL/InterfaceMgr.cpp` / `.h` | P1, P2, P3, P5 | as above |
+| `src/game/ClientShellDLL/InterfaceResMgr.cpp` / `.h` | P1 (borderless window), P3 | P3 owns; P1 adds one call |
+| `src/game/ClientShellDLL/FolderMgr.cpp` / `.h` | P3, P4 | new `FOLDER_ID_*` values appended in this order, before the last id: `MAIN_CASUAL`, `MAIN_WINTER`, `INTERFACE` (P3), `JUKEBOX` (P4) |
+| `src/game/ClientShellDLL/LayoutMgr.cpp` | P3, P4 | the folder-name table gets the same four names in the same order |
+| `src/game/ClientShellDLL/FolderOptions.cpp`, `FolderCommands.h` | P3, P4 | `FOLDER_CMD_INTERFACE` (P3) then `FOLDER_CMD_JUKEBOX` (P4) |
+| `src/game/ClientShellDLL/ClientUtilities.cpp` / `.h` | P2 (console command, key names), P5 (toggle-zoom command) | commands appended before the last array entry, console first |
+| `src/game/Shared/CommandIDs.h`, `MsgIDs.h` | P2, P5, P1, P6 | IDs fixed below |
+| `src/game/ObjectDLL/GameServerShell.cpp` / `.h` | P1, P2, P6 | call-outs only |
+| `src/game/ClientShellDLL/PlayerStats.cpp` | P3, P5 | P3 owns; P5's one-line fix in its own block |
+| `src/game/ClientShellDLL/ClientShellDLL.dsp`, `ObjectDLL.dsp` | any package adding a file | `build/build.sh` takes the source list from the `.dsp`: add new files at the end of the source group, one line each |
+| `src/game/ClientRes/ClientRes.rc`, `ClientRes.h` | all | string IDs from the package's range below; one `#ifdef NOLFSRC_MODERN` `STRINGTABLE` block per package at the end of the file |
+
+Fixed identifiers (chosen equal to the Modernizer's, so its multiplayer
+messages mean the same thing):
+
+| Identifier | Value | Item |
+|---|---|---|
+| `COMMAND_ID_TOGGLE_CONSOLE` | 80 | M-P2-03 |
+| `COMMAND_ID_TOGGLE_ZOOM` | 81 | M-P5-13 |
+| `MID_CONSOLE_COMMAND_CLIENT` | 238 | M-P2-08 |
+| `MID_DONT_LOCK_SERVER_FPS` | 250 | M-P1-02 |
+
+New CRes string IDs, by package (30000-30099 is reserved for the Game of the
+Year strings of M-P4-08, whose IDs are fixed by the retail level data):
+
+| Package | Range |
+|---|---|
+| P1 | 31000-31099 |
+| P2 | 31100-31199 |
+| P3 | 31200-31299 |
+| P4 | 31300-31399 |
+| P5 | 31400-31499 |
+| P6 | 31500-31599 |
+
+String text is ours: write new wording rather than copying the Modernizer's.
+
+---
+
+## P0 -- engine
+
+| ID | Title | Kind | What and why | Modernizer source | Our files | Data / strings | Depends | Status |
+|---|---|---|---|---|---|---|---|---|
+| M-P0-01 | Widescreen field of view (Hor+) | feature | The renderer derives the horizontal field of view as if every screen were 4:3, so wide screens get a vertically squashed, horizontally cropped view. The Modernizer's patched `d3d.ren` (BIN/, 120 bytes) jumps out of two places in the camera setup into a routine that recomputes the field of view from the screen's aspect ratio: `fov' = 2*atan(tan(fov/2) * aspect / (4/3))`, applied to the field at `+0xb4` (from width/height at `+0xac`/`+0xb0`) at `0x1001edb0`, and to the width/height pair at `+0x24`/`+0x28` at `0x1001f309`, with the constant 4/3 (`0x3faaaaab`) and 0.5. Do the same calculation in C in our source. | BIN/d3d.ren (patch sites `0x1001edb0`, `0x1001f309`; code at `0x10087b86`, `0x10087bdf`) | `src/engine/d3d/w4_1001eb90_os.cpp` (function `0x1001eb90`), `src/engine/d3d/big1ef30.cpp` (function `0x1001ef30`, camera/viewport setup) | -- | -- | todo |
+| M-P0-02 | Console output to the game's console | feature | The Modernizer's developer console (P2) shows the engine's console text by detouring the engine's console print functions. Here, add a hook in the engine instead: when a console line is printed, also pass it to a callback the game DLL registers. Suggested shape: append one method to the end of `ILTClient` (both `src/LT2/sdk/inc/iltclient.h` and the engine's implementation) under `NOLFSRC_MODERN`, so existing slots keep their layout. | `DetourMgr.cpp` (hooks `0x0041b880`, `0x0041b8c0`) | `src/engine/lithtech/clientconsole.cpp` (`0x0041b880`, `0x0041b8c0`, `0x0041d380`), `src/LT2/sdk/inc/iltclient.h`, the `ILTClient` implementation in `src/engine/lithtech/` | -- | -- | todo |
+| M-P0-03 | Fast `FillRect` | fix (performance) | `ILTClient::FillRect` locks and uploads a surface on every call, so screens that fill many rectangles each frame (menus, sliders, the scope, letterbox bars) lose a lot of frame rate. The Modernizer works around it in the game DLL with a cache of pre-filled surfaces drawn with blits (M-P3-17). Investigate fixing the engine/renderer path itself; if that is not practical, P3's game-side cache stands. | commits 128eae2, 992bd24, `OptimizedRenderer.cpp` | the engine's `FillRect` path in `src/engine/lithtech/` and `src/engine/d3d/` | -- | -- | todo |
+
+## P1 -- timing, input, window, display options
+
+| ID | Title | Kind | What and why | Modernizer source | Our files | Data / strings | Depends | Status |
+|---|---|---|---|---|---|---|---|---|
+| M-P1-01 | 60 fps frame limiter (client) | fix | The game's movement, animation and sound timing were tuned for about 60 fps; uncapped, things run too fast. At the end of each client frame, wait (high-resolution counter) until 1/60 s has passed since the last frame. Applies when `FramerateLock` is 1, always in multiplayer (firing rate otherwise rises with frame rate), and is suspended while the loading screen runs. | 690d5ad, 4828519, 1cc5735, 2caf0ba, 995cb20; `GameClientShell.cpp` (`PostUpdate`), `LoadingScreen.cpp` | `src/game/ClientShellDLL/GameClientShell.cpp`/`.h`, `LoadingScreen.cpp` | strings for the option are in P3 (M-P3-13) | -- | todo |
+| M-P1-02 | 60 fps limiter on servers | fix | A dedicated server also runs too fast unlimited. The server shell caps its update rate to 60 in multiplayer, unless the host's own client (which already limits) sends `MID_DONT_LOCK_SERVER_FPS`; the server only honours that message from a client with a host port. | 0f48561, 006b6aa/be04376; `GameServerShell.cpp`, `MsgIDs.h` | `src/game/ObjectDLL/GameServerShell.cpp`/`.h`, `src/game/Shared/MsgIDs.h`, `GameClientShell.cpp` (send on connect when hosting) | -- | M-P1-01 | todo |
+| M-P1-03 | Raw mouse look | fix | The retail mouse look (DirectInput axis offsets with `CursorCenter`) stutters on modern systems. Read relative mouse motion from raw input (`WM_INPUT` on the game window, which `GameClientShell` already subclasses), scale it by `MouseSensitivity` (the Modernizer halves the retail scale formula), and use it for yaw/pitch. In menus give the cursor back; in game hide and confine it. `OldMouseLook 1` restores the retail path; `NoRawInput 1` uses cursor-delta motion instead of raw input. | 47b3a1f, 83c8743, fd21e9f, f55c2d8, c4998c8, 6b2ca03, 0ffc916, e8d390d, 3ee3a3e; `GameClientShell.cpp` (`UpdateMouseLook` area), `InterfaceMgr.cpp` (`UseCursor`) | `GameClientShell.cpp`/`.h`, `InterfaceMgr.cpp`, a new P1 input file | -- | -- | todo |
+| M-P1-04 | Mouse options | feature | Add a "legacy mouse look" toggle to the Mouse options folder (writes `OldMouseLook`); rename "Mouse smoothing" to describe what it really is, the mouse *wheel* input rate. | f2ed6f7, ec3deeb; `FolderMouse.cpp`, `ClientRes.rc` | `src/game/ClientShellDLL/FolderMouse.cpp`/`.h` | P1 strings: toggle label + help; replacement text for the two retail strings is a CRes change behind the define | M-P1-03 | todo |
+| M-P1-05 | High-resolution game clock | fix | `CWinUtil::GetTime` uses `GetTickCount` (10-16 ms resolution), which makes frame pacing uneven. Use `QueryPerformanceCounter`. | 8c05855; `WinUtil.cpp` | `src/game/ClientShellDLL/WinUtil.cpp` | -- | -- | todo |
+| M-P1-06 | Windowed mode option and window handling | feature | Display options get a windowed-mode toggle (writes `Windowed`, forces a mode reset when it changes); on a mode change the window is resized and centred; when windowed at the desktop's own resolution, make it borderless; re-centre the window when the game regains focus. Retail requires `+windowed 1` on the launcher's command line. | e6e4fb9, 2a51552, e9f178b, de40512, b65ac1a; `FolderDisplay.cpp`, `InterfaceResMgr.cpp` (`HandleBorderlessWindowed`), `GameClientShell.cpp` (focus) | `FolderDisplay.cpp`/`.h`, `InterfaceResMgr.cpp`, `GameClientShell.cpp` | P1 strings: label + help | -- | todo |
+| M-P1-07 | Widescreen resolutions | fix | The resolution list drops every mode that is not exactly 4:3, so wide screens cannot run at their native resolution. Keep all modes of at least 640x480, and drop 16-bit modes instead (they are redundant and cause problems). Mind the list walk: skipping a mode must still advance to the next one (the Modernizer's first version looped forever, 516ec65). | 98369bb, 516ec65; `FolderDisplay.cpp` (`BuildRendererList` area) | `FolderDisplay.cpp` | -- | M-P0-01, P3 (menus must cope with wide modes) | todo |
+| M-P1-08 | Safer fallback mode and surface settings | fix | When the configured mode fails, the retail game falls back to 640x480x16; fall back to 800x600x32. Force `optimizesurfaces 1` on startup (it sometimes ends up off, which makes text draw with black boxes), and `CursorCenter 0` after init in case it was left on. | 98369bb, bc49fee; `GameClientShell.cpp` (`OnEngineInitialized`) | `GameClientShell.cpp` | -- | -- | todo |
+| M-P1-09 | Texture filtering option (anisotropic) | feature | Replace the Advanced Display "Trilinear" toggle with a cycle: none / trilinear / 2x, 4x, 8x, 16x anisotropic. It writes `Bilinear`, `Trilinear` and `Anisotropic` (all read by the retail `d3d.ren`); "none" turns bilinear off too. | 527c8ea, 0bee38b; `FolderAdvDisplay.cpp` | `src/game/ClientShellDLL/FolderAdvDisplay.cpp`/`.h` | P1 strings: label, help, six choices | -- | todo |
+| M-P1-10 | Intel graphics fix (light scale and screen tint) | compat | On Intel integrated graphics, interface light scaling makes the screen go black underwater and the engine's screen tints do not show. A Display option ("Intel graphics fix") sets `EnableLightScale 0` and `EnableScreenTinting 0`: `CLightScaleMgr` then disables light scaling, and `CScreenTintMgr` draws the tint as a small solid surface scaled over the screen with additive blending instead of using the camera tint. | 466df2c, 84b3317, e1ad31f, 628a788, 2e8f6f0; `LightScaleMgr.cpp`, `ScreenTintMgr.cpp`, `GameClientShell.cpp` (draw), `FolderDisplay.cpp` | `LightScaleMgr.cpp`, `ScreenTintMgr.cpp`/`.h`, `FolderDisplay.cpp`, `GameClientShell.cpp` | P1 strings: label + help | -- | todo |
+| M-P1-11 | Faster loading | fix | The loading-screen thread sleeps 100 ms between frames ("not faster than 10 fps"), which also slows the load itself down. Sleep 10 ms. | 6fddadd; `LoadingScreen.cpp` | `src/game/ClientShellDLL/LoadingScreen.cpp` | -- | -- | todo |
+| M-P1-12 | One-time config upgrade | feature | Store a config version (`ModPatchNum`); when it is older than the build's, apply one-time changes: reset the key bindings to the new defaults (M-P4-06) and raise `BulletHoles` to 100. | 94b3171, 3573050, df62e6f; `GameClientShell.cpp`, `VersionMgr.cpp` | `GameClientShell.cpp`, `src/game/Shared/VersionMgr.cpp`/`.h` | -- | M-P4-06 | todo |
+| M-P1-13 | Window procedure guard on exit | fix | During shutdown the subclassed window procedure can be called after the original procedure pointer is cleared, and crashes; ignore such calls. | 5755077; `GameClientShell.cpp` (`HookedWindowProc`) | `GameClientShell.cpp` | -- | -- | todo |
+
+## P2 -- developer console, logging, cheats, debug toggles
+
+| ID | Title | Kind | What and why | Modernizer source | Our files | Data / strings | Depends | Status |
+|---|---|---|---|---|---|---|---|---|
+| M-P2-01 | Drop-down developer console | feature | A console drawn over the top half of the screen (screen width, half height), single-player only: shows engine and game console output, an edit line, scroll-back (Up/Down to recall commands, Page Up/Down to scroll), and pauses the game while open. While it is open, game commands, camera movement and other key handling are ignored. | 2fda13a, 910d120, bbbc018, 254a0a9, 52b34e3, cf7f0a5, b64d954, 1f89822; `ConsoleMgr.cpp`/`.h`, hooks in `GameClientShell.cpp`, `InterfaceMgr.cpp` | new P2 console file(s), `GameClientShell.cpp`, `InterfaceMgr.cpp`, `InterfaceResMgr.cpp` (init on mode change) | -- | M-P0-02 | todo |
+| M-P2-02 | Console runs commands | feature | Enter runs the line as a client console command; if it is a cheat code, run the cheat (and play the cheat sound); when hosting or in single player, also send it to the server (M-P2-08) so server variables can be set. | 2fda13a, a880a42, cfc1e79; `ConsoleMgr.cpp` (`Send`) | P2 console file | -- | M-P2-01, M-P2-08 | todo |
+| M-P2-03 | Rebindable console key | feature | A new `ToggleConsole` command (id 80), bound by default to the backquote key, listed at the end of the Custom Controls list; the key-name table learns backquote, Scroll Lock, Num Lock, Insert and Delete. The console is locked (cannot open) while editing controls and during loading screens, and never opens in multiplayer. | 3739a8f, c9560cf; `CommandIDs.h`, `ClientUtilities.cpp`, `FolderCustomControls.cpp`, `LoadingScreen.cpp` | `src/game/Shared/CommandIDs.h`, `ClientUtilities.cpp`, `FolderCustomControls.cpp`, `LoadingScreen.cpp` | P2 strings: control name + action string; default binding in M-P4-06 | M-P2-01 | todo |
+| M-P2-04 | Console help list | feature | A `Help` console program lists every registered console program. The Modernizer collects the names by replacing the client interface's register/unregister function pointers with proxies; with our own engine, the list can be read from the engine directly (or the same proxy approach used). | bbbc018; `GameClientShell.cpp` (proxy functions), `ConsoleMgr.cpp` | P2 console file, possibly `src/engine/lithtech/` | -- | M-P2-01 | todo |
+| M-P2-05 | Console backdrops | feature | `ConsoleBackdrop` picks the console's background. The Modernizer's choice 0 is the NOLF demo's console art (`interface/console.pcx`, not on the retail discs -- not ported); use retail `menu/art/blanktag.pcx` (its choice 1) and plain black (its choice 2), and make 0 the blank tag. | c3f4ffc, e08a4a1; `ConsoleMgr.cpp` (`Draw`) | P2 console file | -- | M-P2-01 | todo |
+| M-P2-06 | Console history dump | feature | A console program that writes the whole console history to the modern log (M-P2-07). | 4c5b89e; `ConsoleMgr.cpp` | P2 console file | -- | M-P2-01, M-P2-07 | todo |
+| M-P2-07 | Modern log file | feature | The Modernizer logs to `Debug.log` (cleared at start) through SDL. Give the modern build a small always-on log (game directory, cleared per run) for messages such as font loading, timeout retries and the defensive fixes' warnings. Note: `src/nolfsrc/nolfsrc_debug.h`'s `NOLFSRC_LOG` is debug-build only; this one is for the modern build itself. | 36449b2, 21fcab4, 73a804f; `GameClientShell.cpp` (`SDLLog`) | a small P2 file; used by others | -- | -- | todo |
+| M-P2-08 | Client-to-server console commands (safe) | feature | Message `MID_CONSOLE_COMMAND_CLIENT` (238) carries a console string from client to server, which runs it. The Modernizer's server runs it from **any** client; ours must only accept it from the local/hosting client (single player or the listen-server host), and ignore it otherwise. | a880a42; `GameServerShell.cpp` (`OnMessage`), `MsgIDs.h` | `src/game/ObjectDLL/GameServerShell.cpp`, `src/game/Shared/MsgIDs.h` | -- | -- | todo |
+| M-P2-09 | Cheats in the console, cheat list | feature | A console program `Cheats` prints the cheat codes and what they do (descriptions are ours). Four cheats compiled out of the retail final build are enabled: no-clip (`mpclip`, also the documented way out of stuck spots), remove all AI, unlock all missions, reset player history. | cfc1e79; `MessageMgr.cpp` (`CCheatMgr::Process`) | `src/game/ClientShellDLL/MessageMgr.cpp`/`.h` | P2 strings if the list is localised | M-P2-01 | todo |
+| M-P2-10 | Big head mode | feature | `BigHeadMode <scale>`: character heads drawn 1.8 x scale larger -- client: a model-node control on the head node (found by name `head_node`) for characters and bodies; server: head attachments (Head/Eyes/Chin positions) scaled, and the head hit-box radius enlarged to match. Sent to the server when single player/hosting (via M-P2-08); forced off in multiplayer. Known imperfect hit boxes (the Modernizer says so too). | a675150, 51ae03f, 95e945e, c4b7a24, e26fe28; `SpecialFX.h`, `BodyFX.cpp`, `NodeController.cpp`, `Attachments.cpp`, `CharacterHitBox.cpp`, `GameServerShell.cpp`, `GameClientShell.cpp` | those files | -- | M-P2-08 | todo |
+| M-P2-11 | Display triggers | feature | Server variable `DisplayTriggers`: draw the bounding boxes of `Trigger` objects (yellow, nearly opaque), and remove them when turned off again. Also corrects the retail bounding-box debug view: the debug model path (`264.abc` -> `364.abc`) and radius used to visualise hit boxes. | dc377e1; `GameServerShell.cpp` (`UpdateBoundingBoxes`), `GameBase.cpp`, `CharacterHitBox.cpp` | `GameServerShell.cpp`/`.h`, `src/game/ObjectDLL/GameBase.cpp`, `CharacterHitBox.cpp` | -- | -- | todo |
+| M-P2-12 | Speed-run helpers | feature | The Modernizer logs the addresses of the current mission/level and an is-loading flag so speed-run timers can read them. Our addresses differ from the Modernizer's anyway; provide the same three values in one exported/static block and log their addresses at startup. | bdc4770, 5edbf15, b8da510, 6a856af; `GameClientShell.h`, `LoadingScreen.*` | `GameClientShell.cpp`/`.h`, `LoadingScreen.cpp`/`.h` | -- | M-P2-07 | todo |
+| M-P2-13 | Debug level off for new players | fix | The server forces `debuglevel 0` when a player is added, because the level could be left on and flood the console. Check whether this happens with our build before porting. | (in `GameServerShell.cpp` `CreatePlayer`) | `GameServerShell.cpp` | -- | -- | todo |
+
+## P3 -- menus and HUD at any resolution
+
+The retail interface is laid out for 640x480 and stretched by separate X and
+Y ratios (or offset to the centre). The Modernizer switches the menus to a
+centred 4:3 area scaled by the *Y* ratio only, with the side areas filled
+(pillarboxing), so nothing is stretched on wide screens.
+
+| ID | Title | Kind | What and why | Modernizer source | Our files | Data / strings | Depends | Status |
+|---|---|---|---|---|---|---|---|---|
+| M-P3-01 | 4:3-area menu layout | feature | `InterfaceResMgr` X offset becomes the 4:3 side margin `(width - height*4/3)/2`, Y offset 0; menu controls are positioned by `pos * yRatio + xOffset`, with each fixed control's layout position remembered so it is not re-offset each frame (controls that position themselves -- edit fields, the password dialog -- opt out). Mouse coordinates are then used as-is. Interface 3D sprites (scale FX) stop multiplying their depth by the X ratio. | 3ed42b1, 09abe0b, 75a3b2e, 4e333b5, 5995bc1, 38ad510, 596ff46, c42d808; `BaseFolder.cpp`, `InterfaceResMgr.cpp`, `InterfaceMgr.cpp` (mouse), `ListCtrl.cpp`, the `Folder*.cpp` scale-FX code | `BaseFolder.cpp`/`.h`, `InterfaceResMgr.cpp`/`.h`, `InterfaceMgr.cpp`, `ListCtrl.cpp`/`.h`, `BaseSelectionFolder.cpp`, `FolderGadgets.cpp`, `FolderGear.cpp`, `FolderIntel.cpp`, `FolderInventory.cpp`, `FolderMods.cpp`, `FolderPlayer.cpp`, `FolderViewInventory.cpp`, `FolderWeaponControls.cpp`, `FolderWeapons.cpp`, `LoadingScreen.cpp` | -- | -- | todo |
+| M-P3-02 | Side bars | feature | One function draws the shade colour into the side margins; used by menus, the splash screen, the loading screen and the scope overlay (which otherwise shows the world at the sides). | c42d808, 327320e; `InterfaceResMgr.cpp` (`DrawFolderBars`), `PlayerStats.cpp` (scope) | `InterfaceResMgr.cpp`, `PlayerStats.cpp`, `InterfaceMgr.cpp` | -- | M-P3-01 | todo |
+| M-P3-03 | Per-folder widths | feature | Every options folder multiplies its layout widths (gap, column, slider) by the Y ratio so labels and values do not collide at high resolutions: Audio, Controls, Crosshair, Effects, Game, Host Options, JoinLAN, Keyboard, Mouse, Performance, Texture, Weapon Controls, Joystick, Advanced Display, Host, Player. | 9372bbe, 78e762f and the menu-scaling commits | those `Folder*.cpp`, `JoystickAxis.cpp` | -- | M-P3-01 | todo |
+| M-P3-04 | Back/continue arrows that scale | feature | The menu back/continue arrows are scale FX sprites that do not follow the new layout. The Modernizer replaces them with new 64x64 bitmaps in a new scalable bitmap control (Modernizer art -- not ported). Keep the retail arrow sprites and position/scale them for the 4:3 area instead; if a bitmap control is needed, generate the arrow images. Note the Modernizer's later crash fix in the weapon-hotkey screen (control `Param1` checks) was needed only because of its new control; check ours does not collide the same way. | f717cda, 216fc7f, 76d1427; `BaseFolder.cpp`, `ScalableBitmapCtrl.*`, `FolderWeaponControls.cpp`, `BaseSelectionFolder.cpp` | `BaseFolder.cpp`, possibly a new control | -- | M-P3-01 | todo |
+| M-P3-05 | Splash, failure and loading screens | fix | The splash and mission-failure backgrounds are drawn at 640x480 or stretched; draw them scaled into the 4:3 area with side bars. The loading screen scales its text position and mission photo by the Y ratio. | 4e333b5, 04be8a2; `InterfaceMgr.cpp` (splash, failure), `LoadingScreen.cpp` | `InterfaceMgr.cpp`, `LoadingScreen.cpp` | -- | M-P3-01, M-P3-02 | todo |
+| M-P3-06 | Multiplayer menus | fix | Join (server list, sort bars, status/option bars, column widths and arrow offset), Host, Host Levels (the frame drawing is disabled), the multiplayer summary, and the team/frag score positions (moved right so they do not overlap the bound-weapons bar) are adjusted for the scaled layout. | fc99f6b, 5929056/26855b3/4762b70, f4b9b98, 58ec382; `FolderJoin.cpp`, `FolderHost.cpp`, `FolderHostLevels.cpp`, `FolderMultiSummary.cpp`, `ClientInfoMgr.cpp` | those files (`FolderJoin`/`FolderHost` shared with P6: P3 owns layout lines) | -- | M-P3-01 | todo |
+| M-P3-07 | Password dialog and save-name field | fix | The join-password dialog is centred on the real screen instead of at (320,240), and the save-game name field keeps its position; both opt out of the fixed-control re-positioning. | 9dc7f61, 8112bbe; `FolderJoin.cpp`, `FolderSave.cpp` | `FolderJoin.cpp`, `FolderSave.cpp` | -- | M-P3-01 | todo |
+| M-P3-08 | 4:3 cinematics | feature | `RestrictCinematicsTo4x3`: during letterboxed cinematics also draw black bars in the side margins, hiding scene edges that were never meant to be seen. | 27bd359; `InterfaceMgr.cpp` (letterbox drawing) | `InterfaceMgr.cpp` | P3 strings (in M-P3-13) | M-P3-01 | todo |
+| M-P3-09 | Space-suit overlay | fix | The space-suit helmet overlay is stretched on wide screens; scale it with the 4:3 ratio instead of the layout's `SpaceScale`. | 65915bb; `LayoutMgr.cpp` (`OVM_SPACE`) | `src/game/ClientShellDLL/LayoutMgr.cpp` | -- | -- | todo |
+| M-P3-10 | Original or GOTY main menu | feature | `UseGotyMenu`: show the GOTY main menu art (retail default) or the original edition's. The original's textures are retail data -- `nolf2.rez`'s `MENU/SPRTEX/MAINMENU1.dtx` and `MENU/SPRTEX/NOLF.dtx`, overridden in a GOTY install -- so a build-time recipe copies them to new names (the Modernizer's `MAINMENU1b`/`NOLFb`), with two small `.spr` files we write; the menu swaps the sprite file names of the `InterfaceSpr1` and `mainnolftext` scale FX. Our install always has `nolfgoty.rez`, so default to GOTY. | 2633a19, 3b8fab5, 04bfa92; `BaseFolder.cpp` (`CreateScaleFX`), `InterfaceMgr.cpp`, `VersionMgr.cpp` | `BaseFolder.cpp`, `InterfaceMgr.cpp`, recipes in `src/modern/data/` (needs M-P4-01) | P3 strings: label, help, two choices | M-P4-01 | todo |
+| M-P3-11 | Seasonal main menus | feature | `GetMainFolder()` replaces every hard-coded `FOLDER_ID_MAIN`: from 15 to 31 December the main menu shows a winter Cate, on Fridays a casual Cate, otherwise the normal one; `NoFunMenus 1` always uses the normal one. The two variants are new folder ids with their own layout sections. The Modernizer's variant models (`INTHERO_CASUAL/WINTER.abc`) are its own work (not ported); their skins are retail (`HERO_CASUAL*.dtx`, `HERO_WINTER*.dtx`), so try the interface Cate model with those skins through a model-bute style recipe, and drop the item if the skins do not fit. (Its "fixed Christmas" commit fixes its own date test: check the range is 15-31 December inclusive.) | 2633a19, f35883d, edc7ba3, 7f433c7, 50ec0b5; `InterfaceMgr.cpp` (`GetMainFolder`), `FolderMgr.*`, ~25 call sites | `InterfaceMgr.cpp`/`.h`, `FolderMgr.cpp`/`.h`, `LayoutMgr.cpp`, every `FOLDER_ID_MAIN` site; layout + model-bute recipes | -- | M-P4-01, M-P4-03 | todo |
+| M-P3-12 | HUD scaling | feature | `UIScale` (times the Y ratio) scales the health/armour bars and their flash, the ammo bar and icon, the air meter, the damage icons (drawn a little smaller and higher), and the bound-weapon icons (moved to the top right), using `TransformSurfaceToSurfaceTransparent`. | 286b806, 5e5ebf1, 45ef789, eda9e43, 11a62f7, 032fea2, b3dd011, a7737fc, 98c661c, 80a8945, e0944c7; `PlayerStats.cpp` | `src/game/ClientShellDLL/PlayerStats.cpp`/`.h` | -- | -- | todo |
+| M-P3-13 | Interface options folder | feature | A new options folder ("Interface"), reached from Options: HUD scale slider, frame-rate lock (60 fps / unlocked), show frame rate, cinematic aspect ratio (4:3 / wide), and the main-menu style (when GOTY). Also moves "Quick switch" there if wanted. | 2120b18, d6bd8c7, 798d802, 470c4a1; `FolderHUD.cpp`, `FolderOptions.cpp`, `FolderMgr.*`, `LayoutMgr.cpp` | new `FolderInterface.*`, `FolderOptions.cpp`, `FolderCommands.h`, `FolderMgr.*`, `LayoutMgr.cpp`; layout recipe section `[FolderInterface]` (M-P4-03) | P3 strings: title, menu entry + help, each label + help, choice texts | M-P3-12, M-P1-01, M-P3-14, M-P3-08, M-P3-10 | todo |
+| M-P3-14 | Frame-rate counter | feature | `ShowFramerate`: average the frame rate over 10 frames and draw it at the bottom left. | c22d278, 8798b8d, 36b9b71, b0606a6; `PlayerStats.cpp`, `GameClientShell.cpp` | `PlayerStats.cpp`, `GameClientShell.cpp` | -- | -- | todo |
+| M-P3-15 | Intel reading | feature | Reading an intel item pauses the game and shows the cursor; the popup background fills the screen. | 05a1cd4, d97664e; `InterfaceMgr.cpp` (popup state), `PopupText.cpp` | `InterfaceMgr.cpp`, `PopupText.cpp` | -- | -- | todo |
+| M-P3-16 | Message perf | fix | On-screen info messages (ammo pickups, deaths) are drawn with colour-keyed transparency every frame, which costs a lot; draw them without it (no visible difference). | 3fb3d14; `MessageMgr.cpp` (draw) | `MessageMgr.cpp` (one line; P2 owns the file) | -- | -- | todo |
+| M-P3-17 | Fill-rect cache | fix (performance) | If M-P0-03 does not fix `FillRect` in the engine: a game-side cache of pre-filled surfaces keyed by size and colour, drawn with blits, used in place of every `FillRect` in the interface (about 60 call sites: letterbox, fades, crosshair, scope, sliders, list frames, team banners, credits, subtitles...); rebuilt on resolution change; never used after shutdown (the Modernizer's subtitle crash). | 128eae2, 992bd24, ae11687, c12d011, bf1c1e8, e1bcb1b, a0b321f; `OptimizedRenderer.*` and its users | new P3 file + the call sites | -- | M-P0-03 | todo |
+| M-P3-18 | Weapon and ammo chooser | fix | The chooser draws the previous/next weapon and ammo icons beside the current one (retail had the drawing commented out), and centres the ammo row. | 7921cc7; `WeaponChooser.cpp` | `src/game/ClientShellDLL/WeaponChooser.cpp` (P5 owns; this is one block) | -- | -- | todo |
+| M-P3-19 | Fonts | fix | Bitmap fonts are always drawn with blending (the air and chooser fonts were not), which removes black boxes around text. (The Modernizer also prepared an HD large font and edited two HUD font images; its HD font is disabled in its own code -- not ported; see M-P4-10 for the font images.) | d6f610e; `InterfaceResMgr.cpp` (`SetupFont` calls) | `InterfaceResMgr.cpp` | -- | -- | todo |
+| M-P3-20 | Version string | fix | The main menu's version text is positioned by the screen ratios rather than fixed 640x480 coordinates. | 75a3b2e; `FolderMain.cpp` | `src/game/ClientShellDLL/FolderMain.cpp` | -- | M-P3-01 | todo |
+
+## P4 -- jukebox, game data, strings
+
+| ID | Title | Kind | What and why | Modernizer source | Our files | Data / strings | Depends | Status |
+|---|---|---|---|---|---|---|---|---|
+| M-P4-01 | Recipe kinds: copy from an archive, game-directory files | feature (tooling) | `tools/moddata.py` today patches a file or installs a new one into `custom/`. Two more recipe kinds are needed: install a retail file from a *named* archive under a new path (the original main-menu textures of M-P3-10, the retail skins of M-P3-11, the cosmonaut model of M-P4-04), and write into the game directory itself rather than `custom/` (for `defctrls.cfg`, M-P4-06, which the engine reads from disk). Document them in `src/modern/data/README.md`. | -- | `tools/moddata.py`, `src/modern/data/README.md`, `build/variant.sh` | -- | -- | todo |
+| M-P4-02 | Jukebox | feature | Options gets a Jukebox folder: a list of the game's music themes (Ambush, Ba-De-Dum, Bad Guys, Orchestral, Main Theme, and the GOTY theme when present) and, for the selected theme, its intensity levels; choosing one plays that theme at that intensity, with a "now playing" line; leaving restores the previous music state. Themes are listed in a new attribute file we write, `ATTRIBUTES/Jukebox.txt` (theme name, music directory, control file, needs-GOTY flag) read by a small bute manager. The Modernizer's intensity names are its own invention ("I made up all these song names"): describe the levels ourselves (or use neutral labels such as "Intensity 3"). | cc80f1d, 7c517ea, 0f08dac, 6de82fc, 2a4702e, 494747e, dd1d500, 5914926, e400f56; `FolderJukebox.*`, `JukeboxButeMgr.*`, ASSETS/Attributes/Jukebox.txt | new `FolderJukebox.*`, `JukeboxButeMgr.*`, `GameClientShell.*` (manager), `FolderOptions.cpp`, `FolderMgr.*`, `LayoutMgr.cpp`; recipe `files/ATTRIBUTES/Jukebox.txt`; layout section `[FolderJukebox]` (M-P4-03) | P4 strings: entry + help, title, "Themes", "Now playing: %s", theme names | M-P4-03 | todo |
+| M-P4-03 | Layout data | feature | The Modernizer ships a complete modified copy of `ATTRIBUTES/LAYOUT.txt` (as `LayoutNew.txt`, with the game reading that name). Instead, patch the retail `LAYOUT.txt` with a recipe: new sections for the seasonal main menus, the Interface folder and the Jukebox folder, and the characters they use. The other edits (Player setup animation, Join map column) are separate items. | d03fb15 and the folder commits; ASSETS/Attributes/LayoutNew.TXT | recipe `src/modern/data/ATTRIBUTES/LAYOUT.txt.patch` (one file; each package adds its hunk through P4) | -- | M-P4-01 | todo |
+| M-P4-04 | Multiplayer character selection | fix | Player setup gains a second cosmonaut style (`cosmonaut_style2`, blue/red skins and three heads, all retail skins) whose model is the retail `COSMONAUT_ACTION_MULTI.abc` under a new name, and its helmet attachment requirement is fixed (`ATTACHMENTS.txt` `Requirement3` style "" -> "Action"); a bystander winter skin and a dummy head are added to their models' lists. The PS2 Cate ("Thief" style, `hero_thief*`) uses models and skins taken from the PlayStation 2 release -- not on these discs, not ported. | 110a997, 50fee30; ASSETS/Attributes/MODELBUTES.TXT, ATTACHMENTS.TXT, CHARS/MODELS/MULTI | recipes for `ATTRIBUTES/MODELBUTES.txt`, `ATTRIBUTES/ATTACHMENTS.txt`, the model copy | -- | M-P4-01 | todo |
+| M-P4-05 | Player-setup and server-list layout values | fix | Player setup shows the female model with a walking animation that does not suit it (`CharAnim "UUW"` -> `"LWF"`); the Join server list's map column is too narrow (`MapWidth 128` -> `256`). | f628f29, 4762b70; ASSETS/Attributes/LayoutNew.TXT | layout recipe (M-P4-03) | -- | M-P4-03 | todo |
+| M-P4-06 | New default controls | feature | Defaults change: the mouse wheel switches weapons (it zoomed), the middle mouse button toggles zoom (it reloaded), backquote opens the console; `defctrls.cfg` gains the two new actions. Applied to existing configs once by M-P1-12. | 3573050; BIN/defctrls.cfg | recipe for the game-directory `defctrls.cfg` (needs M-P4-01) | -- | M-P4-01, M-P2-03, M-P5-13 | todo |
+| M-P4-07 | Alternate skydiving SMG name | fix | Two weapons share the name "Hampton MPL 9mm SMG"; the skydiving variant gets its own name string ("... (Alternate)") so they can be told apart in lists. | 6ca6961; ASSETS/Attributes/WEAPONS.TXT (`NameId 4012` -> new id) | recipe `ATTRIBUTES/WEAPONS.txt.patch` | P4 string: the new weapon name | -- | todo |
+| M-P4-08 | Game of the Year strings | fix | The GOTY bonus mission ("Rest and Relaxation") and other GOTY content use CRes string IDs 30000-30084 that are not in the v1.003 source's string table, so with our CRes those texts are missing. The Modernizer types them into `ClientRes.rc`. Here, take them at build time from the retail GOTY `CRES.dll` inside `nolfgoty.rez` (its string table) and compile them into CRes. **Note:** the release build has the same gap (it also uses the v1.003-source CRes) -- see the note at the end. | 2143494; `ClientRes.rc` 30000-30084 | `build/build.sh` (CRes step) or a generated `.rc` include; `tools/` (string-table reader) | IDs 30000-30084 as retail | -- | done (in the release build too: `BUILDING.md` step 2c) |
+| M-P4-09 | Tech-demo music mood lock | not ported | `MusicMgr` locks the mood for the tech demo's music control file; only meaningful with M-P4-11. | 2d7697d; `MusicMgr.cpp` | -- | -- | -- | not ported (tech demo not available, M-P4-11) |
+| M-P4-10 | HUD font images | todo (investigate) | `INTERFACE/FONTS/HUD_NMRS.PCX` differs from retail in 11 bytes (palette) and `HUD_CHOOSER.PCX` was re-saved; probably the transparent colour, for the blending change of M-P3-19. If they are needed, derive them from the retail files at build time (a palette edit) rather than committing images. | ASSETS/INTERFACE/FONTS | possibly a derive recipe | -- | M-P3-19, M-P4-01 | todo |
+| M-P4-11 | Extras: LithTech tech demo | not ported | The Modernizer renames "Custom level" to "Extras" and ships Monolith's October 2000 LithTech "Goodman" tech demo level with its models, textures and music (with a strobe-light warning). That content is not on the retail discs and is not ours to ship. The retail custom-level folder stays. | 2d7697d; ASSETS/WORLDS/Extras, CHARS/MODELS/GOODMAN.ABC, PARTNER_DANCIN.ABC, TEX/OBJECTS/OBJ05, MUSIC/NOLFDANCE | -- | -- | -- | not ported |
+
+## P5 -- gameplay, AI, physics and crash fixes
+
+Several of these were found under the Modernizer's Visual Studio 2019 build,
+whose floating-point behaviour differs from VC6's x87 code (its own comments
+say so for the path-finding fix). For each, first check whether the retail
+game (or our modern build without the fix) shows the problem; record the
+answer here, and add an entry to `RETAIL_BUGS.md` for those that are real
+retail bugs.
+
+| ID | Title | Kind | What and why | Modernizer source | Our files | Data / strings | Depends | Status |
+|---|---|---|---|---|---|---|---|---|
+| M-P5-01 | Enemies flying off at "FTL speed" | fix | `GetMovementData` interpolates through a table by a time fraction that can fall slightly outside 0..1, indexing past the table; clamp the time to 0..1. | 7206431, f4cfdb6; `AIMovement.cpp` | `src/game/ObjectDLL/AIMovement.cpp` | -- | -- | todo |
+| M-P5-02 | AI path-finding intersection | fix (verify) | The connection-point intersection divides two dot products and can divide 0 by 0; the Modernizer replaces the NaN with 1.0, saying this mimics what VC6's code did. Check our VC6 build's behaviour before changing anything. | 3b14d20, f38c666; `AIPathMgr.cpp` | `src/game/ObjectDLL/AIPathMgr.cpp` | -- | -- | todo |
+| M-P5-03 | Switches and bombs with no move direction | fix (verify) | A door/switch with a zero move direction normalises a zero vector (0/0), and moving to a target at zero distance does the same; guard both. On loading a save, a door whose saved vectors are NaN (seen on mission 2's bombs) gets them reset. | 2221959, 040e499, 8a109a2, 14c214d; `Door.cpp` | `src/game/ObjectDLL/Door.cpp` | -- | -- | todo |
+| M-P5-04 | Zero-vector normalise in player rotation | fix (verify) | The player's turn-to-target code normalises a direction that can be zero; skip the normalise then. | 839e7b2, 14c214d; `PlayerObj.cpp` | `src/game/ObjectDLL/PlayerObj.cpp` | -- | -- | todo |
+| M-P5-05 | Invisible impassable geometry | fix | The player is pushed back by gaps between floor polygons because "standing on" is lost for a frame. Carry the last standing-on surface forward for up to 10 frames while nothing is under the player (not while jumping or falling). The Modernizer's earlier doorway-specific workarounds (673be2f, 0754b9f) were superseded by this. | 4ba3819, 2b32b27; `CMoveMgr.cpp` (`UpdateOnGround`) | `src/game/ClientShellDLL/CMoveMgr.cpp`/`.h` | -- | -- | todo |
+| M-P5-06 | Invalid model style crash | fix | `CCharacterFX` can see an invalid model style and crash looking up its name; fall back to the default style. | 62e9f7a; `CharacterFX.cpp` | `src/game/ClientShellDLL/CharacterFX.cpp` | -- | -- | todo |
+| M-P5-07 | Lip-sync with a zero-channel sound | fix | Lip-sync divides by the sound's channel count, which can come back 0 when the sound data cannot be read; return early. | b93d68d; `NodeController.cpp` | `NodeController.cpp` (P2 owns; one block) | -- | -- | todo |
+| M-P5-08 | Player setup crash | fix | `CModelButeMgr` frees its attribute data at the end of `Init`, but player setup reads it when the folder gets focus; free it in `Term` instead. | 256862b; `ModelButeMgr.cpp` | `src/game/Shared/ModelButeMgr.cpp` | -- | -- | todo |
+| M-P5-09 | Player setup string overflow | fix | Player setup copies console strings (skin, head, model, name) into 32-byte buffers; long values overflow. Use buffers big enough (or bounded copies). | 2a73340; `FolderPlayer.cpp` | `src/game/ClientShellDLL/FolderPlayer.cpp` | -- | -- | todo |
+| M-P5-10 | Camera disabler ammo HUD | fix | The camera disabler's "shots per clip" is about 1000, so the ammo HUD surface is created far larger than the screen; recreate it when it exceeds the screen. | b6c8cea; `PlayerStats.cpp` (`UpdateAmmo` area) | `PlayerStats.cpp` (P3 owns; one block) | -- | -- | todo |
+| M-P5-11 | Mission summary continue button | fix | In single player the summary's continue button is missing because the data update only happens on a message that is not sent; always update. | d23b2b4; `FolderSummary.cpp` | `src/game/ClientShellDLL/FolderSummary.cpp` | -- | -- | todo |
+| M-P5-12 | Quick switch | feature | `QuickSwitch`: next/previous weapon changes the weapon at once (the chooser stays visible and closes 2.5 s later), and firing works while it is open. Game options get a toggle. | 0eb8734, a1637ca, 827a88c; `InterfaceMgr.cpp`, `GameClientShell.cpp`, `WeaponModel.cpp` (`ChangeWeapon` keep-chooser flag), `FolderGame.cpp` | `InterfaceMgr.cpp`, `GameClientShell.cpp`, `WeaponModel.cpp`/`.h`, `FolderGame.cpp`/`.h` | P5 strings: label + help | -- | todo |
+| M-P5-13 | Toggle zoom | feature | A `ToggleZoom` command (id 81): each press steps the scope to the next zoom level, and past the last one zooms out. | 3573050, e460812; `GameClientShell.cpp` (`OnCommandOn`), `ClientUtilities.cpp`, `CommandIDs.h` | `GameClientShell.cpp`, `ClientUtilities.cpp`, `CommandIDs.h` | P5 strings: control name + action string | -- | todo |
+| M-P5-14 | Shadows lost after cinematics and loads | fix | Model shadows switch off during cinematics and are restored from a value saved when the cinematic started -- which is 0 if two cinematics overlap, and is never restored after loading a save. Restore `MaxModelShadows` from `DrawShadows` when a cinematic ends and after a world loads. | 38479a9; `GameClientShell.cpp` | `GameClientShell.cpp` | -- | -- | todo |
+| M-P5-15 | Attribute-file save crash | fix (verify) | Saving an attribute file (e.g. `NetHost.txt`) with no filename set crashes in the bute manager. The Modernizer's fix is in NOLF2's bute manager source, which it used instead of the retail library; check whether our reconstructed `ButeMgr` has the same fault before porting. | 856a2b7; LT2/lithshared/butemgr/ButeMgr.cpp | `src/lithshared/ButeMgr/butemgr.cpp` | -- | -- | todo |
+| M-P5-16 | Animation parser value | fix (verify) | The generated animation parser leaves `yyval`'s string uninitialised for empty rules. Check whether it matters for our flex/bison output before porting. | 862a96b; `AnimationParse.cpp`, `bison.simple` | `src/game/ObjectDLL/AnimationParse.y` (or the bison template) | -- | -- | todo |
+
+## P6 -- multiplayer
+
+| ID | Title | Kind | What and why | Modernizer source | Our files | Data / strings | Depends | Status |
+|---|---|---|---|---|---|---|---|---|
+| M-P6-01 | Format-string injection in names and chat | fix | Player names, chat messages and server names reach `printf`-style formatting, so a `%` in them can crash clients and servers (a published LithTech format-string vulnerability). Strip `%` from player names (server, when set), chat text (server, before relaying), the host's own session name and player name, and server names shown in the browser. | 8eee245; `CommonUtilities.cpp` (`FilterString`), `PlayerObj.cpp`, `GameServerShell.cpp`, `FolderHost.cpp`, `FolderJoin.cpp`, `FolderPlayer.cpp` | `src/game/Shared/CommonUtilities.cpp`/`.h`, `PlayerObj.cpp`, `GameServerShell.cpp`, `FolderHost.cpp`, `FolderJoin.cpp`, `FolderPlayer.cpp` | -- | -- | todo |
+| M-P6-02 | Master server | feature | GameSpy's master server is gone, so the internet server list is empty and servers cannot advertise. The Modernizer hex-edited Monolith's prebuilt GameSpy libraries to point at another master (now `master.openspy.net`). Our `src/lithshared/gamespy/` is a stand-in that does not talk to a master at all; under `NOLFSRC_MODERN`, implement the GameSpy master protocol (server heartbeat; client list query) against a configurable master address. | e390d9f, b26446f, 0fbeba9 (binary edits of LT2/lithshared/libs) | `src/lithshared/gamespy/**` | -- | -- | todo |
+| M-P6-03 | Version filter default | fix | The server browser's version filter defaults to "all versions"; default it to the current version, so incompatible servers are not shown. | 9999997; `FolderJoin.cpp` | `FolderJoin.cpp` | -- | -- | todo |
+| M-P6-04 | Handshake version | decision | Decided: the modern build keeps the 1.003 handshake (minor version 4), so it plays with retail 1.003 players and servers; the Modernizer's two new client-to-server messages (238, 250) are ignored by a retail server. The Modernizer raises it to 8, which only separates the two populations -- no existing message changed format. Optional, later: a modern server could accept 4 and 8 and answer each client with its own value, letting Modernizer players join too. Version strings stay 1.003. | 6ec9a51, 7dfafda, a86ff70; `ClientServerShared.h`, `VersionMgr.cpp` | `src/game/Shared/ClientServerShared.h`, `VersionMgr.cpp` | -- | -- | decided |
+| M-P6-05 | Reconnect after a level-change timeout | fix | Between server level changes clients sometimes time out at once. On a timeout disconnect in multiplayer, retry joining the same address up to twice (the retry has to wait for the next update); reset the counter on entering a world. | 24e2980; `GameClientShell.cpp` (`OnEvent` disconnect, `Update`) | `GameClientShell.cpp`/`.h` | -- | -- | todo |
+| M-P6-06 | Join retry log | feature | Print each join attempt and its result to the console. | 24e2980; `GameClientShell.cpp` (`DoJoinGame`) | `GameClientShell.cpp` | -- | -- | todo |
+| M-P6-07 | Multiplayer frame lock | fix | Covered by M-P1-01/M-P1-02 (always limited in multiplayer). | 995cb20 | -- | -- | M-P1-01 | todo |
+| M-P6-08 | Big head mode in multiplayer | fix | Covered by M-P2-10 (forced off in multiplayer). | c4b7a24 | -- | -- | M-P2-10 | todo |
+| M-P6-09 | PlayStation 2 Cate | not ported | A multiplayer character using the PS2 release's Cate model, skins and first-person hands. Not on these discs. | 50fee30; CHARS/MODELS/MULTI/hero_thief_multi.abc, CHARS/SKINS/hero_thief*, GUNS/SKINS_PV/thiefhands_pv.dtx | -- | -- | -- | not ported |
+
+---
+
+## Not ported
+
+| What | Why |
+|---|---|
+| SDL2, Microsoft Detours, the Visual Studio 2019 / CMake / Azure project files, `_CRT_SECURE_NO_WARNINGS`, "disable Spectre mitigation", the C++ syntax fixes (`int operator==`, `STD` iostream prefixes, default-argument edits in `iltclient.h`/`iltserver.h`, `const` casts in `Sparam.cpp`) | build plumbing for a different compiler; the behaviour they enable is reimplemented with Win32 and VC6 (see the rules above) |
+| Strict floating-point exception macros (`DebugNew.h`) | a debugging aid for their Debug build; our debug build is `make debug` |
+| The bundled `lithtech.exe` | byte-identical to retail |
+| `d3dim700.dll` | Microsoft's Direct3D immediate-mode runtime, redistributed for compatibility: not ours; Wine provides its own |
+| "Movies disabled" (`NextMovie` skipped, 25bac3d) | only needed because SDL2 conflicted with the video player on the shared window; without SDL2 there is no conflict |
+| The demo console backdrop (`interface/console.pcx`) | art from the NOLF demo, not on the retail discs (M-P2-05 uses retail art instead) |
+| The new arrow, solid-colour and HD-font images (`INTERFACE/Arrow*.pcx`, `GroovyGreen`/`PitchBlack`/`QuantumWhite.pcx`, `FONT_LARGE_0_HD.*`, `FONT_AIR_Indexed.PCX`), the `BETHHAND`/`EXPON` TrueType fonts and the `ExpoFont` layout key | Modernizer art and third-party fonts; the solid colours and HD font are unused in its final code, the arrows are replaced as described in M-P3-04 |
+| The seasonal menus' Cate models (`INTHERO_CASUAL.abc`, `INTHERO_WINTER.abc`, `INTHERO_ACTION.lta`) | Modernizer model edits (M-P3-11 tries the retail skins on the retail model instead) |
+| The LithTech tech demo and everything only it uses | M-P4-11, M-P4-09 |
+| PS2 Cate | M-P6-09 |
+| The Modernizer's jukebox song names | its own invented names (M-P4-02 writes ours) |
+
+## Note: Game of the Year strings
+
+Monolith's v1.003 source of `CRes.dll` lacks the Game of the Year content's
+strings (IDs 30000-30095: the "Rest and Relaxation" mission name, briefing,
+objectives, intel and subtitles) and its credits, which the retail GOTY
+`CRES.dll` in `nolfgoty.rez` has. The build now extracts both from the disc
+and compiles them into our `CRes.dll` (`BUILDING.md`, step 2c), in the release
+build and therefore in the modern one too, so its resources are the retail
+GOTY ones (411 of 411 byte-identical). M-P4-08 is covered by that.

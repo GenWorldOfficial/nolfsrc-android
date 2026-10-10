@@ -15,13 +15,17 @@
 #            wrong. Compile + /Z7 /Oy- /D NOLFSRC_DEBUG (debug information,
 #            frame pointers kept so a backtrace can walk the stack; every
 #            other flag, the optimisation included, is the release one);
+#            resource scripts + /d NOLFSRC_DEBUG;
 #            link + /DEBUG /OPT:REF /INCREMENTAL:NO (a .pdb per binary, the
 #            same unreferenced-code removal as release). The .pdb and .map of
 #            every binary go beside it. src/nolfsrc/nolfsrc_debug.h's
 #            NOLFSRC_LOG lines and lithtech.exe's crash backtraces
 #            (nolfsrc_crash.h) go to nolfsrc.log in the game's directory.
-#   modern   NOLFSRC_MODERN: the retail bugs fixed (RETAIL_BUGS.md) and,
-#            later, new features. Compile + /D NOLFSRC_MODERN, nothing else.
+#   modern   NOLFSRC_MODERN: the retail bugs fixed (RETAIL_BUGS.md) and new
+#            features (MODERN.md). Compile + /D NOLFSRC_MODERN, resource
+#            scripts + /d NOLFSRC_MODERN, nothing else; then the game-data
+#            edits in src/modern/data/ are applied to the data from the
+#            discs (tools/moddata.py), into custom/.
 #   modern-debug   both.
 #
 # The flags reach every compile and link through build/env.sh's
@@ -47,11 +51,14 @@ cd "$REPO"
 VARIANT="${1:-}"
 case "$VARIANT" in
     debug)        CFLAGS="/Z7 /Oy- /D NOLFSRC_DEBUG"
-                  LDFLAGS="/DEBUG /OPT:REF /INCREMENTAL:NO" ;;
+                  LDFLAGS="/DEBUG /OPT:REF /INCREMENTAL:NO"
+                  RCFLAGS="/d NOLFSRC_DEBUG" ;;
     modern)       CFLAGS="/D NOLFSRC_MODERN"
-                  LDFLAGS="" ;;
+                  LDFLAGS=""
+                  RCFLAGS="/d NOLFSRC_MODERN" ;;
     modern-debug) CFLAGS="/Z7 /Oy- /D NOLFSRC_DEBUG /D NOLFSRC_MODERN"
-                  LDFLAGS="/DEBUG /OPT:REF /INCREMENTAL:NO" ;;
+                  LDFLAGS="/DEBUG /OPT:REF /INCREMENTAL:NO"
+                  RCFLAGS="/d NOLFSRC_DEBUG /d NOLFSRC_MODERN" ;;
     *) echo "usage: build/variant.sh debug|modern|modern-debug" >&2; exit 2 ;;
 esac
 
@@ -77,9 +84,16 @@ export NOLF_ISOS="${NOLF_ISOS:-$REPO/ISOS}"
 
 export NOLFSRC_CFLAGS="$CFLAGS"
 export NOLFSRC_LDFLAGS="$LDFLAGS"
+export NOLFSRC_RCFLAGS="$RCFLAGS"
 export NOLF_GAME_OUT="$REPO/out/game-$VARIANT"
 export NOLF_PACKAGE=0
 bash "$TREE/build/all.sh"
+
+case "$VARIANT" in modern*)
+    echo
+    echo "== modern data: src/modern/data/ recipes -> out/game-$VARIANT/custom/"
+    python3 "$TREE/tools/moddata.py" apply "$NOLF_GAME_OUT" "$TREE/src/modern/data" ;;
+esac
 
 case "$VARIANT" in *debug)
     echo
