@@ -76,6 +76,10 @@ enum eFolderID
 	FOLDER_ID_MAIN_WINTER,
 	FOLDER_ID_INTERFACE,
 #endif
+#ifdef NOLFSRC_MODERN
+	// M-P4-02: jukebox
+	FOLDER_ID_JUKEBOX,
+#endif
 
 	//this must be the last id
 	FOLDER_ID_UNASSIGNED,

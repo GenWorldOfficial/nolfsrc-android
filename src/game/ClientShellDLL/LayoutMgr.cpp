@@ -298,6 +298,10 @@ char s_aFolderTag[FOLDER_ID_UNASSIGNED+1][32] =
 	"FolderMainWinter",		//FOLDER_ID_MAIN_WINTER,
 	"FolderInterface",		//FOLDER_ID_INTERFACE,
 #endif
+#ifdef NOLFSRC_MODERN
+	// M-P4-02: jukebox
+	"FolderJukebox",		//FOLDER_ID_JUKEBOX,
+#endif
 
 	LO_DEFAULT_TAG			//FOLDER_ID_UNASSIGNED,
 

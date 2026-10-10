@@ -68,6 +68,10 @@
 
 
 #include "GameClientShell.h"
+#ifdef NOLFSRC_MODERN
+// M-P4-02: jukebox
+#include "cshell/p4_jukebox.h"
+#endif
 extern CGameClientShell* g_pGameClientShell;
 
 //////////////////////////////////////////////////////////////////////
@@ -568,6 +572,13 @@ void CFolderMgr::AddFolder(eFolderID folderID)
 		pFolder = debug_new(CFolderInterface);
 		break;
 #endif
+#ifdef NOLFSRC_MODERN
+	// M-P4-02: jukebox
+	case FOLDER_ID_JUKEBOX:
+		pFolder = P4_CreateJukeboxFolder();
+		break;
+#endif
+
 	}
 
 	if (pFolder)

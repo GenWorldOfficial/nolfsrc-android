@@ -1,0 +1,27 @@
+// p4.rc -- the modern build's P4 strings (jukebox, game data).
+// Wording written for this project.
+
+#include "p4.h"
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_P4_JUKEBOX              "Jukebox"
+    IDS_P4_HELP_JUKEBOX         "Listen to the music of the game, theme by theme."
+    IDS_P4_TITLE_JUKEBOX        "Jukebox"
+    IDS_P4_JUKEBOX_THEMES       "Themes"
+    IDS_P4_JUKEBOX_NOW_PLAYING  "Now playing: %1!s! - %2!s!"
+    IDS_P4_JUKEBOX_NOTHING      "Pick a theme, then a piece to hear it."
+    IDS_P4_HELP_JUKEBOX_THEME   "List the pieces of this theme."
+    IDS_P4_HELP_JUKEBOX_PIECE   "Play this piece. The music you had before comes back when you leave the jukebox."
+    IDS_P4_JUKEBOX_NO_MUSIC     "Music is switched off (see Sound options)."
+    IDS_P4_JUKEBOX_CANT_PLAY    "This theme could not be played: no music device."
+
+    IDS_P4_THEME_AMBUSH         "Ambush"
+    IDS_P4_THEME_BADEDUM        "Ba-De-Dum"
+    IDS_P4_THEME_BADGUY         "Bad Guys"
+    IDS_P4_THEME_ORCHESTRA      "Orchestra"
+    IDS_P4_THEME_NOLFTHEME      "The NOLF Theme"
+    IDS_P4_THEME_GOTY           "Game of the Year"
+
+    IDS_P4_WEAPON_SMG_SKYDIVE   "Hampton MPL 9mm SMG (Skydiving)"
+END

@@ -13,6 +13,10 @@
 
 #include "GameClientShell.h"
 extern CGameClientShell* g_pGameClientShell;
+#ifdef NOLFSRC_MODERN
+// M-P4-02: jukebox
+#include "cres/p4.h"
+#endif
 
 
 //////////////////////////////////////////////////////////////////////
@@ -42,6 +46,10 @@ LTBOOL CFolderOptions::Build()
 #ifdef NOLFSRC_MODERN
 	// M-P3-13 (P3), then P4's: the modern build's options folders
 	AddTextItem(IDS_P3_INTERFACE,	FOLDER_CMD_INTERFACE,	IDS_P3_HELP_INTERFACE);
+#endif
+#ifdef NOLFSRC_MODERN
+	// M-P4-02: jukebox
+	AddTextItem(IDS_P4_JUKEBOX,		FOLDER_CMD_JUKEBOX,		IDS_P4_HELP_JUKEBOX);
 #endif
 
 	// Make sure to call the base class
@@ -85,6 +93,14 @@ uint32 CFolderOptions::OnCommand(uint32 dwCommand, uint32 dwParam1, uint32 dwPar
 	case FOLDER_CMD_INTERFACE:
 		{
 			m_pFolderMgr->SetCurrentFolder(FOLDER_ID_INTERFACE);
+			break;
+		}
+#endif
+#ifdef NOLFSRC_MODERN
+	// M-P4-02: jukebox
+	case FOLDER_CMD_JUKEBOX:
+		{
+			m_pFolderMgr->SetCurrentFolder(FOLDER_ID_JUKEBOX);
 			break;
 		}
 #endif
