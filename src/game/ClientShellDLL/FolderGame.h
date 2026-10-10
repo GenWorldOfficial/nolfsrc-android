@@ -38,6 +38,10 @@ protected:
 	int					m_nWeaponSway;
 	int					m_nPickupMsgDur;
 	LTBOOL				m_bObjMessages;
+#ifdef NOLFSRC_MODERN
+	// M-P5-12
+	LTBOOL				m_bQuickSwitch;
+#endif
 
 	CLTGUICycleCtrl		*m_pDifficultyCtrl;			// The difficulty control
 

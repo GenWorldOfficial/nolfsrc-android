@@ -1,0 +1,12 @@
+// p5.rc -- strings of package P5 (MODERN.md), added to CRes.dll by the
+// modern build only. IDs in p5.h.
+
+#include "p5.h"
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_P5_QUICKSWITCH              "Quick weapon switch"
+    IDS_P5_HELP_QUICKSWITCH         "Next and previous weapon change weapons straight away, without waiting for you to confirm."
+    IDS_P5_CONTROL_TOGGLE_ZOOM      "Step zoom"
+    IDS_P5_ACTIONSTRING_TOGGLE_ZOOM "ToggleZoom"
+END

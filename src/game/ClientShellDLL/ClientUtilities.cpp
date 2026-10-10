@@ -21,6 +21,10 @@
 // M-P2-03: the console key's strings
 #include "cres/p2.h"
 #endif
+#ifdef NOLFSRC_MODERN
+// M-P5-13: the toggle-zoom control's strings
+#include "cres/p5.h"
+#endif
 
 extern CGameClientShell* g_pGameClientShell;
 
@@ -61,6 +65,10 @@ CommandID g_CommandArray[] =
 	{ IDS_CONTROL_CROSSHAIRTOGGLE,	COMMAND_ID_CROSSHAIRTOGGLE,	IDS_ACTIONSTRING_CROSSHAIRTOGGLE,	COM_MISC },
 	{ IDS_CONTROL_SAY,				COMMAND_ID_MESSAGE,			IDS_ACTIONSTRING_SAY,				COM_MISC },
 	{ IDS_CONTROL_TEAM_SAY,			COMMAND_ID_TEAM_MESSAGE,	IDS_ACTIONSTRING_TEAM_SAY,			COM_MISC },
+#ifdef NOLFSRC_MODERN
+	// M-P5-13: toggle zoom
+	{ IDS_P5_CONTROL_TOGGLE_ZOOM,	COMMAND_ID_TOGGLE_ZOOM,		IDS_P5_ACTIONSTRING_TOGGLE_ZOOM,	COM_VIEW },
+#endif
 
 #ifdef NOLFSRC_MODERN
 	// M-P2-03: the developer console

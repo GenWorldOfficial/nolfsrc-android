@@ -20,6 +20,10 @@
 #include "SurfaceMgr.h"
 #include "VarTrack.h"
 #include "CameraOffsetMgr.h"
+#ifdef NOLFSRC_MODERN
+// M-P5-05: the last surface under the player
+#include "cshell/p5_movement.h"
+#endif
 
 class ILTClientPhysics;
 class CGameClientShell;
@@ -234,6 +238,11 @@ class CMoveMgr
 	CCharacterFX*	m_pCharFX;
 
 	CVehicleMgr*	m_pVehicleMgr;
+
+#ifdef NOLFSRC_MODERN
+	// M-P5-05: carried across frames the engine finds nothing underfoot
+	P5StandingOn	m_P5StandingOn;
+#endif
 };
 
 inline LTBOOL CMoveMgr::IsMovingQuietly() const

@@ -28,6 +28,10 @@
 // M-P3: menus and HUD at any resolution
 #include "cshell/p3_ui.h"
 #endif
+#ifdef NOLFSRC_MODERN
+// M-P5-10: the ammo HUD surface
+#include "cshell/p5_gameplay.h"
+#endif
 
 extern CGameClientShell* g_pGameClientShell;
 
@@ -2568,7 +2572,12 @@ void CPlayerStats::UpdateAmmoSurfaces()
 	int nWidth  = Max(nClipWidth,nBarWidth) + abs(m_AmmoClipOffset.y) + 2;
 	int nHeight = Max(m_AmmoSz.y,m_nBarHeight) + abs(m_AmmoClipOffset.y) + 2;
 
+#ifdef NOLFSRC_MODERN
+	// M-P5-10: no wider than the screen (the camera disabler's clip is 10000)
+	if (P5_FitAmmoHUD(nWidth, nHeight, m_rcAmmoHUD))
+#else
 	if (nWidth > m_rcAmmoHUD.right || nHeight > m_rcAmmoHUD.bottom)
+#endif
 	{
 		if (m_hHUDAmmo)
             g_pLTClient->DeleteSurface (m_hHUDAmmo);
