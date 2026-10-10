@@ -1193,6 +1193,15 @@ void con_Print(char* pFormat, ...)
 // under the server's name.
 extern int g_CV_TraceConsole;                                // 0x004b327c
 
+#ifdef NOLFSRC_MODERN
+// M-P0-02: the game's console hook (ILTClient::SetConsoleOutputFn, defined
+// at the bottom of this file).
+typedef void (*ModernConsoleOutputFn)(void* pUser, uint32 nColor, int nLevel,
+                                      const char* pText);
+extern ModernConsoleOutputFn g_pfnModernConsoleOutput;
+extern void*                 g_pModernConsoleOutputUser;
+#endif
+
 void CConsoleView::Sub41d1c0(uint32 nColor, int nLevel, char* pText)
 {
 	char*             pEnd;
@@ -1203,6 +1212,12 @@ void CConsoleView::Sub41d1c0(uint32 nColor, int nLevel, char* pText)
 		return;
 
 	m_CS.Enter();
+
+#ifdef NOLFSRC_MODERN
+	// M-P0-02: every console line also goes to the game DLL's console
+	if (g_pfnModernConsoleOutput)
+		g_pfnModernConsoleOutput(g_pModernConsoleOutputUser, nColor, nLevel, pText);
+#endif
 
 	if (m_Unknown3b0)
 		((void (*)(char*))m_Unknown3b0)(pText);
@@ -1941,3 +1956,65 @@ LTBOOL con_ICompare(char* p1, char* p2)
 		p2++;
 	}
 }
+#ifdef NOLFSRC_MODERN
+// ======================================================================= //
+//  The modern build's additions to ILTClient (NOLFSRC_MODERN only)
+// ======================================================================= //
+//
+// src/LT2/sdk/inc/iltclient.h declares these two as virtual methods appended
+// after EndQuery, the last retail slot, so every retail slot keeps its
+// place. lithtech.exe's ILTClient vtable is not compiled from a class but
+// assembled by tools/mkvtabobj.py from link/vtables.txt, whose
+// "%ifdef NOLFSRC_MODERN" block names the two members below as slots 113
+// and 114. They are plain (non-virtual) thiscall members of a class of their
+// own: `this` is the CLTClient object, which neither of them reads.
+
+typedef void (*ModernConsoleCommandEnumFn)(void* pUser, const char* pName,
+                                           uint32 nFlags);
+
+ModernConsoleOutputFn g_pfnModernConsoleOutput;
+void*                 g_pModernConsoleOutputUser;
+
+class CLTClientModern
+{
+public:
+	LTRESULT SetConsoleOutputFn(ModernConsoleOutputFn pFn, void* pUser);
+	LTRESULT EnumConsoleCommands(ModernConsoleCommandEnumFn pFn, void* pUser);
+};
+
+// M-P0-02: one callback (NULL to remove it), handed every line the console
+// prints, after the console's own level filter: exactly the lines the
+// engine's console keeps.  Called inside the console's
+// critical section; it must not print to the console itself.
+LTRESULT CLTClientModern::SetConsoleOutputFn(ModernConsoleOutputFn pFn, void* pUser)
+{
+	g_Console.m_CS.Enter();
+	g_pfnModernConsoleOutput   = pFn;
+	g_pModernConsoleOutputUser = pUser;
+	g_Console.m_CS.Leave();
+
+	return LT_OK;
+}
+
+// M-P2-04: every command the client console knows, in registration order.
+// nFlags bit 0: registered by the game (RegisterConsoleProgram, which files
+// it with a user word of 1); otherwise one of the engine's own.
+LTRESULT CLTClientModern::EnumConsoleCommands(ModernConsoleCommandEnumFn pFn, void* pUser)
+{
+	LTLink* pCur;
+
+	if (!pFn)
+		return LT_INVALIDPARAMS;
+
+	for (pCur = g_ClientConsoleState.m_CommandHead.m_pNext;
+	     pCur != &g_ClientConsoleState.m_CommandHead; pCur = pCur->m_pNext)
+	{
+		ConsoleCommand* pCmd = (ConsoleCommand*)pCur->m_pData;
+
+		if (pCmd && pCmd->m_pName)
+			pFn(pUser, pCmd->m_pName, (pCmd->m_pUser == (void*)1) ? 1 : 0);
+	}
+
+	return LT_OK;
+}
+#endif

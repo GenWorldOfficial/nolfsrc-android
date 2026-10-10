@@ -20,6 +20,10 @@
 // M-P1-01, M-P1-11: loading-screen timing
 #include "cshell/p1_modern.h"
 #endif
+#ifdef NOLFSRC_MODERN
+// M-P2-03 / M-P2-12: console lock, speed-run is-loading flag
+#include "cshell/p2_client.h"
+#endif
 
 extern CGameClientShell* g_pGameClientShell;
 
@@ -548,6 +552,11 @@ LTBOOL CLoadingScreen::Show(LTBOOL bRun)
 	// Go into the right state..
 	m_eCurState = STATE_SHOW;
 
+#ifdef NOLFSRC_MODERN
+	// M-P2-03 / M-P2-12: a loading screen is up
+	P2_OnLoadingScreen(LTTRUE);
+#endif
+
 	// Update once so the screen's showing
 	Update();
 
@@ -618,6 +627,11 @@ LTBOOL CLoadingScreen::Hide()
 
 	// Change state
 	m_eCurState = STATE_INIT;
+
+#ifdef NOLFSRC_MODERN
+	// M-P2-03 / M-P2-12: and gone again
+	P2_OnLoadingScreen(LTFALSE);
+#endif
 
 	// Clean up
 	Term();

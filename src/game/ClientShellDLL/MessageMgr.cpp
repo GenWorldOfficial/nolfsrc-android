@@ -967,6 +967,48 @@ void CCheatMgr::Process( CheatCode nCheatCode )
 		g_pGameClientShell->ProcessCheat(nCheatCode);
 	}
 
+#ifdef NOLFSRC_MODERN
+	// M-P2-09: six cheats the retail final build compiles out (_FINAL, below)
+	// work in the modern build: no-clip -- also the way out of a spot the
+	// player is stuck in -- teleport to the start, the mission's starting
+	// equipment, remove all AI, every mission selectable, clear the record.
+	switch ( nCheatCode )
+	{
+		case CHEAT_CLIP:
+			SetClipMode(!s_CheatInfo[nCheatCode].bActive);
+			m_bPlayerCheated = LTTRUE;
+			return;
+
+		case CHEAT_TELEPORT:
+			Teleport();
+			m_bPlayerCheated = LTTRUE;
+			return;
+
+		case CHEAT_MISSION_INVENTORY:
+			SetMissionInventory();
+			m_bPlayerCheated = LTTRUE;
+			return;
+
+		case CHEAT_REMOVEAI:
+			RemoveAI(!s_CheatInfo[nCheatCode].bActive);
+			m_bPlayerCheated = LTTRUE;
+			return;
+
+		case CHEAT_ALL_MISSIONS:
+			AllowAllMissions(!s_CheatInfo[nCheatCode].bActive);
+			m_bPlayerCheated = LTTRUE;
+			return;
+
+		case CHEAT_RESET_HISTORY:
+			ResetHistory();
+			m_bPlayerCheated = LTTRUE;
+			return;
+
+		default:
+			break;
+	}
+#endif
+
 	// process cheat codes
 	switch ( nCheatCode )
 	{

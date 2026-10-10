@@ -8,6 +8,10 @@
 #include "ClientRes.h"
 #include "keyfixes.h"
 #include "dinput.h"
+#ifdef NOLFSRC_MODERN
+// M-P2-03: no console while keys are being bound
+#include "cshell/p2_console.h"
+#endif
 
 extern CommandID g_CommandArray[];
 
@@ -824,6 +828,11 @@ LTBOOL CFolderCustomControls::OnMouseMove(int x, int y)
 
 void CFolderCustomControls::OnFocus(LTBOOL bFocus)
 {
+#ifdef NOLFSRC_MODERN
+	// M-P2-03: the console key is just another key to bind here
+	P2Console_SetLock(P2CONSOLE_LOCK_CONTROLS, bFocus);
+#endif
+
 	if (bFocus)
 	{
 		// Add the controls to the folder

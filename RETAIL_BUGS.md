@@ -17,6 +17,7 @@ in.
 **Fixed so far** (in the modern build):
 
 * [`CSoundMgr::GetFilterIndex`: the name comparison is inverted](#csoundmgrgetfilterindex-the-name-comparison-is-inverted)
+* [The hit-sphere debug view loads a model that does not exist](#the-hit-sphere-debug-view-loads-a-model-that-does-not-exist)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -193,6 +194,20 @@ The string is read in two parts, a two-byte length and then the body, and
 only the body read's result is returned. A stream that runs out between the
 two returns `LT_OK` with an empty string. (A caller that checks
 `ErrorStatus` afterwards, as the SDK advises, still finds out.)
+
+### The hit-sphere debug view loads a model that does not exist
+Object.lto · `src/game/ObjectDLL/CharacterHitBox.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`, MODERN.md M-P2-11):
+> the same file loads `364.abc` and scales it by twice the radius. The
+> release build keeps the retail code.
+
+`CCharacterHitBox::CreateNodeRadiusModels`, the debug view that shows each
+model node's hit sphere, creates its spheres from
+`SFX\Expl\Models\264.abc`; no archive has that file (the sphere is
+`364.abc`), so the view shows nothing. It also scales the sphere by the
+radius, where the model needs twice that to match the hit sphere. Both found
+by NOLF Modernizer.
 
 ### `CLTDirectMusicMgr::Stop` discards the queue it was asked to wait for
 `0x00440480` (lithtech.exe) · `src/engine/lithtech/clientmusic.cpp`

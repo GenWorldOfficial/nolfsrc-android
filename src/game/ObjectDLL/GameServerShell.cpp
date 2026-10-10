@@ -37,6 +37,11 @@
 #include "object/p1_server.h"
 #endif
 
+#ifdef NOLFSRC_MODERN
+// P2: console commands from the host, big head mode, trigger boxes
+#include "object/p2_server.h"
+#endif
+
 #define MAX_CLIENT_NAME_LENGTH		100
 #define CLIENT_PING_UPDATE_RATE		3.0f
 #define UPDATENAME_INTERVAL			10.0f
@@ -117,6 +122,11 @@ IServerShell* CreateServerShell(ILTServer *pServerDE)
     g_NetFragScore.Init(g_pLTServer,"NetFragScore",LTNULL,1.0f);
 	g_NetAudioTaunts.Init(g_pLTServer,"NetAudioTaunts",LTNULL,1.0f);
 	g_NetArmorHealthPercent.Init(g_pLTServer, "NetArmorHealthPercent", LTNULL, 0.0f);
+
+#ifdef NOLFSRC_MODERN
+	// M-P2-10 / M-P2-11: BigHeadMode, DisplayTriggers
+	P2Server_Init();
+#endif
 
 	// Make sure we are using autodeactivation...
 
@@ -1252,6 +1262,15 @@ void CGameServerShell::OnMessage(HCLIENT hSender, uint8 messageID, HMESSAGEREAD 
 		}
 		break;
 
+#ifdef NOLFSRC_MODERN
+		// M-P2-08: a console line from the local player's console
+		case MID_CONSOLE_COMMAND_CLIENT :
+		{
+			P2Server_OnConsoleCommand(hSender, hMessage);
+		}
+		break;
+#endif
+
 		case MID_DIFFICULTY:
 		{
             m_eDifficulty = (GameDifficulty)g_pLTServer->ReadFromMessageByte(hMessage);
@@ -2337,6 +2356,11 @@ void CGameServerShell::Update(LTFLOAT timeElapsed)
 			RemoveBoundingBoxes();
 		}
 	}
+
+#ifdef NOLFSRC_MODERN
+	// M-P2-11: DisplayTriggers
+	P2Server_Update();
+#endif
 
 
 	// Did the server want to say something?
