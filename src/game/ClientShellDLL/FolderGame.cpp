@@ -9,6 +9,10 @@
 
 #include "GameClientShell.h"
 #include "GameSettings.h"
+#ifdef NOLFSRC_MODERN
+// M-P5-12: quick switch toggle strings
+#include "cres/p5.h"
+#endif
 
 
 namespace
@@ -36,6 +40,10 @@ CFolderGame::CFolderGame()
 	m_nWeaponSway = 0;
 	m_nPickupMsgDur = 0;
 	m_bObjMessages = LTTRUE;
+#ifdef NOLFSRC_MODERN
+	// M-P5-12
+	m_bQuickSwitch = LTFALSE;
+#endif
 
 }
 
@@ -109,6 +117,13 @@ LTBOOL CFolderGame::Build()
 	pToggle->SetOnString(IDS_YES);
 	pToggle->SetOffString(IDS_NO);
 
+#ifdef NOLFSRC_MODERN
+	// M-P5-12: quick switch
+	pToggle = AddToggle(IDS_P5_QUICKSWITCH, IDS_P5_HELP_QUICKSWITCH, kGap, &m_bQuickSwitch );
+	pToggle->SetOnString(IDS_YES);
+	pToggle->SetOffString(IDS_NO);
+#endif
+
 	// Make sure to call the base class
 	if (! CBaseFolder::Build()) return LTFALSE;
 
@@ -149,6 +164,10 @@ void CFolderGame::OnFocus(LTBOOL bFocus)
 		m_nWeaponSway = (int)(10.0f * GetConsoleFloat("WeaponSway",1.0f));
 		m_nPickupMsgDur = (int)(2.0f * GetConsoleFloat("PickupMessageDuration",5.0f));
 		m_bObjMessages = ( GetConsoleInt("ObjectiveMessages",1) > 0 );
+#ifdef NOLFSRC_MODERN
+		// M-P5-12
+		m_bQuickSwitch = ( GetConsoleInt("QuickSwitch",0) > 0 );
+#endif
 
         UpdateData(LTFALSE);
 	}
@@ -169,6 +188,10 @@ void CFolderGame::OnFocus(LTBOOL bFocus)
 		WriteConsoleFloat("WeaponSway",((LTFLOAT)m_nWeaponSway / 10.0f));
 		WriteConsoleFloat("PickupMessageDuration",((LTFLOAT)m_nPickupMsgDur / 2.0f));
 		WriteConsoleInt("ObjectiveMessages",m_bObjMessages);
+#ifdef NOLFSRC_MODERN
+		// M-P5-12
+		WriteConsoleInt("QuickSwitch",(int)m_bQuickSwitch);
+#endif
 
 		g_pLTClient->WriteConfigFile("autoexec.cfg");
 

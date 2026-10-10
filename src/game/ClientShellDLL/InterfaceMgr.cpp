@@ -25,6 +25,10 @@
 #include "CharacterFX.h"
 #include "GameButes.h"
 #include "FolderPerformance.h"
+#ifdef NOLFSRC_MODERN
+// M-P5-12: quick switch
+#include "cshell/p5_gameplay.h"
+#endif
 
 // TESTING DYNAMIC LIGHT IN INTERFACE
 /*
@@ -2419,6 +2423,15 @@ LTBOOL CInterfaceMgr::OnCommandOff(int command)
 
 		case COMMAND_ID_FIRING :
 		{
+#ifdef NOLFSRC_MODERN
+			// M-P5-12: with quick switch the weapon is already changed: fire
+			// just puts the chooser away
+			if (IsChoosingWeapon() && P5_QuickSwitchOn())
+			{
+				m_WeaponChooser.Close();
+			}
+			else
+#endif
 			if (IsChoosingWeapon())
 			{
                 uint8 nCurrWeapon = m_WeaponChooser.GetCurrentSelection();

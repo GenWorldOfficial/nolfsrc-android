@@ -68,6 +68,10 @@
 #define COMMAND_ID_TEAM_MESSAGE		77
 #define COMMAND_ID_INVENTORY		78
 #define COMMAND_ID_LEFT_SHORT		79
+#ifdef NOLFSRC_MODERN
+// M-P5-13: toggle zoom (the Modernizer's id)
+#define COMMAND_ID_TOGGLE_ZOOM		81
+#endif
 
 // Special command ids...
 

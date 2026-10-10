@@ -17,12 +17,20 @@ in.
 **Fixed so far** (in the modern build):
 
 * [`CSoundMgr::GetFilterIndex`: the name comparison is inverted](#csoundmgrgetfilterindex-the-name-comparison-is-inverted)
+* [The ammo HUD surface is sized for a 10000-shot clip](#the-ammo-hud-surface-is-sized-for-a-10000-shot-clip)
+* [`GetMovementData` reads one past its table, and the word there is a NaN](#getmovementdata-reads-one-past-its-table-and-the-word-there-is-a-nan)
+* [Doors and switches with no move direction normalise a zero vector](#doors-and-switches-with-no-move-direction-normalise-a-zero-vector)
+* [`FACEOBJECT` normalises a zero vector](#faceobject-normalises-a-zero-vector)
+* [`CCharacterFX::InitLocalPlayer` indexes the style table unchecked](#ccharacterfxinitlocalplayer-indexes-the-style-table-unchecked)
+* [Player setup copies the skin and head settings into a 32-byte buffer](#player-setup-copies-the-skin-and-head-settings-into-a-32-byte-buffer)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
 byte-identical, or a known near match, so it describes what the retail code
 does, not a guess. Addresses are as in the retail images
-(`build/reference.sh` extracts them into `out/reference/`).
+(`build/reference.sh` extracts them into `out/reference/`). The game DLLs
+(`CShell.dll`, `Object.lto`) are built from Monolith's own source as it
+shipped, so their entries name the function and the source file instead.
 
 ---
 
@@ -213,9 +221,121 @@ loaded but not playing would be found forever: a hang. Nothing reaches that
 state today (a node is only added once DirectMusic has returned a segment
 state), so the wrong test is the only thing between the loop and the hang.
 
+### Model shadows are switched off for good by the first cinematic
+`CGameClientShell::TurnOnAlternativeCamera`, `TurnOffAlternativeCamera` (CShell.dll) · `src/game/ClientShellDLL/GameClientShell.cpp`
+
+> **Fix written, not yet switched on** (`NOLFSRC_MODERN`, M-P5-14):
+> `TurnOffAlternativeCamera` and `FirstUpdate` set `MaxModelShadows` from
+> the player's `DrawShadows` setting (`src/modern/cshell/p5_gameplay.cpp`,
+> `P5_RESTORE_MODEL_SHADOWS`). With shadows left on, our reconstructed
+> `d3d.ren` crashes in its shadow pass, which the retail `d3d.ren` does not;
+> this bug is what has kept that crash from showing.
+
+Cinematics turn model shadows off: `TurnOnAlternativeCamera` saves
+`MaxModelShadows` in `g_nCinSaveModelShadows`, sets it to 0, and
+`TurnOffAlternativeCamera` writes the saved value back. But
+`UpdateAlternativeCamera` calls `TurnOnAlternativeCamera` on every frame a
+cinematic camera is live, so from the second frame on the value it saves is
+its own 0, and the end of the cinematic restores 0. `TurnOffAlternativeCamera`
+is also called by `ExitLevel` and `LoadGame` whether or not a cinematic ran,
+and then writes the global's initial 0. Either way the variable is written
+with `+`, so the 0 goes into `autoexec.cfg`: shadows stay off, in this and
+later sessions, until the player sets them again in the display options.
+
+### The ammo HUD surface is sized for a 10000-shot clip
+`CPlayerStats::UpdateAmmoSurfaces` (CShell.dll) · `src/game/ClientShellDLL/PlayerStats.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`, M-P5-10): the surface
+> is never made wider than the screen, and one that is gets made again
+> (`P5_FitAmmoHUD`, `src/modern/cshell/p5_gameplay.cpp`).
+
+The ammo bar's surface is made as wide as a full clip of ammo icons
+(`nShotsPerClip * m_AmmoSz.x`) and only ever grows. The camera disabler's
+`ShotsPerClip` in `ATTRIBUTES/WEAPONS.txt` is 10000, so selecting it once
+creates a surface ten thousand icons wide, which every later weapon then
+uses (cleared, drawn into and blitted, mostly off the screen's left edge)
+until the HUD is rebuilt.
+
 ---
 
 ## Crashes and corruption: checks that are missing
+
+### `GetMovementData` reads one past its table, and the word there is a NaN
+`GetMovementData` (Object.lto) · `src/game/ObjectDLL/AIMovement.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`, M-P5-01): the time is
+> clamped to 0..1 and the last sample is used without a neighbour
+> (`P5_GetMovementData`, `src/modern/object/p5_fixes.cpp`).
+
+AI dodges and cover moves are driven by tables of distances sampled over the
+animation (`s_afRifleShuffleLeft` ... `s_afPistolCornerLeft`, each `cData+1`
+floats). The lookup interpolates between `afData[int(fTime*cData)]` and
+`afData[int(fTime*cData+1)]`, with `fTime` the animation's time over its
+length. When the animation reaches its end, `fTime` is 1.0 and the second
+index is `cData+1`, one past the table. Its weight is 0, which hides the read
+for most tables (the next table's first value follows), but not for the last
+one: in every retail `OBJECT.lto` the word after `s_afPistolCornerLeft` is
+`0xffffffff`, a NaN, and 0 times a NaN is a NaN. A pistol-armed AI finishing a
+cover move to the left is moved by a NaN distance and vanishes. (An animation
+of length 0 makes `fTime` 0/0, a NaN, with the same result.)
+
+### Doors and switches with no move direction normalise a zero vector
+`Door::InitialUpdate`, `Door::CalculateNewPos` (Object.lto) · `src/game/ObjectDLL/Door.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`, M-P5-03): a zero
+> direction is left zero, a door already at its destination arrives, and a
+> door loaded from a retail save gets its NaN direction and open position
+> repaired (`src/modern/object/p5_fixes.cpp`).
+
+`InitialUpdate` normalises `MoveDir` with `VEC_NORM`, which multiplies by
+`1/|v|`: a zero vector becomes `0 * inf`, NaN in every component, and the open
+position computed from it is NaN too. `Switch` declares `MoveDir` with a
+default of (0, 0, 0). Opening such a door moves it towards a NaN position
+(`CalculateNewPos` takes its `else` branch: the x87 compare with a NaN is
+unordered), and `vNewPos == m_vOpenPos` is never true, so it never reaches
+the open state. A `Switch` still sends its trigger message (that happens in
+`SetOpening`), which is why such switches seem to work. `CalculateNewPos`
+also normalises the remaining distance without a check, so a door that has
+arrived, or does not move, computes NaNs as well. The NaNs are saved with the
+game and come back on load.
+
+### `FACEOBJECT` normalises a zero vector
+`CPlayerObj::ProcessCommand` (Object.lto) · `src/game/ObjectDLL/PlayerObj.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`, M-P5-04): with no
+> horizontal direction the player's rotation is left alone.
+
+Turning the player to face an object, the direction is flattened to the
+horizontal and normalised with `VEC_NORM`. An object straight above or below
+the player leaves a zero vector, which becomes NaN, and the player's
+rotation is set from it.
+
+### `CCharacterFX::InitLocalPlayer` indexes the style table unchecked
+`CCharacterFX::InitLocalPlayer` (CShell.dll) · `src/game/ClientShellDLL/CharacterFX.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`, M-P5-06): an invalid
+> style falls back to the default one.
+
+The player's model style comes from the server in the character's create
+struct and goes straight into `CModelButeMgr::GetStyleName`, which returns
+`m_aStyles[eStyle].m_szName` with no range check, and into
+`GetPlayerHeadOffset`. `eModelStyleInvalid` is 0xFF, so an invalid style
+reads 255 entries into a heap array that holds a handful.
+
+### Player setup copies the skin and head settings into a 32-byte buffer
+`CFolderPlayer::OnFocus` (CShell.dll) · `src/game/ClientShellDLL/FolderPlayer.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`, M-P5-09): the
+> settings are compared where they are, without a copy.
+
+Leaving the multiplayer player setup, the folder checks for changes by
+copying each console value into `char szTemp[32]` and comparing. The model
+and name copies are bounded (`SAFE_STRCPY`, which truncates them, so a long
+one always reads as changed); `NetPlayerSkin` and `NetPlayerHead` are copied
+with `GetConsoleString`, a plain `strcpy`, and hold "display name,file name"
+pairs that are usually longer than 31 characters. In the shipped build's
+stack frame the overrun lands in space only another branch uses, so it does
+no visible harm there; another frame layout crashes.
 
 ### `CObjBase::InitFields` leaves `m_StandingLink` uninitialised
 `0x10024802` (server.dll) · `src/engine/server/objtypes.cpp`

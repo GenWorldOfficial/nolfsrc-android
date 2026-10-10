@@ -37,6 +37,10 @@
 #include "CharacterHitBox.h"
 
 #include <stdio.h>
+#ifdef NOLFSRC_MODERN
+// M-P5-04: facing an object
+#include "object/p5_fixes.h"
+#endif
 
 extern CGameServerShell* g_pGameServerShell;
 extern CServerButeMgr* g_pServerButeMgr;
@@ -3989,11 +3993,23 @@ LTBOOL CPlayerObj::ProcessCommand(char** pTokens, int nArgs, char* pNextCommand)
 					vTargetPos.y = vPos.y; // Don't look up/down.
 
 					VEC_SUB(vDir, vTargetPos, vPos);
+#ifdef NOLFSRC_MODERN
+					// M-P5-04: an object straight above or below the player
+					// gives no direction to face; VEC_NORM would make the
+					// player's rotation NaN
+					if (P5_NormalizeIfNonZero(vDir))
+					{
+	                    LTRotation rRot;
+	                    g_pLTServer->AlignRotation(&rRot, &vDir, NULL);
+	                    g_pLTServer->SetObjectRotation(m_hObject, &rRot);
+					}
+#else
 					VEC_NORM(vDir);
 
                     LTRotation rRot;
                     g_pLTServer->AlignRotation(&rRot, &vDir, NULL);
                     g_pLTServer->SetObjectRotation(m_hObject, &rRot);
+#endif
 				}
 			}
 		}

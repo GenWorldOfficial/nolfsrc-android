@@ -11,6 +11,10 @@
 #include "MsgIds.h"
 
 #include "GameClientShell.h"
+#ifdef NOLFSRC_MODERN
+// M-P5-09: player setup strings
+#include "cshell/p5_gameplay.h"
+#endif
 extern CGameClientShell* g_pGameClientShell;
 
 extern VarTrack g_vtPlayerName;
@@ -292,6 +296,21 @@ void    CFolderPlayer::OnFocus(LTBOOL bFocus)
 		}
 
 		LTBOOL bChanged = LTFALSE;
+#ifdef NOLFSRC_MODERN
+		// M-P5-09: compare with the console values where they are; the
+		// skin and head values ("<name>,<file>") overran the 32-byte copy
+		if (strcmp(g_vtPlayerModel.GetStr(),m_szPlayerModel) != 0)
+			bChanged = LTTRUE;
+
+		if (strcmp(P5_GetConsoleStr("NetPlayerSkin"),m_szPlayerSkin) != 0)
+			bChanged = LTTRUE;
+
+		if (strcmp(P5_GetConsoleStr("NetPlayerHead"),m_szPlayerHead) != 0)
+			bChanged = LTTRUE;
+
+		if (strcmp(g_vtPlayerName.GetStr(),m_szPlayerName) != 0)
+			bChanged = LTTRUE;
+#else
 		char szTemp[32];
 		SAFE_STRCPY(szTemp,g_vtPlayerModel.GetStr() );
 		if (strcmp(szTemp,m_szPlayerModel) != 0)
@@ -309,6 +328,7 @@ void    CFolderPlayer::OnFocus(LTBOOL bFocus)
 		SAFE_STRCPY(szTemp,g_vtPlayerName.GetStr() );
 		if (strcmp(szTemp,m_szPlayerName) != 0)
 			bChanged = LTTRUE;
+#endif
 
 		if (m_nTeam != (int)g_vtPlayerTeam.GetFloat())
 			bChanged = LTTRUE;

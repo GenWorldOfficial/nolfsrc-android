@@ -19,6 +19,10 @@
 #include "keyframer_light.h"
 #include "hingeddoor.h"
 #include "CommandMgr.h"
+#ifdef NOLFSRC_MODERN
+// M-P5-03: doors and switches with no move direction
+#include "object/p5_fixes.h"
+#endif
 
 // Defines....
 
@@ -986,7 +990,13 @@ LTBOOL Door::InitialUpdate(int nInfo)
 
     LTVector vt, pos;
 
+#ifdef NOLFSRC_MODERN
+	// M-P5-03: a zero MoveDir (Switch's default) stays zero: VEC_NORM would
+	// make it NaN, and the open position with it
+	P5_NormalizeIfNonZero(m_vMoveDir);
+#else
 	VEC_NORM(m_vMoveDir)
+#endif
 
 	// Current position is the closed position
 
@@ -1402,6 +1412,16 @@ void Door::CalculateNewPos(LTVector & vNewPos, LTVector vFinalPos, LTFLOAT fSpee
 
 	VEC_SUB(vDir, vFinalPos, vNewPos)
     LTFLOAT distTo = (LTFLOAT)VEC_MAG(vDir);
+#ifdef NOLFSRC_MODERN
+	// M-P5-03: already there (a door that does not move), or no distance at
+	// all: arrive, rather than normalise a zero vector into NaNs
+	if (!(distTo > 0.0f))
+	{
+		vNewPos = vFinalPos;
+		if (pPercent) *pPercent = 1.0f;
+		return;
+	}
+#endif
 	VEC_NORM(vDir)
 
     LTFLOAT fPercent    = 1 - distTo / m_fMoveDist;
@@ -2153,6 +2173,10 @@ void Door::Load(HMESSAGEREAD hRead, uint32 dwLoadFlags)
     g_pLTServer->ReadFromMessageVector(hRead, &m_vAttachDir);
     m_fSpeed                = g_pLTServer->ReadFromMessageFloat(hRead);
     m_fMoveDist             = g_pLTServer->ReadFromMessageFloat(hRead);
+#ifdef NOLFSRC_MODERN
+	// M-P5-03: a save from a retail build can hold the NaNs of a zero MoveDir
+	P5_RepairLoadedDoor(m_vMoveDir, m_vOpenPos, m_vClosedPos, m_fMoveDist);
+#endif
     m_fOpenWaitTime         = g_pLTServer->ReadFromMessageFloat(hRead);
     m_fCloseWaitTime        = g_pLTServer->ReadFromMessageFloat(hRead);
     m_fClosingSpeed         = g_pLTServer->ReadFromMessageFloat(hRead);

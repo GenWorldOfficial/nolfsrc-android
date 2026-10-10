@@ -9,6 +9,10 @@
 #include "WinUtil.h"
 #include "SoundMgr.h"
 #include "LayoutMgr.h"
+#ifdef NOLFSRC_MODERN
+// M-P5-12: quick switch
+#include "cshell/p5_gameplay.h"
+#endif
 
 extern CGameClientShell* g_pGameClientShell;
 
@@ -133,6 +137,10 @@ void CWeaponChooser::NextWeapon()
 		m_hWeaponSurf[i] = m_hWeaponSurf[i+1];
 	}
 	m_nWeapons[kLastWeapon] = g_pGameClientShell->GetWeaponModel()->NextWeapon(m_nWeapons[kLastWeapon-1]);
+#ifdef NOLFSRC_MODERN
+	// M-P5-12: quick switch changes to the new selection at once
+	P5_QuickSwitchSelect(m_nWeapons[1]);
+#endif
 
 	WEAPON* pWeapon = g_pWeaponMgr->GetWeapon(m_nWeapons[kLastWeapon]);
 	if (pWeapon)
@@ -177,6 +185,10 @@ void CWeaponChooser::PrevWeapon()
 		m_hWeaponSurf[i] = m_hWeaponSurf[i-1];
 	}
 	m_nWeapons[0] = g_pGameClientShell->GetWeaponModel()->PrevWeapon(m_nWeapons[1]);
+#ifdef NOLFSRC_MODERN
+	// M-P5-12: quick switch changes to the new selection at once
+	P5_QuickSwitchSelect(m_nWeapons[1]);
+#endif
 
 	WEAPON* pWeapon = g_pWeaponMgr->GetWeapon(m_nWeapons[0]);
 	if (pWeapon)
@@ -211,7 +223,12 @@ void CWeaponChooser::PrevWeapon()
 void CWeaponChooser::Draw()
 {
     float fTime = g_pLTClient->GetTime() - m_fStartTime;
+#ifdef NOLFSRC_MODERN
+	// M-P5-12: after a quick switch the chooser goes away a little sooner
+	if (m_fStartTime > 0.0f && fTime > P5_ChooserDelay(kfDelayTime))
+#else
 	if (m_fStartTime > 0.0f && fTime > kfDelayTime)
+#endif
 	{
         g_pClientSoundMgr->PlayInterfaceSound((char*)g_pInterfaceResMgr->GetSoundSelect());
 		Close();

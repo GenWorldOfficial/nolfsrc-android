@@ -3379,7 +3379,12 @@ LTBOOL CWeaponModel::GetBestAvailableAmmoType(uint8 nWeaponId, int & nAmmoType)
 //
 // ----------------------------------------------------------------------- //
 
+#ifdef NOLFSRC_MODERN
+// M-P5-12: bKeepChooser
+void CWeaponModel::ChangeWeapon(uint8 nCommandId, LTBOOL bCanDeselect, LTBOOL bKeepChooser)
+#else
 void CWeaponModel::ChangeWeapon(uint8 nCommandId, LTBOOL bCanDeselect)
+#endif
 {
 	if (!CanChangeToWeapon(nCommandId)) return;
 
@@ -3393,7 +3398,12 @@ void CWeaponModel::ChangeWeapon(uint8 nCommandId, LTBOOL bCanDeselect)
 		return;
 	}
 
+#ifdef NOLFSRC_MODERN
+	// M-P5-12
+	if (!bKeepChooser && (g_pInterfaceMgr->IsChoosingWeapon() || g_pInterfaceMgr->IsChoosingAmmo()))
+#else
 	if (g_pInterfaceMgr->IsChoosingWeapon() || g_pInterfaceMgr->IsChoosingAmmo())
+#endif
 		g_pInterfaceMgr->CloseChoosers();
 
 	// Handle deselection of current weapon...

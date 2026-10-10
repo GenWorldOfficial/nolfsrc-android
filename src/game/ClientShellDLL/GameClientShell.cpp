@@ -45,6 +45,11 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#ifdef NOLFSRC_MODERN
+// M-P5: gameplay fixes and features (quick switch, toggle zoom, shadows)
+#include "cshell/p5_gameplay.h"
+#endif
+
 #ifdef STRICT
 	WNDPROC g_pfnMainWndProc = NULL;
 #else
@@ -1291,6 +1296,11 @@ uint32 CGameClientShell::OnEngineInitialized(RMode *pMode, LTGUID *pAppGuid)
 
 	m_eDifficulty = (GameDifficulty)nDiff;
 	m_bFadeBodies = (LTBOOL)GetConsoleInt("FadeBodies",0);
+
+#ifdef NOLFSRC_MODERN
+	// M-P5-12, M-P5-13: QuickSwitch and the ToggleZoom action
+	P5_OnEngineInitialized();
+#endif
 
 	// Check for playdemo....
 
@@ -2555,7 +2565,13 @@ void CGameClientShell::TurnOffAlternativeCamera(uint8 nCamType)
 
 	// Set shadows back to whatever they were set to before...
 
+#ifdef NOLFSRC_MODERN
+	// M-P5-14: the saved value is 0 after a cinematic's first frame (and
+	// before any cinematic); go back to the player's setting
+	P5_OnCinematicCameraOff();
+#else
 	WriteConsoleInt("MaxModelShadows", g_nCinSaveModelShadows);
+#endif
 }
 
 
@@ -3143,7 +3159,12 @@ void CGameClientShell::UpdateWeaponModel()
     LTBOOL bFire = LTFALSE;
 
 	// Only check if we're firing if we aren't choosing ammo/weapons...
+#ifdef NOLFSRC_MODERN
+	// M-P5-12: with quick switch the open weapon chooser does not stop fire
+	if (!m_InterfaceMgr.IsChoosingAmmo() && (!m_InterfaceMgr.IsChoosingWeapon() || P5_QuickSwitchOn()))
+#else
 	if (!m_InterfaceMgr.IsChoosingAmmo() && !m_InterfaceMgr.IsChoosingWeapon())
+#endif
 	{
 		if ((m_dwPlayerFlags & BC_CFLG_FIRING) || (m_dwPlayerFlags & BC_CFLG_ALT_FIRING) &&
 			!IsPlayerDead() && !m_bSpectatorMode)
@@ -4190,6 +4211,15 @@ void CGameClientShell::OnCommandOn(int command)
 			}
 		}
 		break;
+
+#ifdef NOLFSRC_MODERN
+		// M-P5-13: toggle zoom -- a zoom-in step, or out after the last one
+		case COMMAND_ID_TOGGLE_ZOOM :
+		{
+			OnCommandOn(P5_ToggleZoomCommand(m_nZoomView));
+		}
+		break;
+#endif
 
 		case COMMAND_ID_TURNAROUND :
 		{
@@ -6685,6 +6715,11 @@ void CGameClientShell::FirstUpdate()
 	UpdateContainerFX();
 	ClearCurContainerCode();
 	UpdateContainerFX();
+
+#ifdef NOLFSRC_MODERN
+	// M-P5-14: undo shadows lost to a cinematic before a save or a quit
+	P5_OnWorldStarted();
+#endif
 }
 
 // --------------------------------------------------------------------------- //
