@@ -1065,6 +1065,10 @@ extern struct Bank10021f40 g_1008afd4;
 #define g_f1008afd8 (*(float*)((char*)&g_1008afd4 + 4))
 extern float    g_f1008b8cc;                            // 0x1008b8cc
 extern float    g_f1008b8d0;                            // 0x1008b8d0
+#ifdef NOLFSRC_MODERN
+extern float    g_fModernFovX4x3;                       // M-P0-01, w4_1001eb90_os.cpp
+extern float    g_fModernFovXScale;                     // M-P0-01, w4_1001eb90_os.cpp
+#endif
 extern uint16   g_w1008bea8;                            // 0x1008bea8
 extern uint32   g_n1008ca38;                            // 0x1008ca38
 extern uint32   g_n1008cb24;                            // 0x1008cb24
@@ -1812,6 +1816,36 @@ void CD3DModelDraw::sub_10017c10(D3DObject* pObject)
 	{
 		LTMat   matFov;
 
+#ifdef NOLFSRC_MODERN
+		// M-P0-01: widescreen (Hor+) field of view.  A model with a field
+		// of view of its own (the player-view weapons) is scaled across by
+		// tan(fovX/2) of the SCENE's field of view plus its offset, so the
+		// widened scene field of view would stretch it sideways.  Start
+		// from the field of view the game asked for (its 4:3 one,
+		// w4_1001eb90_os.cpp), and narrow the result below by the same
+		// factor the scene was widened by: the model then looks exactly as
+		// it does at 4:3.
+		if (g_n1008af94)
+		{
+			fFovX = D3D_CLAMPF(
+				(m_pModel00->m_f144 + g_f1008afd8) * g_fModernFovX4x3,
+				0.17453292f, 2.96705961f);
+			fFovY = D3D_CLAMPF(
+				(m_pModel00->m_f148 + g_f1008afb8) * g_f1008b8d0,
+				0.17453292f, 2.96705961f);
+		}
+		else
+		{
+			fFovX = D3D_CLAMPF(
+				g_f1008afd8 * 0.017453292f + m_pModel00->m_f144
+					+ g_fModernFovX4x3,
+				0.17453292f, 2.96705961f);
+			fFovY = D3D_CLAMPF(
+				g_f1008afb8 * 0.017453292f + m_pModel00->m_f148
+					+ g_f1008b8d0,
+				0.17453292f, 2.96705961f);
+		}
+#else
 		if (g_n1008af94)
 		{
 			// 0x10018019 / 0x10018044.
@@ -1836,12 +1870,18 @@ void CD3DModelDraw::sub_10017c10(D3DObject* pObject)
 					+ g_f1008b8d0,
 				0.17453292f, 2.96705961f);
 		}
+#endif
 
 		// 0x100180d9 / 0x100180f0 -- note the operand order differs
 		// between the two: `fmuls 0.5` on the value already in %st for X,
 		// `flds 0.5 ; fmull` for Y, whose operand had to be spilled as a
 		// double across the first call.
+#ifdef NOLFSRC_MODERN
+		// M-P0-01: narrowed as the scene was widened (see above)
+		matFov.m[0][0] = (float)tan((double)(fFovX * 0.5f)) / g_fModernFovXScale;
+#else
 		matFov.m[0][0] = (float)tan((double)(fFovX * 0.5f));
+#endif
 		matFov.m[0][1] = 0.0f;
 		matFov.m[0][2] = 0.0f;
 		matFov.m[0][3] = 0.0f;

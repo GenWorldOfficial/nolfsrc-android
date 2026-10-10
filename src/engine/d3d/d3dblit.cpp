@@ -633,6 +633,70 @@ void d3d_UnlockScreen()
 	d3d_AddDirtyRect(&g_ScreenLockRect);
 }
 
+#ifdef NOLFSRC_MODERN
+// ---------------------------------------------------------------------- //
+//  M-P0-03: fast FillRect onto the screen
+// ---------------------------------------------------------------------- //
+//
+// The engine's FillRect fills the screen by locking the whole back buffer
+// (LockScreen above) and writing the pixels itself, which makes the video
+// card hand the frame back and take it again -- for every rectangle.  This
+// is the same fill done by DirectDraw: a colour-fill Blt onto the back
+// buffer, ended and restarted around the scene exactly as the DirectDraw
+// blit path does it, and the rectangle goes to the dirty list as an unlocked
+// screen's would.  nPixel is already in the screen's pixel format.  The
+// engine finds it through GetRenderObject("FillScreenRect") (slot +0xb8,
+// w26_10020fd0_osoiqip.cpp), so a retail d3d.ren simply does not offer it
+// and the engine keeps its own path.  Returns FALSE when it cannot fill.
+#define DDBLT_COLORFILL                 0x00000400
+
+struct DDBltFXFill
+{
+	uint32 dwSize;                                      // +0x00
+	uint8  m_pad_04[0x50 - 0x04];                       // +0x04
+	uint32 dwFillColor;                                 // +0x50
+	uint8  m_pad_54[0x64 - 0x54];                       // +0x54
+};                                                      // == DDBltFX
+
+extern "C" LTBOOL __cdecl d3d_FillScreenRect(LTRect* pRect, uint32 nPixel)
+{
+	DDRect      rcDest;
+	DDBltFXFill fx;
+	long        hResult;
+
+	if (!g_pOffscreen || !pRect || g_bScreenLocked)
+		return LTFALSE;
+
+	rcDest.left   = pRect->left;
+	rcDest.top    = pRect->top;
+	rcDest.right  = pRect->right;
+	rcDest.bottom = pRect->bottom;
+
+	if (rcDest.left >= rcDest.right || rcDest.top >= rcDest.bottom)
+		return LTTRUE;
+
+	memset(&fx, 0, sizeof(fx));
+	fx.dwSize      = sizeof(fx);
+	fx.dwFillColor = nPixel;
+
+	if (g_bIn3D && g_pD3DDevice)
+		g_pD3DDevice->lpVtbl->EndScene(g_pD3DDevice);
+
+	hResult = g_pOffscreen->lpVtbl->Blt(g_pOffscreen, &rcDest, LTNULL, LTNULL,
+	                                    DDBLT_COLORFILL | DDBLT_WAIT,
+	                                    (DDBltFX*)&fx);
+
+	if (g_bIn3D && g_pD3DDevice)
+		g_pD3DDevice->lpVtbl->BeginScene(g_pD3DDevice);
+
+	if (hResult != 0)
+		return LTFALSE;
+
+	d3d_AddDirtyRect((LTRect*)&rcDest);
+	return LTTRUE;
+}
+#endif
+
 // ---------------------------------------------------------------------- //
 //  SLOTS +0xe0 / +0xdc -- UnoptimizeSurface (0x10034510) and
 //  OptimizeSurface (0x10034580) are in w81_10034510_os.cpp: this file is
