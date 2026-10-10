@@ -56,7 +56,10 @@ void P2BigHead_ScaleNode(HOBJECT hObj, HMODELNODE hNode, LTMatrix* pGlobalMat)
 	if (fFactor <= 0.0f) return;
 
 	// By name, every time: cheap next to drawing the model, and a handle
-	// cached per object could outlive the object it was found on.
+	// cached per object could outlive the object it was found on. The
+	// engine copies at most sizeof - 1 characters and never terminates
+	// (RETAIL_BUGS.md, ci_GetModelNodeName): the last byte is ours.
+	szName[sizeof(szName) - 1] = '\0';
 	if (g_pLTClient->GetModelNodeName(hObj, hNode, szName, sizeof(szName)) != LT_OK)
 		return;
 
@@ -87,7 +90,7 @@ void P2BigHead_SendToServer()
 	char    szCmd[64];
 	HSTRING hCmd;
 
-	if (!s_vtBigHeadMode.IsInitted() || !g_pGameClientShell) return;
+	if (!s_vtBigHeadMode.IsInitted() || !g_pGameClientShell || !g_pLTClient->IsConnected()) return;
 	if (g_pGameClientShell->IsMultiplayerGame() && !g_pGameClientShell->IsHosting()) return;
 
 	// The same message as a line typed into the console (M-P2-08).

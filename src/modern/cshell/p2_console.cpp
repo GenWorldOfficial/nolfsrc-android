@@ -491,7 +491,7 @@ static void Submit()
 	// Single player, or the host of a game: on the server too, so server
 	// variables (BigHeadMode, DisplayTriggers, ...) can be set. The server
 	// runs it only for a local client (M-P2-08).
-	if (g_pGameClientShell &&
+	if (g_pGameClientShell && g_pLTClient->IsConnected() &&
 	    (!g_pGameClientShell->IsMultiplayerGame() || g_pGameClientShell->IsHosting()))
 	{
 		HSTRING hCmd = g_pLTClient->CreateString(pLine);

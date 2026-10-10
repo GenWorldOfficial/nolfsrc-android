@@ -18,10 +18,6 @@
 #include "AI.h"
 #include "CharacterHitBox.h"
 #include "PlayerObj.h"
-#ifdef NOLFSRC_MODERN
-// M-P2-10: big head mode
-#include "object/p2_server.h"
-#endif
 
 // Static constants
 
@@ -843,6 +839,12 @@ void CAttachments::AddRequirements(ModelId eModelId, ModelStyle eModelStyle)
 		Attach(sSocket, sAttachment);
 	}
 }
+
+#ifdef NOLFSRC_MODERN
+// M-P2-10: big head mode. (Included here, not at the top: CreateAttachment
+// prints __LINE__, and the release build must compile to the same bytes.)
+#include "object/p2_server.h"
+#endif
 
 // ----------------------------------------------------------------------- //
 //
