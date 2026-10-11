@@ -489,7 +489,9 @@ extern uint32 sub_1000f640();
 extern void   sub_1000ef60(void* pA, void* pB);
 
 // 0x1000efa0 -- d3dbatchd.cpp.  Binds a texture to a stage.
-extern LTBOOL sub_1000efa0(void* pObj, uint32 nStage);
+// int32 here (as big6d910.cpp has it): as LTBOOL icl predicts a zero answer
+// and keeps 0x100124a4's bind-failure call inline; the shipped code sinks it.
+extern int32  sub_1000efa0(void* pObj, uint32 nStage);
 
 // 0x1000eef0 -- d3dr3c.cpp, decoded field for field.  The fourth argument
 // is dead; the call site pushes four and unwinds 0x10.

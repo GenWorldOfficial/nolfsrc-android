@@ -165,6 +165,8 @@
 /ALTERNATENAME:?sub_1000ef60@@YAXPAX0@Z=?sub_1000ef60@@YAXPAXPAUStruct1000ef60@@@Z
 # 0x1000efa0  defined in d3dbatchd.obj (identical); name-carried address
 /ALTERNATENAME:?sub_1000efa0@@YAIPAXK@Z=?sub_1000efa0@@YAIPAUSub1000efa0Texture@@K@Z
+# 0x1000efa0  the same, declared int32 in w30_1000f020_osqipni.cpp
+/ALTERNATENAME:?sub_1000efa0@@YAJPAXK@Z=?sub_1000efa0@@YAIPAUSub1000efa0Texture@@K@Z
 # 0x10011420  defined in d3dbatcha.obj (identical); name-carried address
 /ALTERNATENAME:?sub_10011420@@YAIPAPAURVert@@PAJPAX@Z=?sub_10011420@@YAXKKK@Z
 # 0x10011420  defined in d3dbatcha.obj (identical); name-carried address
