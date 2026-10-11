@@ -743,7 +743,10 @@ void CGameServerShell::ProcessHandshake(HCLIENT hClient, HMESSAGEREAD hMessage)
 			// to use our key anyway..
 			HMESSAGEWRITE hResponse = g_pLTServer->StartMessage(hClient, MID_HANDSHAKE);
 			g_pLTServer->WriteToMessageByte(hResponse, MID_HANDSHAKE_PASSWORD);
-			g_pLTServer->WriteToMessageDWord(hResponse, GAME_HANDSHAKE_PASSWORD);
+			// GOTY: reconstructed from the Game of the Year Object.lto -- our
+			// key, salted with theirs, ours and the player's name
+			g_pLTServer->WriteToMessageDWord(hResponse,
+				GAME_HANDSHAKE_ROTATE(pPlayer->GetNetName()[0] & 0xf) ^ nClientKey ^ (uint32)this);
 			g_pLTServer->EndMessage(hResponse);
 		}
 		break;
@@ -751,9 +754,27 @@ void CGameServerShell::ProcessHandshake(HCLIENT hClient, HMESSAGEREAD hMessage)
 		{
 			// Get the client's password
 			uint32 nClientPassword = g_pLTServer->ReadFromMessageDWord(hMessage);
-			uint32 nXORMask = GAME_HANDSHAKE_MASK;
-			nClientPassword ^= nXORMask;
-			if (nClientPassword != GAME_HANDSHAKE_PASSWORD)
+
+			// GOTY: reconstructed from the Game of the Year Object.lto -- the
+			// password is the mask salted with the first (up to) four
+			// characters of the player's name
+			char* pName = pPlayer->GetNetName();
+			uint32 nNameKey = *((uint32*)pName);
+			if (!(nNameKey & 0x000000ff))
+			{
+				nNameKey = 0;
+			}
+			else if (!(nNameKey & 0x0000ff00))
+			{
+				nNameKey &= 0x000000ff;
+			}
+			else if (!(nNameKey & 0x00ff0000))
+			{
+				nNameKey &= 0x0000ffff;
+			}
+
+			uint32 nXORMask = GAME_HANDSHAKE_ROTATE(pName[0] & 0xf) ^ (uint32)this;
+			if ((nXORMask ^ nNameKey) != nClientPassword)
 			{
 				g_pLTServer->CPrint("Handshake failed for '%s'!", pPlayer->GetNetName());
 				g_pLTServer->CPrint("  '%s' was booted due to an invalid password", 

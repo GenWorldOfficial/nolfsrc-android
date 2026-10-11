@@ -156,6 +156,8 @@ VarTrack			g_vtModelGlowMax;
 VarTrack			g_vtSunZoomLevel1MaxDist;
 VarTrack			g_vtSunZoomLevel2MaxDist;
 
+extern VarTrack		g_vtPlayerName;		// GOTY: the handshake salts its keys with it
+
 VarTrack			g_vtFOVYMaxUW;
 VarTrack			g_vtFOVYMinUW;
 VarTrack			g_vtUWFOVRate;
@@ -4104,20 +4106,31 @@ void CGameClientShell::ProcessHandshake(HMESSAGEREAD hMessage)
 			HMESSAGEWRITE hResponse = g_pLTClient->StartMessage(MID_HANDSHAKE);
 		    g_pLTClient->WriteToMessageByte(hResponse, MID_HANDSHAKE_HELLO);
 		    g_pLTClient->WriteToMessageWord(hResponse, GAME_HANDSHAKE_VER);
-			// Send them our secret key
-			g_pLTClient->WriteToMessageDWord(hResponse, GAME_HANDSHAKE_PASSWORD);
+			// GOTY: reconstructed from the Game of the Year CShell.dll --
+			// send them our key (this client's own salt)
+			g_pLTClient->WriteToMessageDWord(hResponse, (uint32)this);
 			g_pLTClient->EndMessage(hResponse);
 		}
 		break;
 		case MID_HANDSHAKE_PASSWORD:
 		{
+			// GOTY: reconstructed from the Game of the Year CShell.dll
+
 			// Read in their key
 			uint32 nServerKey = g_pLTClient->ReadFromMessageDWord(hMessage);
 
-			uint32 nPassword = GAME_HANDSHAKE_PASSWORD;
-			uint32 nXORMask = GAME_HANDSHAKE_MASK;
+			// Salt everything with the first characters of our name
+			char szPlayerName[255];
+			szPlayerName[0] = szPlayerName[1] = szPlayerName[2] = szPlayerName[3] = 0;
+			SAFE_STRCPY(szPlayerName, g_vtPlayerName.GetStr());
+			uint32 nNameKey = *((uint32*)szPlayerName);
 
-			nPassword ^= nXORMask;
+			uint32 nXORMask = GAME_HANDSHAKE_ROTATE(nNameKey & 0xf);
+			nXORMask ^= GAME_HANDSHAKE_ROTATE(szPlayerName[0] & 0xf);
+			nXORMask ^= nServerKey;
+			nXORMask ^= (uint32)this;
+
+			uint32 nPassword = nXORMask ^ nNameKey;
 
 			// Get the weapons file CRC
 			uint32 nWeaponCRC = g_pWeaponMgr->GetFileCRC();

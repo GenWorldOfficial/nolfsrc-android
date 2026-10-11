@@ -236,6 +236,14 @@ enum HitLocation
 #define GAME_HANDSHAKE_PASSWORD		0x40404040
 #define GAME_HANDSHAKE_MASK			0x73173173
 
+// GOTY: reconstructed from the Game of the Year CShell.dll and Object.lto --
+// the handshake keys are salted by both sides and by the player's name: the
+// first (up to) four characters of the name, and a rotation of this key by
+// the low four bits of its first character.
+#define GAME_HANDSHAKE_KEY			0xdeadface
+#define GAME_HANDSHAKE_ROTATE(nShift) \
+	((GAME_HANDSHAKE_KEY >> (32 - (nShift))) + (GAME_HANDSHAKE_KEY << (nShift)))
+
 #define GAME_DISCON_BADHANDSHAKE	1 // Disconnect due to a bad handshake response
 #define GAME_DISCON_BADWEAPONS		2 // Disconnect due to a weapons.txt mismatch
 #define GAME_DISCON_BADCSHELL		3 // Disconnect due to a cshell.dll mismatch
