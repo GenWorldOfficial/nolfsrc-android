@@ -1754,10 +1754,11 @@ void CServerMessageInitQ12::Init(uint16 nMaxDataLen, uint16 nGrowSize)
 // between SetBasisVectors 0x10013509 and the end of the message code;
 // lithtech.exe 0x004361e0 among 0x00435ad0 / 0x00435d90).
 //
-// lithtech.exe: NEAR, size-exact (219/219, 74/74 instructions): register
-// allocation inside the expanded WriteType -- shipped puts m_Pos+1 in edx
-// and m_MaxDataLen in eax, ours the reverse. Without the named byte local
-// server.dll's copy (identical with it) comes out 86 bytes.
+// lithtech.exe 0x004361e0 is byte-identical too, through a named CPacket*
+// for the write: with the cast inline in the call, the expanded WriteType
+// put m_Pos+1 in eax and m_MaxDataLen in edx where shipped has the reverse
+// (219/219, three blocks). Without the named byte local server.dll's copy
+// comes out 86 bytes.
 void quat_ConvertToMatrix(LTRotation* pRot, LTMatrix* pMat);   // 0x10015bcd
 
 void sub_10013585(ServerMessage* pMsg, LTRotation* pRot)
@@ -1772,5 +1773,6 @@ void sub_10013585(ServerMessage* pMsg, LTRotation* pRot)
 
 	nYaw = (uint8)((float)atan2(vForward.x, vForward.z) * (127.0f / MATH_PI));
 
-	((CPacket*)pMsg)->WriteType(nYaw);
+	CPacket* pPacket = (CPacket*)pMsg;
+	pPacket->WriteType(nYaw);
 }
