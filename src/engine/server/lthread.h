@@ -298,25 +298,17 @@ public:
 	// 0x10015ad0, including GenAppend, GenAppendList, PostMessage and six in
 	// netmgr's block.
 	//
-	// NEAR in server.dll (48 of 48 bytes, eighteen instructions of
-	// eighteen): a straight eax/edx transposition. Chased against the
-	// "a rotation is a missing named local" rule and it does not yield —
-	// naming the splice point inside the `if`, naming it at function scope,
-	// and naming the tail all leave the same two registers swapped. The
-	// parameter is not copied to a local either (the shipped code reads its
-	// slot twice, `push 0x4(%esp)` on the Append path and `mov 0x4(%esp)` on
-	// the splice path) and the branch polarity and arm order are already the
-	// shipped ones.
-	void Prepend(LThreadMessage* pMsg)
+	// It RETURNS pMsg, passing on what InsertBefore and Append return, as
+	// those two do. server.dll 0x10015ad0 holds pMsg in eax through the
+	// splice and the splice point in edx; as a void function VC6 swapped
+	// the two (48/48, an eax/edx transposition that naming the splice point
+	// or the tail did not move). Callers all discard the result.
+	LThreadMessage* Prepend(LThreadMessage* pMsg)
 	{
 		if (m_pTail)
-		{
-			InsertBefore(m_pTail->m_pNext, pMsg);
-		}
+			return InsertBefore(m_pTail->m_pNext, pMsg);
 		else
-		{
-			Append(pMsg);
-		}
+			return Append(pMsg);
 	}
 
 	// 0x10015b00 (name ours). INLINE for the same reason and on the same
