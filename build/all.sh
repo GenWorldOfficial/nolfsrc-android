@@ -26,7 +26,11 @@
 #                         middleware with no source, which lithtech.exe and
 #                         NOLF.exe import -- the game cannot load without
 #                         Miles. Isolated in this one step so they are easy
-#                         to find and to replace.
+#                         to find and to replace -- which the modern build
+#                         does (NOLF_MIDDLEWARE=open, set by build/variant.sh):
+#                         OpenMiles' mss32.dll and our FFmpeg-based
+#                         binkw32.dll, built from the ext/ submodules by
+#                         build/ext.sh, and no Miles provider files.
 #   2b. launcher art      the splash bitmap, palette, music, icon and cursors
 #                         that launcher.rc compiles into NOLF.exe, read out of
 #                         the retail NOLF.exe's resource section
@@ -93,16 +97,25 @@ mkdir -p "$OUT/Save" "$OUT/custom"
 # "lithtech.exe -cmdfile nolfcmds.txt"; run.sh does the same with this one.
 # Rez order is the GOTY install's (later entries override earlier ones), and
 # custom/ -- our game DLLs -- goes last. +DisableMovies skips the Bink intro
-# logos, which misrender or stall under some Wine setups.
-printf -- '-rez nolf.rez -rez nolf2.rez -rez nolfu003.rez -rez nolfgoty.rez -rez custom ++screenwidth 640 ++screenheight 480 ++bitdepth 16 ++windowed 1 +DisableMovies 1\r\n' \
-    > "$OUT/nolfcmds.txt"
+# logos, which retail binkw32.dll misrenders or stalls on under some Wine
+# setups; the modern build's own Bink player (NOLF_MIDDLEWARE=open) plays them.
+MOVIES=" +DisableMovies 1"
+[ "${NOLF_MIDDLEWARE:-retail}" = open ] && MOVIES=""
+printf -- '-rez nolf.rez -rez nolf2.rez -rez nolfu003.rez -rez nolfgoty.rez -rez custom ++screenwidth 640 ++screenheight 480 ++bitdepth 16 ++windowed 1%s\r\n' \
+    "$MOVIES" > "$OUT/nolfcmds.txt"
 # run.sh / run-launcher.sh: start the game with the host's Wine, directly or
 # through our NOLF.exe (build/game-scripts/; usage in their headers).
 cp build/game-scripts/run.sh build/game-scripts/run-launcher.sh "$OUT/"
 chmod +x "$OUT/run.sh" "$OUT/run-launcher.sh"
 
-step "2. THIRD-PARTY RUNTIME: Miles + Bink from $RETAIL (the only binaries not built here)"
-python3 tools/retailextract.py thirdparty "$RETAIL" "$OUT"
+if [ "${NOLF_MIDDLEWARE:-retail}" = open ]; then
+    step "2. open runtime: OpenMiles + our Bink player on FFmpeg, built from ext/ (build/ext.sh)"
+    bash build/ext.sh
+    python3 tools/retailextract.py openruntime "${NOLF_EXT_OUT:-out/ext}" "$OUT"
+else
+    step "2. THIRD-PARTY RUNTIME: Miles + Bink from $RETAIL (the only binaries not built here)"
+    python3 tools/retailextract.py thirdparty "$RETAIL" "$OUT"
+fi
 
 step "2b. launcher art: resources of the retail NOLF.exe in $RETAIL -> src/engine/launcher/res/"
 python3 tools/retailextract.py launcherres "$RETAIL" src/engine/launcher/res

@@ -25,7 +25,10 @@
 #            features (MODERN.md). Compile + /D NOLFSRC_MODERN, resource
 #            scripts + /d NOLFSRC_MODERN, nothing else; then the game-data
 #            edits in src/modern/data/ are applied to the data from the
-#            discs (tools/moddata.py), into custom/.
+#            discs (tools/moddata.py), into custom/. And open-source
+#            middleware instead of RAD's (NOLF_MIDDLEWARE=open, build/ext.sh):
+#            OpenMiles for Miles, our FFmpeg-based player for Bink, built
+#            from the ext/ submodules into out/ext/; the movies play.
 #   modern-debug   both.
 #
 # The flags reach every compile and link through build/env.sh's
@@ -88,12 +91,16 @@ tar -C "$REPO" -cf - \
 # the compilers, and the retail game where build/retail.sh looks for it
 [ -L "$TREE/toolchains" ] || ln -s ../../toolchains "$TREE/toolchains"
 [ -L "$TREE/rez" ] || ln -s ../../rez "$TREE/rez"
+# the modern build's open-source middleware (build/ext.sh), built once into
+# out/ext/ for every variant
+[ -L "$TREE/ext" ] || ln -s ../../ext "$TREE/ext"
 
 export NOLFSRC_CFLAGS="$CFLAGS"
 export NOLFSRC_LDFLAGS="$LDFLAGS"
 export NOLFSRC_RCFLAGS="$RCFLAGS"
 export NOLF_GAME_OUT="$REPO/out/$NAME"
 export NOLF_PACKAGE=0
+case "$VARIANT" in modern*) export NOLF_MIDDLEWARE=open NOLF_EXT_OUT="$REPO/out/ext" ;; esac
 bash "$TREE/build/all.sh"
 
 case "$VARIANT" in modern*)

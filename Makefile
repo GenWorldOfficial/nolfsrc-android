@@ -34,7 +34,7 @@ TOOLCHAIN_FILES = toolchains/msvc-6.00-9782/VC98/Bin/CL.EXE \
 	toolchains/msvc-6.00-8447/BIN/cl.exe \
 	toolchains/icl-4.0/BIN/icl.exe
 
-.PHONY: all game debug modern modern-debug image retail check-rez check-toolchain test progress progress-update shell clean distclean help
+.PHONY: all game debug modern modern-debug image retail check-rez check-ext check-toolchain test progress progress-update shell clean distclean help
 
 all: game
 
@@ -62,7 +62,12 @@ help:
 game: check-toolchain retail
 	$(DOCKER_RUN) bash build/all.sh
 
-debug modern modern-debug: check-toolchain retail
+debug: check-toolchain retail
+	$(DOCKER_RUN) bash build/variant.sh $@
+
+# the modern build also builds OpenMiles and its Bink player from ext/
+# (build/ext.sh)
+modern modern-debug: check-toolchain check-ext retail
 	$(DOCKER_RUN) bash build/variant.sh $@
 
 image:
@@ -77,6 +82,11 @@ retail: check-rez image
 
 check-rez:
 	@[ -f rez/install-games.sh ] || { echo "error: rez/ is empty -- the disc images and their installer are the rez/ submodule: run git submodule update --init (see rez/README.md)" >&2; exit 1; }
+
+check-ext:
+	@for d in ext/openmiles ext/ffmpeg; do \
+	  [ -f $$d/LICENSE ] || [ -f $$d/LICENSE.md ] || { echo "error: $$d is empty -- the modern build's middleware is the ext/ submodules: run git submodule update --init" >&2; exit 1; }; \
+	done
 
 check-toolchain:
 	@for f in $(TOOLCHAIN_FILES); do \

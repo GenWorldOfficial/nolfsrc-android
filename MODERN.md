@@ -44,6 +44,11 @@ comes from.
   diff against the retail file, or a new file we wrote ourselves. Modernizer-
   authored art, models, fonts and music are not ported; where a retail file
   can stand in, or an asset can be generated, the item says so.
+* **Open middleware.** The modern build has no RAD binaries: OpenMiles
+  (`ext/openmiles`) stands in for Miles and our FFmpeg-based player
+  (`src/modern/binkw32/`, `ext/ffmpeg`) for Bink, built by `build/ext.sh`
+  (`BUILDING.md`, "The modern build's middleware"). Its movies play
+  (no `+DisableMovies`).
 * **Release unchanged.** After every change: the release build's objects for
   that file still match (`build/engine.sh <target>-one <file>` for the engine;
   `make progress` for everything), and `make modern` builds and plays

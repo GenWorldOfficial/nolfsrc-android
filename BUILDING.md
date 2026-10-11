@@ -7,7 +7,7 @@ parts of it by hand.
 
 * **Linux with Docker.** The compilers are Win32 programs and run under Wine
   in a container; the host needs nothing else (no Wine, no Python).
-* **The two submodules**: `git submodule update --init`.
+* **The submodules**: `git submodule update --init`.
   * `toolchains/`, the compilers (about 560 MB). See `toolchains/README.md`.
   * `rez/`, the retail game the build takes its data from. It fetches the
     redump images of the two discs of *No One Lives Forever: Game of the Year
@@ -15,6 +15,9 @@ parts of it by hand.
     from them as its own setup would, into `rez/games/nolf-eu-goty/`, checked
     file by file against `rez/games.sha256`. `make` does this the first time
     (`make retail`); see `rez/README.md`.
+  * `ext/openmiles` and `ext/ffmpeg`, the upstream projects the modern build
+    uses in place of Miles and Bink ("The modern build's middleware" below).
+    The release build does not need them.
 * About 9 GB of disk: 2.6 GB for the docker image, 2.8 GB for `out/` (the
   game directory, its tar, and the 0.6 GB Wine prefix), about 3 GB in `rez/`
   (the disc images, zipped and unzipped, and the installed game), a few
@@ -176,6 +179,55 @@ depended on the path, and Intel C/C++ builds a different `d3d.ren` from a
 working directory on a drive of its own (`build/env.sh`). The modern build is never scored -- it differs from
 the retail game on purpose. When a fix lands, mark its entry in
 `RETAIL_BUGS.md` as fixed, naming the file.
+
+### The modern build's middleware: `ext/`
+
+The release build plays its sound through RAD's Miles Sound System 6.0i and
+its movies through RAD's Bink 1.0h, both taken from the retail game
+(`build/all.sh` step 2). The modern build uses neither: `build/variant.sh`
+sets `NOLF_MIDDLEWARE=open`, and step 2 then runs `build/ext.sh`, which
+builds
+
+| File | From | In place of |
+|---|---|---|
+| `mss32.dll` | [OpenMiles](https://github.com/maci0/openmiles) (`ext/openmiles`), a clean-room Miles reimplementation, with the Miles 6.0 export table (`-Dmss-version=6.0`) | Miles 6.0i and its 25 provider files (`.m3d`, `.flt`, `.asi`, `.as6`): OpenMiles mixes, positions and decodes MP3 itself |
+| `binkw32.dll` | our Bink player, `src/modern/binkw32/`, linked with a static [FFmpeg](https://ffmpeg.org/) (`ext/ffmpeg`) cut down to its Bink demuxer and decoders | Bink 1.0h |
+
+into `out/ext/` (shared by every modern variant, rebuilt only when a
+submodule's commit or the build script changes; the first build takes about
+two minutes), and installs them in the game directory, removing any retail
+Miles or Bink file a previous build left there. The audit lists them as
+`EXT`. The engine is unchanged: it loads whichever `mss32.dll` and
+`binkw32.dll` are beside it. Because the movies now play reliably under
+Wine, the modern build's `nolfcmds.txt` leaves out `+DisableMovies 1`.
+
+Everything in `ext/` is compiled with [Zig](https://ziglang.org/) 0.16.0,
+which the build image installs (pinned and checksummed in
+`docker/Dockerfile`, the version `ext/openmiles/build.zig.zon` asks for):
+OpenMiles is written in Zig, and `zig cc` is clang with its own mingw-w64
+headers and libraries, so FFmpeg and the Bink player are cross-compiled for
+32-bit Windows with it too. The same compiler targets Linux and macOS, which
+a native port of the game would need. None of this touches the 2000-era
+compilers in `toolchains/`, which still build every game and engine binary.
+
+Each upstream project is a submodule under `ext/`, pinned to a release
+(OpenMiles v0.4.0, FFmpeg n8.1.3; `ext/ffmpeg` is a shallow clone). Nothing
+is written into `ext/`: the builds happen in `out/ext/`. Where upstream needs
+a fix for this game, the fix is a patch in `ext/patches/<project>/`, applied
+in order to a copy of the source in `out/ext/` (the submodule stays exactly
+upstream's); each patch's header says what it fixes. Today there are two,
+both making OpenMiles behave as Miles 6.0i does:
+
+* `0001`: `AIL_init_sample` cleared a sample handle's user data, which the
+  engine relies on to recycle its voices -- the game ran out of voices after
+  a few dozen sounds and went silent (dialogue stopped mid-conversation).
+* `0002`: the 0..127 sample volume followed later Miles versions' much
+  steeper curve; it now follows Miles 6.0i's, measured from the retail DLL
+  (a test tone played through each at every volume and recorded; they now
+  agree within a decibel). The engine lowers the volume of distant
+  speakers, so their dialogue had been 10-30 dB too quiet to hear.
+
+Send such fixes upstream too.
 
 ### The debug build: `NOLFSRC_DEBUG`
 

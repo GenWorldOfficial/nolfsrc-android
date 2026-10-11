@@ -1,0 +1,55 @@
+OpenMiles: Miles 6's sample volume curve
+
+OpenMiles maps the 0..127 sample volume through v^(10/6), the curve of
+later Miles versions' float volume API. Measured against the real Miles
+6.0i mss32.dll, its curve is close to linear in amplitude: volume 32 is
+-10.2 dB (OpenMiles: -20), 16 is -16.6 (-30), 8 is -22 (-40). NOLF lowers
+the volume of distant speakers, so with the steeper curve their dialogue
+was buried under music and ambience. For builds before Miles 6.5 the
+table now follows the measured curve. Applied by build/ext.sh.
+
+--- a/src/root.zig
++++ b/src/root.zig
+@@ -1526,15 +1526,39 @@
+     return if (gain - g_lo <= g_hi - gain) hi else @intCast(lo_clamped);
+ }
+ 
++// Miles 6.0/6.1's integer 0..127 sample volume, as measured from the real
++// Miles 6.0i mss32.dll (a 440 Hz tone played through it at each volume and
++// recorded): close to linear in amplitude, a little gentler -- 32 is -10.2 dB,
++// where v^(10/6) gives -20 dB. With the steeper curve, every quiet sound in a
++// Miles 6 game (a distant speaker, which the game attenuates by lowering
++// the volume) came out 10-30 dB too quiet. Volume, then dB relative to 127;
++// the table interpolates in dB between these points.
++const v6_volume_db = [_][2]f64{
++    .{ 1, -39.4 },  .{ 2, -32.9 },  .{ 4, -26.8 },  .{ 8, -22.0 },
++    .{ 12, -19.4 }, .{ 16, -16.6 }, .{ 24, -13.4 }, .{ 32, -10.2 },
++    .{ 48, -7.4 },  .{ 64, -5.2 },  .{ 80, -3.4 },  .{ 96, -1.9 },
++    .{ 112, -0.7 }, .{ 127, 0.0 },
++};
++
+ const volume_to_gain_table: [128]f32 = blk: {
+     @setEvalBranchQuota(200000);
+     var table: [128]f32 = undefined;
+     table[0] = 0.0;
+     for (1..128) |i| {
+         const n: f64 = @as(f64, @floatFromInt(i)) / 127.0;
+-        // MSS volume curve: gain = volume^(10/6) (0.5 -> -10 dB), per
+-        // AIL_API_set_sample_volume_pan in wavefile.cpp. (Was volume^3 = -18 dB.)
+-        table[i] = @floatCast(std.math.pow(f64, n, 10.0 / 6.0));
++        if (mss_version < 65) {
++            const v: f64 = @floatFromInt(i);
++            var k: usize = 0;
++            while (v6_volume_db[k + 1][0] < v) k += 1;
++            const lo = v6_volume_db[k];
++            const hi = v6_volume_db[k + 1];
++            const db = lo[1] + (hi[1] - lo[1]) * (v - lo[0]) / (hi[0] - lo[0]);
++            table[i] = @floatCast(std.math.pow(f64, 10.0, db / 20.0));
++        } else {
++            // MSS volume curve: gain = volume^(10/6) (0.5 -> -10 dB), per
++            // AIL_API_set_sample_volume_pan in wavefile.cpp. (Was volume^3 = -18 dB.)
++            table[i] = @floatCast(std.math.pow(f64, n, 10.0 / 6.0));
++        }
+     }
+     break :blk table;
+ };

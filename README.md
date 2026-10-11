@@ -26,7 +26,9 @@ Monolith Productions.
 **No game data is included.** The build takes the game's data (and the Miles
 and Bink sound/video runtime, the only binaries not built from source) from
 the retail Game of the Year Edition, which the `rez/` submodule installs from
-the redump images of its two discs, fetched from archive.org.
+the redump images of its two discs, fetched from archive.org. The modern
+build replaces that runtime with open-source builds from `ext/`: OpenMiles
+for Miles, and our own Bink player on FFmpeg.
 
 ## Roadmap
 
@@ -81,12 +83,13 @@ resource-only `ltmsg.dll` and `sres.dll` yet.
 
 ## Build
 
-You need Linux with Docker and the two submodules:
+You need Linux with Docker and the submodules:
 
 1. Fetch them: `git submodule update --init` (or clone with
    `--recurse-submodules`). `toolchains/` is the compilers (about 560 MB,
    see `toolchains/README.md`); `rez/` fetches and installs the retail game
-   (see `rez/README.md`).
+   (see `rez/README.md`); `ext/openmiles` and `ext/ffmpeg` are the modern
+   build's open-source middleware (about 130 MB).
 2. Run
 
 ```sh
@@ -159,4 +162,5 @@ that breaks a function that matched before.
 | `docker/` | the build image (Ubuntu 24.04 + Wine) |
 | `toolchains/` | the compilers (a submodule) |
 | `rez/` | the retail game the build takes its data from: fetches the disc images and installs the game from them (a submodule) |
+| `ext/` | upstream open-source projects the modern build uses, one submodule each: `openmiles/` (OpenMiles, for Miles) and `ffmpeg/` (FFmpeg, for Bink); built by `build/ext.sh`, with our fixes from `ext/patches/` |
 | `out/` | everything the build produces |

@@ -4,3 +4,10 @@
 [submodule "rez"]
 	path = rez
 	url = git@github.com:nolffan/rez.git
+[submodule "ext/openmiles"]
+	path = ext/openmiles
+	url = git@github.com:maci0/openmiles.git
+[submodule "ext/ffmpeg"]
+	path = ext/ffmpeg
+	url = git@github.com:FFmpeg/FFmpeg.git
+	shallow = true

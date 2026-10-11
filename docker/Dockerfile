@@ -1,8 +1,13 @@
 # The build image: Ubuntu 24.04 with its distro Wine (32-bit), Python 3, and
 # what the scripted playtest needs (Xvfb, xdotool, xwd, ImageMagick, Mesa),
 # what rez/ needs to fetch the disc images and install the game from them
-# (curl; a C compiler, make and zlib for its vendored unshield), and objdump
-# (binutils), which the reconstruction tools disassemble with.
+# (curl; a C compiler, make and zlib for its vendored unshield), objdump
+# (binutils), which the reconstruction tools disassemble with, and what the
+# modern build's open-source middleware in ext/ is built with (build/ext.sh):
+# Zig, pinned to the version ext/openmiles declares -- the compiler for
+# OpenMiles, and (`zig cc`, clang with its own mingw-w64 headers and
+# libraries) the 32-bit Windows C cross-compiler for FFmpeg and our
+# binkw32.dll.
 #
 # The Makefile builds it as `nolfsrc-build` and runs every step in a
 # throwaway container with the checkout mounted at /repo, as the invoking
@@ -24,7 +29,16 @@ RUN dpkg --add-architecture i386 \
         libgl1:i386 libglu1-mesa:i386 libgl1-mesa-dri:i386 \
         procps \
         curl ca-certificates gcc make libc6-dev zlib1g-dev \
+        xz-utils patch \
  && rm -rf /var/lib/apt/lists/*
+
+ARG ZIG_VERSION=0.16.0
+ARG ZIG_SHA256=70e49664a74374b48b51e6f3fdfbf437f6395d42509050588bd49abe52ba3d00
+RUN curl -fsSL -o /tmp/zig.tar.xz \
+        "https://ziglang.org/download/${ZIG_VERSION}/zig-x86_64-linux-${ZIG_VERSION}.tar.xz" \
+ && echo "${ZIG_SHA256}  /tmp/zig.tar.xz" | sha256sum -c - \
+ && mkdir /opt/zig && tar -C /opt/zig --strip-components=1 -xJf /tmp/zig.tar.xz \
+ && ln -s /opt/zig/zig /usr/local/bin/zig && rm /tmp/zig.tar.xz
 
 COPY entry.sh /usr/local/bin/nolf-entry
 RUN chmod 755 /usr/local/bin/nolf-entry
