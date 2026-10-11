@@ -1165,7 +1165,10 @@ class PFormat
 public:
 	// 0x1007a3b0 -- Slot00(3, 0xff000000, 0xff0000, 0xff00, 0xff).
 	// d3dbatchd.cpp already records this address as a thiscall member.
-	void            sub_1007a3b0();                     // 0x1007a3b0
+	// Named with "Default" for icl's cold-call layout (0x10038630 hosts
+	// its one conditional call past the epilogue, as shipped; aliased to
+	// the definition in link/aliases.rsp).
+	void            InitDefault1007a3b0();              // 0x1007a3b0
 
 	virtual uint32  Slot00(uint32 nType, uint32 nAlphaMask, uint32 nRedMask,
 	                       uint32 nGreenMask, uint32 nBlueMask);
@@ -1210,8 +1213,10 @@ public:
 	uint32 ConvertPixels(ConvertRequest* pRequest);     // 0x1007a130
 
 	// 0x1007a180 -- convert a colour into a format's pixel, 0 on success
-	// (d3dr2c_os.cpp's C1007a180Disp); 0x10038630 uses it.
-	int32  sub_1007a180(PFormat* pFmt, uint32 nColor, uint32* pOut);
+	// (d3dr2c_os.cpp's C1007a180Disp); 0x10038630 uses it.  LTRESULT,
+	// unsigned: as int32 icl predicts it non-zero and sinks 0x10038630's
+	// colour-key stores, which the shipped code keeps inline.
+	LTRESULT sub_1007a180(PFormat* pFmt, uint32 nColor, uint32* pOut);
 };
 extern FormatMgr g_1008daa0;                            // 0x1008daa0
 
@@ -1731,7 +1736,7 @@ static long r_TransferTexture(RTexture* pRTex, TextureData* pData)
 		//  request field written here that the 8-bit path leaves alone.
 		// -------------------------------------------------------------- //
 	convert:
-		req.m_pSrcFormat->sub_1007a3b0();
+		req.m_pSrcFormat->InitDefault1007a3b0();
 
 		req.m_pSrcData  = pMip->m_pData;
 		req.m_nSrcPitch = pMip->m_nPitch;
@@ -2577,6 +2582,28 @@ extern void sub_10038560(uint32 nW, uint32 nH, uint32* pW, uint32* pH);
 
 
 
+// NEAR (1120 = 1120 bytes, was 1104).  What moved it: the desc stores
+// written size/flags/caps/caps2 and width/height/mipcount (icl emits a
+// run of constant stores in reverse); the format default through this
+// inline helper (icl sinks the `return 3` arm, as shipped: `je` to a
+// `mov $3,%esi ; jmp` past the epilogue); the colour as
+// `r<<16 | (g<<8 | b)`; the table format copied by memcpy (through %edi,
+// as shipped); the LOD in a local before SetLOD; 0x1007a180 unsigned and
+// 0x1007a3b0 cold-named (see the declarations).  Left: the FourCC switch.
+// The shipped code is a `je` chain (4, 5, 6) with the three stores sunk
+// past the epilogue; icl 4.0 lowers a switch that way only with FOUR
+// labels (a separate-bodied `case 3:` or `case 0:` gives it, plus that
+// label's own compare and return, 1136 bytes); with three it is
+// `cmp; jne` with the bodies inline.  Shared-body extra labels (`case
+// 3: default:`), default first, cases 6/5/4, an if-chain, a FourCC helper
+// returning the code or a BOOL: no.
+static inline uint32 GetFmt8630(TexData8630* p)
+{
+	if (!p->m_nFormat)
+		return 3;
+	return p->m_nFormat;
+}
+
 static int32 sub_10038630(TexRequest* pReq, RTexInfo* pInfo,
                           uint32 nFirstMip, uint32 nMipCount,
                           uint32 nFormat)
@@ -2590,24 +2617,23 @@ static int32 sub_10038630(TexRequest* pReq, RTexInfo* pInfo,
 	uint32         nColor;
 	uint32         nKey;
 	uint32         nW, nH;
+	uint32         nLOD;
 
 	pData = (TexData8630*)pReq->m_pData04;
 
 	memset(&ddsd, 0, sizeof(ddsd));
-	ddsd.dwCaps2        = W6_DDSCAPS2_40090;
-	ddsd.dwCaps         = W6_DDSCAPS_TEXTURE | W6_DDSCAPS_MIPMAP | W6_DDSCAPS_COMPLEX;
+	ddsd.dwSize         = sizeof(ddsd);
 	ddsd.dwFlags        = W6_DDSD_CAPS | W6_DDSD_HEIGHT | W6_DDSD_WIDTH |
 	                      W6_DDSD_PIXELFORMAT | W6_DDSD_MIPMAPCOUNT |
 	                      W6_DDSD_TEXTURESTAGE;
-	ddsd.dwSize         = sizeof(ddsd);
+	ddsd.dwCaps         = W6_DDSCAPS_TEXTURE | W6_DDSCAPS_MIPMAP | W6_DDSCAPS_COMPLEX;
+	ddsd.dwCaps2        = W6_DDSCAPS2_40090;
 	ddsd.dwWidth        = pData->m_Mips[nFirstMip].m_nWidth;
-	ddsd.dwMipMapCount  = nMipCount;
 	ddsd.dwHeight       = pData->m_Mips[nFirstMip].m_nHeight;
+	ddsd.dwMipMapCount  = nMipCount;
 	ddsd.dwTextureStage = pReq->m_nStage08;
 
-	nFmt = pData->m_nFormat;
-	if (!nFmt)
-		nFmt = 3;
+	nFmt = GetFmt8630(pData);
 
 	if (sub_100385e0(nFmt))
 	{
@@ -2625,7 +2651,7 @@ static int32 sub_10038630(TexRequest* pReq, RTexInfo* pInfo,
 	}
 	else
 	{
-		ddsd.ddpfPixelFormat = g_1008e6b0_8630[nFormat]->m_ddpf;
+		memcpy(&ddsd.ddpfPixelFormat, &g_1008e6b0_8630[nFormat]->m_ddpf, sizeof(ddsd.ddpfPixelFormat));
 		sub_10038560(ddsd.dwWidth, ddsd.dwHeight,
 		             &ddsd.dwWidth, &ddsd.dwHeight);
 	}
@@ -2635,11 +2661,11 @@ static int32 sub_10038630(TexRequest* pReq, RTexInfo* pInfo,
 	if (parse.sub_10023130("ColorKey", 0, 3) && !g_1008d5e4)
 	{
 		nColor = (atoi(parse.m_Args[1]) << 16) |
-		         (atoi(parse.m_Args[2]) << 8) |
-		         atoi(parse.m_Args[3]);
+		         ((atoi(parse.m_Args[2]) << 8) |
+		         atoi(parse.m_Args[3]));
 
 		if (sub_100385e0(nFmt))
-			((PFormat*)&fmt)->sub_1007a3b0();
+			((PFormat*)&fmt)->InitDefault1007a3b0();
 		else
 			sub_10021010(&ddsd.ddpfPixelFormat, (PFormat*)&fmt);
 
@@ -2666,7 +2692,8 @@ static int32 sub_10038630(TexRequest* pReq, RTexInfo* pInfo,
 		return 0;
 	}
 
-	pSurf->lpVtbl->SetLOD(pSurf, pData->m_nLOD25);
+	nLOD = pData->m_nLOD25;
+	pSurf->lpVtbl->SetLOD(pSurf, nLOD);
 
 	sub_10038560(pData->m_Mips[0].m_nWidth, pData->m_Mips[0].m_nHeight,
 	             &nW, &nH);

@@ -464,6 +464,8 @@
 /ALTERNATENAME:?sub_1007a0d0@Obj1007a0d0@@QAEXXZ=?sub_1007a0d0@C1007a0d0@@QAEPAV1@XZ
 # 0x1007a3b0  defined in d3dbatchd.obj (identical); name-carried address
 /ALTERNATENAME:?sub_1007a3b0@PFormat@@QAEXXZ=?sub_1007a3b0@C1007a3b0@@QAEXXZ
+# 0x1007a3b0  w6_10039730_qip.cpp's cold-named spelling (0x10038630, 0x1003a080)
+/ALTERNATENAME:?InitDefault1007a3b0@PFormat@@QAEXXZ=?sub_1007a3b0@C1007a3b0@@QAEXXZ
 # 0x1007b8d0  defined in d3dneutral.obj (identical); name-carried address
 /ALTERNATENAME:?sub_1007b8d0@@YAPAUC10091a10A@@XZ=?sub_1007b8d0@@YAPAXXZ
 # 0x1007b8d0  defined in d3dneutral.obj (identical); name-carried address
@@ -1139,6 +1141,8 @@
 # 0x1007a180 -- 0x10038893 calls it `mov $0x1008daa0,%ecx ; call 0x1007a180`;
 # d3dr2c_os.cpp defines it as C1007a180Disp's (and 0x1008daa0 is FormatMgr already).
 /ALTERNATENAME:?sub_1007a180@FormatMgr@@QAEJPAVPFormat@@KPAK@Z=?sub_1007a180@C1007a180Disp@@QAEJPAUC1007a180Req@@KPAX@Z
+# 0x1007a180  the same, declared LTRESULT (unsigned) in w6_10039730_qip.cpp
+/ALTERNATENAME:?sub_1007a180@FormatMgr@@QAEKPAVPFormat@@KPAK@Z=?sub_1007a180@C1007a180Disp@@QAEJPAUC1007a180Req@@KPAX@Z
 
 # ---- other spellings of functions already defined. Each
 # caller's rel32 was read back out of the retail d3d.ren at the shipped address of the
