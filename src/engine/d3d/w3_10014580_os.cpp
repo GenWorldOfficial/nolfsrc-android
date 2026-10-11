@@ -428,17 +428,23 @@ void LTMat::sub_100156e0()
 // ======================================================================= //
 //  0x10015770 -- ltmatrix.h's LTMatrix::Apply(in, out) (104 bytes).
 //
-//  NEAR (10 bytes, same length): the shipped z term of each row loads
-//  s->z and multiplies by m[i][2] (`flds 8(%eax); fmuls 8(%ecx)`), ours
-//  the other way round.  Measured: all 48 term orders x commutations of
-//  the row give the same (or a worse) result, so like 0x10015aa0 it is a
-//  TU-context choice, and no other function of ours moves it.
+//  BYTE-IDENTICAL.  The lever is the ADDRESS FORM, not the term order:
+//  icl canonicalises every term order and commutation of a row to the
+//  same bytes (48 per form, measured), but which operand of each product
+//  it loads first follows how the operand is spelled.  With z read as
+//  v[2] off a float pointer to the vector (x and y as members, the matrix
+//  as m[r][c]) the z term loads s->z first and the x/y terms the matrix
+//  first, as shipped.  Swept: s->c / v[c] per component x m[r][c] / f[k]
+//  per column (30 spellings); only z-through-the-pointer matches
+//  (v[1] as well is also identical).
 // ======================================================================= //
 void LTMat::sub_10015770(const LTVec* s, LTVec* d)
 {
-	d->x = m[0][0]*s->x + m[0][1]*s->y + s->z*m[0][2] + m[0][3];
-	d->y = m[1][0]*s->x + m[1][1]*s->y + s->z*m[1][2] + m[1][3];
-	d->z = m[2][0]*s->x + m[2][1]*s->y + s->z*m[2][2] + m[2][3];
+	const float* v = &s->x;
+
+	d->x = m[0][0]*s->x + m[0][1]*s->y + v[2]*m[0][2] + m[0][3];
+	d->y = m[1][0]*s->x + m[1][1]*s->y + v[2]*m[1][2] + m[1][3];
+	d->z = m[2][0]*s->x + m[2][1]*s->y + v[2]*m[2][2] + m[2][3];
 }
 
 
