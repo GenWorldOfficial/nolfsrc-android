@@ -542,13 +542,13 @@ void sub_42f5a0(void* pClientMgr);                                  // 0x0042f5a
 //     LT_CANTCREATECLIENTSHELL with no SetupError (0x0042e3cc).
 //   * the success path is the BODY of `nResult == -1`: the three shell
 //     errors sit after everything else (0x0042e461).
-// NEAR, 813 of 813 bytes, 244 of 244 instructions, two blocks: the two
-// LT_ERRORCOPYINGFILE reports share their tail from the printer call on,
-// and shipped hosts it in the cshell.dll arm (the cres.dll arm jumps back
-// to 0x0042e2db) where ours hosts it in the cres.dll arm. Measured and not
-// it: the cres.dll test as `== 0 && == -1` with the report after (same
-// bytes); the cshell.dll report moved after a positive `== 0` body (832,
-// relayout).
+//   * the two LT_ERRORCOPYINGFILE reports share their tail from the
+//     printer call on, hosted in the cshell.dll arm (the cres.dll arm jumps
+//     back to 0x0042e2db).  VC6 cross-jumps onto the arm LAST in source
+//     order, so the cshell.dll report is a `goto` target written at the
+//     very end; it is still laid out inline after its test.  Written in
+//     place (the obvious form) the host goes to the cres.dll arm: 813/813
+//     with two blocks.
 LTRESULT InitClientShellDE(CClientMgrQC5* pMgr)
 {
 	void* pCreate;
@@ -567,12 +567,7 @@ LTRESULT InitClientShellDE(CClientMgrQC5* pMgr)
 
 	if (sub_42e110((CClientMgrQ42D*)pMgr, sTempPath, "cshell.dll", sFilename,
 	               sizeof(sFilename)) != 0)
-	{
-		pMgr->SetupError(LT_ERRORCOPYINGFILE, "cshell.dll");
-
-		RETURN_ERROR_SYM_DESC(1, "InitClientShellDE", LT_ERRORCOPYINGFILE,
-		                      "cshell.dll")
-	}
+		goto CShellFailed;
 
 	nResult = sub_10034ec6(sFilename, "ClientShell",
 	                       &pMgr->m_pShellModule, 2, &nVersion);
@@ -625,6 +620,12 @@ LTRESULT InitClientShellDE(CClientMgrQC5* pMgr)
 	pMgr->SetupError(LT_INVALIDSHELLDLLVERSION, "cshell.dll", nVersion, 2);
 
 	RETURN_ERROR(1, "InitClientShellDE", LT_INVALIDSHELLDLLVERSION)
+
+CShellFailed:
+	pMgr->SetupError(LT_ERRORCOPYINGFILE, "cshell.dll");
+
+	RETURN_ERROR_SYM_DESC(1, "InitClientShellDE", LT_ERRORCOPYINGFILE,
+	                      "cshell.dll")
 }
 
 
