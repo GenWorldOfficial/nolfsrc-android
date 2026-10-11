@@ -9,8 +9,8 @@ parts of it by hand.
   in a container; the host needs nothing else (no Wine, no Python).
 * **The disc images**, `ISOS/NOLF1-CD1.iso` and `ISOS/NOLF1-CD2.iso` (or
   `NOLF_ISOS=<dir>`), matching `ISOS/SHA256SUMS`. See `ISOS/README.md`.
-* **The compilers** in `toolchain/`: `make toolchain` downloads and assembles
-  them (about 2 GB of downloads, 450 MB installed). See `toolchain/README.md`.
+* **The compilers**, the `toolchains/` submodule: `git submodule update
+  --init` (about 540 MB). See `toolchains/README.md`.
 * About 6 GB of disk: 2.6 GB for the docker image, 2.8 GB for `out/` (the
   game directory, its tar, and the 0.6 GB Wine prefix), a few hundred MB of
   objects.
@@ -20,7 +20,7 @@ parts of it by hand.
 1. Checks both disc images against `ISOS/SHA256SUMS` (on the host, before
    anything else; the result is remembered in `out/.isos-verified` while the
    files are unchanged).
-2. Checks the compilers are in `toolchain/`.
+2. Checks the compilers are in `toolchains/`.
 3. Builds the docker image `nolfsrc-build` from `docker/Dockerfile` if
    needed (a few minutes, once).
 4. Runs `build/all.sh` in a throwaway container (`--rm --init`, named
@@ -158,7 +158,7 @@ passes; check that after any such change (`build/engine.sh <target>-one
 
 The game DLLs are also built from the same paths wherever the checkout is:
 `build/build.sh` makes the checkout's `src/` Wine's drive `S:` and its
-`toolchain/` drive `T:`, so their compiles run in `S:\game\...` with
+`toolchains/` drive `T:`, so their compiles run in `S:\game\...` with
 `T:\...` on the include path. VC6's output for `CShell.dll` and
 `Object.lto` depends on those paths (the same source built in two
 directories of different path lengths gave different binaries), so without

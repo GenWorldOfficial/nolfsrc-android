@@ -9,8 +9,8 @@
 #   make help     everything else
 #
 # Needs only docker on the host, the two disc images in ISOS/ (ISOS/README.md)
-# and the compilers in toolchain/ (`make toolchain` downloads them; see
-# toolchain/README.md). Every step runs in a throwaway container of the image
+# and the compilers, the toolchains/ submodule (`git submodule update --init`;
+# see toolchains/README.md). Every step runs in a throwaway container of the image
 # docker/Dockerfile describes, with this checkout mounted at /repo, as you.
 
 IMAGE     ?= nolfsrc-build
@@ -32,18 +32,17 @@ DOCKER_RUN = docker run --rm --init --name $(CONTAINER) \
 	-u $(shell id -u):$(shell id -g) -e HOME=/tmp/home \
 	-v $(CURDIR):/repo -w /repo $(ISO_MOUNTS) $(SRC_MOUNT) $(IMAGE)
 
-TOOLCHAIN_FILES = toolchain/msvc600/VC98/Bin/CL.EXE \
-	toolchain/msvc-6.00-8168/BIN/cl.exe \
-	toolchain/msvc-6.00-8447/BIN/cl.exe \
-	toolchain/icl-4.0/BIN/icl.exe
+TOOLCHAIN_FILES = toolchains/msvc-6.00-9782/VC98/Bin/CL.EXE \
+	toolchains/msvc-6.00-8168/BIN/cl.exe \
+	toolchains/msvc-6.00-8447/BIN/cl.exe \
+	toolchains/icl-4.0/BIN/icl.exe
 
-.PHONY: all game debug modern modern-debug image toolchain check-isos check-toolchain test progress progress-update shell clean distclean help
+.PHONY: all game debug modern modern-debug image check-isos check-toolchain test progress progress-update shell clean distclean help
 
 all: game
 
 help:
 	@echo "make            build everything into out/game/ and out/nolf-game.tar"
-	@echo "make toolchain  download and assemble the compilers in toolchain/ (once)"
 	@echo "make debug      the game with symbols and NOLFSRC_DEBUG logging, in out/game-debug/"
 	@echo "make modern     the game with NOLFSRC_MODERN (the retail bugs fixed), in out/game-modern/"
 	@echo "make modern-debug  both, in out/game-modern-debug/"
@@ -72,15 +71,12 @@ image:
 	  { echo "error: could not build the docker image (docker/Dockerfile)" >&2; exit 1; }
 	@echo "== docker image $(IMAGE) ready"
 
-toolchain: image
-	$(DOCKER_RUN) bash toolchain/fetch.sh
-
 check-isos:
 	@NOLF_ISOS="$(ISODIR)" bash -c 'source build/isos.sh && iso_verify'
 
 check-toolchain:
 	@for f in $(TOOLCHAIN_FILES); do \
-	  [ -f "$$f" ] || { echo "error: $$f is missing -- run make toolchain first (see toolchain/README.md)" >&2; exit 1; }; \
+	  [ -f "$$f" ] || { echo "error: $$f is missing -- the compilers are the toolchains/ submodule: run git submodule update --init (see toolchains/README.md)" >&2; exit 1; }; \
 	done
 
 test: image

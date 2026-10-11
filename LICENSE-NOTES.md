@@ -39,8 +39,8 @@ Optionally, for `make progress`: Monolith's *NOLF Source Code v1.003*
 release (`NOLF_SOURCE`), whose prebuilt lithshared libraries the scoring
 compares ours against. Only those seven `.lib` files are read.
 
-The compilers in `toolchain/` (Microsoft Visual C++ 6.0, Intel C/C++ 4.0;
-see `toolchain/README.md`), under their own licences.
+The compilers in `toolchains/` (Microsoft Visual C++ 6.0, Intel C/C++ 4.0;
+see `toolchains/README.md`), under their own licences.
 
 The docker image is built from Ubuntu 24.04 packages (Wine, Python, Xvfb,
 ImageMagick, ...), each under its own licence.

@@ -2,12 +2,6 @@
 # README.md are tracked.
 /ISOS/*.iso
 
-# The compilers (see toolchain/README.md, which is tracked)
-/toolchain/*
-!/toolchain/README.md
-!/toolchain/COMPILERS.md
-!/toolchain/fetch.sh
-
 # Everything the build writes
 /out/
 # worktrees made by tools/agentwt.sh

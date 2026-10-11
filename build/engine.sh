@@ -6,11 +6,11 @@
 #
 # The compiler revision and flags differ per binary, and for some files
 # within one binary, because they reproduce what the original build used:
-#   ltmsg, sres, launcher   cl 12.00 (toolchain/msvc600), /O2
+#   ltmsg, sres, launcher   cl 12.00 (toolchains/msvc-6.00-9782), /O2
 #   server                  cl 12.00.8447, /O1, no /GX; localdriver.cpp /Os
 #   lithtech                cl 12.00.8447, /O2; a few files with their own
 #                           flags (NOPOOL_TUS, OD_TUS, GX_TUS below)
-#   d3d                     Intel C/C++ 4.0 (toolchain/icl-4.0), with the
+#   d3d                     Intel C/C++ 4.0 (toolchains/icl-4.0), with the
 #                           per-file flag groups below; new files encode
 #                           their group in their name (w<N>_*_<flags>.cpp)
 #                           -- except D3D_CL_TUS, StdLith's l_allocator.cpp,

@@ -84,8 +84,9 @@ You need Linux with Docker, the two disc images, and the compilers:
 
 1. Put `NOLF1-CD1.iso` and `NOLF1-CD2.iso` in `ISOS/` (see `ISOS/README.md`; they
    are checked against `ISOS/SHA256SUMS`).
-2. Run `make toolchain` once: it downloads the original compilers from
-   public archives into `toolchain/` (about 2 GB; see `toolchain/README.md`).
+2. Fetch the compilers, which are the `toolchains/` submodule:
+   `git submodule update --init` (or clone with `--recurse-submodules`;
+   about 540 MB, see `toolchains/README.md`).
 3. Run
 
 ```sh
@@ -156,5 +157,5 @@ that breaks a function that matched before.
 | `progress/` | the record of what is byte-identical so far, and what `make progress` checks against it |
 | `docker/` | the build image (Ubuntu 24.04 + Wine) |
 | `ISOS/` | where the disc images go, and their checksums |
-| `toolchain/` | the compilers: `make toolchain` assembles them (not in the repository) |
+| `toolchains/` | the compilers (a submodule) |
 | `out/` | everything the build produces |

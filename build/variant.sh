@@ -80,7 +80,7 @@ tar -C "$REPO" -cf - \
     --exclude='__pycache__' \
     src build tools ISOS/SHA256SUMS ISOS/README.md | tar -C "$TREE" -xf -
 # the compilers, and the disc images where build/isos.sh looks for them
-[ -L "$TREE/toolchain" ] || ln -s ../../toolchain "$TREE/toolchain"
+[ -L "$TREE/toolchains" ] || ln -s ../../toolchains "$TREE/toolchains"
 export NOLF_ISOS="${NOLF_ISOS:-$REPO/ISOS}"
 
 export NOLFSRC_CFLAGS="$CFLAGS"

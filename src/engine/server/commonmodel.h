@@ -605,7 +605,7 @@ public:
 	// The body is reconstructed in commonmodel.cpp and every statement of
 	// it is accounted for; what does not reproduce is that the shipped
 	// build expanded `CMoArray<T, NoCache>::CMoArray(uint32)` inline at the
-	// first of the two collection temporaries, and no VC6 in toolchain/
+	// first of the two collection temporaries, and no VC6 in toolchains/
 	// will do that at /Ob1. The full finding is on the definition.
 	//
 	// Fourteen sub-objects run before the body, in offset order, which is

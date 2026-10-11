@@ -1,6 +1,6 @@
 # The build image: Ubuntu 24.04 with its distro Wine (32-bit), Python 3, and
 # what the scripted playtest needs (Xvfb, xdotool, xwd, ImageMagick, Mesa),
-# what toolchain/fetch.sh needs to download and unpack the compilers'
+# what toolchains/fetch.sh needs to rebuild the compiler trees from their
 # original media (curl, bsdtar, 7z, cabextract, unar, unshield), and objdump
 # (binutils), which the reconstruction tools disassemble with.
 #

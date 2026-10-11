@@ -8,7 +8,7 @@
 #   build/all.sh            (inside the build container, e.g. `make shell`)
 #   make test               (then: play it -- tools/playtest.sh on out/game/)
 #
-# Needs: the toolchain (toolchain/, see toolchain/README.md), Wine (the build
+# Needs: the toolchain (toolchains/, see toolchains/README.md), Wine (the build
 # container has it), and the disc images NOLF1-CD1.iso / NOLF1-CD2.iso in
 # ISOS/ (or $NOLF_ISOS). Nothing else -- in particular no retail install and
 # no retail game binaries.

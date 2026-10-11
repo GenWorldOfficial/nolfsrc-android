@@ -41,7 +41,7 @@
 //     +0x5c 0x00439f80  ListDeviceNames         <- below
 //
 //  That it is DirectInput and not something engine-grown is settled by the
-//  constants, all checked against toolchain/msvc-6.00-8447/INCLUDE/dinput.h:
+//  constants, all checked against toolchains/msvc-6.00-8447/INCLUDE/dinput.h:
 //  0x004a3a4c/0x004a3a5c are GUID_SysKeyboard/GUID_SysMouse, 0x004a3b1c is
 //  IID_IDirectInputDevice2A, 0x004a3914 is c_dfDIJoystick (dwSize 24,
 //  dwObjSize 16, dwFlags 1, dwDataSize 0x50, dwNumObjs 0x2c), and the ten

@@ -1,12 +1,12 @@
 # Source this to get the VC6-under-Wine build environment. It runs inside the
 # build container (docker/Dockerfile; `make shell` gives you one), where Wine
-# is on PATH and the toolchain is toolchain/ in this checkout
-# (toolchain/README.md).
+# is on PATH and the toolchain is toolchains/ in this checkout
+# (toolchains/README.md).
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-MSVC="$REPO/toolchain/msvc600"
+MSVC="$REPO/toolchains/msvc-6.00-9782"
 if [ ! -f "$MSVC/VC98/Bin/CL.EXE" ]; then
-    echo "error: $MSVC/VC98/Bin/CL.EXE not found -- the toolchain is missing (toolchain/README.md)" >&2
+    echo "error: $MSVC/VC98/Bin/CL.EXE not found -- the toolchain is missing (toolchains/README.md)" >&2
     return 1 2>/dev/null || exit 1
 fi
 if ! command -v wine >/dev/null 2>&1; then
@@ -25,9 +25,9 @@ export WINEDLLOVERRIDES="mscoree,mshtml="
 # depends on where the compiler finds things: the same source built in two
 # directories whose paths differ in length gave two different binaries. So
 # build/build.sh sets NOLFSRC_DRIVES=1 before sourcing this, and then the
-# checkout's src/ is Wine's drive S: and its toolchain/ drive T: (links in
+# checkout's src/ is Wine's drive S: and its toolchains/ drive T: (links in
 # the prefix's dosdevices/), and the compilers see the same paths --
-# S:\game\ObjectDLL as their working directory, T:\msvc600\... in INCLUDE --
+# S:\game\ObjectDLL as their working directory, T:\msvc-6.00-9782\... in INCLUDE --
 # wherever the checkout is (the main one, a worktree, out/release-tree/).
 # Everything else keeps Z:, and the links are removed for it: Intel C/C++
 # builds a different d3d.ren from a working directory on a drive of its own,
@@ -36,7 +36,7 @@ WINEPFX="${WINEPREFIX:-$HOME/.wine}"
 if [ "${NOLFSRC_DRIVES:-0}" = 1 ]; then
     [ -d "$WINEPFX/dosdevices" ] || "$WINE" cmd /c exit >/dev/null 2>&1 || true
     ln -sfn "$REPO/src" "$WINEPFX/dosdevices/s:"
-    ln -sfn "$REPO/toolchain" "$WINEPFX/dosdevices/t:"
+    ln -sfn "$REPO/toolchains" "$WINEPFX/dosdevices/t:"
 else
     rm -f "$WINEPFX/dosdevices/s:" "$WINEPFX/dosdevices/t:"
 fi
@@ -44,7 +44,7 @@ wpath() {  # wpath <unix path> -> its Windows path
     local p="$1"
     case "${NOLFSRC_DRIVES:-0}:$p" in
         1:"$REPO/src"|1:"$REPO/src"/*)             p="s:${p#"$REPO/src"}" ;;
-        1:"$REPO/toolchain"|1:"$REPO/toolchain"/*) p="t:${p#"$REPO/toolchain"}" ;;
+        1:"$REPO/toolchains"|1:"$REPO/toolchains"/*) p="t:${p#"$REPO/toolchains"}" ;;
         *)                                         p="z:$p" ;;
     esac
     echo "${p//\//\\}"
@@ -100,32 +100,33 @@ nolfsrc_cl_args() {
 run_cl()   { nolfsrc_cl_args "$@"; "$WINE" "$MSVC/VC98/Bin/CL.EXE" "${NOLFSRC_ARGS[@]}"; }
 
 # Compiler-revision override: CL_REV=8168|8447 makes run_cl use
-# toolchain/msvc-6.00-<rev> (with its own CRT headers) instead of the default
-# msvc600 (cl 12.00.8804). The build scripts set it per target, to the
-# revision each original binary was built with.
+# toolchains/msvc-6.00-<rev> (with its own CRT headers) instead of the
+# default msvc-6.00-9782 (cl 12.00.8804, back end 12.00.9782). The build
+# scripts set it per target, to the revision each original binary was built
+# with.
 CLDIR=""
-if [ -n "${CL_REV:-}" ] && [ -d "$REPO/toolchain/msvc-6.00-$CL_REV" ]; then
-    CLDIR="$REPO/toolchain/msvc-6.00-$CL_REV"
-elif [ -n "${CL_REV:-}" ] && [ -d "$REPO/toolchain/msvc-$CL_REV" ]; then
-    CLDIR="$REPO/toolchain/msvc-$CL_REV"
+if [ -n "${CL_REV:-}" ] && [ -d "$REPO/toolchains/msvc-6.00-$CL_REV" ]; then
+    CLDIR="$REPO/toolchains/msvc-6.00-$CL_REV"
+elif [ -n "${CL_REV:-}" ] && [ -d "$REPO/toolchains/msvc-$CL_REV" ]; then
+    CLDIR="$REPO/toolchains/msvc-$CL_REV"
 fi
 if [ -n "$CLDIR" ]; then
     WCLDIR="$(wpath "$CLDIR")"
     run_cl() { INCLUDE="$WCLDIR\\INCLUDE;$WCLDIR\\MFC\\INCLUDE;$WNOLFSRC" \
                nolfsrc_cl_args "$@"; "$WINE" "$CLDIR/BIN/cl.exe" "${NOLFSRC_ARGS[@]}"; }
 fi
-# d3d.ren is built with Intel C/C++ 4.0 (toolchain/icl-4.0), as the original
+# d3d.ren is built with Intel C/C++ 4.0 (toolchains/icl-4.0), as the original
 # was; icl uses msvc-6.00-8168's headers and libraries beside its own.
-ICLDIR="$REPO/toolchain/icl-4.0"
+ICLDIR="$REPO/toolchains/icl-4.0"
 run_icl() {
     if [ ! -f "$ICLDIR/BIN/icl.exe" ]; then
         echo "error: $ICLDIR/BIN/icl.exe not present." >&2
-        echo "       d3d.ren needs Intel C/C++ 4.0; see toolchain/README.md" >&2
+        echo "       d3d.ren needs Intel C/C++ 4.0; see toolchains/README.md" >&2
         return 1
     fi
     local WI WV
     WI="$(wpath "$ICLDIR")"
-    WV="$(wpath "$REPO/toolchain/msvc-6.00-8168")"
+    WV="$(wpath "$REPO/toolchains/msvc-6.00-8168")"
     nolfsrc_cl_args "$@"
     INCLUDE="$WI\\INCLUDE;$WV\\INCLUDE;$WNOLFSRC" LIB="$WI\\LIB;$WV\\LIB" \
         "$WINE" "$ICLDIR/BIN/icl.exe" "${NOLFSRC_ARGS[@]}"
@@ -153,7 +154,7 @@ nolfsrc_release_tree() {
     python3 "$REPO/tools/releasesrc.py" outputs "$REPO/src" "$tree/src" || exit 1
     rm -rf "$tree/build" "$tree/tools"
     tar -C "$REPO" -cf - --exclude='__pycache__' build tools | tar -C "$tree" -xf -
-    [ -L "$tree/toolchain" ] || ln -s ../../toolchain "$tree/toolchain"
+    [ -L "$tree/toolchains" ] || ln -s ../../toolchains "$tree/toolchains"
     ( cd "$tree" && NOLFSRC_IN_RELEASE_TREE=1 \
         NOLF_REFERENCE="$(cd "$REPO" && realpath -m "${NOLF_REFERENCE:-out/reference}")" \
         bash "build/$script" "$@" ) || rc=$?

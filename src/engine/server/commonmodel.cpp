@@ -683,7 +683,7 @@ uint32 g_nModelDataBytes;                   // 0x10058724 (uninitialised)
 // almost entirely constants.
 //
 // NEAR, 567 of 581 bytes, and the fourteen missing bytes are one inline
-// decision that no VC6 in toolchain/ will make. The shipped build expanded
+// decision that no VC6 in toolchains/ will make. The shipped build expanded
 // `CMoArray<T, NoCache>::CMoArray(uint32)` inline at the first temporary —
 // vptr store, m_pArray and m_nElements zeroed, then a call to the
 // out-of-line `Init(0, 0)` (0x10019903) — where ours emits a call to the

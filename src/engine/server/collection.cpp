@@ -157,7 +157,7 @@
 //     alone makes VC6 expand ALL FIVE and the function comes out at 252
 //     bytes with two relocations -- so what our build cannot reach is the
 //     PARTIAL spend, three of five. With the true two-member body every
-//     revision in toolchain/ expands none of them: 8168, 8447 and 8966 all
+//     revision in toolchains/ expands none of them: 8168, 8447 and 8966 all
 //     give the same 275 bytes and seven relocations. Neither is it the
 //     helper's spelling. Three forms were measured and all three give the
 //     identical 275/7: the in-class operator= below, the compiler's
