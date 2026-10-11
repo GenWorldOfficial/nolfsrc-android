@@ -1116,7 +1116,9 @@ void    sub_10021d10(const char* pszFmt, ...);          // console print
 
 
 // ======================================================================= //
-//  0x10036e40  913 bytes.  MakeScreenShot(pFilename).
+//  0x10036e40  913 bytes.  MakeScreenShot(pFilename).  IDENTICAL: the
+//  pixel count is a named local, so the bitmap size reuses it
+//  (`lea 0x36(%ebx,%ebx,2)`) and %ebx is taken for it all through.
 // ======================================================================= //
 void sub_10036e40(const char* pFilename)
 {
@@ -1126,6 +1128,7 @@ void sub_10036e40(const char* pFilename)
 	BmpInfoHeader26     bih;
 	uint32              nWidth;
 	uint32              nHeight;
+	uint32              nPixels;
 	uint32              x;
 	uint32              y;
 	uint32*             pPixel;
@@ -1145,7 +1148,8 @@ void sub_10036e40(const char* pFilename)
 	nWidth  = ddsd.dwWidth;
 	nHeight = ddsd.dwHeight;
 
-	if (!buffer.SetSize(nWidth * nHeight))
+	nPixels = nWidth * nHeight;
+	if (!buffer.SetSize(nPixels))
 		return;
 
 	ddsd.dwSize = sizeof(ddsd);
@@ -1187,7 +1191,7 @@ void sub_10036e40(const char* pFilename)
 	memset(&bih, 0, sizeof(bih));
 
 	bfh.bfType    = 0x4d42;                             // 'BM'
-	bfh.bfSize    = nHeight * nWidth * 3 + sizeof(bfh) + sizeof(bih);
+	bfh.bfSize    = nPixels * 3 + sizeof(bfh) + sizeof(bih);
 	bfh.bfOffBits = sizeof(bfh) + sizeof(bih);
 
 	bih.biSize        = sizeof(bih);
