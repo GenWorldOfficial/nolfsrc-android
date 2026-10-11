@@ -64,11 +64,11 @@ of each binary's code, by size, those functions make up.
 | `server.dll` | the server | 2,027 / 2,270 | 211,857 / 249,608 bytes | `████████████████░░░░` 84.8% | 0 | 36 |
 | `d3d.ren` | the Direct3D renderer | 739 / 936 | 129,857 / 514,535 bytes | `█████░░░░░░░░░░░░░░░` 25.2% | 0 | 49 |
 | `NOLF.exe` | the launcher | 172 / 220 | 34,056 / 35,020 bytes | `███████████████████░` 97.2% | 0 | 6 |
-| lithshared | the seven shared libraries | 793 / 798 | 94,450 / 96,637 bytes | `███████████████████░` 97.7% | 0 | 0 |
-| `CShell.dll` | the game: client | 3,710 / 4,929 | 914,135 / 933,394 bytes | `███████████████████░` 97.9% | 15 | 1 |
-| `Object.lto` | the game: server objects | 4,873 / 6,910 | 1,231,935 / 1,261,338 bytes | `███████████████████░` 97.6% | 13 | 9 |
+| lithshared | the shared libraries | 807 / 812 | 96,039 / 98,226 bytes | `███████████████████░` 97.7% | 0 | 0 |
+| `CShell.dll` | the game: client | 3,715 / 4,928 | 914,920 / 933,114 bytes | `███████████████████░` 98.0% | 0 | 0 |
+| `Object.lto` | the game: server objects | 4,885 / 6,919 | 1,239,233 / 1,261,040 bytes | `███████████████████░` 98.2% | 0 | 0 |
 | `CRes.dll` | the game's resources, not in the total | 411 / 411 resources | 704,745 / 704,745 bytes | `████████████████████` 100.0% | 0 | -- |
-| **All** | | **15,344 / 19,492** | **3,053,447 / 3,661,538 bytes** | `████████████████░░░░` **83.3%** | **28** | **193** |
+| **All** | | **15,375 / 19,514** | **3,063,119 / 3,662,549 bytes** | `████████████████░░░░` **83.6%** | **0** | **183** |
 <!-- progress:end -->
 
 Every function in that table is recorded in `progress/identical.txt`, and
