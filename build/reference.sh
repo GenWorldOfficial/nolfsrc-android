@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Extract the retail engine images -- lithtech.exe, server.dll, d3d.ren,
-# NOLF.exe, ltmsg.dll -- from disc 2, and the Game of the Year game DLLs --
-# CShell.dll, Object.lto, CRes.dll -- out of disc 1's NOLFGOTY.REZ, into
+# NOLF.exe, ltmsg.dll -- and the Game of the Year game DLLs -- CShell.dll,
+# Object.lto, CRes.dll, out of NOLFGOTY.REZ -- from the installed retail game
+# (build/retail.sh) into
 # out/reference/, with their function
 # and vtable tables (<stem>-functions.csv, <stem>-vtables.csv), for the checks that
 # compare our build against them: `build/engine.sh <target> verify`, the
@@ -13,8 +14,8 @@
 #                                  Python 3; no Wine involved)
 set -e
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
-source build/isos.sh
-python3 tools/discextract.py reference "$(iso_dir)" out/reference
+source build/retail.sh
+python3 tools/retailextract.py reference "$(retail_dir)" out/reference
 
 # The function table of each image (tools/enumfuncs.py --csv): addr, size,
 # how the start was found, and the name an error-tag literal or export gives

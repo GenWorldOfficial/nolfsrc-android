@@ -1,7 +1,3 @@
-# The disc images (you provide them; see ISOS/README.md). SHA256SUMS and
-# README.md are tracked.
-/ISOS/*.iso
-
 # Everything the build writes
 /out/
 # worktrees made by tools/agentwt.sh

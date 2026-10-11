@@ -23,9 +23,10 @@ blocks. See `LICENSE-NOTES.md` for what is whose.
 This project, and its modern build in particular, is not made or supported by
 Monolith Productions.
 
-**No game data is included.** You need the two original CDs: the build reads
-the game's data (and the Miles and Bink sound/video runtime, the only
-binaries not built from source) straight from images of them.
+**No game data is included.** The build takes the game's data (and the Miles
+and Bink sound/video runtime, the only binaries not built from source) from
+the retail Game of the Year Edition, which the `rez/` submodule installs from
+the redump images of its two discs, fetched from archive.org.
 
 ## Roadmap
 
@@ -80,18 +81,18 @@ resource-only `ltmsg.dll` and `sres.dll` yet.
 
 ## Build
 
-You need Linux with Docker, the two disc images, and the compilers:
+You need Linux with Docker and the two submodules:
 
-1. Put `NOLF1-CD1.iso` and `NOLF1-CD2.iso` in `ISOS/` (see `ISOS/README.md`; they
-   are checked against `ISOS/SHA256SUMS`).
-2. Fetch the compilers, which are the `toolchains/` submodule:
-   `git submodule update --init` (or clone with `--recurse-submodules`;
-   about 560 MB, see `toolchains/README.md`).
-3. Run
+1. Fetch them: `git submodule update --init` (or clone with
+   `--recurse-submodules`). `toolchains/` is the compilers (about 560 MB,
+   see `toolchains/README.md`); `rez/` fetches and installs the retail game
+   (see `rez/README.md`).
+2. Run
 
 ```sh
-make            # -> out/nolf-legacy-release/ and out/nolf-legacy-release.tar  (about 3 minutes,
-                #    plus about 3 for the docker image the first time)
+make            # -> out/nolf-legacy-release/ and out/nolf-legacy-release.tar
+                #    (about 3 minutes; the first time, also the docker image
+                #    and the retail game's download and install)
 make test       # optional: plays two levels under Xvfb with scripted input
 make debug      # optional: the same game with symbols and debug logging,
                 #    in out/nolf-legacy-debug/
@@ -156,6 +157,6 @@ that breaks a function that matched before.
 | `guides/` | how to reconstruct a function so it compiles to the retail bytes: start here to contribute |
 | `progress/` | the record of what is byte-identical so far, and what `make progress` checks against it |
 | `docker/` | the build image (Ubuntu 24.04 + Wine) |
-| `ISOS/` | where the disc images go, and their checksums |
 | `toolchains/` | the compilers (a submodule) |
+| `rez/` | the retail game the build takes its data from: fetches the disc images and installs the game from them (a submodule) |
 | `out/` | everything the build produces |

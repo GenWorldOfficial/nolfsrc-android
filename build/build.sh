@@ -110,14 +110,14 @@ compile_list() {
 
 # CRes.dll's resources: ClientRes.rc, plus what the retail Game of the Year
 # CRES.dll has and Monolith's v1.003 source of it lacks -- the GOTY content's
-# strings and its credits -- which build/all.sh extracts from the disc into
-# goty/ (tools/discextract.py goty). Compiled from goty/, where rc finds the
+# strings and its credits -- which build/all.sh extracts from the retail game
+# into goty/ (tools/retailextract.py goty). Compiled from goty/, where rc finds the
 # GOTY credits.txt before ClientRes.rc's own (rc looks in its working
 # directory first); everything else ClientRes.rc names comes from /i ..
 cres_rc() {  # cres_rc <outdir, relative to src/game/ClientRes>  (run in ClientRes)
     if [ ! -f goty/goty.rc ] || [ ! -f goty/credits.txt ]; then
         echo "error: src/game/ClientRes/goty/ is missing -- build/all.sh writes it" >&2
-        echo "       (or: python3 tools/discextract.py goty <isodir> src/game/ClientRes/goty)" >&2
+        echo "       (or: python3 tools/retailextract.py goty <retaildir> src/game/ClientRes/goty)" >&2
         return 1
     fi
     printf '#include "..\\ClientRes.rc"\r\n#include "goty.rc"\r\n' > goty/cres_goty.rc

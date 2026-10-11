@@ -1,24 +1,27 @@
 #!/usr/bin/env bash
 # THE build: a runnable No One Lives Forever (GOTY) in out/nolf-legacy-release/, with every
 # binary compiled from this repository's source and only DATA taken from the
-# two disc images.
+# retail game.
 #
-#   make                    (on the host: builds the docker image, checks
-#                            the disc images, runs this in a container)
+#   make                    (on the host: builds the docker image, installs
+#                            and checks the retail game, runs this in a
+#                            container)
 #   build/all.sh            (inside the build container, e.g. `make shell`)
 #   make test               (then: play it -- tools/playtest.sh on out/nolf-legacy-release/)
 #
 # Needs: the toolchain (toolchains/, see toolchains/README.md), Wine (the build
-# container has it), and the disc images NOLF1-CD1.iso / NOLF1-CD2.iso in
-# ISOS/ (or $NOLF_ISOS). Nothing else -- in particular no retail install and
-# no retail game binaries.
+# container has it), and the retail Game of the Year Edition (Europe) as the
+# rez/ submodule installs it from its two disc images (rez/games/nolf-eu-goty/,
+# build/retail.sh). It only reads that directory: no retail game binary is
+# run, linked or copied into the game, apart from the middleware of step 2.
 #
 # The steps, in order:
-#   1. resources          game data off the discs: the four .rez archives
+#   1. resources          game data from the retail game: the four .rez archives
 #                         (with the retail game DLLs inside them zeroed),
 #                         configs, text, movies. No binary.
 #   2. third-party runtime  Miles (mss32.dll + its .flt/.m3d/.asi/.as6
-#                         providers) and Bink (binkw32.dll), off the discs.
+#                         providers) and Bink (binkw32.dll), from the retail
+#                         game.
 #                         The ONLY binaries not built here: licensed
 #                         middleware with no source, which lithtech.exe and
 #                         NOLF.exe import -- the game cannot load without
@@ -26,7 +29,7 @@
 #                         to find and to replace.
 #   2b. launcher art      the splash bitmap, palette, music, icon and cursors
 #                         that launcher.rc compiles into NOLF.exe, read out of
-#                         the retail NOLF.exe's resource section on the disc
+#                         the retail NOLF.exe's resource section
 #                         into src/engine/launcher/res/ (data, not code; the
 #                         retail image is parsed, never copied or run).
 #   3. clean              every build output from a previous run is removed,
@@ -67,10 +70,10 @@ fi
 export WINEDEBUG=-all
 
 cd "$REPO"
-source build/isos.sh
+source build/retail.sh
 OUT="${NOLF_GAME_OUT:-out/nolf-legacy-release}"
-ISOS="$(iso_dir)"
-iso_verify
+RETAIL="$(retail_dir)"
+retail_verify
 T0=$(date +%s)
 step() { echo; echo "######## $* ($(( $(date +%s) - T0 ))s)"; }
 need() {  # need <file> <what> [log]: a build output must exist
@@ -80,8 +83,8 @@ need() {  # need <file> <what> [log]: a build output must exist
     exit 1
 }
 
-step "1. resources: game data from $ISOS -> $OUT"
-python3 tools/discextract.py resources "$ISOS" "$OUT"
+step "1. resources: game data from $RETAIL -> $OUT"
+python3 tools/retailextract.py resources "$RETAIL" "$OUT"
 # autoexec.cfg starts as the shipped defaults (the engine rewrites it on
 # exit); a rebuild keeps the player's.
 [ -f "$OUT/autoexec.cfg" ] || cp "$OUT/defaults.cfg" "$OUT/autoexec.cfg"
@@ -98,14 +101,14 @@ printf -- '-rez nolf.rez -rez nolf2.rez -rez nolfu003.rez -rez nolfgoty.rez -rez
 cp build/game-scripts/run.sh build/game-scripts/run-launcher.sh "$OUT/"
 chmod +x "$OUT/run.sh" "$OUT/run-launcher.sh"
 
-step "2. THIRD-PARTY RUNTIME: Miles + Bink from $ISOS (the only binaries not built here)"
-python3 tools/discextract.py thirdparty "$ISOS" "$OUT"
+step "2. THIRD-PARTY RUNTIME: Miles + Bink from $RETAIL (the only binaries not built here)"
+python3 tools/retailextract.py thirdparty "$RETAIL" "$OUT"
 
-step "2b. launcher art: resources of the retail NOLF.exe on $ISOS -> src/engine/launcher/res/"
-python3 tools/discextract.py launcherres "$ISOS" src/engine/launcher/res
+step "2b. launcher art: resources of the retail NOLF.exe in $RETAIL -> src/engine/launcher/res/"
+python3 tools/retailextract.py launcherres "$RETAIL" src/engine/launcher/res
 
-step "2c. Game of the Year text: the retail CRES.dll on $ISOS -> src/game/ClientRes/goty/"
-python3 tools/discextract.py goty "$ISOS" src/game/ClientRes/goty
+step "2c. Game of the Year text: the retail CRES.dll in $RETAIL -> src/game/ClientRes/goty/"
+python3 tools/retailextract.py goty "$RETAIL" src/game/ClientRes/goty
 
 step "3. clean: previous build outputs"
 rm -rf src/engine/*/Release src/lithshared/*/Release src/lithshared/*/Debug \
@@ -161,7 +164,7 @@ install_built src/game/ObjectDLL/Final_Release/Object.lto    custom/object.lto
 install_built src/engine/sres/Release/sres.dll           custom/sres.dll
 
 step "8. audit: every PE file in $OUT"
-python3 tools/discextract.py audit "$OUT"
+python3 tools/retailextract.py audit "$OUT"
 
 # (NOLF_PACKAGE=0 skips it: build/variant.sh makes no tar)
 if [ "${NOLF_PACKAGE:-1}" = 1 ]; then

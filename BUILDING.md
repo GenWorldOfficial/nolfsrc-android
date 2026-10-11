@@ -7,35 +7,42 @@ parts of it by hand.
 
 * **Linux with Docker.** The compilers are Win32 programs and run under Wine
   in a container; the host needs nothing else (no Wine, no Python).
-* **The disc images**, `ISOS/NOLF1-CD1.iso` and `ISOS/NOLF1-CD2.iso` (or
-  `NOLF_ISOS=<dir>`), matching `ISOS/SHA256SUMS`. See `ISOS/README.md`.
-* **The compilers**, the `toolchains/` submodule: `git submodule update
-  --init` (about 560 MB). See `toolchains/README.md`.
-* About 6 GB of disk: 2.6 GB for the docker image, 2.8 GB for `out/` (the
-  game directory, its tar, and the 0.6 GB Wine prefix), a few hundred MB of
-  objects.
+* **The two submodules**: `git submodule update --init`.
+  * `toolchains/`, the compilers (about 560 MB). See `toolchains/README.md`.
+  * `rez/`, the retail game the build takes its data from. It fetches the
+    redump images of the two discs of *No One Lives Forever: Game of the Year
+    Edition* (Europe) from archive.org, checks them, and installs the game
+    from them as its own setup would, into `rez/games/nolf-eu-goty/`, checked
+    file by file against `rez/games.sha256`. `make` does this the first time
+    (`make retail`); see `rez/README.md`.
+* About 9 GB of disk: 2.6 GB for the docker image, 2.8 GB for `out/` (the
+  game directory, its tar, and the 0.6 GB Wine prefix), about 3 GB in `rez/`
+  (the disc images, zipped and unzipped, and the installed game), a few
+  hundred MB of objects.
 
 ## What `make` does
 
-1. Checks both disc images against `ISOS/SHA256SUMS` (on the host, before
-   anything else; the result is remembered in `out/.isos-verified` while the
-   files are unchanged).
-2. Checks the compilers are in `toolchains/`.
-3. Builds the docker image `nolfsrc-build` from `docker/Dockerfile` if
+1. Checks the compilers are in `toolchains/` and that `rez/` is there.
+2. Builds the docker image `nolfsrc-build` from `docker/Dockerfile` if
    needed (a few minutes, once).
+3. `make retail`, in a container: the first time, fetches the two disc
+   images and installs the retail game from them (`rez/fetch-isos.sh
+   nolf-eu-goty`, `rez/install-games.sh nolf-eu-goty`); every time, checks
+   the installed files against `rez/games.sha256` (the result is remembered
+   in `out/.retail-verified` while the files are unchanged). See
+   `build/retail.sh`.
 4. Runs `build/all.sh` in a throwaway container (`--rm --init`, named
-   `nolfsrc-build`), as your user, with the checkout mounted at `/repo` and
-   the disc images read-only at `/isos`. The Wine prefix lives in
-   `out/wineprefix`.
+   `nolfsrc-build`), as your user, with the checkout (and so `rez/`) mounted
+   at `/repo`. The Wine prefix lives in `out/wineprefix`.
 
 `build/all.sh` then:
 
 | Step | What | Output |
 |---|---|---|
-| 1. resources | game data off the discs: the four `.rez` archives, configs, text, movies -- with the retail game DLLs inside the archives overwritten with zeros | `out/nolf-legacy-release/` |
-| 2. third-party runtime | Miles Sound System (`mss32.dll` and its `.flt` / `.m3d` / `.asi` / `.as6` providers) and Bink (`binkw32.dll`) off the discs: licensed middleware with no source, which the engine imports | `out/nolf-legacy-release/` |
-| 2b. launcher art | the splash bitmap, palette, music, icon and cursors `launcher.rc` compiles into `NOLF.exe`, read out of the retail `NOLF.exe`'s resources on the disc | `src/engine/launcher/res/` |
-| 2c. Game of the Year text | the strings of the Game of the Year content (the "Rest and Relaxation" mission) and the GOTY credits, which Monolith's v1.003 source of `CRes.dll` lacks, read out of the retail GOTY `CRES.dll` on the disc; compiled into our `CRes.dll` beside `ClientRes.rc`, so its resources are the retail ones | `src/game/ClientRes/goty/` |
+| 1. resources | game data from the retail game: the four `.rez` archives, configs, text, movies -- with the retail game DLLs inside the archives overwritten with zeros | `out/nolf-legacy-release/` |
+| 2. third-party runtime | Miles Sound System (`mss32.dll` and its `.flt` / `.m3d` / `.asi` / `.as6` providers) and Bink (`binkw32.dll`) from the retail game: licensed middleware with no source, which the engine imports | `out/nolf-legacy-release/` |
+| 2b. launcher art | the splash bitmap, palette, music, icon and cursors `launcher.rc` compiles into `NOLF.exe`, read out of the retail `NOLF.exe`'s resources | `src/engine/launcher/res/` |
+| 2c. Game of the Year text | the strings of the Game of the Year content (the "Rest and Relaxation" mission) and the GOTY credits, which Monolith's v1.003 source of `CRes.dll` lacks, read out of the retail GOTY `CRES.dll` (in `NOLFGOTY.REZ`); compiled into our `CRes.dll` beside `ClientRes.rc`, so its resources are the retail ones | `src/game/ClientRes/goty/` |
 | 3. clean | every object and image from a previous run is removed | |
 | 4. libraries | `build/libs.sh all`; `RegMgr` twice, as Monolith built it for each game DLL: the Release build for `NOLF.exe` and `Object.lto`, the Debug build (`RegMgr_Debug.lib`) for `CShell.dll`, which the Game of the Year `CShell.dll` linked | `src/lithshared/out/*.lib` |
 | 5. game DLLs | `build/build.sh all final`: `CRes.dll`, `CShell.dll`, `Object.lto` | `src/game/*/Release`, `Final_Release` |
@@ -74,7 +81,7 @@ make distclean    # clean, and remove the docker image
 
 `make progress` scores what the last `make` built (it compiles nothing), so
 run `make` first; the retail images it compares against are extracted from
-disc 2 into `out/reference/` the first time. `progress/README.md` describes
+the retail game into `out/reference/` the first time. `progress/README.md` describes
 the scoring and the test.
 
 ## Running parts of the build

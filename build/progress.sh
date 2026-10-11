@@ -3,13 +3,14 @@
 # held to what has already been recorded. See progress/README.md.
 #
 #   make progress           (on the host: runs `build/progress.sh check` in a
-#                            container, with the disc images and $NOLF_SOURCE)
+#                            container, with $NOLF_SOURCE)
 #   make progress-update    (`build/progress.sh update`: record the run)
 #   build/progress.sh check|update   (inside the build container)
 #
 # Scores what the last `make` left in src/engine/*/Release/ and
-# src/lithshared/out/; it compiles nothing. Needs the disc images (the retail
-# images are extracted into out/reference/ the first time) and, to score the
+# src/lithshared/out/; it compiles nothing. Needs the installed retail game
+# (build/retail.sh; its images are extracted into out/reference/ the first
+# time) and, to score the
 # lithshared libraries, NOLF_SOURCE: the NOLF Source Code v1.003 release.
 #
 #   check   tools/progress.py, then tools/ratchet.py check: fails if a

@@ -10,7 +10,7 @@ what has been done.
 | `cshell/` | new game code for `CShell.dll`: every `.cpp` here is compiled into it (with `CShell.dll`'s own flags and include paths, without its precompiled header -- include `stdafx.h` yourself) | `build/build.sh cshell` |
 | `object/` | the same for `Object.lto` | `build/build.sh object` |
 | `cres/` | new strings for `CRes.dll`: every `.rc` here is compiled into it beside `ClientRes.rc`; put the IDs in a `.h` beside it | `build/build.sh cres` |
-| `data/` | game-data recipes, applied to the data from the discs (`data/README.md`) | `build/variant.sh`, `tools/moddata.py` |
+| `data/` | game-data recipes, applied to the data from the retail game (`data/README.md`) | `build/variant.sh`, `tools/moddata.py` |
 
 In a modern build `src/modern/` is on the game DLLs' include path, so retail
 files reach the new code with, for example, `#include "cshell/p1_input.h"`

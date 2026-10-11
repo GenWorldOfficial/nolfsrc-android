@@ -76,7 +76,7 @@ fi
 
 TREE="$REPO/out/build-$VARIANT"
 echo "== $VARIANT tree: src/ build/ tools/ -> out/build-$VARIANT/ (no build outputs)"
-rm -rf "$TREE/src" "$TREE/build" "$TREE/tools" "$TREE/ISOS"
+rm -rf "$TREE/src" "$TREE/build" "$TREE/tools"
 mkdir -p "$TREE"
 tar -C "$REPO" -cf - \
     --exclude='src/engine/*/Release' --exclude='src/lithshared/*/Release' \
@@ -84,10 +84,10 @@ tar -C "$REPO" -cf - \
     --exclude='src/lithshared/out' --exclude='src/game/*/Release' \
     --exclude='src/game/*/Final_Release' --exclude='src/game/*/Debug' \
     --exclude='__pycache__' \
-    src build tools ISOS/SHA256SUMS ISOS/README.md | tar -C "$TREE" -xf -
-# the compilers, and the disc images where build/isos.sh looks for them
+    src build tools | tar -C "$TREE" -xf -
+# the compilers, and the retail game where build/retail.sh looks for it
 [ -L "$TREE/toolchains" ] || ln -s ../../toolchains "$TREE/toolchains"
-export NOLF_ISOS="${NOLF_ISOS:-$REPO/ISOS}"
+[ -L "$TREE/rez" ] || ln -s ../../rez "$TREE/rez"
 
 export NOLFSRC_CFLAGS="$CFLAGS"
 export NOLFSRC_LDFLAGS="$LDFLAGS"

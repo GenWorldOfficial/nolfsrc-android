@@ -1,13 +1,13 @@
 # The build image: Ubuntu 24.04 with its distro Wine (32-bit), Python 3, and
 # what the scripted playtest needs (Xvfb, xdotool, xwd, ImageMagick, Mesa),
-# what toolchains/fetch.sh needs to rebuild the compiler trees from their
-# original media (curl, bsdtar, 7z, cabextract, unar, unshield), and objdump
+# what rez/ needs to fetch the disc images and install the game from them
+# (curl; a C compiler, make and zlib for its vendored unshield), and objdump
 # (binutils), which the reconstruction tools disassemble with.
 #
 # The Makefile builds it as `nolfsrc-build` and runs every step in a
 # throwaway container with the checkout mounted at /repo, as the invoking
-# user. Nothing from the repository, the toolchain or the disc images is
-# baked into the image.
+# user. Nothing from the repository, the toolchain or the game is baked into
+# the image.
 #
 # Why a container at all: Wine is the only way to run the 2000-era
 # compilers, and Ubuntu 24.04's Wine 9.0 is the one this build is known to
@@ -23,7 +23,7 @@ RUN dpkg --add-architecture i386 \
         xvfb xauth xdotool x11-apps imagemagick \
         libgl1:i386 libglu1-mesa:i386 libgl1-mesa-dri:i386 \
         procps \
-        curl ca-certificates libarchive-tools p7zip-full cabextract unar unshield \
+        curl ca-certificates gcc make libc6-dev zlib1g-dev \
  && rm -rf /var/lib/apt/lists/*
 
 COPY entry.sh /usr/local/bin/nolf-entry

@@ -8,20 +8,17 @@
 #                 fails if a function recorded as identical stops matching
 #   make help     everything else
 #
-# Needs only docker on the host, the two disc images in ISOS/ (ISOS/README.md)
-# and the compilers, the toolchains/ submodule (`git submodule update --init`;
-# see toolchains/README.md). Every step runs in a throwaway container of the image
-# docker/Dockerfile describes, with this checkout mounted at /repo, as you.
+# Needs only docker on the host and the two submodules (`git submodule update
+# --init`): the compilers, toolchains/ (toolchains/README.md), and rez/, which
+# fetches the redump images of the Game of the Year discs from archive.org and
+# installs the game from them (rez/README.md; `make retail`, which every build
+# runs first, does it once). Every step runs in a throwaway container of the
+# image docker/Dockerfile describes, with this checkout mounted at /repo, as
+# you.
 
 IMAGE     ?= nolfsrc-build
 CONTAINER ?= nolfsrc-build
-ISODIR    ?= $(if $(NOLF_ISOS),$(NOLF_ISOS),$(CURDIR)/ISOS)
 TEST_LEVELS ?= T01S01 M03S01
-
-# The disc images are mounted by their real paths, so ISOS/ may hold symlinks.
-ISO1 := $(realpath $(ISODIR)/NOLF1-CD1.iso)
-ISO2 := $(realpath $(ISODIR)/NOLF1-CD2.iso)
-ISO_MOUNTS := $(if $(ISO1),-v $(ISO1):/isos/NOLF1-CD1.iso:ro) $(if $(ISO2),-v $(ISO2):/isos/NOLF1-CD2.iso:ro) -e NOLF_ISOS=/isos
 
 # The NOLF Source Code v1.003 release, for scoring the lithshared libraries
 # against its prebuilt .libs (progress/README.md). Optional.
@@ -30,14 +27,14 @@ SRC_MOUNT := $(if $(NOLF_SOURCE),-v $(realpath $(NOLF_SOURCE)):/nolfsource:ro -e
 
 DOCKER_RUN = docker run --rm --init --name $(CONTAINER) \
 	-u $(shell id -u):$(shell id -g) -e HOME=/tmp/home \
-	-v $(CURDIR):/repo -w /repo $(ISO_MOUNTS) $(SRC_MOUNT) $(IMAGE)
+	-v $(CURDIR):/repo -w /repo $(SRC_MOUNT) $(IMAGE)
 
 TOOLCHAIN_FILES = toolchains/msvc-6.00-9782/VC98/Bin/CL.EXE \
 	toolchains/msvc-6.00-8168/BIN/cl.exe \
 	toolchains/msvc-6.00-8447/BIN/cl.exe \
 	toolchains/icl-4.0/BIN/icl.exe
 
-.PHONY: all game debug modern modern-debug image check-isos check-toolchain test progress progress-update shell clean distclean help
+.PHONY: all game debug modern modern-debug image retail check-rez check-toolchain test progress progress-update shell clean distclean help
 
 all: game
 
@@ -51,19 +48,21 @@ help:
 	@echo "make progress   score the build against the retail binaries; fails if a"
 	@echo "                function recorded in progress/identical.txt stops matching"
 	@echo "make progress-update  record the score in progress/ and README.md"
+	@echo "make retail     fetch the two disc images and install the retail game from"
+	@echo "                them (rez/, once; every build runs it), and check it"
 	@echo "make shell      a shell in the build container (build/*.sh, tools/ work there)"
 	@echo "make image      (re)build the docker image $(IMAGE)"
 	@echo "make clean      remove out/ and every build output in the source tree"
 	@echo "make distclean  clean, and remove the docker image too"
 	@echo
-	@echo "Variables: NOLF_ISOS=<dir> (default ISOS/), TEST_LEVELS=\"$(TEST_LEVELS)\""
+	@echo "Variables: TEST_LEVELS=\"$(TEST_LEVELS)\""
 	@echo "           NOLF_SOURCE=<dir> (the NOLF Source Code v1.003 release, for"
 	@echo "           make progress), COMPLETE=1, COVERED=1, ACCEPT_LOSSES=1 (progress/README.md)"
 
-game: check-isos check-toolchain image
+game: check-toolchain retail
 	$(DOCKER_RUN) bash build/all.sh
 
-debug modern modern-debug: check-isos check-toolchain image
+debug modern modern-debug: check-toolchain retail
 	$(DOCKER_RUN) bash build/variant.sh $@
 
 image:
@@ -71,8 +70,13 @@ image:
 	  { echo "error: could not build the docker image (docker/Dockerfile)" >&2; exit 1; }
 	@echo "== docker image $(IMAGE) ready"
 
-check-isos:
-	@NOLF_ISOS="$(ISODIR)" bash -c 'source build/isos.sh && iso_verify'
+# The retail game the build takes its data from (build/retail.sh): installed
+# by rez/ the first time, checked against rez/games.sha256 every time.
+retail: check-rez image
+	@$(DOCKER_RUN) bash -c 'source build/retail.sh && retail_install && retail_verify'
+
+check-rez:
+	@[ -f rez/install-games.sh ] || { echo "error: rez/ is empty -- the disc images and their installer are the rez/ submodule: run git submodule update --init (see rez/README.md)" >&2; exit 1; }
 
 check-toolchain:
 	@for f in $(TOOLCHAIN_FILES); do \
@@ -89,16 +93,16 @@ test: image
 	if [ $$rc = 0 ]; then echo "== make test: every level ALIVE (shots in out/play/test-*/)"; \
 	else echo "== make test: FAILED (see out/play/test-*/result.txt, wine.log)"; fi; exit $$rc
 
-progress: check-isos image
+progress: retail
 	$(DOCKER_RUN) env COMPLETE=$(COMPLETE) COVERED=$(COVERED) bash build/progress.sh check
 
-progress-update: check-isos image
+progress-update: retail
 	$(DOCKER_RUN) env ACCEPT_LOSSES=$(ACCEPT_LOSSES) bash build/progress.sh update
 
 shell: image
 	docker run --rm -it --init --name $(CONTAINER)-shell \
 	  -u $(shell id -u):$(shell id -g) -e HOME=/tmp/home \
-	  -v $(CURDIR):/repo -w /repo $(ISO_MOUNTS) $(SRC_MOUNT) $(IMAGE) bash
+	  -v $(CURDIR):/repo -w /repo $(SRC_MOUNT) $(IMAGE) bash
 
 clean:
 	rm -rf out

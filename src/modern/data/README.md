@@ -2,9 +2,9 @@
 
 Some changes in the modern build (`make modern`, `NOLFSRC_MODERN`; see
 `BUILDING.md`, "Variant builds") need game data changed as well as code. The
-game data is not in this repository -- it comes from the discs -- so a change
-is committed here as a recipe, and `tools/moddata.py` applies it when the
-modern build is made. The results go into the game directory's `custom/` rez
+game data is not in this repository -- it comes from the retail game, which
+the `rez/` submodule installs -- so a change is committed here as a recipe,
+and `tools/moddata.py` applies it when the modern build is made. The results go into the game directory's `custom/` rez
 directory, which the engine searches after the four `.rez` archives, so they
 override the retail copies. The release build never sees any of it.
 

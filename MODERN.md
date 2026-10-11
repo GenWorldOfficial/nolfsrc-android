@@ -39,7 +39,7 @@ comes from.
   * Detours hooks into `lithtech.exe` become direct changes in our engine
     source (`src/engine/`), because we own it.
   * Containers become fixed arrays, `CMoArray`, or plain C strings.
-* **Game data comes from the discs.** No game data is committed. A data change
+* **Game data comes from the retail game.** No game data is committed. A data change
   is a recipe in `src/modern/data/` (`src/modern/data/README.md`): a unified
   diff against the retail file, or a new file we wrote ourselves. Modernizer-
   authored art, models, fonts and music are not ported; where a retail file
@@ -312,7 +312,7 @@ retail bugs.
 Monolith's v1.003 source of `CRes.dll` lacks the Game of the Year content's
 strings (IDs 30000-30095: the "Rest and Relaxation" mission name, briefing,
 objectives, intel and subtitles) and its credits, which the retail GOTY
-`CRES.dll` in `nolfgoty.rez` has. The build now extracts both from the disc
-and compiles them into our `CRes.dll` (`BUILDING.md`, step 2c), in the release
+`CRES.dll` in `nolfgoty.rez` has. The build now extracts both from the
+retail game and compiles them into our `CRes.dll` (`BUILDING.md`, step 2c), in the release
 build and therefore in the modern one too, so its resources are the retail
 GOTY ones (411 of 411 byte-identical). M-P4-08 is covered by that.

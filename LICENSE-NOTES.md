@@ -14,7 +14,11 @@ This file says which is which; it is not legal advice and grants nothing.
 | `src/engine/` | the LithTech engine (`lithtech.exe`, `server.dll`, `d3d.ren`), the `NOLF.exe` launcher, `ltmsg.dll` and `sres.dll`: written for this project, reconstructed from the retail binaries so that it compiles back to them. It implements Monolith's engine and interfaces, and `launcher.rc` / `ltmsg.rc` reproduce the retail resource scripts (dialogs and strings) | written for this project; no licence is declared |
 | `src/nolfsrc/`, `src/modern/`, `build/`, `tools/`, `docker/`, `progress/`, `Makefile`, the documentation | written for this project | no licence is declared |
 
-## Not in this repository, taken from your discs at build time
+## Not in this repository, taken from the retail game at build time
+
+The build takes these from the Game of the Year Edition as the `rez/`
+submodule installs it, from the redump images of its two discs that it
+fetches from archive.org (`rez/README.md`).
 
 | What | Origin | Where it goes |
 |---|---|---|
