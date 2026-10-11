@@ -222,8 +222,10 @@ void sub_1007a680(Obj1007a680* pObj)
 //  every site).
 //
 //  RESULTS: 0x1007aeb0 (the stack entry) and 0x1007b880 IDENTICAL;
-//  0x1007aeb4 near (1644 vs 1530), 0x1007b580 near (768 vs 759),
-//  0x1007a7b0 near (1796 vs 1671).  The residue in all three is block
+//  0x1007aeb4 near (1644 vs 1660), 0x1007b580 near (768 vs 759),
+//  0x1007a7b0 near (1796 vs 1792) -- 0x1007aeb4 and 0x1007a7b0 grew to
+//  that since QueuePoly's arms were nested the shipped way round (see
+//  QueuePoly1007aeb4).  The residue in all three is block
 //  placement -- icl here sinks the arm the shipped code keeps inline and
 //  vice versa (the translucent-queue arm, the object-draw arm, the walk
 //  arm of 0x1007b580), plus one extra frame slot in 0x1007b580 (0x48 vs
@@ -359,16 +361,20 @@ struct CQipPolyQueue
 		return LTTRUE;
 	}
 
+	// The grow arm sunk (switch-default), as shipped: compare, store,
+	// count, jmp back -- Insert2 below the function's epilogue.
 	inline void Add(Poly1007aeb4* pPoly)
 	{
-		if (m_nUsed < m_nElements)
+		switch (m_nUsed >= m_nElements)
 		{
+		case 0:
 			m_pArray[m_nUsed] = pPoly;
 			m_nUsed++;
-		}
-		else if (Insert2(m_nElements, pPoly, &g_10091df0))
-		{
-			m_nUsed++;
+			break;
+
+		default:
+			if (Insert2(m_nElements, pPoly, &g_10091df0))
+				m_nUsed++;
 		}
 	}
 };
@@ -421,37 +427,44 @@ inline void QueuePoly1007aeb4(Poly1007aeb4* pPoly)
 	pSurf = pPoly->m_pSurf28;
 	if (!(pSurf->m_nFlags38 & 4))
 	{
-		if ((pSurf->m_nFlags38 & 0x10) && !g_CV_DrawFlat)
+		// The tests nested with the lightmap-table arm innermost and the
+		// three Adds as the else arms: icl lays the table search inline and
+		// the Adds after it in reverse (the two opaque ones kept apart, the
+		// translucent one falling into the frame-code store), as shipped.
+		// As an else-if chain in the other order it merged the two opaque
+		// Adds and laid the translucent one inline (1680 -> 1792 bytes of
+		// 0x1007a7b0's shipped 1796; 0x1007aeb4 1532 -> 1660 of 1644).
+		if (!(pSurf->m_nFlags38 & 0x10) || g_CV_DrawFlat)
 		{
-			g_10091a10.m_Translucent.Add(pPoly);
-		}
-		else if (pSurf->m_wLMAnim42 == 0x7fff)
-		{
-			g_10091a10.m_Opaque.Add(pPoly);
-		}
-		else if (!g_1008d958)
-		{
-			g_10091a10.m_Opaque.Add(pPoly);
+			if (pSurf->m_wLMAnim42 != 0x7fff)
+			{
+				if (g_1008d958)
+				{
+					nEntries = g_10091a10.m_nEntries;
+					if (nEntries < 0x20)
+					{
+						for (j = 0; j < nEntries; j++)
+						{
+							if (g_10091a10.m_Entries[j].m_pPoly == pPoly)
+								break;
+						}
+
+						if (j >= nEntries)
+						{
+							g_10091a10.m_Entries[nEntries].m_pPoly = pPoly;
+							g_10091a10.m_Entries[nEntries].m_pMat = &g_1008ba9c;
+							g_10091a10.m_nEntries++;
+						}
+					}
+				}
+				else
+					g_10091a10.m_Opaque.Add(pPoly);
+			}
+			else
+				g_10091a10.m_Opaque.Add(pPoly);
 		}
 		else
-		{
-			nEntries = g_10091a10.m_nEntries;
-			if (nEntries < 0x20)
-			{
-				for (j = 0; j < nEntries; j++)
-				{
-					if (g_10091a10.m_Entries[j].m_pPoly == pPoly)
-						break;
-				}
-
-				if (j >= nEntries)
-				{
-					g_10091a10.m_Entries[nEntries].m_pPoly = pPoly;
-					g_10091a10.m_Entries[nEntries].m_pMat = &g_1008ba9c;
-					g_10091a10.m_nEntries++;
-				}
-			}
-		}
+			g_10091a10.m_Translucent.Add(pPoly);
 	}
 
 	pPoly->m_wFrameCode42 = g_1008bea8;
@@ -499,26 +512,33 @@ void sub_1007a7b0(Leaf1007a7b0* pLeaf)
 	     pLink = pLink->m_pNext)
 	{
 		pObj = ((ObjRef1007a7b0*)pLink->m_pData)->m_pObj18;
-		if (pObj->m_cTypeBC != 7)
-			continue;
 
-		if (!(pObj->m_nFlags88 & 1) || pObj->m_nFrame58 == g_1008bea4)
-			continue;
-
-		pObj->m_nFrame58 = g_1008bea4;
-		g_100895c0[pObj->m_cTypeBC].m_p00(pObj);
-
-		if (pObj->m_pNodes98)
-		for (pNode = pObj->m_pNodes98; pNode; pNode = pNode->m_pNext)
+		// The switch-default sink: the shipped loop keeps the not-type-7
+		// `continue` inline and the type-7 body out of line (`je` to it).
+		switch (pObj->m_cTypeBC == 7)
 		{
-			pChild = g_1008cbcc->m_pfnGetChild(pObj, pNode);
-			if (pChild && pChild->m_nFrame58 != g_1008bea4)
+		case 0:
+			break;
+
+		default:
+			if (!(pObj->m_nFlags88 & 1) || pObj->m_nFrame58 == g_1008bea4)
+				continue;
+
+			pObj->m_nFrame58 = g_1008bea4;
+			g_100895c0[pObj->m_cTypeBC].m_p00(pObj);
+
+			if (pObj->m_pNodes98)
+			for (pNode = pObj->m_pNodes98; pNode; pNode = pNode->m_pNext)
 			{
-				sub_1007a580(pChild, 1);
-				if (CanDraw1007a680(pChild))
+				pChild = g_1008cbcc->m_pfnGetChild(pObj, pNode);
+				if (pChild && pChild->m_nFrame58 != g_1008bea4)
 				{
-					g_100895c0[pChild->m_cTypeBC].m_p00(pChild);
-					pChild->m_nFrame58 = g_1008bea4;
+					sub_1007a580(pChild, 1);
+					if (CanDraw1007a680(pChild))
+					{
+						g_100895c0[pChild->m_cTypeBC].m_p00(pChild);
+						pChild->m_nFrame58 = g_1008bea4;
+					}
 				}
 			}
 		}
