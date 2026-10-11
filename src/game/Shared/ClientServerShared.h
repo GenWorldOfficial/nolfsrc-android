@@ -225,7 +225,7 @@ enum HitLocation
 
 #ifndef _DEMO
 #define GAME_HANDSHAKE_VER_MAJOR	1 // GAME_HANDSHAKE_VER_MAJOR.GAME_HANDSHAKE_VER_MINOR - 1
-#define GAME_HANDSHAKE_VER_MINOR	4 // 1.003
+#define GAME_HANDSHAKE_VER_MINOR	5 // 1.004 (GOTY: the Game of the Year binaries' handshake, 0x105; was 4, 1.003)
 #else
 #define GAME_HANDSHAKE_VER_MAJOR	0 // Demo = 0.002
 #define GAME_HANDSHAKE_VER_MINOR	3    
