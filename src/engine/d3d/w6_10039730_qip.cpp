@@ -2352,7 +2352,11 @@ extern uint32 g_1008da60;                                   // 0x1008da60  DXT5 
 extern uint32 g_1008da64;                                   // 0x1008da64  DXT3 supported
 extern uint32 g_1008da68;                                   // 0x1008da68  DXT1 supported
 
-static int32 sub_100385e0(uint32 nFormat)
+// LTBOOL (unsigned), measured: as int32 icl predicts the answer non-zero
+// and sinks 0x10038a90's `if (!sub_100385e0()) nMipBase += bias`, which
+// the shipped code keeps inline (0x10038a90 1232 -> 1216 bytes, the
+// shipped length).
+static LTBOOL sub_100385e0(uint32 nFormat)
 {
 	uint32 bSupported;
 
