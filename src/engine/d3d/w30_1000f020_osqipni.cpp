@@ -1673,9 +1673,7 @@ void sub_100124a0(Obj124a4* pObj)
 	Ctx124a4*     pCtx;
 	Table124a4*   pTable;
 	Bucket124a4*  pBucket;
-	Bucket124a4*  pNewBucket;
 	Elem124a4*    pElem;
-	Elem124a4*    pFreeElem;
 
 	void*         pData;             // -0x1e34
 	int32         nSrcCount;         // -0x1e30
@@ -1692,8 +1690,10 @@ void sub_100124a0(Obj124a4* pObj)
 
 	uint32        nFlagBit;
 	int32         nLeft;
-	int32         bDraw;
-	int32         bMoved;            // -0x70
+	// bDraw / bMoved are unsigned (LTBOOL): as int32 icl turns their
+	// `==` / `!=` into branches where the shipped code has sete/setne.
+	LTBOOL        bDraw;
+	LTBOOL        bMoved;            // -0x70
 	LTBOOL        b80;               // -0x80
 	LTBOOL        b88;               // -0x88
 	LTBOOL        bEnvMap;           // -0x78
@@ -1964,18 +1964,7 @@ L_Done:
 		if (!pBucket)
 		{
 			// 0x100144dc / 0x10014510 -- sub_1000a6a0(&g_1008d4c8).
-			pNewBucket = g_1008d4e0;
-
-			if (!pNewBucket)
-			{
-				sub_1007fbf0(&g_1008d4c8, g_1008d4c8.m_nGrow08);
-				pNewBucket = g_1008d4e0;
-			}
-
-			if (pNewBucket)
-				g_1008d4e0 = *(Bucket124a4**)pNewBucket;
-
-			pBucket = pNewBucket;
+			pBucket = (Bucket124a4*)sb_Allocate124a4(&g_1008d4c8);
 
 			pBucket->m_pTable      = pTable;
 			pTable->m_pBuckets[0]  = pBucket;
@@ -1985,18 +1974,7 @@ L_Done:
 		}
 
 		// 0x100142e6 / 0x100144a5 -- sub_1000a6a0(&g_1008d4e4).
-		pFreeElem = g_1008d4fc;
-
-		if (!pFreeElem)
-		{
-			sub_1007fbf0(&g_1008d4e4, g_1008d4e4.m_nGrow08);
-			pFreeElem = g_1008d4fc;
-		}
-
-		if (pFreeElem)
-			g_1008d4fc = *(Elem124a4**)pFreeElem;
-
-		pElem = pFreeElem;
+		pElem = (Elem124a4*)sb_Allocate124a4(&g_1008d4e4);
 
 		// 0x100142fd.
 		pElem->m_pNext       = pBucket->m_pElements;
