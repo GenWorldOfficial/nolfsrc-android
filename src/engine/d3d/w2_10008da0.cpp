@@ -155,16 +155,16 @@ public:
 // ======================================================================= //
 void CD3DModelDraw::sub_10008e10()
 {
-	// NEAR, 2 bytes: the call below goes to 0x10008fd0's stack entry, where
-	// shipped calls its /Qip register entry 0x10008fd4 -- reachable only
-	// with this function in big8fd0.cpp's TU at /Qip (not done:
-	// big8fd0.cpp is /O2 /Qrcd today).  Everything else
-	// is byte-identical (was 77 off): the pieces through the
-	// model's NumPieces()/GetPiece(i) (shipped keeps the model in a slot
-	// across the loop and re-reads the count at each test), a one-site
-	// volatile read of m_pModel00 in the matrices arm (shipped re-reads the
-	// model after the switch instead of reusing that arm's load), and the
-	// vertex count through a named local (shipped loads it, then adds).
+	// Identical.  The call below goes to 0x10008fd0's stack entry, where
+	// shipped calls its /Qip register entry 0x10008fd4 (masked as a
+	// relocation; reachable only with this function in big8fd0.cpp's /Qip
+	// TU).  What made it (was 77 off): the pieces through the model's
+	// NumPieces()/GetPiece(i) (shipped keeps the model in a slot across the
+	// loop and re-reads the count at each test), a one-site volatile read of
+	// m_pModel00 in the matrices arm (shipped re-reads the model after the
+	// switch instead of reusing that arm's load), the vertex count through a
+	// named local (shipped loads it, then adds), and pSet2 zeroed before
+	// nOut (the other order swaps their two frame stores).
 	LTMat* pMatrices;
 	uint32 nOut;
 	ModelVertSet* pSet2;
@@ -174,8 +174,8 @@ void CD3DModelDraw::sub_10008e10()
 		default: pMatrices = m_pMatrices640;
 	}
 
-	nOut = 0;
 	pSet2 = 0;
+	nOut = 0;
 	for (uint32 i = 0; i < m_pModel00->NumPieces(); i++)
 	{
 		ModelPiece8e10* pPiece = m_pModel00->GetPiece(i);
