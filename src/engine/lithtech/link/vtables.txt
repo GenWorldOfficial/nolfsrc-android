@@ -698,7 +698,7 @@ vtable ??_7CSoundDataView@@6B@ 0x004a342c  # compiled with 7 slots
     ?Load@CSoundDataQ47C@@UAEKXZ  # SUSPECT slot 6 0x0047c8c0: ?__ftol@+d6=0x004928c0(unverifiable) __imp__AIL_lock@0@+423=0x8b004a14(want 0x004a140c) __imp__AIL_mem_free_lock@4@+42d=0xff004a14(want 0x004a1410)
 vtable ??_7CSoundInstance1@@6B@ 0x004a34a4  # compiled with 23 slots
     ??_GCSoundInstance1@@UAEPAXI@Z
-    ?Init@CSoundInstanceView@@UAEKPAVCSoundDataView@@PAUPlaySoundInfo@@K@Z  # SUSPECT slot 1 0x0047e9a0: ?_rand@+60=0x30d87504(unverifiable) __real@4@3ff08001000000000000@+6e=0x244c8900(want 0x004a23e0) __real@4@00000000000000000000@+8e=0xc0d91024(want 0x004a14d8)
+    ?Init@CSndInstanceAmbientJ@@UAEKPAUCSndDataJ@@PAUPlaySoundInfo@@K@Z
     ?Term@CSoundInstanceView@@UAEXXZ
     ?_v0c@CSoundInstanceView@@UAEKXZ  # SOFT slot 3 0x0047db20: ?__ftol@+e6=0x004928c0(unverifiable)
     ?Update@CSndInstanceAmbientJ@@UAEIK@Z  # SOFT slot 4 0x0047eaa0: ?__ftol@+263=0x004928c0(unverifiable)
@@ -722,7 +722,7 @@ vtable ??_7CSoundInstance1@@6B@ 0x004a34a4  # compiled with 23 slots
     ?ApplyFilter@CSoundInstanceQ47C@@UAEKXZ
 vtable ??_7CSoundInstance2@@6B@ 0x004a3508  # compiled with 23 slots
     ??_GCSoundInstance2@@UAEPAXI@Z
-    ?Init@CSoundInstanceView@@UAEKPAVCSoundDataView@@PAUPlaySoundInfo@@K@Z  # SUSPECT slot 1 0x0047ee50: ?_rand@+60=0x8b47eebb(unverifiable) __real@4@3ff08001000000000000@+6e=0x8b042464(want 0x004a23e0) __real@4@00000000000000000000@+8e=0x14245cd9(want 0x004a14d8)
+    ?Init@CSndInstance3DJ@@UAEKPAUCSndDataJ@@PAUPlaySoundInfo@@K@Z
     ?Term@CSoundInstanceView@@UAEXXZ
     ?_v0c@CSoundInstanceView@@UAEKXZ  # SOFT slot 3 0x0047db20: ?__ftol@+e6=0x004928c0(unverifiable)
     ?Update@CSndInstance3DJ@@UAEIK@Z  # SOFT slot 4 0x0047f020: ?__ftol@+43e=0x004928c0(unverifiable) ?__ftol@+4fb=0x004928c0(unverifiable)
