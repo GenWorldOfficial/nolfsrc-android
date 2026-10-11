@@ -641,6 +641,40 @@ static TUInit10021580 s_TUInit10021580;
 //  Returns 0 on success, 1 on failure (after Term), 10 if DirectDraw
 //  cannot be enumerated.
 // ======================================================================= //
+// The named-device search, inlined into Init: ship tests its result with
+// `xor %edx,%edx ; test %edx,%edx ; jne` after the loop -- an inlined
+// `return LTNULL` joined with the in-loop `return pDev`, not a flag local.
+// NEAR (Init, 1272 against 1247): with this the search loop is ship's; left
+// are the block layout around it (ship threads the not-found arm straight
+// into the fallback loop and keeps the named search as the fall-through)
+// and the error returns (ship hosts the epilogue in the r_GetBufferFormat
+// failure and shares its `add $8 ; return 1` with the other two; a goto to
+// one `return 1`, a positive guard on r_GetBufferFormat, a second inline for
+// the fallback loop and if/else spellings of the found test do not).
+static inline Src10021220* FindDev100215a0(const char* pName)
+{
+	DLink*			pCur;
+	Src10021220*	pDev;
+	char			szWant[100];
+	char			szHave[100];
+
+	strncpy(szWant, pName, sizeof(szWant));
+	sub_10021ed0(szWant);
+
+	for (pCur = g_1008bf78.m_pNext; pCur != &g_1008bf78; pCur = pCur->m_pNext)
+	{
+		pDev = (Src10021220*)pCur->m_pData;
+
+		strncpy(szHave, pDev->m_szName, sizeof(szHave));
+		sub_10021ed0(szHave);
+
+		if (strcmp(szWant, szHave) == 0)
+			return pDev;
+	}
+
+	return LTNULL;
+}
+
 int32 sub_100215a0(RenderStructInit* pInit)
 {
 	char*           pValue;
@@ -649,8 +683,6 @@ int32 sub_100215a0(RenderStructInit* pInit)
 	Src10021220*    pFound;
 	Src10021220*    pDev;
 	DLink*          pCur;
-	char            szWant[100];
-	char            szHave[100];
 	W26Rect         rcDesk;
 	W26Rect         rc;
 
@@ -682,23 +714,7 @@ int32 sub_100215a0(RenderStructInit* pInit)
 	pWant = pInit->m_Mode.m_InternalName;
 	if (pWant[0])
 	{
-		strncpy(szWant, pWant, sizeof(szWant));
-		sub_10021ed0(szWant);
-
-		pFound = LTNULL;
-		for (pCur = g_1008bf78.m_pNext; pCur != &g_1008bf78; pCur = pCur->m_pNext)
-		{
-			pDev = (Src10021220*)pCur->m_pData;
-
-			strncpy(szHave, pDev->m_szName, sizeof(szHave));
-			sub_10021ed0(szHave);
-
-			if (strcmp(szWant, szHave) == 0)
-			{
-				pFound = pDev;
-				break;
-			}
-		}
+		pFound = FindDev100215a0(pWant);
 
 		if (!pFound)
 		{
