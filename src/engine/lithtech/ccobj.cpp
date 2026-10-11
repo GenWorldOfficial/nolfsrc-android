@@ -26,7 +26,7 @@
 //                                           (0x004669a0 380, 0x10028be3 356),
 //                                           with oi_FindClass beside it
 //                                           (0x00466b20 / 0x10028d47)
-//   0x00466bd0  597   cc_SpawnObject      written  — console.cpp:1042, ditto
+//   0x00466bd0  597   cc_SpawnObject      console.cpp, matching both images (moved)
 //   0x00467540  174   EXTENT WRONG        — the real function is
 //                                           0x00467540..0x00467eec (2,476
 //                                           bytes) = sub_100291c7; written
@@ -885,69 +885,3 @@ LTRESULT sm_DetachClientQ464(CServerMgr* pMgr, Client* pClient)
 }
 
 
-// ======================================================================= //
-//  MOVE-ME: src/engine/server/console.cpp:1280, cc_SpawnObject.
-//
-//  0x00466bd0 (597 bytes, /O2) / 0x10028da3 (/O1).  console.cpp's body
-//  reaches Clear() through a local view with Clear out of line (0x10001bd7),
-//  which is right for server.dll and is 295 bytes here: lithtech.exe
-//  EXPANDS both Clears (0x00466bdb..0x00466c6d for the constructor's,
-//  0x00466ce2..0x00466d8a for the explicit one), and every store they make
-//  is the SDK ltbasedefs.h ObjectCreateStruct::Clear, offset for offset
-//  (+0x04 = OCS_AUTOLOAD, the 1.0f scale at +0x1c, the rotation's w at
-//  +0x34, the two-skin loop at +0xfc, m_NextUpdate/m_fDeactivationTime at
-//  +0x27c/+0x280).  So the original used the SDK struct itself.
-// ======================================================================= //
-
-class CConServerQ464
-{
-public:
-	uint8  m_pad_00[0x24];
-	HCLASS (*GetClass)(char* pName);                                  // 0x24
-	uint8  m_pad_28[0x38 - 0x28];
-	void*  (*CreateObjectProps)(HCLASS hClass,
-	                            ObjectCreateStruct* pStruct,
-	                            char* pszProps);                      // 0x38
-};
-
-void cc_SpawnObjectQ464(int argc, char** argv)
-{
-	ObjectCreateStruct ocs;
-	Client*            pClient;
-	char*              pszProps;
-	HCLASS             hClass;
-
-	if (argc == 0 || !g_pServerMgr ||
-	    !g_pServerMgr->m_pUnknown928 ||
-	    !g_pServerMgr->m_ClientList.m_nElements)
-	{
-		dsi_ServerError("SpawnObject <class name> \"spawn args\"");
-		return;
-	}
-
-	if (argc >= 2)
-		pszProps = argv[1];
-	else
-		pszProps = "";
-
-	hClass = ((CConServerQ464*)g_pServerMgr->m_pUnknown928)->GetClass(argv[0]);
-
-	if (!hClass)
-	{
-		dsi_ServerError("Can't find class %s", argv[0]);
-		return;
-	}
-
-	ocs.Clear();
-
-	pClient = (Client*)g_pServerMgr->m_ClientList.m_Head.m_pNext->m_pData;
-
-	ocs.m_Pos = pClient->m_Position;
-	ocs.m_Pos.z += 200.0f;
-
-	if (((CConServerQ464*)g_pServerMgr->m_pUnknown928)->CreateObjectProps(
-		hClass, &ocs, pszProps))
-		dsi_ServerError("%s spawned successfully", argv[0]);
-	else
-		dsi_ServerError("Error in CreateObjectProps");
-}

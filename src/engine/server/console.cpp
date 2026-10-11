@@ -1264,20 +1264,14 @@ void cc_DisableWMPhysics(int argc, char** argv)
 	}
 }
 
-// ObjectCreateStruct as the engine's own header had it -- 0x284 bytes with
-// Clear() out of line at 0x10001bd7, the same local view counter.cpp and
-// servermodel.cpp carry and for the same reason (/O1 implies /Ob1, so an
-// in-class body would be expanded into every caller).
-class CConObjCreateStruct
-{
-public:
-	CConObjCreateStruct() { Clear(); }
-	void Clear();                            // 0x10001bd7
-
-	uint8    m_pad_00[0x10];
-	LTVector m_Pos;                          // 0x010
-	uint8    m_pad_1c[0x284 - 0x1c];
-};
+// The create struct is the SDK's own ObjectCreateStruct (ltbasedefs.h), and
+// its in-class Clear() is what the two images disagree about: lithtech.exe
+// (/O2) EXPANDS both Clears into cc_SpawnObject (0x00466bdb..0x00466c6d for
+// the constructor's, 0x00466ce2..0x00466d8a for the explicit one, every
+// store at the SDK struct's offsets), while server.dll's /Os declines them
+// and calls the out-of-line COMDAT (0x10001bd7). One spelling gives both.
+// (The local view with an out-of-line Clear that stood here matched
+// server.dll only.)
 
 // The two CLTServer entries SpawnObject reaches. servermsg.h lays the whole
 // table out; this is the local two-field view, because console.cpp does not
@@ -1289,7 +1283,7 @@ public:
 	HCLASS (*GetClass)(char* pName);                                  // 0x24
 	uint8  m_pad_28[0x38 - 0x28];
 	void*  (*CreateObjectProps)(HCLASS hClass,
-	                            CConObjCreateStruct* pStruct,
+	                            ObjectCreateStruct* pStruct,
 	                            char* pszProps);                      // 0x38
 };
 
@@ -1316,7 +1310,7 @@ public:
 // prints the usage rather than an error about the client list.
 void cc_SpawnObject(int argc, char** argv)
 {
-	CConObjCreateStruct ocs;
+	ObjectCreateStruct  ocs;
 	Client*             pClient;
 	char*               pszProps;
 	HCLASS              hClass;
