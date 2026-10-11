@@ -145,11 +145,16 @@ extern void d3d_AddDirtyRect(LTRect* pRect);                // 0x1003b3d0
 //  tile texture's size.  Stage 0's texture is saved first and put back
 //  after; the destination rect is added to the dirty list.
 //
-//  NEAR: 357 instructions against 357, 1,352 bytes against 1,342, the
-//  residue register allocation (esi/edi swapped for x and the dest rect,
-//  pOpt kept in a register where the shipped code spills it to -0x88) and
-//  the x87 store schedule of the nine vertex stores.  What was measured
-//  and kept:
+//  NEAR: 358 instructions against 357, 1,344 bytes against 1,342, four
+//  blocks: one colour store (-0x100) scheduled late, the `mov $1.0f ;
+//  add $-12,%esp` pair two stores early, and the v1.tv store hoisted above
+//  the v2/v3 tv pair (one extra fxch).  Was 1,352 / 23 blocks; closed by
+//  the column tile in pTile (`pTile = &pOpt->m_Tiles[nTileX]`, which is
+//  what spills nTileX and keeps the LTMIN result in a register), the rhw
+//  chain 0,1,2,3, and the y(3,2) pair before the z chain.  No better: all
+//  24 colour chain orders, the four middle vertex statements permuted, the
+//  z chain at every position, the v0/v1 tv pair split, reversed or moved,
+//  the z chain reversed.  What was measured and kept before that:
 //    * the four rect extents are FLOAT locals: icl spills them as doubles
 //      (`fildl ; fstpl -0x38(%ebp)`); declared double they force the
 //      aligned-stack prologue (`push %ebx ; mov %esp,%ebx ; and $-8`)
@@ -193,7 +198,7 @@ void sub_10034f10(RenderBlitRequest* pRequest)
 	nAlpha = (uint32)(pRequest->m_fAlpha14 * 255.0f);
 	verts[0].a = verts[1].a = verts[2].a = verts[3].a = (uint8)nAlpha;
 
-	verts[0].rhw = verts[3].rhw = verts[2].rhw = verts[1].rhw = 1.0f;
+	verts[0].rhw = verts[1].rhw = verts[2].rhw = verts[3].rhw = 1.0f;
 
 	pOldTexture = LTNULL;
 	g_pD3DDevice->GetTexture(0, &pOldTexture);
@@ -202,7 +207,8 @@ void sub_10034f10(RenderBlitRequest* pRequest)
 	{
 		xEnd  = x + OPT_TILE_SIZE;
 		nTileX = x / OPT_TILE_SIZE;
-		xEnd  = LTMIN(pOpt->m_Tiles[nTileX].m_Rect.right,
+		pTile = &pOpt->m_Tiles[nTileX];
+		xEnd  = LTMIN(pTile->m_Rect.right,
 		              LTMIN(xEnd, pSrc->right));
 
 		for (y = pSrc->top; y < pSrc->bottom; y = yEnd)
@@ -232,8 +238,8 @@ void sub_10034f10(RenderBlitRequest* pRequest)
 			fY1 = LTMAX(0.0f, fY1 - g_1008944c);
 
 			verts[0].tu = verts[3].tu = fU0;
-			verts[0].z  = verts[3].z = verts[2].z = verts[1].z = 1.0f;
 			verts[3].y  = verts[2].y = fY1;
+			verts[0].z  = verts[3].z = verts[2].z = verts[1].z = 1.0f;
 			verts[2].tu = verts[1].tu = fU1;
 			verts[2].tv = verts[3].tv = fV1;
 			verts[0].tv = verts[1].tv = fV0;
