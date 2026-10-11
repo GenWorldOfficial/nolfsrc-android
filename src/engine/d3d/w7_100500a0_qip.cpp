@@ -1,7 +1,17 @@
 // ======================================================================= //
-//  w7_100500a0.cpp -- d3d.ren functions written for the whole-DLL link
-//: the deferred-draw queue at 0x1008ef20.  /O2 (multi-byte
+//  w7_100500a0_qip.cpp -- d3d.ren functions written for the whole-DLL link
+//: the deferred-draw queue at 0x1008ef20.  /O2 /Qip (multi-byte
 //  lea padding).
+//
+//  /O2 /Qip, not /O2: the queue's CMoArray<W7Pending500a0> is instantiated
+//  here, and at /O2 its virtuals came out with Insert2/Remove2/SetSize2
+//  INLINED (GenAppend 424 bytes, GenRemoveAt 392, GenCopyList 417 ...):
+//  nine COMDATs the shipped d3d.ren does not have.  At /O2 /Qip the stock
+//  dynarray.h bodies are the shipped vtable 0x100896c0's twelve slots,
+//  every one byte-identical (0x100503f0 GenSetCacheSize .. 0x10050770
+//  GenBegin, and 0x1007c700 GenIsValid), and 0x1004fbc0 and 0x100500a0
+//  stay identical.  (The sort 0x1004fea4 still lives apart, in
+//  w16_1004fea4_qip.cpp: in this TU /O2 /Qip inlines it, see there.)
 // ======================================================================= //
 #include "ltbasedefs.h"
 #include "../../LT2/lithshared/stdlith/dynarray.h"

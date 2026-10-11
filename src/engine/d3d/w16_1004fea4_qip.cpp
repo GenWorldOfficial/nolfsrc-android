@@ -18,7 +18,7 @@
 //  at 4 mod 16, and its three loop-head alignment runs come out different
 //  sizes -- the ONLY difference (5 differing blocks, all nop runs).  Byte
 //  identity needs this body in one /Qip TU with 0x1004fbc0
-//  (w7_100500a0.cpp, /O2 today).  NEAR.
+//  (w7_100500a0_qip.cpp).  NEAR.
 //
 //  THAT MOVE WAS MEASURED AND NOT KEPT.  One file with
 //  0x1004fbc0, this body (named sub_1004fea0, after its stack entry) and
@@ -30,7 +30,7 @@
 //  reloads it every iteration).  But the static s_Queue's CMoArray
 //  vtable is instantiated in that TU, and under /Qip_no_inlining its
 //  GenBegin no longer expands GenListPos's constructor: 0x10050770,
-//  byte-identical from w7_100500a0.obj today, is lost.  At /O2 /Qip
+//  byte-identical from w7_100500a0_qip.obj today, is lost.  At /O2 /Qip
 //  (inlining on) this body is inlined into 0x1004fbc0 (1085 bytes) --
 //  also with the sort defined after its caller, and with a local timer
 //  object for the compiled-out tick count.  So the shipped TU inlined
@@ -38,7 +38,7 @@
 //
 //  0x1004fea4 -- 503 bytes (0x1004fea0 with the shim).  C100500a0::sub_1004fea4, the deferred-draw
 //  queue's sort (called once, from the end-of-frame flush 0x1004fbc0 in
-//  w7_100500a0.cpp, with the draw context 0x1008b880).
+//  w7_100500a0_qip.cpp, with the draw context 0x1008b880).
 //
 //  Two passes over the queue's twelve-byte {item, draw callback, key}
 //  records (m_pArray at +0x04, the count in use at +0x14):
@@ -89,7 +89,7 @@ struct Rec1004fea4
 	float			m_fKey;                             // +0x08
 };
 
-// The queue (w7_100500a0.cpp: a CMoArray<W7Pending500a0> plus the count in
+// The queue (w7_100500a0_qip.cpp: a CMoArray<W7Pending500a0> plus the count in
 // use); only the fields this function reads.
 class C100500a0
 {

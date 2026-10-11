@@ -187,7 +187,7 @@ void sub_1003ac30()
 //  is 09-codegen-patterns.md's "no folding of redundant null tests".
 //
 //  IDENTICAL (was 122 bytes off as a hand-expanded copy of the
-//  template).  The function is a member of w7_100500a0.cpp's queue class
+//  template).  The function is a member of w7_100500a0_qip.cpp's queue class
 //  C100500a0 -- a CMoArray<W7Pending500a0> with a count in use at +0x14 --
 //  and written over the REAL dynarray.h it is
 //
@@ -199,12 +199,12 @@ void sub_1003ac30()
 //  guard (86 bytes off), as does `GetSize() < nSize`, and NiceSetSize is
 //  a different function (276 bytes).  Measured: identical at /O2 and at
 //  /O2 /Qip, alone or beside its register-entry caller 0x1004fbc0 (a
-//  w7_100500a0.cpp copy built /O2 /Qip keeps 0x100500a0 identical and
+//  w7_100500a0_qip.cpp copy built /O2 /Qip keeps 0x100500a0 identical and
 //  0x1004fbc0 at its 122); /Os is 123 off.  Shipped it is the /Qip pair
 //  0x10050280/0x10050284 in 0x1004fbc0's TU; the body does not need the
 //  pair, so it stays here.
 // ---------------------------------------------------------------------- //
-struct W7Pending500a0                                   // w7_100500a0.cpp's
+struct W7Pending500a0                                   // w7_100500a0_qip.cpp's
 {
 	void*	m_pItem;                                    // +0x00
 	void	(*m_pfnDraw)(void* pCtx, void* pItem);      // +0x04
