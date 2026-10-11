@@ -17,6 +17,15 @@
 /ALTERNATENAME:?sub_1007ee60@Arr100158d0@@QBEKXZ=?sub_1005f780@C1005f780@@QAEKXZ
 # 0x1007ee60
 /ALTERNATENAME:?sub_1007ee60@Arr1001c@@QBEKXZ=?sub_1005f780@C1005f780@@QAEKXZ
+# 0x10023230  ltmatrix.h's MatVMul_H, out of line (w30_1000f020_osqipni.obj, near); big2b1b0/big40e10
+# call it as `sub_10023230` (the shipped calls at 0x1002b1d4, 0x1002b206, 0x10040eda, 0x10040f63)
+/ALTERNATENAME:_sub_10023230=?MatVMul_H@@YAMPAV?$_CVector@M@@PAVLTMatrix@@0@Z
+# 0x1000a680 / 0x1000a690  DefaultCache::SetCacheSize / GetCacheSize (dynarray.h, out of line in the
+# /Qip TUs: w64_10009f10_qip, d3dr5b, w7_100500a0_qip), which d3dbatcha.cpp spells CValue1000a680
+# and d3dbatchc.cpp C1000a690
+/ALTERNATENAME:?sub_1000a680@CValue1000a680@@QAEXK@Z=?SetCacheSize@DefaultCache@@QAEXK@Z
+/ALTERNATENAME:?sub_1000a690@CValue1000a680@@QAEKXZ=?GetCacheSize@DefaultCache@@QBEKXZ
+/ALTERNATENAME:?sub_1000a690@C1000a690@@QAEKXZ=?GetCacheSize@DefaultCache@@QBEKXZ
 # 0x10021a80
 /ALTERNATENAME:?GetNumAllocatedElements@Arr10021ad0@@QAEKXZ=?sub_10021a80@C10021a80@@QAEKXZ
 # 0x10021a80
@@ -25,8 +34,6 @@
 /ALTERNATENAME:?sub_1007ee60@Arr32@@QBEKXZ=?sub_1005f780@C1005f780@@QAEKXZ
 # 0x1007ee60
 /ALTERNATENAME:?sub_1007ee60@ArrP@@QBEKXZ=?sub_1005f780@C1005f780@@QAEKXZ
-# 0x1000a690
-/ALTERNATENAME:?GetCacheSize@DefaultCache@@QBEKXZ=?sub_1000a690@CValue1000a680@@QAEKXZ
 # 0x1001dc30
 /ALTERNATENAME:?sub_1001dc30@Arr1001d@@QBEAAGK@Z=?sub_1001dc30@Sub1001dc30Array@@QAEPAGK@Z
 # 0x1007c870  operator[] of CMoArray<void*>: `call 0x1007c870` at 0x1007f6f8 (d3dr4b.cpp's 0x1007f670) and
@@ -48,12 +55,10 @@
 /ALTERNATENAME:?sub_1000eec0@LTVec60010@@QAEXMMM@Z=?sub_1000eec0@Vec1004b6f0@@QAEXMMM@Z
 # 0x1000eec0
 /ALTERNATENAME:?sub_1000eec0@Vert60010@@QAEXMMM@Z=?sub_1000eec0@Vec1004b6f0@@QAEXMMM@Z
-# 0x1000a680
-/ALTERNATENAME:?SetCacheSize@DefaultCache@@QAEXK@Z=?sub_1000a680@CValue1000a680@@QAEXK@Z
 # 0x1001e4d0
 /ALTERNATENAME:?sub_1001e4d0@Mat4D@@QAEXPAUVec3D@@00@Z=?sub_1001e4d0@Mat1001e480@@QAEXPAVVec1004b6f0@@00@Z
 # 0x1000a680
-/ALTERNATENAME:?sub_1000a680@Node1000a670@@QAEXK@Z=?sub_1000a680@CValue1000a680@@QAEXK@Z
+/ALTERNATENAME:?sub_1000a680@Node1000a670@@QAEXK@Z=?SetCacheSize@DefaultCache@@QAEXK@Z
 # 0x1007b8d0
 /ALTERNATENAME:?sub_1007b8d0@@YAPAUC1007b8d0Thing@@XZ=?sub_1007b8d0@@YAPAXXZ
 # 0x1007b8d0
@@ -132,8 +137,8 @@
 /ALTERNATENAME:?sub_1000a670@List1000a670@@QBEPAPAUSPoly5dca0@@XZ=?sub_1000a670@Node1000a670@@QBEKXZ
 # 0x1000a670  defined in d3dbatchb.obj (identical); name-carried address
 /ALTERNATENAME:?sub_1000a670@List1005dcf4@@QBEPAPAUSPoly5dca0@@XZ=?sub_1000a670@Node1000a670@@QBEKXZ
-# 0x1000a680  defined in d3dbatcha.obj (identical); name-carried address
-/ALTERNATENAME:?sub_1000a680@Cache1007f810@@QAEXK@Z=?sub_1000a680@CValue1000a680@@QAEXK@Z
+# 0x1000a680  DefaultCache::SetCacheSize, dynarray.h out of line (the /Qip TUs emit it)
+/ALTERNATENAME:?sub_1000a680@Cache1007f810@@QAEXK@Z=?SetCacheSize@DefaultCache@@QAEXK@Z
 # 0x1000a700  defined in d3dbatchd.obj (identical); name-carried address
 /ALTERNATENAME:?sub_1000a700@@YAXPAUSGeoObj@@PAPAUSrcVert@@PAJ@Z=?sub_1000a700@@YAXPAUSub1000a700Geom@@PAPAXPAK@Z
 # 0x1000a700  defined in d3dbatchd.obj (identical); name-carried address
@@ -1054,7 +1059,7 @@
 # its callees, read out of the shipped body (0x1000a670 at 0x1001c81a/0x1001c83c, 0x1000a680 at
 # 0x1001c847/0x1001c85a, 0x1001c450 at 0x1001c82d, 0x10021a80 at 0x1001c865, 0x1001cf00 at 0x1001c876):
 /ALTERNATENAME:?sub_1000a670@DefaultCache@@QBEKXZ=?sub_1000a670@Node1000a670@@QBEKXZ
-/ALTERNATENAME:?sub_1000a680@DefaultCache@@QAEXK@Z=?sub_1000a680@CValue1000a680@@QAEXK@Z
+/ALTERNATENAME:?sub_1000a680@DefaultCache@@QAEXK@Z=?SetCacheSize@DefaultCache@@QAEXK@Z
 /ALTERNATENAME:?sub_1001c450@?$Arr1001c7e0@XUDefaultCache@@@@QAEPAXKPAUIAllocator@@@Z=?sub_1001c450@C1001c450@@QAEPAXKPAVSub1000a0e0Alloc@@@Z
 /ALTERNATENAME:?sub_10021a80@?$Arr1001c7e0@XUDefaultCache@@@@QAEKXZ=?sub_10021a80@C10021a80@@QAEKXZ
 /ALTERNATENAME:?sub_1001cf00@?$Arr1001c7e0@XUDefaultCache@@@@QAEXPAUIAllocator@@K@Z=?sub_1001cf00@C1001cf00@@QAEXPAVCD3DAlloc@@K@Z

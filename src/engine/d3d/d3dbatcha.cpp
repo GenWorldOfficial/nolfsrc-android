@@ -151,28 +151,22 @@ extern uint32 g_n1008e688;                              // 0x1008e688
 //  0x1001cf32, 0x1007ebfe), never inlined, which is /Ob1 doing what /Ob1
 //  does to a member defined outside its class body.
 //
-//  The class it belongs to is not named because nothing in these bodies
-//  names it: what is established is its width and its two accessors.
+//  The class is dynarray.h's DefaultCache (m_CacheSize at +0x00): these are
+//  its SetCacheSize and GetCacheSize, out of line in the /Qip translation
+//  units (w64_10009f10_qip.cpp, d3dr5b.cpp, w7_100500a0_qip.cpp emit them,
+//  byte-identical).  They were also defined here, a second copy of each, and
+//  0x1000a690's was left over and unplaced; now this spelling only declares
+//  them, aliased onto dynarray.h's in link/aliases.rsp.
 // ======================================================================= //
 
 class CValue1000a680
 {
 public:
-	void   sub_1000a680(uint32 nValue);
-	uint32 sub_1000a690();
+	void   sub_1000a680(uint32 nValue);                 // DefaultCache::SetCacheSize
+	uint32 sub_1000a690();                              // DefaultCache::GetCacheSize
 
-	uint32 m_nValue00;                                  // +0x00
+	uint32 m_nValue00;                                  // +0x00  m_CacheSize
 };
-
-void CValue1000a680::sub_1000a680(uint32 nValue)
-{
-	m_nValue00 = nValue;
-}
-
-uint32 CValue1000a680::sub_1000a690()
-{
-	return m_nValue00;
-}
 
 
 // ======================================================================= //

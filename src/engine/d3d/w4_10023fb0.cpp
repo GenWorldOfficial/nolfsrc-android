@@ -3,8 +3,7 @@
 //  MODULE:   W4_10023FB0 (.CPP)  -- /O2
 //
 //  PURPOSE:  Functions the d3d.ren link referenced by address and nobody
-//            had written, 0x10023230..0x1002e350: the projecting point
-//            transform, the vertex pool's grow, the element free-list
+//            had written, 0x10023fb0..0x1002e350: the vertex pool's grow, the element free-list
 //            returns, and three /Qip callers whose callees live in files
 //            built without /Qip (near by construction).
 //
@@ -261,39 +260,21 @@ void sub_1002e350(Ctx1008beac* pWorld)
 
 
 // ======================================================================= //
-//  0x10023230 -- transform a point by a 4x4 and divide through by w
-//  (MatVMul_H with the projection), answering 1/w.  C linkage
-//  (big2b1b0.cpp / big40e10.cpp call `_sub_10023230`).
-//
-//  NEAR, 4 instructions: the shipped z row multiplies m[2][0]*x first and
-//  m[2][2]*z last; icl emits the x and y rows' terms last-first, as the
-//  source below reproduces byte for byte, but every spelling of the z row
-//  tried -- reordered, re-parenthesised, operands swapped, accumulated in
-//  a local, the reciprocal on the left -- comes out last-first too.
-//  Also: the matrix pointer declared then assigned, ltmatrix.h's
-//  MatVMul_H verbatim (32 bytes, worse), the z row through a local, and
-//  the function alone in a TU -- all 16 or worse.  Same class as
-//  0x1005a550 (w7_1005a550.cpp): icl's sum order follows TU history.
-//  All 144 spellings of the z row (6 term orders x 8
-//  operand orders x 3 groupings, plus the constant first) measured alone
-//  in a TU: none below 16.  The z row's order does move with unrelated
-//  functions compiled ahead of it (16 -> 28 at 18..21 small functions,
-//  back to 16 from 24 to 90), never to 0.
+//  0x10023230 -- transform a point by a 4x4 and divide through by w,
+//  answering 1/w: ltmatrix.h's inline MatVMul_H, the out-of-line copy
+//  (`?MatVMul_H@@YAMPAV?$_CVector@M@@PAVLTMatrix@@0@Z`) that
+//  w30_1000f020_osqipni.cpp emits.  It was ALSO
+//  written here, as `extern "C" sub_10023230`, a hand spelling for the two
+//  callers that name the address (big2b1b0.cpp, big40e10.cpp; the shipped
+//  calls are 0x1002b1d4, 0x1002b206, 0x10040eda, 0x10040f63): one shipped
+//  function, two of ours, and this one was left unplaced.  It is gone; the
+//  callers' spelling is aliased onto the header's function in
+//  link/aliases.rsp.  Measured at the shipped address: the header's own
+//  body as w30 builds it is 12 bytes off, this spelling was 16 (its notes:
+//  every one of 144 spellings of the z row stays last-first, the order
+//  moving with the functions compiled ahead of it -- icl's sum order
+//  follows TU history, as at 0x1005a550, w7_1005a550.cpp).
 // ======================================================================= //
-struct LTVec { float x, y, z; };
-struct LTMat { float m[4][4]; };
-
-extern "C" float sub_10023230(LTVec* pOut, const LTMat* pMat, const LTVec* pIn)
-{
-	const float (*m)[4] = pMat->m;
-	float fInvW;
-
-	fInvW = 1.0f / (m[3][0]*pIn->x + m[3][1]*pIn->y + m[3][2]*pIn->z + m[3][3]);
-	pOut->x = (pIn->x*m[0][0] + pIn->y*m[0][1] + pIn->z*m[0][2] + m[0][3]) * fInvW;
-	pOut->y = (m[1][0]*pIn->x + m[1][1]*pIn->y + m[1][2]*pIn->z + m[1][3]) * fInvW;
-	pOut->z = (m[2][0]*pIn->x + m[2][1]*pIn->y + m[2][2]*pIn->z + m[2][3]) * fInvW;
-	return fInvW;
-}
 
 
 // ======================================================================= //

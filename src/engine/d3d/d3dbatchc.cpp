@@ -153,10 +153,10 @@ public:
 class C1000a690
 {
 public:
-	uint32 sub_1000a690();                              // 0x1000a690
+	uint32 sub_1000a690();                              // 0x1000a690  DefaultCache::GetCacheSize
 
-	uint32 m_n00;                                       // +0x00
-	uint32 m_n04;                                       // +0x04
+	uint32 m_n00;                                       // +0x00  m_CacheSize
+	uint32 m_n04;                                       // +0x04  m_WantedCache
 };
 
 
@@ -719,20 +719,14 @@ LTBOOL sub_1006a800(const uint8* pSrc, uint32 nSrcLen, uint8* pDst)
 
 
 // ======================================================================= //
-//  0x1000a690 -- the definition, kept here at the END of the file ON PURPOSE.
-//
-//  C10009c90::sub_10009c90 above CALLS this rather than inlining it, and the
-//  shipped image calls it from all fifty-eight of its sites without ever
-//  inlining a single one. Placing the body after its caller means the caller
-//  is compiled against a declaration alone, which is the only lever this
-//  file has over a compiler that would otherwise be free to expand a
-//  four-byte accessor in place.
+//  0x1000a690 is dynarray.h's DefaultCache::GetCacheSize (the class is
+//  DefaultCache: m_CacheSize, m_WantedCache), out of line in the /Qip
+//  translation units (w64_10009f10_qip.cpp, d3dr5b.cpp,
+//  w7_100500a0_qip.cpp emit it, byte-identical; the shipped callers never
+//  inline it).  It was also defined here, a second copy, left over and
+//  unplaced; this spelling is now aliased onto dynarray.h's in
+//  link/aliases.rsp.
 // ======================================================================= //
-
-uint32 C1000a690::sub_1000a690()
-{
-	return m_n00;
-}
 
 
 // ======================================================================= //
