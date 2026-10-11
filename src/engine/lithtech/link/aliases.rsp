@@ -1230,8 +1230,6 @@
 /ALTERNATENAME:?sm_CreateInterObjectLink@@YAKPAVCServerMgr@@PAVLTObject@@1H@Z=?sm_CreateInterObjectLink@@YAKPAVCLinkMgrView@@PAVCLinkedObject@@1H@Z
 # 0x43bdb0
 /ALTERNATENAME:?sm_CreateInterlink@@YAKPAVSavServerMgr@@PAVSavObject@@1K@Z=?sm_CreateInterObjectLink@@YAKPAVCLinkMgrView@@PAVCLinkedObject@@1H@Z
-# 0x474ab0
-/ALTERNATENAME:?sm_CreateObjectInWorldQ402@@YAKPAVCServerMgrQ402@@PAVCBaseClassQ402@@PAUClassDefQ402@@PAUObjectCreateStruct@@KMPAPAVLTObject@@@Z=?sm_CreateObjectInWorld@@YAKPAVCServerMgr@@PAVBaseClass@@PAUClassDef@@PAUObjectCreateStruct@@KMPAPAVLTObject@@@Z
 # 0x46adf0
 /ALTERNATENAME:?sm_LoadModel@@YAKPAVCServerMgr@@PADPAPAVModel@@PAPAVCFileIdentifier@@HH@Z=?se_LoadModel@@YAKPAVCServerMgr@@PADPAPAVModel@@PAPAXHH@Z
 # 0x484a30
@@ -1616,8 +1614,6 @@
 /ALTERNATENAME:?sb_Grow@@YAXPAVStructBank@@K@Z=?sb_AllocateNewStructPage@@YAHPAUStructBank_t@@K@Z
 # 0x490c20
 /ALTERNATENAME:?sb_GrowQ11@@YAXPAVCStructBankQ11@@K@Z=?sb_AllocateNewStructPage@@YAHPAUStructBank_t@@K@Z
-# 0x490c20
-/ALTERNATENAME:?sb_GrowQ402@@YAXPAVStructBankQ402@@K@Z=?sb_AllocateNewStructPage@@YAHPAUStructBank_t@@K@Z
 # 0x490c20
 /ALTERNATENAME:?sb_GrowQ414@@YAXPAVStructBankQ414@@K@Z=?sb_AllocateNewStructPage@@YAHPAUStructBank_t@@K@Z
 # 0x490c20
@@ -2204,10 +2200,6 @@
 /ALTERNATENAME:?GetTextRect@CcnConsole@@QAEXPAVLTRect@@@Z=?GetTextRect@CUnknown41D040@@QAEXPAVLTRect@@@Z
 # 0x40bfe0 (CMoArray<uint8>::SetSize2, the uint-returning spelling)
 /ALTERNATENAME:?SetSize2@CMsgArray@@QAEIKPAVLAlloc@@@Z=?SetSize2@?$CMoArray@EVDefaultCache@@@@QAEIKPAVLAlloc@@@Z
-# 0x4147f0 ObjectCreateStruct::Clear: counter.cpp's CObjCreateStruct is the
-# same 0x284-byte struct (server.dll aliases it the same way, 0x10001bd7);
-# lithtech.exe's copy of its caller (0x402c90) expands it inline.
-/ALTERNATENAME:?Clear@CObjCreateStruct@@QAEXXZ=?Clear@ObjectCreateStruct@@QAEXXZ
 # ---- cissurf / lt2new1 / lt2new2 / cmodelload / console ----
 # 0x45f5e0 -- FMConvertMgrAPI::PValueToFormatColor (writer table 0x4aceb8; fmconvert.cpp); cissurf/lt2new2 call it as the blitter's ConvertColor
 /ALTERNATENAME:?ConvertColor@CBlitterQ40C@@QAEXPAVPFormatQ40C@@KPAK@Z=?PValueToFormatColor@FMConvertMgrAPI@@QAEKPAVFMFormat@@KPAK@Z
@@ -2270,7 +2262,6 @@
 # 0x4500d0 -- commonphysics.cpp's phys_ComputeFrameMove (near pair)
 /ALTERNATENAME:?pm_UpdateMovement@@YAXPAVCMoveAbstractView@@@Z=?phys_ComputeFrameMove@@YAHPAVGlobalForceControl@@@Z
 # console.cpp's out-of-line ObjectCreateStruct::Clear (server.dll's aliases.rsp carries the same pair; lithtech's /O2 build of cc_SpawnObject 0x466bd0 expands it)
-/ALTERNATENAME:?Clear@CConObjCreateStruct@@QAEXXZ=?Clear@ObjectCreateStruct@@QAEXXZ
 # --- fntdraw.cpp / cltapi.cpp / filemgr.cpp / clientstreams.cpp / servermessage.cpp /
 # --- servermath.cpp / objtypes.cpp: hand-proven (shipped bytes read, cited per line).
 # 0x45f5e0 FMConvertMgr's first colour dispatcher (table 0x4aceb8), fmconvert.cpp's

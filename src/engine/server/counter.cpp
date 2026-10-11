@@ -25,6 +25,7 @@
 #undef GetClassName
 
 #include "servermgr.h"
+#include "servermodel.h"
 #include "de_error.h"
 
 // de_error.h's two globals, defined once, here. The format pointer is the
@@ -698,32 +699,6 @@ void sub_10001ae6(CClassMgr* pClassMgr)
 	}
 }
 
-// ObjectCreateStruct as the engine's own header had it (the same
-// declaration servermodel.cpp carries, for the same reason): 0x284 bytes,
-// and Clear() out of line at 0x10001bd7 because /O1 implies /Ob1 and an
-// in-class body would be expanded into every caller.
-class CObjCreateStruct
-{
-public:
-	CObjCreateStruct() { Clear(); }
-	void Clear();                            // 0x10001bd7
-
-	uint16     m_ObjectType;                 // 0x000
-	uint16     m_ContainerCode;              // 0x002
-	uint32     m_CreateFlags;                // 0x004
-	uint32     m_Flags;                      // 0x008
-	uint32     m_Flags2;                     // 0x00c
-	LTVector   m_Pos;                        // 0x010
-	LTVector   m_Scale;                      // 0x01c
-	LTRotation m_Rotation;                   // 0x028
-	uint32     m_UserData;                   // 0x038
-	char       m_ClassName[0x40];            // 0x03c
-	char       m_Filename[0x80];             // 0x07c
-	char       m_SkinNames[2][0x80];         // 0x0fc
-	char       m_Name[0x80];                 // 0x1fc
-	float      m_NextUpdate;                 // 0x27c
-	float      m_fDeactivationTime;          // 0x280
-};
 
 // The three CClassStats fields servermgr.h leaves in padding, on a view of
 // the whole record so one cast serves every use: the class definition the
@@ -873,9 +848,11 @@ int sub_10001977(CClassMgr* pClassMgr)
 // m_ClassFlags gets its single instance made now, at load time.
 //
 // The create struct is cleared twice over: once by its own constructor on
-// the way into the function and once at the head of every iteration. Both
-// calls are in the bytes, which is what says Clear() is out of line and
-// that the constructor is not the only thing that runs it.
+// the way into the function and once at the head of every iteration. It is
+// the SDK's ObjectCreateStruct, whose in-class Clear() server.dll's /Os
+// calls out of line (0x10001bd7) and lithtech.exe's /O2 expands at both
+// sites (0x00402c90); sm_AllocateObjectInline (servermodel.h) is likewise
+// called here and expanded there. One spelling, both images.
 //
 // The class definition comes out of the stats table (CClassStats+0x24, the
 // back-pointer whose first fields are a ClassDef's), and the table itself is
@@ -885,7 +862,7 @@ int sub_10001977(CClassMgr* pClassMgr)
 // itself always reports zero.
 int sub_10001b54(CClassMgr* pClassMgr)
 {
-	CObjCreateStruct ocs;
+	ObjectCreateStruct ocs;
 	int i;
 
 	for (i = 0; i < pClassMgr->m_nClasses; i++)
@@ -899,10 +876,10 @@ int sub_10001b54(CClassMgr* pClassMgr)
 
 		if (pClass->m_ClassFlags & 4)
 		{
-			pObject = sm_AllocateObject(pClassMgr->m_pServerMgr, pClass);
+			pObject = sm_AllocateObjectInline(pClassMgr->m_pServerMgr, pClass);
 
 			sm_CreateObjectInWorld(pClassMgr->m_pServerMgr, pObject, pClass,
-			                       (ObjectCreateStruct*)&ocs, 0xffff, 0.0f,
+			                       &ocs, 0xffff, 0.0f,
 			                       &((CClassStatsView*)
 			                             pClassMgr->m_pClassStats)[i].m_pStaticObject);
 		}

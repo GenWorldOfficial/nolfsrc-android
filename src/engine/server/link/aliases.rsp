@@ -78,8 +78,6 @@
 /ALTERNATENAME:?c_CommandHandler@@YAKPAVConsoleState@@PAD@Z=?cc_RunConsoleString@@YAHPAVConsoleState@@PAD@Z
 /ALTERNATENAME:?cc_RunCommand@@YAXPAVConsoleState@@PADH@Z=?con_RunString3@@YAXPAVConsoleState@@PADH@Z
 /ALTERNATENAME:?cc_SaveConfigFile@@YAIPAVConsoleState@@PAD@Z=?con_SaveFile@@YAIPAVConsoleState@@PAD@Z
-/ALTERNATENAME:?Clear@CConObjCreateStruct@@QAEXXZ=?Clear@ObjectCreateStruct@@QAEXXZ
-/ALTERNATENAME:?Clear@CObjCreateStruct@@QAEXXZ=?Clear@ObjectCreateStruct@@QAEXXZ
 /ALTERNATENAME:?Clear@CWorldSubFCView@@QAEXXZ=?Clear@CWorldSubFC@@QAEXXZ
 /ALTERNATENAME:?Close@CRezMgrX720@@QAEHH@Z=?Close@CRezMgrX380@@QAEHH@Z
 /ALTERNATENAME:?CloseFile@CRezFileDirectoryEmulationFileRf90@@QAEHXZ=?CloseFile@CRezFileDirectoryEmulationFileRf80@@QAEHXZ
