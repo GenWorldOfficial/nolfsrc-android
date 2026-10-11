@@ -13,6 +13,8 @@
 #   d3d                     Intel C/C++ 4.0 (toolchain/icl-4.0), with the
 #                           per-file flag groups below; new files encode
 #                           their group in their name (w<N>_*_<flags>.cpp)
+#                           -- except D3D_CL_TUS, StdLith's l_allocator.cpp,
+#                           which is VC6 library code: cl 12.00.8447 /O2 /GX
 # src/engine/server/*.cpp is compiled into both server.dll and lithtech.exe.
 #
 # Each link reads committed link inputs in src/engine/<target>/link/: an
@@ -208,6 +210,15 @@ D3D_QIP_OS_OI_SF_TUS="$(_d3dw 'w[0-9]*_osoiqipsf.cpp')"
 D3D_QIP_SF_TUS="$(_d3dw 'w[0-9]*_qipsf.cpp')"
 D3D_QIP_NI_SF_TUS="$D3D_QIP_NI_SF_TUS"$'\n'"$(_d3dw 'w[0-9]*_qipnisf.cpp')"
 D3D_QIP_OS_OI_NI_TUS="$(_d3dw 'w[0-9]*_osoiqipni.cpp')"
+# Not icl at all: StdLith's l_allocator.cpp (LAlloc and g_DefAlloc,
+# 0x1007faa0..0x1007fb1d), VC6 library code linked into d3d.ren. It is built
+# as StdLith is (build/libs.sh: cl 8447, LIB_CFLAGS); see w12_7fae0.cpp.
+D3D_CL_TUS=$'w12_7fae0.cpp'
+D3D_CL_FLAGS='/nologo /MT /W3 /GX /O2 /D WIN32 /D NDEBUG /D _WINDOWS /D NO_PRAGMA_LIBS /c'
+d3d_cl() {  # d3d_cl <tu.cpp>...: compile with cl 8447 into src/engine/d3d/Release
+    ( export CL_REV=8447; source "$(dirname "$0")/env.sh"
+      cd src/engine/d3d && run_cl $D3D_CL_FLAGS /I ..\\..\\LT2\\lithshared\\stdlith /FoRelease/ "$@" )
+}
 d3d_flags() {  # d3d_flags <tu.cpp> -> the icl optimisation flags that file is built with
     local t="$1"
     if   grep -qxF "$t" <<<"$D3D_OS_G5_TUS";        then echo "/Os /G5"
@@ -327,7 +338,7 @@ case "${1:-}" in
               echo "==== $D -> objects (Intel C/C++ 4.0, per-file flag groups)"
               mkdir -p "$D/Release"
               ( cd "$D" && run_icl /nologo /MT /W3 /O2 /D WIN32 /D NDEBUG /D _WINDOWS \
-                  /D NO_PRAGMA_LIBS /I ..\\..\\LT2\\sdk\\inc /I . /c /FoRelease/ $(ls *.cpp | grep -vxF "$D3D_OS_TUS" | grep -vxF "$D3D_QIP_TUS" | grep -vxF "$D3D_QIP_OS_TUS" | grep -vxF "$D3D_OI_TUS" | grep -vxF "$D3D_QIP_OI_TUS" | grep -vxF "$D3D_RCD_TUS" | grep -vxF "$D3D_OS_OI_TUS" | grep -vxF "$D3D_QIP_NI_TUS" | grep -vxF "$D3D_QIP_OS_OI_TUS" | grep -vxF "$D3D_QIP_OS_NI_TUS" | grep -vxF "$D3D_OS_G5_TUS" | grep -vxF "$D3D_OS_SF_TUS" | grep -vxF "$D3D_QIP_OS_OI_SF_TUS" | grep -vxF "$D3D_QIP_SF_TUS" | grep -vxF "$D3D_QIP_NI_SF_TUS" | grep -vxF "$D3D_QIP_OS_OI_NI_TUS") )
+                  /D NO_PRAGMA_LIBS /I ..\\..\\LT2\\sdk\\inc /I . /c /FoRelease/ $(ls *.cpp | grep -vxF "$D3D_OS_TUS" | grep -vxF "$D3D_QIP_TUS" | grep -vxF "$D3D_QIP_OS_TUS" | grep -vxF "$D3D_OI_TUS" | grep -vxF "$D3D_QIP_OI_TUS" | grep -vxF "$D3D_RCD_TUS" | grep -vxF "$D3D_OS_OI_TUS" | grep -vxF "$D3D_QIP_NI_TUS" | grep -vxF "$D3D_QIP_OS_OI_TUS" | grep -vxF "$D3D_QIP_OS_NI_TUS" | grep -vxF "$D3D_OS_G5_TUS" | grep -vxF "$D3D_OS_SF_TUS" | grep -vxF "$D3D_QIP_OS_OI_SF_TUS" | grep -vxF "$D3D_QIP_SF_TUS" | grep -vxF "$D3D_QIP_NI_SF_TUS" | grep -vxF "$D3D_QIP_OS_OI_NI_TUS" | grep -vxF "$D3D_CL_TUS") )
               [ -n "$D3D_RCD_TUS" ] && ( cd "$D" && run_icl /nologo /MT /W3 /O2 /Qrcd /D WIN32 /D NDEBUG /D _WINDOWS \
                   /D NO_PRAGMA_LIBS /I ..\\..\\LT2\\sdk\\inc /I . /c /FoRelease/ $D3D_RCD_TUS )
               [ -n "$D3D_OI_TUS" ] && ( cd "$D" && run_icl /nologo /MT /W3 /O2 /Oi- /D WIN32 /D NDEBUG /D _WINDOWS \
@@ -360,6 +371,7 @@ case "${1:-}" in
                   /D NO_PRAGMA_LIBS /I ..\\..\\LT2\\sdk\\inc /I . /c /FoRelease/ $D3D_QIP_NI_SF_TUS )
               [ -n "$D3D_QIP_OS_OI_NI_TUS" ] && ( cd "$D" && run_icl /nologo /MT /W3 /Os /Oi- /Qip /Qip_no_inlining /D WIN32 /D NDEBUG /D _WINDOWS \
                   /D NO_PRAGMA_LIBS /I ..\\..\\LT2\\sdk\\inc /I . /c /FoRelease/ $D3D_QIP_OS_OI_NI_TUS )
+              d3d_cl $D3D_CL_TUS
               [ "${2:-}" = verify ] && match "$(ref d3d.ren)" src/engine/d3d/Release/*.obj
               ;;
     # One file, with the flags its group gives it.
@@ -367,10 +379,15 @@ case "${1:-}" in
     d3d-one)
               export CL_REV="${CL_REV:-8168}"; source "$(dirname "$0")/env.sh"
               TU="${2:?usage: engine.sh d3d-one <tu.cpp> [symbol-filter]}"
-              FLAGS=$(d3d_flags "$TU"); echo "==== $TU ($FLAGS)"
               rm -f "src/engine/d3d/Release/${TU%.cpp}.obj"
-              ( cd src/engine/d3d && run_icl /nologo /MT /W3 $FLAGS /D WIN32 /D NDEBUG /D _WINDOWS \
-                  /D NO_PRAGMA_LIBS /I ..\\..\\LT2\\sdk\\inc /I . /c /FoRelease/ "$TU" ) || exit 1
+              if grep -qxF "$TU" <<<"$D3D_CL_TUS"; then
+                  echo "==== $TU (cl 8447 $D3D_CL_FLAGS)"
+                  d3d_cl "$TU" || exit 1
+              else
+                  FLAGS=$(d3d_flags "$TU"); echo "==== $TU ($FLAGS)"
+                  ( cd src/engine/d3d && run_icl /nologo /MT /W3 $FLAGS /D WIN32 /D NDEBUG /D _WINDOWS \
+                      /D NO_PRAGMA_LIBS /I ..\\..\\LT2\\sdk\\inc /I . /c /FoRelease/ "$TU" ) || exit 1
+              fi
               match "$(ref d3d.ren)" "src/engine/d3d/Release/${TU%.cpp}.obj" -- "${3:-}" ;;
     lithtech) export CL_REV="${CL_REV:-8447}"; source "$(dirname "$0")/env.sh"
               D=src/engine/lithtech

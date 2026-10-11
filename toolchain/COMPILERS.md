@@ -111,6 +111,13 @@ called, not expanded), `/Qrcd` (fast float-to-int conversion), `/Qsfalign16`,
 by their name (`w<N>_*_<flags>.cpp`), and `build/engine.sh d3d-one <file>`
 compiles a file with its group's flags.
 
+One file is not icl's: `w12_7fae0.cpp` is StdLith's `l_allocator.cpp`
+(`LAlloc` and `g_DefAlloc`, 0x1007faa0..0x1007fb1d, in the library tail
+above the CRT boundary), Microsoft code like the rest of StdLith (one of
+the Rich header's C++ 8447 objects). `build/engine.sh` builds it as
+`build/libs.sh` builds StdLith (`D3D_CL_TUS`: cl 8447, `/O2 /GX`), and it is
+then all seven shipped functions, byte for byte.
+
 The evaluation release of icl 4.0 that `toolchain/fetch.sh` assembles has
 its licence check disabled by one byte, as the archive's own `$ICL.COM`
 documents (`toolchain/README.md`). It runs against `msvc-6.00-8168`'s headers

@@ -23,51 +23,29 @@
 //    0x1007fb00  LAlloc's scalar deleting destructor (vtable slot 0)
 //    vtable 0x100881b8 = { 0x1007fb00, 0x1007fae0, 0x1007faf0 }
 //
-//  src/lithshared/out/StdLith.lib's l_allocator.obj reproduces all three
-//  virtuals byte-identical (0x1007fae0, 0x1007faf0, 0x1007fb00),
-//  so this block was VC6-compiled library code, not icl. It is NOT linked
-//  from the library, though: the recovered l_allocator.cpp also DEFINES
-//  DefStdlithAlloc/DefStdlithFree (malloc/free), and in d3d.ren those two
-//  are the renderer's own functions -- LAlloc::Alloc calls 0x10021ce0 and
-//  LAlloc::Free calls 0x10021cb0 (d3d_Free), both of which route through
-//  the engine's allocator interface at 0x1008cbcc. Pulling the library
-//  member would hand every StdLith allocation to the CRT heap while the
-//  renderer frees through the engine: a mismatched heap at run time. So
-//  the class is compiled here, under the spelling the d3d objects already
-//  use (CD3DAlloc, d3dr5b.cpp), calling the renderer's two functions.
-//  icl's bytes are not the shipped VC6 bytes; the behaviour is.
+//  It is VC6 code, not icl's: built here exactly as StdLith is (cl 8447,
+//  build/libs.sh's flags; build/engine.sh's D3D_CL_TUS), this file is all
+//  seven shipped functions, byte for byte -- the three virtuals, and the
+//  four initialiser thunks _$E4 (0x1007faa0), _$E1 (0x1007fab0), _$E3
+//  (0x1007fac0) and _$E2 (0x1007fad0).  (Compiled by icl, as it was until
+//  now under the name CD3DAlloc, the three functions it emitted matched
+//  nothing and a ___sti__ initialiser stood where VC6's thunks are.)
 //
-//  (StdLith.lib IS linked for struct_bank.obj and dynarray.obj -- see the
-//  d3d-link target -- and their DefStdlithAlloc/DefStdlithFree references
-//  are aliased onto 0x10021ce0/0x10021cb0 in link/aliases.rsp.)
+//  It is NOT linked from src/lithshared/out/StdLith.lib, though: that
+//  library's l_allocator.obj also DEFINES DefStdlithAlloc/DefStdlithFree
+//  (malloc/free, as the LT2-era source release has them), while in d3d.ren
+//  those two are the renderer's own functions -- LAlloc::Alloc calls
+//  0x10021ce0 and LAlloc::Free calls 0x10021cb0 (d3d_Free), both routing
+//  through the engine's allocator interface at 0x1008cbcc.  Pulling the
+//  library member would hand every StdLith allocation to the CRT heap while
+//  the renderer frees through the engine.  So only the class and the
+//  object are compiled here, and the two calls resolve, like
+//  struct_bank.obj's, through link/aliases.rsp onto 0x10021ce0/0x10021cb0.
 //
 // *********************************************************************** //
 
-typedef unsigned long uint32;
+#include "l_allocator.h"
 
-void* sub_10021ce0(uint32 nSize);                        // 0x10021ce0 DefStdlithAlloc
-void  sub_10021cb0(void* p);                             // 0x10021cb0 DefStdlithFree / d3d_Free
 
-class CD3DAlloc
-{
-public:
-	virtual       ~CD3DAlloc() {}                        // vtbl +0x00 (0x1007fb00)
-	virtual void* Alloc(uint32 nSize);                   // vtbl +0x04 (0x1007fae0)
-	virtual void  Free(void* pData);                     // vtbl +0x08 (0x1007faf0)
-};
-
-// 0x1007fae0
-void* CD3DAlloc::Alloc(uint32 nSize)
-{
-	return sub_10021ce0(nSize);
-}
-
-// 0x1007faf0
-void CD3DAlloc::Free(void* pData)
-{
-	sub_10021cb0(pData);
-}
-
-// 0x10091df0 -- g_DefAlloc. Its static constructor/destructor pair is
-// 0x1007faa0..0x1007fada.
-CD3DAlloc g_10091df0;
+// 0x10091df0
+LAlloc g_DefAlloc;

@@ -733,8 +733,6 @@
 /ALTERNATENAME:?sub_1002ec30@Arr10050560@@QAEKPAVLAllocR5C@@@Z=?sub_1002ec30@C1002ec30@@QAEIPAX@Z
 # 0x10050d00  0x10050d30 calls it on a fresh node; it returns `this` (`mov %ecx,%eax ; ret`), so it is defined returning the node in w7_1004b5c0_os.cpp
 /ALTERNATENAME:?sub_10050d00@C10050d00@@QAEXXZ=?sub_10050d00@W7Node50d00@@QAEPAU1@XZ
-# 0x10091df0  dynarray.h's g_DefAlloc: 0x100500a0's inlined Insert2 allocates and frees through `mov $0x10091df0,%ecx ; call *0x4(%edx)` / `*0x8(%edx)`
-/ALTERNATENAME:?g_DefAlloc@@3VLAlloc@@A=?g_10091df0@@3UC10091df0@@A
 # 0x10050284  0x1004fbc0 calls it on the queue; wC1_r5c.cpp now defines C100500a0::sub_10050284 itself (no alias)
 # 0x10021f10  w25_10037bf0_qipni.cpp's 0x10037cb0 zero-extends the result of all four calls (`movzwl %ax,%eax` at 0x10037d44/55/66/77), so it declares a WORD return; defined in d3dbatcha.cpp as uint32 (the same body: the count lands in %eax)
 /ALTERNATENAME:?sub_10021f10@@YAGK@Z=?sub_10021f10@@YAKK@Z
@@ -1408,17 +1406,15 @@
 # 0x10091d80
 /ALTERNATENAME:?g_Cache10091d80@@3VD3DModelCache@@A=?g_10091d80@@3UC1007e0a0@@A
 # 0x10091df0
-/ALTERNATENAME:?g_10091df0@@3UC10091df0@@A=?g_10091df0@@3VCD3DAlloc@@A
+/ALTERNATENAME:?g_10091df0@@3UC10091df0@@A=?g_DefAlloc@@3VLAlloc@@A
 # 0x10091df0
-/ALTERNATENAME:?g_10091df0@@3UIAllocator@@A=?g_10091df0@@3VCD3DAlloc@@A
+/ALTERNATENAME:?g_10091df0@@3UIAllocator@@A=?g_DefAlloc@@3VLAlloc@@A
 # 0x10091df0
-/ALTERNATENAME:?g_10091df0@@3VIAllocator@@A=?g_10091df0@@3VCD3DAlloc@@A
+/ALTERNATENAME:?g_10091df0@@3VIAllocator@@A=?g_DefAlloc@@3VLAlloc@@A
 # 0x10091df0
-/ALTERNATENAME:?g_10091df0@@3VLAlloc1007aeb4@@A=?g_10091df0@@3VCD3DAlloc@@A
+/ALTERNATENAME:?g_10091df0@@3VLAlloc1007aeb4@@A=?g_DefAlloc@@3VLAlloc@@A
 # 0x10091df0
-/ALTERNATENAME:?g_10091df0@@3VLAllocR5C@@A=?g_10091df0@@3VCD3DAlloc@@A
-# 0x10091df0
-/ALTERNATENAME:?g_DefAlloc@@3VLAlloc@@A=?g_10091df0@@3VCD3DAlloc@@A
+/ALTERNATENAME:?g_10091df0@@3VLAllocR5C@@A=?g_DefAlloc@@3VLAlloc@@A
 # 0x10003770
 /ALTERNATENAME:_d3dfn_10003770=??_GCModelVBBank@@UAEPAXI@Z
 # 0x100037b0
@@ -1562,9 +1558,9 @@
 # 0x10050410
 /ALTERNATENAME:_d3dfn_10050410=?GenFindElement@?$CMoArray@UW7Pending500a0@@VDefaultCache@@@@UBEHABUW7Pending500a0@@AAVGenListPos@@@Z
 # 0x10050450
-/ALTERNATENAME:_d3dfn_10050450=?sub_10050450@Arr10050560@@QAEKABUGenList10050560@@@Z
+/ALTERNATENAME:_d3dfn_10050450=?GenAppendList@?$CMoArray@UW7Pending500a0@@VDefaultCache@@@@UAEHABV?$GenList@UW7Pending500a0@@@@@Z
 # 0x10050560
-/ALTERNATENAME:_d3dfn_10050560=?sub_10050560@Arr10050560@@QAEKABUGenList10050560@@@Z
+/ALTERNATENAME:_d3dfn_10050560=?GenCopyList@?$CMoArray@UW7Pending500a0@@VDefaultCache@@@@UAEHABV?$GenList@UW7Pending500a0@@@@@Z
 # 0x10050670
 /ALTERNATENAME:_d3dfn_10050670=?sub_10050670@Arr10050670@@QBEKXZ
 # 0x10050690
@@ -1574,9 +1570,9 @@
 # 0x100506d0
 /ALTERNATENAME:_d3dfn_100506d0=?sub_100506d0@C10050800@@QAEXK@Z
 # 0x100506f0
-/ALTERNATENAME:_d3dfn_100506f0=?sub_100506f0@Arr100506f0@@QBE?AUT100506f0@@AAUGenListPos@@@Z
+/ALTERNATENAME:_d3dfn_100506f0=?GenGetAt@?$CMoArray@UW7Pending500a0@@VDefaultCache@@@@UBE?AUW7Pending500a0@@AAVGenListPos@@@Z
 # 0x10050730
-/ALTERNATENAME:_d3dfn_10050730=?sub_10050730@Arr10050730@@QBE?AUT10050730@@AAUGenListPos@@@Z
+/ALTERNATENAME:_d3dfn_10050730=?GenGetNext@?$CMoArray@UW7Pending500a0@@VDefaultCache@@@@UBE?AUW7Pending500a0@@AAVGenListPos@@@Z
 # 0x10050770
 /ALTERNATENAME:_d3dfn_10050770=?GenBegin@?$CMoArray@UW7Pending500a0@@VDefaultCache@@@@UBE?AVGenListPos@@XZ
 # 0x10050830
@@ -1736,7 +1732,7 @@
 # 0x1007c6d0
 /ALTERNATENAME:_d3dfn_1007c6d0=?sub_1007c6d0@Arr1007c@@QBEKAAUGenListPos@@@Z
 # 0x1007c700
-/ALTERNATENAME:_d3dfn_1007c700=?sub_1007c700@Arr1007c@@QBEKABUGenListPos@@@Z
+/ALTERNATENAME:_d3dfn_1007c700=?GenIsValid@?$CMoArray@UW7Pending500a0@@VDefaultCache@@@@UBEHABVGenListPos@@@Z
 # 0x1007dbd0
 /ALTERNATENAME:_d3dfn_1007dbd0=?sub_1007dbd0@Obj1007dcc4@@QAEXK@Z
 # 0x1007dc00
