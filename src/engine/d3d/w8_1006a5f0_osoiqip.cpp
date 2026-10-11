@@ -148,7 +148,27 @@ struct Query1006a5f0
 // (ja vs jbe+jmp), the edge Dot's term order (z,y,x against y,x,z), and
 // the else-branch's `d1 > EPS` retest the shipped code keeps and icl
 // here folds away (tried: `||` forms, a ternary, d1 as double -- the last
-// brings back icl's stack-realigning entry).  Pairs as near.
+// brings back icl's stack-realigning entry).
+// 1059 -> 1076 bytes, ZERO mnemonic blocks, all three closed:
+//    * the both-sides tests as the server twin writes them
+//      (bspq_IntersectLineRec, server packet.cpp): `d1 > EPS && d2 > EPS`
+//      first, then `if (d1 < -EPS) {..}` with `else if (d1 > EPS)` as the
+//      spanning case's first test -- icl threads the first `&&`'s d1 test
+//      straight into `iSide = 1` and KEEPS the `d1 > EPS` retest, as shipped;
+//    * each dot as `a = y + x; a += z;` -- icl puts a flat three-term float
+//      sum in z,y,x order whatever the source order (six permutations,
+//      Dot from either side: all z,y,x), only the split statement keeps y,x;
+//    * `t > 0.99f` BREAKs to the loop's `return LTFALSE` (a direct `ja`
+//      back to the shared exit) where a `return LTFALSE` there was a
+//      separate block icl tail-merged into `jbe +5 ; jmp`.
+// NEAR, 34 instructions differ, all frame-slot operands: our spill slots
+// for pNode/iSide/pQuery/pPlane/pEnd sit at -0x20..-0x30, shipped at
+// -0x1c..-0x2c -- ours has an unreferenced 4-byte slot at -0x1c, shipped
+// one at -0x30.  Unchanged by: declaration order (d1.. last, iSide/pPoly/
+// pFilter moved), t/pPrev/pEdge/fEdgeDist block-scoped, fDenom folded
+// away, pFilter removed (worse), iSide uint32/LTBOOL (worse), Norm(1.0f)
+// or written out, pNode/pQuery copied from renamed parameters, a for(;;)
+// with the flag test inside (worse), unused functions before it.
 LTBOOL sub_1006a1b0(Hit1006a5f0* pNode, Query1006a5f0* pQuery,
                     LTVector vFrom, LTVector vTo)
 {
@@ -162,7 +182,7 @@ LTBOOL sub_1006a1b0(Hit1006a5f0* pNode, Query1006a5f0* pQuery,
 	Edge1006a5f0*	pEdge;
 	Edge1006a5f0*	pPrev;
 	Edge1006a5f0*	pEnd;
-	float			fEdgeDist;
+	float			fEdgeDist, fMidDist;
 	Filter1006a5f0*	pFilter;
 
 	while (!(pNode->m_nFlags16 & 3))
@@ -170,17 +190,13 @@ LTBOOL sub_1006a1b0(Hit1006a5f0* pNode, Query1006a5f0* pQuery,
 		d1 = ((LTPlane*)pNode->GetPlane())->DistTo(vFrom);
 		d2 = ((LTPlane*)pNode->GetPlane())->DistTo(vTo);
 
-		if (d1 > EPS_1006a1b0)
+		if (d1 > EPS_1006a1b0 && d2 > EPS_1006a1b0)
 		{
-			if (d2 > EPS_1006a1b0)
-			{
-				pNode = pNode->m_pSides04[1];
-				continue;
-			}
-
-			iSide = 1;
+			pNode = pNode->m_pSides04[1];
+			continue;
 		}
-		else if (d1 < -EPS_1006a1b0)
+
+		if (d1 < -EPS_1006a1b0)
 		{
 			if (d2 < -EPS_1006a1b0)
 			{
@@ -190,15 +206,12 @@ LTBOOL sub_1006a1b0(Hit1006a5f0* pNode, Query1006a5f0* pQuery,
 
 			iSide = 0;
 		}
+		else if (d1 > EPS_1006a1b0)
+			iSide = 1;
+		else if (d2 < 0.0f)
+			iSide = 1;
 		else
-		{
-			if (d1 > EPS_1006a1b0)
-				iSide = 1;
-			else if (d2 < 0.0f)
-				iSide = 1;
-			else
-				iSide = 0;
-		}
+			iSide = 0;
 
 		fDenom = d2 - d1;
 		if (fDenom != 0.0f && (d1 < -EPS_1006a1b0 || d1 > EPS_1006a1b0))
@@ -229,8 +242,13 @@ LTBOOL sub_1006a1b0(Hit1006a5f0* pNode, Query1006a5f0* pQuery,
 
 					vNormal.Norm();
 
-					fEdgeDist = vNormal.Dot(*pEdge->m_pVert);
-					if (vNormal.Dot(vMid) - fEdgeDist < -EPS_1006a1b0)
+					fEdgeDist  = vNormal.y * pEdge->m_pVert->y + vNormal.x * pEdge->m_pVert->x;
+					fEdgeDist += vNormal.z * pEdge->m_pVert->z;
+
+					fMidDist  = vNormal.y * vMid.y + vNormal.x * vMid.x;
+					fMidDist += vNormal.z * vMid.z;
+
+					if (fMidDist - fEdgeDist < -EPS_1006a1b0)
 						goto Miss;
 
 					pPrev = pEdge;
@@ -250,7 +268,7 @@ LTBOOL sub_1006a1b0(Hit1006a5f0* pNode, Query1006a5f0* pQuery,
 			}
 			else if (t > 0.99f)
 			{
-				return LTFALSE;
+				break;		// to the loop's own `return LTFALSE`
 			}
 
 		Miss:
