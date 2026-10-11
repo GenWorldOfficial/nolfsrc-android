@@ -322,15 +322,10 @@ public:
 // Same two-vftable shape as CNetBank: the manager's destructor restores this
 // class's own and then 0x1004d260, so the three slots after the destructor
 // belong to a base (name ours).
-// Giving these classes VIRTUAL destructors also makes VC6 emit a `??_G`
-// scalar DELETING destructor for each -- CNetQueueA and
-// CUnknown8FC -- and the shipped image has no counterpart for any of them,
-// because nothing ever deletes one: they exist only as members and are
-// destroyed in place. Unmatched symbols that are the compiler's and not
-// missing work, the same phenomenon commonmodel.h records for the
-// vector-constructor iterators. CConnList and CDriverList used to be on
-// that list; they are collection.h's CMoArray now, whose destructor is not
-// virtual (GenList has no destructor slot), so their two thunks are gone.
+// (CNetQueueA, CUnknown8FC, CConnList and CDriverList used to have VIRTUAL
+// destructors, and so `??_G` scalar-deleting destructors the shipped image
+// has no counterpart for. None of them was ever polymorphic on a destructor:
+// all four are GenList queues/arrays, whose vtables open with GenBegin.)
 class CBankBase
 {
 public:
@@ -1219,19 +1214,23 @@ public:
 	uint8           m_Data0C[0x70 - 0x0c];   // +0x0c  the wire payload
 };
 
-// The manager's two message queues: LMessageList-shaped but with their own
-// vtables in the image (0x1004dd2c / 0x1004dd5c), so two distinct classes
-// (standalone: the shipped constructors store one vptr before the zeros).
-class CNetQueueA
+// The manager's two message queues. The first is an LMessageList: CNetMgr's
+// constructor stores 0x1004dd2c into +0xb8 (0x1002141c), and 0x1004dd2c is
+// ??_7LMessageList@@6B@ (NetConnection's constructor stores it too, see
+// netmgr.cpp). So the class derives from LMessageList and adds nothing
+// virtual -- it used to be a standalone class with a VIRTUAL destructor,
+// whose `??_G` the shipped image does not have (slot 0 of every queue
+// vtable is GenBegin). It exists as a class of its own only for its
+// destructor: ~CNetMgr expands it as the vptr restore and the two clears,
+// m_pTail before m_nMessages, which LMessageList itself must not have (it
+// stays trivially destructible; see LThreadMsgList). The constructor repeats
+// the zeros, __forceinline, for the reason CNetQueueB's does below.
+class CNetQueueA : public LMessageList
 {
 public:
-	CNetQueueA() { m_nMessages = 0; m_pTail = LTNULL; }
-	// Inline, and NOT empty: the manager's destructor expands it and the
-	// expansion clears both fields, m_pTail before m_nMessages.
-	virtual ~CNetQueueA() { m_pTail = LTNULL; m_nMessages = 0; }
+	__forceinline CNetQueueA() { m_nMessages = 0; m_pTail = LTNULL; }
 
-	uint32          m_nMessages;             // +0x04
-	LThreadMessage* m_pTail;                 // +0x08
+	~CNetQueueA() { m_pTail = LTNULL; m_nMessages = 0; }
 };
 
 // Its vtable (0x1004dd5c) names CNetSentQueue's GenAppendList at 0x10023f87
