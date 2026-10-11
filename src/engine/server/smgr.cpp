@@ -8880,9 +8880,17 @@ public:
 // and the other arm's expands around a called _DeleteAndDestroyArray
 // (0x00413050), and the +0x04 SetSize2 expands around a called BaseDelete
 // (0x004152b0). VC6 picked every one of those itself.
-class CSWElem60
+//
+// The 0x60 record is collection.cpp's CCollElem60 -- a constructor (the
+// one BaseNew 0x1000d1f2 runs) and no destructor, which is why the release
+// is the plain BaseDelete -- restated here exactly as collection.cpp's
+// DECLARE_COLLCTOR spells it, so that the array's COMDATs are collection.cpp's
+// own (a constructor-less 0x60 stand-in compiled a second _AllocateTArray
+// the shipped image does not have).
+class CCollElem60
 {
 public:
+	CCollElem60();
 	uint8 m_pad[0x60];
 };
 
@@ -8943,7 +8951,7 @@ void CServerWorld::Term()
 	}
 	else
 	{
-		((CMoArray<CSWElem60, DefaultCache>*)&pThis->m_Collection04)->SetSize2(0,
+		((CMoArray<CCollElem60, DefaultCache>*)&pThis->m_Collection04)->SetSize2(0,
 			(LAlloc*)&g_WorldAllocator);
 
 		TermObjects();
