@@ -108,7 +108,7 @@
 /ALTERNATENAME:?Find@CommandParserQ468@@QAEIPADIH@Z=?Find@CommandParser@@QAEIPADIH@Z
 /ALTERNATENAME:?Find@CRezTypeHashTableX720@@QAEPAVCRezTypX720@@K@Z=?Find@CRezTypeHashTableQ48C@@QAEPAVCRezTypQ48C@@K@Z
 /ALTERNATENAME:?fs_FindFileInTrees@@YAHPAVCFileMgr@@PADPAPAXPAK@Z=?fs_FindFileInTreesQ468@@YAHPAVCFileMgrQ468@@PADPAPAVCFileTreeRecQ468@@PAK@Z
-/ALTERNATENAME:?fs_GetFileIdentifier@@YAHPAVCFileMgr@@PADHPAPAX@Z=?se_LoadFile@@YAHPAVCFileMgr@@PADHPAPAX@Z
+/ALTERNATENAME:?fs_GetFileIdentifier@@YAHPAVCFileMgr@@PADHPAPAX@Z=?se_LoadFile@@YAHPAVCFileMgr@@PADGPAPAX@Z
 /ALTERNATENAME:?fs_GetFilename@@YAPADPAVCFileMgr@@PAX@Z=?fs_GetFileName@@YAPADPAVCFileMgr@@PAX@Z
 /ALTERNATENAME:?fs_GetFileName@@YAPADPAVSavFileMgrQ4S@@PAX@Z=?fs_GetFileName@@YAPADPAVCFileMgr@@PAX@Z
 /ALTERNATENAME:?fs_GetSourceInfo@@YAHPAVICacheSource@@PAUCCacheSourceInfo@@@Z=?wav_ParseFile_D@@YAIPAVILTStream@@PAUWaveInfo_D@@@Z

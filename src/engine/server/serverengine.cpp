@@ -1321,8 +1321,8 @@ int fs_FindFileInTreesQ468(CFileMgrQ468* pFileMgr, char* pFilename,
 int xfer_AddFile(CClientFiles* pState, char* pName, uint32 nUnknown,
                  uint32 nFileID, uint16 nFlags);
 
-// BYTE-IDENTICAL on lithtech.exe (0x0046b9d0, 303 bytes); SIZE-EXACT on
-// server.dll (246 of 246, no mnemonic block, two differing bytes).
+// BYTE-IDENTICAL on lithtech.exe (0x0046b9d0, 303 bytes) and server.dll
+// (0x1002be8c, 246 bytes).
 //
 // The first length is a NAMED LOCAL, `nLen = strlen(pFilename)`, with the +1
 // in the call. lithtech.exe proves it: its inlined first strlen ends
@@ -1333,11 +1333,13 @@ int xfer_AddFile(CClientFiles* pState, char* pName, uint32 nUnknown,
 // the frame slot that the old 245-byte version recycled a parameter slot
 // for — the `push %ecx` and `leave` came back with it.
 //
-// What remains on server.dll is one spill: the loop's Client pointer goes
-// to nFlags's dead slot 0x10(%ebp) in the shipped build (0x1002bf50,
-// 0x1002bf64) and to ppFile's 0x14(%ebp) in ours. Dead-parameter-slot
-// choice; pClient declared first, and pClient block-scoped in the loop,
-// both leave it at 0x14; folding pName into the call costs two instructions.
+// nFlags is a uint16 PARAMETER, not an int narrowed at the store. On
+// server.dll the loop's Client pointer is spilled to a dead parameter slot,
+// and with an int nFlags VC6 picked ppFile's 0x14(%ebp); the shipped build
+// uses nFlags's 0x10(%ebp) (0x1002bf50, 0x1002bf64), which only the
+// sixteen-bit parameter gives. (Tried first and NOT it: pClient declared
+// first or block-scoped, no pClient local, a for loop, the call folded,
+// a uint32 nFlags, the cast dropped.) Callers push a dword 0 either way.
 //
 // 0x1002be8c — the file manager's "give me this file" entry point, and the
 // only thing that ever builds a CFileRef.
@@ -1355,7 +1357,7 @@ int xfer_AddFile(CClientFiles* pState, char* pName, uint32 nUnknown,
 // Every client is then told, because a client has to be able to name the same
 // file by the same id the server used; the id is the manager's file counter at
 // the moment the record was made.
-int se_LoadFile(CFileMgr* pFileMgr, char* pFilename, int nFlags, void** ppFile)
+int se_LoadFile(CFileMgr* pFileMgr, char* pFilename, uint16 nFlags, void** ppFile)
 {
 	CFileRef*     pRef;
 	uint32        nLen;

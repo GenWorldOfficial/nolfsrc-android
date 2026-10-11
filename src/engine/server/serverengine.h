@@ -226,7 +226,7 @@ LTRESULT se_LoadModelData(CServerMgr* pMgr, char* pFilename, void* pFile,
 // pointer. Nonzero means it came back. What it fills is the same slot of the
 // object data a model's file goes in — an object is made of one file and the
 // slot does not care which kind (name ours).
-int se_LoadFile(class CFileMgr* pFileMgr, char* pFilename, int nFlags,
+int se_LoadFile(class CFileMgr* pFileMgr, char* pFilename, uint16 nFlags,
                 void** ppFile);
 
 // A sprite object keeps the frame it is showing past the end of LTObject; an
