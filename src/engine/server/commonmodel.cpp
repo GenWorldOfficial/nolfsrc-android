@@ -4325,11 +4325,20 @@ public:
 	// still calls it; there the stand-in is a size-exact near of the
 	// shipped 34 bytes (the Init push schedule), where only the real
 	// template matches -- the address is credited by the other copies.
+	//
+	// server.dll's build only DECLARES it: link/aliases.rsp binds it to the
+	// real template's out-of-line constructor, the body that matches the
+	// shipped 34 bytes, where this stand-in's own copy was a near the image
+	// has no second address for.
+#ifdef LT_SERVER_BUILD
+	CWorldPolyArray();
+#else
 	CWorldPolyArray()                        // 0x1000b15c
 	{
 		Clear();
 		Init();
 	}
+#endif
 	LTBOOL Init(uint32 size = 0, uint32 cacheSize = CACHE_DEFAULT_SIZE);
 	void   Clear()
 	{
@@ -4845,11 +4854,20 @@ public:
 	// still calls it; there the stand-in is a size-exact near of the
 	// shipped 34 bytes (the Init push schedule), where only the real
 	// template matches -- the address is credited by the other copies.
+	//
+	// server.dll's build only DECLARES it: link/aliases.rsp binds it to the
+	// real template's out-of-line constructor, the body that matches the
+	// shipped 34 bytes, where this stand-in's own copy was a near the image
+	// has no second address for.
+#ifdef LT_SERVER_BUILD
+	CWorldTable();
+#else
 	CWorldTable()                            // 0x1000bca5
 	{
 		Clear();
 		Init();
 	}
+#endif
 	LTBOOL Init(uint32 size = 0, uint32 cacheSize = CACHE_DEFAULT_SIZE);
 	void   Clear()
 	{

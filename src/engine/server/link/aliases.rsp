@@ -556,3 +556,6 @@
 /ALTERNATENAME:?am_RemoveAttachment@@YAKPAVCUnknown390@@PAVLTObject@@PAVAttachment@@@Z=?am_RemoveAttachment@@YAKPAVCObjMgrView@@PAVCObjLinked@@PAVAttachment@@@Z
 # 0x10023e86 -- smgr.cpp's CMsgCursorView::Init (smgrnew.cpp's view of it)
 /ALTERNATENAME:?Init@CMsgCursorViewQ474@@QAEPAVServerMessage@@PAV2@@Z=?Init@CMsgCursorView@@QAEPAVServerMessage@@PAV2@@Z
+# 0x1000b15c / 0x1000bca5 -- the two world collections' constructors are the template's
+/ALTERNATENAME:??0?$CWorldPolyArray@PAVCWorldPolyRec@@@@QAE@XZ=??0?$CMoArray@PAVCWorldPart@@VDefaultCache@@@@QAE@XZ
+/ALTERNATENAME:??0CWorldTable@@QAE@XZ=??0?$CMoArray@PAVCWorldPart@@VDefaultCache@@@@QAE@XZ
