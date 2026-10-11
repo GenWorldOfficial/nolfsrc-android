@@ -31,3 +31,4 @@ Object.lto,0x100ce7f0,"??0CDialogueWindow (35 bytes) behind the 10-byte _$E thun
 Object.lto,0x100d4c60,"??_Dostrstream (20 bytes) behind the 9-byte flush(ostream&) at 0x100d4c50 (mov ecx,[esp+4]; jmp)"
 Object.lto,0x100ec450,"??0CMusicMgr (117 bytes) behind the 10-byte _$E thunk at 0x100ec440 (mov ecx,&g; jmp ??1CMusicMgr at 0x100ec4f0)"
 Object.lto,0x1010aeb0,"??0PROPTYPE (176 bytes) that the enumerator merges into CPropTypeMgr::Term at 0x1010ad70: Term ends with ret at 0x1010aeae"
+CShell.dll,0x10073c20,"CreateClientShell (82 bytes) behind the 10-byte SetInstanceHandle export at 0x10073c10 (mov eax,[esp+4]; mov [global],eax; ret, padded with 0x90 to 0x10073c20)"

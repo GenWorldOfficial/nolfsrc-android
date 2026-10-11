@@ -131,7 +131,8 @@ LTRESULT CWorldPropertiesPlugin::PreHook_EditStringList(
     const uint32 cMaxStrings,
     const uint32 cMaxStringLength)
 {
-    if (_stricmp(szSoundFilter, szPropName) == 0)
+	// GOTY: reconstructed from the Game of the Year Object.lto (g_pLTServer test)
+    if (g_pLTServer && _stricmp(szSoundFilter, szPropName) == 0)
 	{
 		m_SoundFilterMgrPlugin.PreHook_EditStringList(szRezPath, szPropName,
 			aszStrings, pcStrings, cMaxStrings, cMaxStringLength);

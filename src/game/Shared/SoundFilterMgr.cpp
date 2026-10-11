@@ -300,7 +300,8 @@ LTRESULT CSoundFilterMgrPlugin::PreHook_EditStringList(
     const uint32 cMaxStrings,
     const uint32 cMaxStringLength)
 {
-	if (!g_pSoundFilterMgr)
+	// GOTY: reconstructed from the Game of the Year Object.lto (g_pLTServer test)
+	if (g_pLTServer && !g_pSoundFilterMgr)
 	{
 		// This will set the g_pSoundFilterMgr...Since this could also be
 		// set elsewhere, just check for the global bute mgr...
