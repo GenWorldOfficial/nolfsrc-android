@@ -27,6 +27,19 @@
 //     1015 -> 921 bytes against the shipped 916;
 //   * (closed) 0x10021e50, read the console variables, is
 //     w15_10021e50_os.cpp.
+//   * (closed) the second light vector is `(scale * 1.0f) * (1.0f /
+//     255.0f)` through a by-value vector-times-scalar inline (FVecScale):
+//     the shipped code keeps both multiplies (six separate constants), and
+//     written componentwise icl folds the 1.0f away;
+//   * (closed) the 0xff pair is stored BEFORE the seventeen counter
+//     zeroes (icl then emits the zeroes first, through %eax, 5-byte
+//     stores), the world node is read before the draw-mode test, and the
+//     world before the node is published.
+//  LEFT (920 of 925 bytes, one block): the world-model loop's entry test
+//  loads the count into %eax and the shipped code reloads 0x1008beac
+//  before the body; ours tests in %ecx and keeps the world in %eax.  No
+//  effect: `k, i` / int32 counters, `count > i`, a guarded do/while, the
+//  loop as an inline or static helper, the frame code set after the loop.
 //
 // *********************************************************************** //
 
@@ -78,6 +91,18 @@ struct SceneDesc
 
 struct LTVec { float x, y, z; };
 struct FVec3 { float x, y, z; };                       // big2d1c0.cpp's spelling
+
+// A vector times a scalar, the SDK's `operator*(float)` shape: a fresh
+// temporary per product, so `(v * 1.0f) * (1.0f / 255.0f)` keeps both
+// multiplies (written componentwise icl folds the 1.0f away).
+inline FVec3 FVecScale(const FVec3& v, float f)
+{
+	FVec3 r;
+	r.x = v.x * f;
+	r.y = v.y * f;
+	r.z = v.z * f;
+	return r;
+}
 
 // A world model's poly and leaf records carry a frame code each.
 struct WorldPoly  { uint8 m_pad[0x2c]; uint16 m_wFrameCode; uint8 m_pad2e[2]; };
@@ -224,7 +249,7 @@ unsigned int sub_1001eb90(SceneDesc* pScene, void* pMem, unsigned long nMemSize)
 	SceneWorldNode* pNode;
 	WorldBsp*       pBsp;
 	LTVec           vTemp;
-	LTVec           vTemp2;
+	FVec3           vTemp2;
 	uint32          i, k;
 
 	__asm
@@ -242,14 +267,14 @@ unsigned int sub_1001eb90(SceneDesc* pScene, void* pMem, unsigned long nMemSize)
 	g_1008b878 = nMemSize;
 	g_1008beb0 = (C1008beb0Thing*)pScene;
 
+	pNode = pScene->m_pWorldNode;
 	if (pScene->m_DrawMode == 1)
 	{
-		pNode = pScene->m_pWorldNode;
 		if (!pNode)
 			return 0;
 
-		g_1008beb4 = pNode;
 		g_1008beac = pNode->m_pWorld;
+		g_1008beb4 = pNode;
 
 		if (pNode->m_wFrameCode == 0xffff)
 		{
@@ -291,15 +316,14 @@ unsigned int sub_1001eb90(SceneDesc* pScene, void* pMem, unsigned long nMemSize)
 	vTemp.z = 255.0f * g_vLightScale.z;
 	g_v1008be74 = vTemp;
 
-	vTemp2.x = (1.0f * g_vLightScale.x) * 0.003921568859368563f;
-	vTemp2.y = (1.0f * g_vLightScale.y) * 0.003921568859368563f;
-	vTemp2.z = (1.0f * g_vLightScale.z) * 0.003921568859368563f;
-	g_v1008be68 = vTemp2;
+	vTemp2 = FVecScale(FVecScale(g_vLightScale, 1.0f), 1.0f / 255.0f);
+	g_v1008be68 = *(LTVec*)&vTemp2;
 
 	g_1008be66 = (uint8)RoundF(255.0f * g_vLightScale.x);
 	g_1008be65 = (uint8)RoundF(255.0f * g_vLightScale.y);
 	g_1008be64 = (uint8)RoundF(255.0f * g_vLightScale.z);
-
+	g_1008be60              = 0xff;
+	g_1008be67              = 0xff;
 	g_nWorldPoliesProcessed = 0;
 	g_1008be5c              = 0;
 	g_nParticlesDrawn       = 0;
@@ -317,8 +341,6 @@ unsigned int sub_1001eb90(SceneDesc* pScene, void* pMem, unsigned long nMemSize)
 	g_n1008bd80             = 0;
 	g_nLitPoliesUploaded    = 0;
 	g_nTextureUploadSaves   = 0;
-	g_1008be60              = 0xff;
-	g_1008be67              = 0xff;
 	g_1008be30              = 0.0f;
 
 #ifdef NOLFSRC_MODERN
