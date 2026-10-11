@@ -857,6 +857,34 @@ vtable ??_7CTCPDriverBase@@6B@ 0x004a223c  # compiled with 27 slots
     __purecall
     __purecall
     __purecall
+vtable ??_7CLocalDriverBase@@6B@ 0x004a223c  # localdriver.cpp's view of the same base; replaces its /Od copy (and that copy's ??_G)
+    ??_GCTCPDriverBase@@UAEPAXI@Z
+    __purecall
+    __purecall
+    __purecall
+    ?GenSetCacheSize@?$GenList@VCCmgElem08@@@@UAEXK@Z
+    ?GetServiceList@CBaseDriverDefaultsView@@UAEIPAPAX@Z
+    ?GetServiceList@CBaseDriverDefaultsView@@UAEIPAPAX@Z
+    ?GetSessionName@CBaseDriverDefaultsView@@UAEIPADK@Z
+    ?GetServiceList@CBaseDriverDefaultsView@@UAEIPAPAX@Z
+    _sub_463d20
+    ?GetServiceList@CBaseDriverDefaultsView@@UAEIPAPAX@Z
+    _sub_463d20
+    ?GetServiceList@CBaseDriverDefaultsView@@UAEIPAPAX@Z
+    ?GetServiceList@CBaseDriverDefaultsView@@UAEIPAPAX@Z
+    ?GetServiceList@CBaseDriverDefaultsView@@UAEIPAPAX@Z
+    ?GetSessionName@CBaseDriverDefaultsView@@UAEIPADK@Z
+    ?GetName@CConsoleNameList@@UAEPADXZ
+    ?GetLobbyLaunchInfo@CBaseDriverDefaultsView@@UAEIPAPAX@Z
+    ?GetServiceList@CBaseDriverDefaultsView@@UAEIPAPAX@Z
+    ?GetName@CConsoleNameList@@UAEPADXZ
+    ?GetTcpIpAddress@CBaseDriverDefaultsView@@UAEIPADKAAG@Z
+    ?GetLobbyLaunchInfo@CBaseDriverDefaultsView@@UAEIPAPAX@Z
+    ?SendTo@CBaseDriverDefaultsView@@UAEIPBXKPBDK@Z
+    __purecall
+    __purecall
+    __purecall
+    __purecall
 vtable ??_7CUnknown3b8Q404@@6B@ 0x004a1698  # compiled with 1 slots
     ?SetCursorMode@CClientCursorProxy@@QAEKW4CursorMode@@@Z  # SDK slot 0 is SetCursorMode (was ?_v00@CUnknown3b8Q404@@UAEXXZ)
     ?GetCursorMode@CClientCursorProxy@@QAEKAAW4CursorMode@@@Z

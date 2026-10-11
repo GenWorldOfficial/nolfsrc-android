@@ -172,7 +172,7 @@ public:
 	virtual LTBOOL Init()=0;
 	virtual void   Term()=0;
 	virtual void   Update()=0;
-	virtual void   _p10()=0;
+	virtual void   Connect(void* pDriver);                     // 0x10
 
 	virtual LTBOOL GetServiceList(void** ppList);              // 0x14
 	virtual LTBOOL SelectService(void* hService);              // 0x18
@@ -216,6 +216,19 @@ LTBOOL CBaseDriverDefaultsView::_p48(void* pA)                       { return 1;
 // pair is what makes the argument-count argument above check out.
 LTBOOL CBaseDriverDefaultsView::_p1c(void* pA, void* pB)             { return 1; }
 LTBOOL CBaseDriverDefaultsView::GetSessionName(char* s, uint32 n)    { return 1; }
+
+// 0x00432030 — `mov $0x1,%eax; ret`, and 0x00432040 — `xor %eax,%eax;
+// ret`: the two argument-less defaults, which the shipped vtable points
+// OUTSIDE this run (their bodies fold with every other such function in the
+// image). 0x00459f70 — a bare `ret $0x4` — is slot 4, Connect, which does
+// nothing. Written so that src/engine/server/localdriver.cpp's client build
+// can link its CLocalDriver vtable onto these (link/aliases.rsp) rather than
+// compiling /Od copies of its own.
+LTBOOL CBaseDriverDefaultsView::_p24()                               { return 1; }
+LTBOOL CBaseDriverDefaultsView::_p2c()                               { return 1; }
+LTBOOL CBaseDriverDefaultsView::IsLobbyLaunched()                    { return 0; }
+LTBOOL CBaseDriverDefaultsView::_p4c()                               { return 0; }
+void   CBaseDriverDefaultsView::Connect(void* pDriver)               {}
 
 // 0x0042d1a0 — `xor %eax,%eax; ret $0xc`.  One slot; the unsigned short goes
 // by reference, which is the third dword.

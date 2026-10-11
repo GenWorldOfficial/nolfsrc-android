@@ -174,11 +174,11 @@ OD_TUS="..\\server\\localdriver.cpp"
 GX_TUS="controlfile.cpp"
 GX_FLAGS="/GX /O2"
 OD_FLAGS="/Od /Oi /Ob1"
-build_engine_scaffold_os() {  # same, /Os without /Og
+build_engine_scaffold_os() {  # same (defines included), /Os without /Og
     local D="src/engine/$1" INCS="$2"; shift 2
     echo "==== $D -> objects (/Os TUs)"
     mkdir -p "$D/Release"
-    ( cd "$D" && run_cl /nologo /MT /W3 /Os /Ob1 /D WIN32 /D NDEBUG /D _WINDOWS \
+    ( cd "$D" && run_cl /nologo /MT /W3 /Os /Ob1 /D WIN32 /D NDEBUG /D _WINDOWS /D LT_SERVER_TIMERS /D LT_SERVER_BUILD \
         /D NO_PRAGMA_LIBS $INCS /c /FoRelease/ "$@" )
 }
 

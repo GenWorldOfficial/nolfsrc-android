@@ -3032,3 +3032,26 @@
 /ALTERNATENAME:?g_pClientMgrQ47C@@3PAVCClientMgrQ47C@@A=?g_pClientMgrQ42C@@3PAVCFileMgrHolderQ42C@@A
 /ALTERNATENAME:?cm_OpenStreamQ47C@@YAPAVILTStream@@PAVCFileMgrQ47C@@PAVCSoundFileRefQ47C@@@Z=?sub_00404890@@YAPAVILTStream@@PAVCFileMgrView@@PAVCFileRecView@@@Z
 /ALTERNATENAME:?sub_47d240@CSoundDataQ47C@@QAEKPAEPAGK@Z=?sub_47d240@CSoundDataView@@QAEKPAEPAGK@Z
+# 0x0042d180..0x0042d1c0, 0x00432030, 0x00432040, 0x00459f70 -- the shipped
+# CLocalDriver vtable (0x004a244c) takes every inherited CBaseDriver default
+# from the client's /O2 copies (clientworld.cpp's CBaseDriverDefaultsView);
+# localdriver.cpp's client (/Od) build only declares them.
+/ALTERNATENAME:?Connect@CLocalDriverBase@@UAEXPAVCBaseDriver@@@Z=?Connect@CBaseDriverDefaultsView@@UAEXPAX@Z
+/ALTERNATENAME:?GetServiceList@CLocalDriverBase@@UAEKPAPAVNetService@@@Z=?GetServiceList@CBaseDriverDefaultsView@@UAEIPAPAX@Z
+/ALTERNATENAME:?SelectService@CLocalDriverBase@@UAEHPAUHNETSERVICE_t@@@Z=?SelectService@CBaseDriverDefaultsView@@UAEIPAX@Z
+/ALTERNATENAME:?_p1c@CLocalDriverBase@@UAEKPAX0@Z=?_p1c@CBaseDriverDefaultsView@@UAEIPAX0@Z
+/ALTERNATENAME:?_p20@CLocalDriverBase@@UAEKPAX@Z=?_p20@CBaseDriverDefaultsView@@UAEIPAX@Z
+/ALTERNATENAME:?_p24@CLocalDriverBase@@UAEKXZ=?_p24@CBaseDriverDefaultsView@@UAEIXZ
+/ALTERNATENAME:?_p28@CLocalDriverBase@@UAEKPAX@Z=?_p28@CBaseDriverDefaultsView@@UAEIPAX@Z
+/ALTERNATENAME:?_p2c@CLocalDriverBase@@UAEKXZ=?_p2c@CBaseDriverDefaultsView@@UAEIXZ
+/ALTERNATENAME:?HostSession@CLocalDriverBase@@UAEKPAUNetHost@@@Z=?HostSession@CBaseDriverDefaultsView@@UAEIPAX@Z
+/ALTERNATENAME:?_p34@CLocalDriverBase@@UAEKPAX@Z=?_p34@CBaseDriverDefaultsView@@UAEIPAX@Z
+/ALTERNATENAME:?UpdateSessionName@CLocalDriverBase@@UAEKPBD@Z=?UpdateSessionName@CBaseDriverDefaultsView@@UAEIPBD@Z
+/ALTERNATENAME:?GetSessionName@CLocalDriverBase@@UAEKPADK@Z=?GetSessionName@CBaseDriverDefaultsView@@UAEIPADK@Z
+/ALTERNATENAME:?IsLobbyLaunched@CLocalDriverBase@@UAEIXZ=?IsLobbyLaunched@CBaseDriverDefaultsView@@UAEIXZ
+/ALTERNATENAME:?GetLobbyLaunchInfo@CLocalDriverBase@@UAEIPAPAX@Z=?GetLobbyLaunchInfo@CBaseDriverDefaultsView@@UAEIPAPAX@Z
+/ALTERNATENAME:?_p48@CLocalDriverBase@@UAEKPAX@Z=?_p48@CBaseDriverDefaultsView@@UAEIPAX@Z
+/ALTERNATENAME:?_p4c@CLocalDriverBase@@UAEIXZ=?_p4c@CBaseDriverDefaultsView@@UAEIXZ
+/ALTERNATENAME:?GetTcpIpAddress@CLocalDriverBase@@UAEIPADKAAG@Z=?GetTcpIpAddress@CBaseDriverDefaultsView@@UAEIPADKAAG@Z
+/ALTERNATENAME:?_p54@CLocalDriverBase@@UAEIPAX@Z=?_p54@CBaseDriverDefaultsView@@UAEIPAX@Z
+/ALTERNATENAME:?SendTo@CLocalDriverBase@@UAEKPBXKPBDK@Z=?SendTo@CBaseDriverDefaultsView@@UAEIPBXKPBDK@Z

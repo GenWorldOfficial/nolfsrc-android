@@ -82,6 +82,23 @@ CLocalQueue::~CLocalQueue()
 	}
 }
 
+// The base's default bodies are server.dll's alone. In lithtech.exe the
+// CLocalDriver vtable (0x004a244c) points every inherited default at the
+// client's /O2 copies -- 0x0042d180/190/1a0/1b0/1c0 (clientworld.cpp's
+// CBaseDriverDefaultsView), 0x00432030, 0x00432040 and 0x00459f70 -- and no
+// slot at a body of this /Od translation unit, so the client build only
+// DECLARES them and src/engine/lithtech/link/aliases.rsp resolves each one
+// onto that copy. Compiled here they were eighteen /Od COMDATs (sixteen of
+// them 15-18 bytes of frame around a one-instruction body) that the
+// shipped client does not have.
+#ifdef LT_SERVER_BUILD
+#define LDB_RETURN(r)   { return r; }
+#define LDB_EMPTY       {}
+#else
+#define LDB_RETURN(r)   ;
+#define LDB_EMPTY       ;
+#endif
+
 // The base half of the driver, spelled out here rather than reached through
 // servermgr.h's CBaseDriver: that declaration is shared with the client half
 // and has eight of the twenty-seven slots as argument-less `_pNN` stubs,
@@ -107,7 +124,7 @@ public:
 	// CLocalDriver's vtable (0x1004d7f0 overrides it with 0x10015193) but it
 	// is slot 4 of the base's own table (0x1004d880) and of the TCP driver's
 	// (0x1004e95c), which inherits it: `ret $0x4`, one argument, no result.
-	virtual void     Connect(CBaseDriver* pDriver)          {}
+	virtual void     Connect(CBaseDriver* pDriver)          LDB_EMPTY
 
 	// The base's DEFAULTS, and the eight bodies behind them (0x10014ebe -
 	// 0x10014f16). This class declared every slot and defined none, so all
@@ -122,29 +139,29 @@ public:
 	// GetServiceList is LTRESULT, not the void this file had: slot 0x14
 	// takes one argument and sets %eax to 1, and tcpdriver.cpp's view of the
 	// same base already declares it LTRESULT.
-	virtual LTRESULT GetServiceList(NetService** ppList)  { return LT_ERROR; }
-	virtual int      SelectService(HNETSERVICE hService)  { return 1; }
-	virtual LTRESULT _p1c(void* a, void* b)               { return LT_ERROR; }
-	virtual LTRESULT _p20(void* a)                        { return LT_ERROR; }
-	virtual LTRESULT _p24()                               { return LT_ERROR; }
-	virtual LTRESULT _p28(void* a)                        { return LT_ERROR; }
-	virtual LTRESULT _p2c()                               { return LT_ERROR; }
-	virtual LTRESULT HostSession(NetHost* pHostInfo)      { return LT_ERROR; }
-	virtual LTRESULT _p34(void* a)                        { return LT_ERROR; }
-	virtual LTRESULT UpdateSessionName(const char* sName) { return LT_ERROR; }
+	virtual LTRESULT GetServiceList(NetService** ppList)  LDB_RETURN(LT_ERROR)
+	virtual int      SelectService(HNETSERVICE hService)  LDB_RETURN(1)
+	virtual LTRESULT _p1c(void* a, void* b)               LDB_RETURN(LT_ERROR)
+	virtual LTRESULT _p20(void* a)                        LDB_RETURN(LT_ERROR)
+	virtual LTRESULT _p24()                               LDB_RETURN(LT_ERROR)
+	virtual LTRESULT _p28(void* a)                        LDB_RETURN(LT_ERROR)
+	virtual LTRESULT _p2c()                               LDB_RETURN(LT_ERROR)
+	virtual LTRESULT HostSession(NetHost* pHostInfo)      LDB_RETURN(LT_ERROR)
+	virtual LTRESULT _p34(void* a)                        LDB_RETURN(LT_ERROR)
+	virtual LTRESULT UpdateSessionName(const char* sName) LDB_RETURN(LT_ERROR)
 	virtual LTRESULT GetSessionName(char* sName, uint32 nLen)
-	                                                      { return LT_ERROR; }
-	virtual LTBOOL   IsLobbyLaunched()                    { return LTFALSE; }
-	virtual LTBOOL   GetLobbyLaunchInfo(void** ppData)    { return LTFALSE; }
-	virtual LTRESULT _p48(void* a)                        { return LT_ERROR; }
-	virtual LTBOOL   _p4c()                               { return LTFALSE; }
+	                                                      LDB_RETURN(LT_ERROR)
+	virtual LTBOOL   IsLobbyLaunched()                    LDB_RETURN(LTFALSE)
+	virtual LTBOOL   GetLobbyLaunchInfo(void** ppData)    LDB_RETURN(LTFALSE)
+	virtual LTRESULT _p48(void* a)                        LDB_RETURN(LT_ERROR)
+	virtual LTBOOL   _p4c()                               LDB_RETURN(LTFALSE)
 	virtual LTBOOL   GetTcpIpAddress(char* sAddress, uint32 dwBufferSize,
 	                                 unsigned short& hostPort)
-	                                                      { return LTFALSE; }
-	virtual LTBOOL   _p54(void* a)                        { return LTFALSE; }
+	                                                      LDB_RETURN(LTFALSE)
+	virtual LTBOOL   _p54(void* a)                        LDB_RETURN(LTFALSE)
 	virtual LTRESULT SendTo(const void* pData, uint32 len,
 	                        const char* sAddr, uint32 port)
-	                                                      { return LT_ERROR; }
+	                                                      LDB_RETURN(LT_ERROR)
 	virtual void     Disconnect(NetConnection* pConn, uint32 nReason,
 	                            uint32 flags) = 0;               // 0x5c
 	virtual LTBOOL   SendPacket(void* pData, uint32 nLen, uint32 nUnused,
