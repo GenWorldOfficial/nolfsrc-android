@@ -860,19 +860,19 @@ void obj_MaybeRetransformWorldModel(LTObject* pObj, int bFlag)
 //     `fadds 0x198(%ecx)` and only then materialises `lea 0x198(%ecx),%eax`
 //     for the other two (0x100209ff), the same fingerprint as wm_SetObjectDims.
 //
-// NEAR (514 of 514 bytes, 198 of 198 instructions, 7 mnemonic blocks, down
-// from 24). What is left is two float copies that the shipped build does as
-// integer moves and ours through the FPU: `fPosA = vPos[nAxis]` (shipped
-// 0x100208f2: `mov -0x20(%ebp,%ecx,1),%ecx; ... mov %ecx,-0x14(%ebp)`, with
-// nAxis*4 pre-loaded into ecx before the vPos copy) and `fPosB =
-// vPos[nAxis]` (0x10020927, after which the shipped build loads `fOrigPos +
-// fDelta` before the copy rather than after). Probed without effect:
-// VEC_INDEX or `(&vPos.x)[nAxis]` at either site, fPosA moved to each earlier
-// position in its block, one function-scope vPos, `LTVector vPos =
-// pObj->m_Pos` initialisation, and the compare written `fPosB < fOrigPos +
-// fDelta`. The choice looks like the GP-register-free heuristic, i.e.
-// allocation, not source. (Re-probed: fPosA hoisted directly under its vPos
-// copy -- still an FPU copy, 10 blocks; reverted.)
+// The two float snapshots fPosA and fPosB are INTEGER copies in both images
+// (server 0x100208f2 `mov -0x20(%ebp,%ecx,1),%ecx ; ... mov %ecx,-0x14(%ebp)`
+// and 0x10020927), and VC6 only gives a float copy integer moves here when
+// the copy is spelled through an integer type: every float spelling
+// (operator[], VEC_INDEX, `(&vPos.x)[nAxis]`, at every position) goes
+// through the FPU. fPosA's copy also sits directly under its vPos copy --
+// that is what loads nAxis*4 into %ecx ahead of the vMove copy
+// (0x100208d0). With both, server.dll 0x1002082b is byte-identical.
+//
+// lithtech.exe 0x00454250: 731/731 and ZERO mnemonic blocks; what is left
+// is the esp-frame slots of fDelta and one other float swapped (0x18 against
+// 0x28) and one 0x30/0x20 pair. Declaration order of the five floats does
+// not move it (four swaps measured).
 //
 // The inner test is written `<` with the else-arm body first: lithtech.exe
 // (0x454250) falls through into the inner-else's own vMove copy and `jmp`s
@@ -915,13 +915,13 @@ void wm_ResizeAxis(WMMoveState* pState, int nAxis, float* pfWanted)
 
 		vPos = pObj->m_Pos;
 
+		*(uint32*)&fPosA = *(uint32*)&vPos[nAxis];
+
 		vMove = pObj->m_Pos;
 
 		fDelta2 = fDelta + fDelta;
 
 		vMove[nAxis] += fDelta2;
-
-		fPosA = vPos[nAxis];
 	}
 
 	wm_MoveObject(&state, vMove, 1);
@@ -930,7 +930,7 @@ void wm_ResizeAxis(WMMoveState* pState, int nAxis, float* pfWanted)
 		LTVector vPos;
 
 		vPos  = pObj->m_Pos;
-		fPosB = vPos[nAxis];
+		*(uint32*)&fPosB = *(uint32*)&vPos[nAxis];
 	}
 
 	if (fOrigPos + fDelta > fPosB)
