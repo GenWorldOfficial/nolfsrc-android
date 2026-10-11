@@ -344,7 +344,7 @@ static inline LTBOOL sub_10001000(uint32* pUnused, ClipVert** ppVerts, int32* pn
 	nInside = 0;
 	pFlag   = anInside;
 	pV      = &(*ppVerts)[0];
-	pEnd    = pV + *pnVerts;
+	pEnd    = &(*ppVerts)[*pnVerts];
 
 	for (; pV != pEnd; ++pV)
 	{
@@ -411,7 +411,7 @@ static inline LTBOOL sub_10001330(uint32* pUnused, ClipVert** ppVerts, int32* pn
 	nInside = 0;
 	pFlag   = anInside;
 	pV      = &(*ppVerts)[0];
-	pEnd    = pV + *pnVerts;
+	pEnd    = &(*ppVerts)[*pnVerts];
 
 	for (; pV != pEnd; ++pV)
 	{
@@ -478,7 +478,7 @@ static inline LTBOOL sub_10001670(uint32* pUnused, ClipVert** ppVerts, int32* pn
 	nInside = 0;
 	pFlag   = anInside;
 	pV      = &(*ppVerts)[0];
-	pEnd    = pV + *pnVerts;
+	pEnd    = &(*ppVerts)[*pnVerts];
 
 	for (; pV != pEnd; ++pV)
 	{
@@ -545,7 +545,7 @@ static inline LTBOOL sub_10001990(uint32* pUnused, ClipVert** ppVerts, int32* pn
 	nInside = 0;
 	pFlag   = anInside;
 	pV      = &(*ppVerts)[0];
-	pEnd    = pV + *pnVerts;
+	pEnd    = &(*ppVerts)[*pnVerts];
 
 	for (; pV != pEnd; ++pV)
 	{
@@ -612,7 +612,7 @@ static inline LTBOOL sub_10001cb0(uint32* pUnused, ClipVert** ppVerts, int32* pn
 	nInside = 0;
 	pFlag   = anInside;
 	pV      = &(*ppVerts)[0];
-	pEnd    = pV + *pnVerts;
+	pEnd    = &(*ppVerts)[*pnVerts];
 
 	for (; pV != pEnd; ++pV)
 	{
@@ -679,7 +679,7 @@ static inline LTBOOL sub_10001fe0(uint32* pUnused, ClipVert** ppVerts, int32* pn
 	nInside = 0;
 	pFlag   = anInside;
 	pV      = &(*ppVerts)[0];
-	pEnd    = pV + *pnVerts;
+	pEnd    = &(*ppVerts)[*pnVerts];
 
 	for (; pV != pEnd; ++pV)
 	{
@@ -821,8 +821,15 @@ extern "C" int32 sub_1006f540(Obj6f540* pObj)
 
 		pWalk->m_Diffuse10.m_n = 0xffffffff;
 
-		pWalk->m_fU = pSrc->m_fU04 * g_f1008e664;
-		pWalk->m_fV = pSrc->m_fV08 * g_f1008e668;
+		// Both products before either store (the shipped loop keeps them
+		// on the x87 stack and stores them at the top of the next pass).
+		{
+			float fU = pSrc->m_fU04 * g_f1008e664;
+			float fV = pSrc->m_fV08 * g_f1008e668;
+
+			pWalk->m_fU = fU;
+			pWalk->m_fV = fV;
+		}
 
 		pSrc++;
 		pWalk++;
@@ -844,9 +851,16 @@ extern "C" int32 sub_1006f540(Obj6f540* pObj)
 
 		while (nLeft--)
 		{
+			// The operand spellings are what reproduce icl's shipped product
+			// order (it canonicalises the term order of a sum, but which
+			// product comes first, and which operand of it is loaded first,
+			// follows the operands' address forms).  Found by sweeping
+			// member / pointer forms per operand, about 500 spellings.
+			const float* v = &pWalk->m_vPos.x;
+
 			fOOW = 1.0f / (pWalk->m_vPos.x * pM->m_f20c
 			             + pWalk->m_vPos.y * pM->m_f210
-			             + pWalk->m_vPos.z * pM->m_f214
+			             + pWalk->m_vPos.z * (&pM->m_f20c)[2]
 			             + pM->m_f218);
 
 			vScreen.x = (pWalk->m_vPos.x * pM->m_f1dc
@@ -859,8 +873,8 @@ extern "C" int32 sub_1006f540(Obj6f540* pObj)
 			           + pWalk->m_vPos.z * pM->m_f1f4
 			           + pM->m_f1f8) * fOOW;
 
-			vScreen.z = (pWalk->m_vPos.x * pM->m_f1fc
-			           + pWalk->m_vPos.y * pM->m_f200
+			vScreen.z = (v[0] * pM->m_f1fc
+			           + v[1] * pM->m_f200
 			           + pWalk->m_vPos.z * pM->m_f204
 			           + pM->m_f208) * fOOW;
 
