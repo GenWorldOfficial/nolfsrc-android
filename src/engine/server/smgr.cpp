@@ -10368,8 +10368,12 @@ void sm_Unknown2873d(CServerMgr* pMgr, Client* pClient)
 //    * the flag byte is CObjInfo::m_Unknown02 — `testb $0x1,0x2(%edx,%ecx,4)`
 //      against a four-byte record indexed by id off Client+0x190, which is
 //      m_pObjInfos, and the address is then handed to DropListener as its
-//      one stack argument. Character for character sm_WriteIDList's
-//      `uint8* pFlags = &...m_Unknown02; if (!(*pFlags & 1)) ...`.
+//      one stack argument. NOT through a `uint8* pFlags` local, though:
+//      lithtech.exe 0x0046903c tests the byte in memory (`testb $0x1,
+//      (%eax)`) and re-reads it for DropListener's `or` (0x00469051), which
+//      is the element written out at both uses. Through a pointer local
+//      /O2 loads the byte once into %al and keeps the address in %esi.
+//      server.dll is the same either way.
 //    * single `xor %eax,%eax` at each of the two exits, so LTRESULT/LT_OK.
 //
 //  CSoundListenerView is smgr.cpp's local view class (0x100273bc). It is
@@ -10384,7 +10388,6 @@ LTRESULT sm_Unknown29f42(CServerMgr* pMgr, ServerMessage* pMsg,
 	uint16           nID;
 	CObjectMapEntry* pEntry;
 	void*            pRecord;
-	uint8*           pFlags;
 
 	if (!pClient)
 		return LT_OK;
@@ -10401,10 +10404,8 @@ LTRESULT sm_Unknown29f42(CServerMgr* pMgr, ServerMessage* pMsg,
 
 			if (pRecord)
 			{
-				pFlags = &pClient->m_pObjInfos[nID].m_Unknown02;
-
-				if (!(*pFlags & 1))
-					((CSoundListenerView*)pRecord)->DropListener(pFlags);
+				if (!(pClient->m_pObjInfos[nID].m_Unknown02 & 1))
+					((CSoundListenerView*)pRecord)->DropListener(&pClient->m_pObjInfos[nID].m_Unknown02);
 			}
 		}
 	}
