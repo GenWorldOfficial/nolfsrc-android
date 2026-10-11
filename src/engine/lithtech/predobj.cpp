@@ -365,19 +365,9 @@ public:
 	// ?SetPos@LTObject@@QAEXV?$_CVector@M@@@Z -- __thiscall, the vector BY
 	// VALUE (0x00461a2a builds a twelve-byte copy on the stack with
 	// `mov %esp,%ecx` and three dword pairs before the call).  Declared, not
-	// defined.
+	// defined: src/engine/server/ltobject.cpp's LTObject::SetPos is the body
+	// (link/aliases.rsp), matching both images.
 	void SetPos(LTVector vPos);                              // 0x0045aaa0
-
-	// src/engine/server/ltobject.cpp's UpdateBounds, restated INLINE and
-	// in-class: lithtech.exe's SetPos (0x0045aaa0) expands it where
-	// server.dll's (0x10024a33) calls it.  See section E below.
-	void UpdateBounds()
-	{
-		m_BBoxMin = m_Pos - m_Dims;
-		m_BBoxMax = m_Pos + m_Dims;
-
-		m_Radius = m_Dims.Mag() + 0.1f;
-	}
 };
 
 
@@ -920,21 +910,11 @@ void pg_FreeDataQ460(CPolyGridQ460* pGrid)
 
 // ======================================================================= //
 //
-//  E.  0x0045aaa0 (255 bytes) -- LTObject::SetPos, lithtech.exe's copy
-//
-//  Home: src/engine/server/ltobject.cpp (ltobject.obj).  That file's SetPos CALLS UpdateBounds, which is what server.dll
-//  ships (0x10024a33, 38 bytes); lithtech.exe's /O2 copy expands the
-//  whole of UpdateBounds inline -- both by-value vector temps (the 0xc
-//  frame), the two box stores at +0xf0/+0xfc, and Mag() + 0.1f into +0x1a4
-//  (0x0045ab83 fsqrt, 0x0045ab8b fadds 0.1f).  Restated here against
-//  LTObjectQ460 with UpdateBounds in-class, i.e. inline.
+//  E.  0x0045aaa0 (255 bytes) -- LTObject::SetPos: written in its home,
+//  src/engine/server/ltobject.cpp, where UpdateBounds is now `inline` and
+//  defined above it -- lithtech.exe's /O2 SetPos expands it, server.dll's
+//  /Os calls 0x10024a4c -- so one body matches both images.
 // ======================================================================= //
-void LTObjectQ460::SetPos(LTVector vPos)
-{
-	m_Pos = vPos;
-
-	UpdateBounds();
-}
 
 
 // ======================================================================= //

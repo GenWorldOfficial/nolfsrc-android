@@ -624,15 +624,6 @@ void obj_ReleaseMemory(LTObject* pObj)
 		pg_FreeData(pObj);
 }
 
-// 0x10024a33 — move the object. The position arrives by value, and the
-// bounds are rebuilt afterwards.
-void LTObject::SetPos(LTVector vPos)
-{
-	m_Pos = vPos;
-
-	UpdateBounds();
-}
-
 // 0x10024a4c. The world-space box is the position give or take the
 // dimensions, and the bounding sphere is the dimensions' own length with a
 // tenth of a unit of slack. Both boxes go through the vector operators, so
@@ -640,12 +631,25 @@ void LTObject::SetPos(LTVector vPos)
 // a copy of its return temporary out again — that pair of twelve-byte slots
 // is the whole 0x18-byte frame. The radius is a real call: VC6 declines to
 // inline Mag() however the header writes it.
-void LTObject::UpdateBounds()
+//
+// `inline`, and defined ABOVE SetPos: lithtech.exe's /O2 SetPos (0x0045aaa0,
+// 255 bytes) carries this whole body and the client has no copy of its own,
+// while server.dll's /Os declines it and SetPos calls 0x10024a4c.
+inline void LTObject::UpdateBounds()
 {
 	m_BBoxMin = m_Pos - m_Dims;
 	m_BBoxMax = m_Pos + m_Dims;
 
 	m_Radius = m_Dims.Mag() + 0.1f;
+}
+
+// 0x10024a33 — move the object. The position arrives by value, and the
+// bounds are rebuilt afterwards.
+void LTObject::SetPos(LTVector vPos)
+{
+	m_Pos = vPos;
+
+	UpdateBounds();
 }
 
 // 0x1000d7c7. Every record the grid holds comes out of both lists it is in

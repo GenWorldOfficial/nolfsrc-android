@@ -3046,3 +3046,5 @@
 /ALTERNATENAME:?SendTo@CLocalDriverBase@@UAEKPBXKPBDK@Z=?SendTo@CBaseDriverDefaultsView@@UAEIPBXKPBDK@Z
 # 0x45bf10 -- objbank.cpp's am_RemoveAttachment, the one definition
 /ALTERNATENAME:?am_RemoveAttachment@@YAKPAVCUnknown390@@PAVLTObject@@PAVAttachment@@@Z=?am_RemoveAttachment@@YAKPAVCObjMgrView@@PAVCObjLinked@@PAVAttachment@@@Z
+# 0x45aaa0 -- ltobject.cpp's LTObject::SetPos (predobj.cpp's view of the object)
+/ALTERNATENAME:?SetPos@LTObjectQ460@@QAEXV?$_CVector@M@@@Z=?SetPos@LTObject@@QAEXV?$_CVector@M@@@Z
