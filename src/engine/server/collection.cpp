@@ -909,7 +909,12 @@ template class CMoArray<uint32, DefaultCache>;
 template class CMoArray<uint8, DefaultCache>;
 template class CMoArray<float, DefaultCache>;
 template class CMoArray<CCollElem04, DefaultCache>;
-template class CMoArray<CCollElem04, NoCache>;
+// No NoCache array of the four-byte CLASS: every shipped NoCache four-byte
+// vtable (0x004a26d8, 0x004a2784, 0x004a28a8, 0x004a2968, 0x004a2998 in
+// lithtech.exe) holds a pointer, and shares GenCopyList 0x00447f90 (250)
+// and GenAppendList 0x0044a1b0 (197) -- which the class's own copies miss by
+// seven bytes each (the class element is copied through a buffer). Every
+// other member it emitted is placed by the pointer instantiations too.
 template class CMoArray<CCollElem04F, DefaultCache>;
 
 template class CMoArray<CCollElem08, DefaultCache>;

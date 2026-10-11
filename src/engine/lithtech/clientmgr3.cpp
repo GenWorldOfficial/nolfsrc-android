@@ -1041,7 +1041,7 @@ public:
 };                                                              // 0x810
 
 // src/engine/lithtech/clientworld.cpp's CDemoMgrView at +0x158c.  Its
-// 0x0042bfa0 is read there as a void "Clear"; it is the CONSTRUCTOR -- it
+// 0x0042bfa0 is that class's constructor, and this one is linked onto it -- it
 // moves `this` into %eax first and leaves it there, which is exactly how
 // VC6 answers an out-of-line constructor.  The back pointer at +0x0c is the
 // 0x1598 store the factory makes.

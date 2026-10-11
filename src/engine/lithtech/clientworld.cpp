@@ -874,7 +874,7 @@ uint32 sub_42e670();
 class CDemoMgrView
 {
 public:
-	void   Clear();                          // 0x0042bfa0 (name ours)
+	CDemoMgrView();                          // 0x0042bfa0
 	LTBOOL IsRunning();                      // 0x0042bfd0 (name ours)
 	void   SeedAndStart();                   // 0x0042bff0 (name ours)
 	void   Forward58(void* pA, void* pB);    // 0x0042c020 (name ours)
@@ -889,15 +889,20 @@ public:
 	uint32             m_nMode018;           // +0x18
 };
 
-// 0x0042bfa0 — clear five dwords.  thiscall, no arguments, twenty bytes.
+// 0x0042bfa0 — the CONSTRUCTOR (clientmgr3.cpp's CCmgDemoMgr, which the
+// client manager's constructor builds at +0x158c, is linked onto it).
+// thiscall, no arguments, twenty bytes.
 //
 // Read off the bytes: the stores are +0x0c, +0x10, +0x18, +0x04, +0x14 — NOT
 // ascending, and not the reverse of ascending either, so they are five
 // separate assignments in that source order, and the order is the shipped
-// code's rather than ours.  `this` is moved into eax first and never
-// answered, so again a void member and not a constructor; the zero is commoned
-// into ecx across all five.
-void CDemoMgrView::Clear()
+// code's rather than ours.  `this` is moved into eax FIRST and left there:
+// that is how VC6 answers an out-of-line constructor, and a void member
+// written with the same five stores commons the zero into eax instead and
+// comes out two bytes short (`xor %eax,%eax`, stores through ecx).  The
+// earlier reading of this as a void "Clear" left 0x0042bfa0 to be paired,
+// by size, with an unrelated CMoArray constructor.
+CDemoMgrView::CDemoMgrView()
 {
 	m_pClientMgr = LTNULL;
 	m_n010       = 0;

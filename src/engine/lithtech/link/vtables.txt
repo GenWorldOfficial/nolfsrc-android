@@ -172,8 +172,8 @@ vtable ??_7CCmgCSBase@@6B@ 0x004a1b00  # compiled with 1 slots
     ?GetCollisionInfo@CClientCSBase@@UAEPAPAVCollisionInfo@@XZ
     ?TouchNotify@CClientCSBase@@UAEXPAVLTObject@@0PAV?$_CVector@M@@M@Z
     ?_p00@CClientCSBase@@UAEXPAX0@Z
-    ?GenSetCacheSize@?$CMoArray@VCCollElem04@@VNoCache@@@@UAEXK@Z
-    ?GenSetCacheSize@?$CMoArray@VCCollElem04@@VNoCache@@@@UAEXK@Z
+    ?GenSetCacheSize@?$CMoArray@PAVModelNode@@VNoCache@@@@UAEXK@Z
+    ?GenSetCacheSize@?$CMoArray@PAVModelNode@@VNoCache@@@@UAEXK@Z
     ?IsMatch@CClientCSBase@@UAEIPAXK0@Z
     ?_p00@CClientCSBase@@UAEXPAX0@Z
     ?_p00@CClientCSBase@@UAEXPAX0@Z
