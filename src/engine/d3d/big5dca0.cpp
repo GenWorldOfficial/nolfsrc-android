@@ -630,6 +630,17 @@
 //      test sinks the arm and gives 4 of 4.  Both were built and measured;
 //      this is not a reading.
 //
+//      UPDATE: the shipped arm is sunk as a whole -- `je` to the default
+//      list on AllSkyPortals, then `jne` to the sunk arm on the grid -- and
+//      each arm stores its own clip mask (`mov $0x3f,%dl ; mov %dl,
+//      -0x124(%ebp)`).  Both come out only as a `switch` on the `&&` whose
+//      `case 0` is the default list and whose `default` is the sky arm
+//      (the lever of w26_100262f0.cpp / w12_3b3d0_os.cpp), with the mask a
+//      uint32: the first 0x84 bytes are then the shipped ones and the
+//      instruction count is the shipped 1,660 (was 1,654; 47 -> 42 blocks).
+//      As if/else in either polarity, or with the mask uint8 / int32, the
+//      mask is stored once after the join.
+//
 //      NOTE the general lesson, because it cost this function three of its
 //      four calls twice over.  An arm-order "coin-flip" is usually NOT a
 //      coin-flip when the function makes calls in either arm -- the call
@@ -1576,7 +1587,7 @@ LTBOOL sub_1005dca0(void)
 	SPoly5dca0**	ppList;
 	uint32			nPolys;
 	uint32			i;
-	uint8			nClipFlags;
+	uint32			nClipFlags;
 
 	RVert5dca0		aVerts[VERTS5DCA0_MAX];
 	RVert5dca0*		pVerts;
@@ -1645,20 +1656,14 @@ LTBOOL sub_1005dca0(void)
 	//  cleared.  A sky portal seen through the AllSkyPortals debug switch
 	//  is not far-clipped.
 	// ------------------------------------------------------------------ //
-	if (!g_nAllSkyPortals || !g_p1008beac)
+	switch (g_nAllSkyPortals && g_p1008beac)
 	{
+	case 0:
 		ppList     = pRoot->m_List28.sub_1000a670();
 		nPolys     = pRoot->m_List28.m_nCount;
 		nClipFlags = 0x3f;
-	}
-	else
-	{
-		// CALLS, not field reads.  The shipped code calls 0x1000a670 at
-		// 0x1005f416 and 0x1005f780 at 0x1005f429 rather than loading
-		// +0x04 and +0x08 inline, and these are declared-not-defined
-		// here so icl has to emit the calls.  Spelling them as member
-		// reads compiled to no call at all and lost three of the
-		// function's four.
+		break;
+	default:
 		ppList     = g_p1008beac->m_List19c.sub_1000a670();
 		nPolys     = g_p1008beac->m_List19c.sub_1005f780();
 		nClipFlags = 0x3d;

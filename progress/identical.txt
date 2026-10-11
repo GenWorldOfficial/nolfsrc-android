@@ -9672,6 +9672,7 @@ d3d.ren	sub_10003bf0
 d3d.ren	sub_10008680
 d3d.ren	sub_10008a44
 d3d.ren	sub_10008da0
+d3d.ren	sub_10008e10
 d3d.ren	sub_10009860
 d3d.ren	sub_10009a60
 d3d.ren	sub_10009a80
@@ -9704,6 +9705,7 @@ d3d.ren	sub_1000a700
 d3d.ren	sub_1000a740
 d3d.ren	sub_1000a770
 d3d.ren	sub_1000a7d0
+d3d.ren	sub_1000a8a0
 d3d.ren	sub_1000aa90
 d3d.ren	sub_1000ac10
 d3d.ren	sub_1000adc0
@@ -9751,6 +9753,7 @@ d3d.ren	sub_10015640
 d3d.ren	sub_10015690
 d3d.ren	sub_100156e0
 d3d.ren	sub_10015740
+d3d.ren	sub_10015770
 d3d.ren	sub_10015800
 d3d.ren	sub_10015830
 d3d.ren	sub_100158a0
@@ -9870,6 +9873,7 @@ d3d.ren	sub_1001eab0
 d3d.ren	sub_1001eb20
 d3d.ren	sub_10020c00
 d3d.ren	sub_10020ce0
+d3d.ren	sub_10020d80
 d3d.ren	sub_10020e80
 d3d.ren	sub_10020e8e
 d3d.ren	sub_10020f30
@@ -9932,6 +9936,7 @@ d3d.ren	sub_100257d0
 d3d.ren	sub_10025820
 d3d.ren	sub_10025890
 d3d.ren	sub_10025db0
+d3d.ren	sub_100262f0
 d3d.ren	sub_10026484
 d3d.ren	sub_10026504
 d3d.ren	sub_100265a0
@@ -9993,6 +9998,7 @@ d3d.ren	sub_100331e0
 d3d.ren	sub_10033f30
 d3d.ren	sub_10033fa0
 d3d.ren	sub_10034510
+d3d.ren	sub_10034580
 d3d.ren	sub_10034930
 d3d.ren	sub_10034b00
 d3d.ren	sub_10034c60
@@ -10030,6 +10036,7 @@ d3d.ren	sub_10036bc4
 d3d.ren	sub_10036cf0
 d3d.ren	sub_10036da0
 d3d.ren	sub_10036df4
+d3d.ren	sub_10036e40
 d3d.ren	sub_100371e0
 d3d.ren	sub_10037470
 d3d.ren	sub_100374a0
@@ -10068,6 +10075,7 @@ d3d.ren	sub_1003acf0
 d3d.ren	sub_1003b1c0
 d3d.ren	sub_1003b240
 d3d.ren	sub_1003b3b0
+d3d.ren	sub_1003b3d0
 d3d.ren	sub_1003b690
 d3d.ren	sub_1003b6f4
 d3d.ren	sub_1003b740
