@@ -37,7 +37,37 @@ namespace
 
 	char szPath[128];
 
+	// GOTY: reconstructed from the Game of the Year CShell.dll -- the
+	// user-designed maps shipped with the Game of the Year Edition, marked
+	// with a '*' in the list of available levels
+	char* aUserLevels[] =
+	{
+		"Abduction_AM.dat",
+		"Castle_AM.dat",
+		"Cloud-City_AM.dat",
+		"Protect_The_King_AM.dat",
+		"TreeTop Assault_AM.dat",
+		"Zipper_AM.DAT",
+		"Abduction_DM.dat",
+		"Checkmate_DM.dat",
+		"FastLane_DM.dat",
+		"Guerilla_Night_DM.dat",
+		"Guns & HockeyPucks_DM.dat",
+		"Mudtown_DM.dat",
+		"Ruination_DM.dat",
+		"Ruins_DM.dat",
+		"SpaceCruiser_DM.DAT",
+		"Subway_DM.dat",
+		LTNULL
+	};
 
+	// GOTY: the strings of the note under the level list (CRes.dll)
+	enum
+	{
+		IDS_HOST_USER_LEVEL_NOTE = 30082,	// "* denotes a user-designed map"
+		IDS_HOST_GOTY_NOTE1,				// "included as part of the"
+		IDS_HOST_GOTY_NOTE2,				// "Game of the Year Edition."
+	};
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -53,10 +83,21 @@ CFolderHostLevels::CFolderHostLevels()
     m_pRemoveLevel  = LTNULL;
     m_pAddAll       = LTNULL;
     m_pRemoveAll    = LTNULL;
+	// GOTY: reconstructed from the Game of the Year CShell.dll
+	m_hUserLevelNote = LTNULL;
+	m_hGOTYNote1	= LTNULL;
+	m_hGOTYNote2	= LTNULL;
 }
 
 CFolderHostLevels::~CFolderHostLevels()
 {
+	// GOTY: reconstructed from the Game of the Year CShell.dll
+	if (g_pLTClient && m_hUserLevelNote)
+		g_pLTClient->FreeString(m_hUserLevelNote);
+	if (g_pLTClient && m_hGOTYNote1)
+		g_pLTClient->FreeString(m_hGOTYNote1);
+	if (g_pLTClient && m_hGOTYNote2)
+		g_pLTClient->FreeString(m_hGOTYNote2);
 
 }
 
@@ -163,6 +204,10 @@ LTBOOL CFolderHostLevels::Build()
     AddFixedControl(m_pRemoveAll,pos,LTTRUE);
 	pos.y += (m_nItemSpacing + pFont->GetHeight());
 
+	// GOTY: reconstructed from the Game of the Year CShell.dll
+	m_hUserLevelNote = g_pLTClient->FormatString(IDS_HOST_USER_LEVEL_NOTE);
+	m_hGOTYNote1 = g_pLTClient->FormatString(IDS_HOST_GOTY_NOTE1);
+	m_hGOTYNote2 = g_pLTClient->FormatString(IDS_HOST_GOTY_NOTE2);
 
 
  	// Make sure to call the base class
@@ -304,6 +349,17 @@ void    CFolderHostLevels::OnFocus(LTBOOL bFocus)
 	CBaseFolder::OnFocus(bFocus);
 }
 
+// GOTY: reconstructed from the Game of the Year CShell.dll
+LTBOOL CFolderHostLevels::IsUserLevel(char* sLevel, char** pList)
+{
+	for (int i = 0; pList[i]; i++)
+	{
+		if (stricmp(sLevel, pList[i]) == 0)
+			return LTTRUE;
+	}
+	return LTFALSE;
+}
+
 LTBOOL CFolderHostLevels::FillLevelList(CListCtrl *pList, char* sDir)
 {
 	// Sanity checks...
@@ -330,8 +386,12 @@ LTBOOL CFolderHostLevels::FillLevelList(CListCtrl *pList, char* sDir)
 			{
 				char sLevel[128];
 				strcpy(sLevel, ptr->m_pBaseFilename);
+				// GOTY: reconstructed from the Game of the Year CShell.dll
+				LTBOOL bUserLevel = IsUserLevel(sLevel, aUserLevels);
 				int len = strlen(sLevel);
 				if (len > 4) sLevel[len - 4] = '\0';
+				if (bUserLevel == LTTRUE)
+					strcat(sLevel, "*");
 
 				CString *pStr = debug_new1(CString, sLevel);
 
@@ -496,6 +556,16 @@ LTBOOL CFolderHostLevels::Render(HSURFACE hDestSurf)
 {
 	DrawFrame(hDestSurf,&rcAvailRect,(GetSelectedControl() == m_pAvailLevels));
 	DrawFrame(hDestSurf,&rcSelRect,(GetSelectedControl() == m_pSelLevels));
+
+	// GOTY: reconstructed from the Game of the Year CShell.dll -- the note
+	// about the user-designed maps, under the list of available levels
+	CLTGUIFont *pFont = g_pInterfaceResMgr->GetHelpFont();
+	int xo = g_pInterfaceResMgr->GetXOffset();
+	int yo = g_pInterfaceResMgr->GetYOffset();
+	pFont->Draw(m_hUserLevelNote, hDestSurf, xo+rcAvailRect.left+2, yo+rcAvailRect.bottom+4, LTF_JUSTIFY_LEFT);
+	pFont->Draw(m_hGOTYNote1, hDestSurf, xo+rcAvailRect.left+2, yo+rcAvailRect.bottom+pFont->GetHeight()+6, LTF_JUSTIFY_LEFT);
+	pFont->Draw(m_hGOTYNote2, hDestSurf, xo+rcAvailRect.left+2, yo+rcAvailRect.bottom+2*pFont->GetHeight()+8, LTF_JUSTIFY_LEFT);
+
 	return CBaseFolder::Render(hDestSurf);
 }
 
@@ -574,6 +644,11 @@ void CFolderHostLevels::AddLevelToList(CListCtrl *pList, char* sGameLevel)
 			strcpy(sLevel, &sTemp[i]);
 		}
 	}
+
+	// GOTY: reconstructed from the Game of the Year CShell.dll -- drop the
+	// '*' that marks a user-designed map in the list of available levels
+	if (sLevel[strlen(sLevel)-1] == '*')
+		sLevel[strlen(sLevel)-1] = '\0';
 
 
 	// Add the level to the list...

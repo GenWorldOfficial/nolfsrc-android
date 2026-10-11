@@ -45,6 +45,8 @@ protected:
 	void	AddLevelToList(CListCtrl *pList, char* sGameLevel);
 	void	UpdateButtons();
     void    DrawFrame(HSURFACE hDestSurf, LTRect *rect, LTBOOL bSel = LTFALSE);
+	// GOTY: reconstructed from the Game of the Year CShell.dll
+	LTBOOL	IsUserLevel(char* sLevel, char** pList);
 
 	int					m_nGameType;
 
@@ -54,6 +56,12 @@ protected:
 	CStaticTextCtrl*	m_pRemoveLevel;
 	CStaticTextCtrl*	m_pAddAll;
 	CStaticTextCtrl*	m_pRemoveAll;
+
+	// GOTY: reconstructed from the Game of the Year CShell.dll -- the note
+	// under the level list about the user-designed maps
+	HSTRING				m_hUserLevelNote;
+	HSTRING				m_hGOTYNote1;
+	HSTRING				m_hGOTYNote2;
 };
 
 #endif // _FOLDER_HOST_LEVELS_H_

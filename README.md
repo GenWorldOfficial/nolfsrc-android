@@ -14,10 +14,11 @@ DLLs -- compiled from the source in this repository with the original
 
 The engine source in `src/engine/` is a reconstruction: Monolith never
 released it, so it was written to recompile to the retail machine code. The
-game code in `src/game/` is Monolith's own NOLF Source Code v1.003 release;
-the release build compiles it unmodified (the modern build's changes to it
-sit inside `#ifdef NOLFSRC_MODERN` blocks). See `LICENSE-NOTES.md` for what is
-whose.
+game code in `src/game/` is Monolith's own NOLF Source Code v1.003 release,
+which predates the Game of the Year Edition: the GOTY changes to it,
+reconstructed from the retail GOTY game DLLs, are made in place and marked
+`GOTY:`, and the modern build's changes sit inside `#ifdef NOLFSRC_MODERN`
+blocks. See `LICENSE-NOTES.md` for what is whose.
 
 This project, and its modern build in particular, is not made or supported by
 Monolith Productions.
