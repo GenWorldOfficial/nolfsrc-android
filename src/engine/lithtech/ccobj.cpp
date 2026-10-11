@@ -15,7 +15,7 @@
 //
 //   0x004641a0  251   sub_100273e9        NEW      — written below
 //   0x00464640  170   sm_ClientExitWorld  written  — smgr.cpp, /O2 shape work
-//   0x00464ed0  134   sm_VisCallbackA     written  — smgr.cpp:5091, ditto
+//   0x00464ed0  134   sm_VisCallbackA     smgr.cpp, matching both images (moved)
 //   0x00465610 2186   sm_WriteClientUpdate written — smgr.cpp, ditto
 //   0x00466550  186   snd_FindSentState   NEW      — written below
 //   0x004669aa  370   NOT A FUNCTION      — the fall-through of __chkstk; the
@@ -798,70 +798,6 @@ void xfer_TermQ464(void* pState)
 	xfer_FinishTransferQ464(pState);
 
 	delete (CClientFilesQ464*)pState;
-}
-
-
-// ======================================================================= //
-//  MOVE-ME: src/engine/server/smgr.cpp, over sub_10027be0 and
-//  sm_VisCallbackA (smgr.cpp:5153 and :5209).
-//
-//  0x00464ed0 (134 bytes, /O2) / 0x10027c3c (53 bytes, /O1).  smgr.cpp's
-//  body is right for server.dll; lithtech.exe EXPANDS the filter
-//  (0x00464edc..0x00464f3b is 0x10027be0's body, 0x10027be0 has no
-//  lithtech.exe copy of its own), so the filter was an `inline` function
-//  that /Os declines and /Ob1 takes.  And the flag clear is a DWORD
-//  `and` on m_ChangeFlags (0x00464f42/0x00464f46, reusing the %ecx the
-//  expanded `& 4` test loaded): `&= ~0x200` -- /O1 narrows it to the
-//  `andb $0xfd,0x121` at 0x10027c60.
-// ======================================================================= //
-
-class CModelInstQ464
-{
-public:
-	uint8        m_pad_00[0x1dc];
-	class Model* m_pModel;                              // +0x1dc
-};
-
-void sub_100348cc(LTObject* pObject);                   // 0x00476660
-
-inline int sub_10027be0Q464(CServerMgr* pMgr, LTObject* pObject)
-{
-	uint32 nFlags = pObject->m_Flags;
-
-	if (!(nFlags & FLAG_FORCECLIENTUPDATE))
-	{
-		if (!(nFlags & FLAG_VISIBLE) && !(nFlags & (FLAG_RAYHIT | FLAG_SOLID)))
-			return 0;
-
-		if (pObject->m_ObjectType == OT_NORMAL &&
-			pObject->m_pSData->m_Unknown2c == 0)
-			return 0;
-	}
-
-	if (!(pObject->m_ChangeFlags & 4))
-		return 0;
-
-	if (pObject->m_ObjectType == OT_MODEL &&
-		((CModelInstQ464*)pObject)->m_pModel == pMgr->m_pPlaceholderModel)
-		return 0;
-
-	return 1;
-}
-
-void sm_VisCallbackAQ464(void* pUser, void* pObject)
-{
-	if (((uint32*)pUser)[0x54 / 4] != 0)
-		return;
-
-	if (!sub_10027be0Q464(*(CServerMgr**)pObject, (LTObject*)pUser))
-		return;
-
-	if (((uint32*)pObject)[0x1c / 4] == 0)
-		return;
-
-	((LTObject*)pUser)->m_ChangeFlags &= ~0x200;
-
-	sub_100348cc((LTObject*)pUser);
 }
 
 

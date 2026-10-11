@@ -5381,7 +5381,12 @@ public:
 // object also has to be one the clients can perceive: visible, or solid or
 // ray-hittable, and an OT_NORMAL has to be carrying the engine-data flag at
 // SObjData+0x2c. A model still holding the placeholder has nothing to send.
-int sub_10027be0(CServerMgr* pMgr, LTObject* pObject)
+//
+// `inline`, and defined above every caller: lithtech.exe (/O2) expands it at
+// all four sites -- sm_VisCallbackA (0x00464ed0), sub_10027918 (0x00464a00,
+// twice) and sm_VisGatherObjects (0x00465e00) -- and has no copy of its own,
+// while server.dll's /Os declines every site and keeps 0x10027be0.
+inline int sub_10027be0(CServerMgr* pMgr, LTObject* pObject)
 {
 	uint32 nFlags = pObject->m_Flags;
 
@@ -5456,7 +5461,11 @@ void sm_VisCallbackA(void* pUser, void* pObject)
 	if (((uint32*)pObject)[0x1c / 4] == 0)
 		return;
 
-	((uint8*)pUser)[0x121] &= ~0x02;
+	// A DWORD clear of change flag 0x200: lithtech.exe (0x00464f42) ands
+	// m_ChangeFlags itself, reusing the register the expanded `& 4` test
+	// loaded; server.dll's /O1 narrows the same statement to the `andb
+	// $0xfd,0x121` at 0x10027c60.
+	((LTObject*)pUser)->m_ChangeFlags &= ~0x200;
 
 	sub_100348cc((LTObject*)pUser);
 }
@@ -6517,12 +6526,6 @@ extern CVisQueryState* g_pVisQueryState;
 // second argument, this one fetches it out of the global the world's walk
 // publishes, and holds it in a local that has to spill because all three
 // callee-saved registers are already busy.
-#ifndef LT_SERVER_BUILD
-// lithtech.exe 0x00465e00 expands the filter (0x00465e24..0x00465e7e), as
-// sub_10027918 and sm_VisCallbackA do there; sub_10027be0Inline below is
-// that inline body.
-inline int sub_10027be0Inline(CServerMgr* pMgr, LTObject* pObject);
-#endif
 
 void sm_VisGatherObjects(LTLink* pListHead, LTObject*** pppList, uint32* pnCount)
 {
@@ -6536,11 +6539,7 @@ void sm_VisGatherObjects(LTLink* pListHead, LTObject*** pppList, uint32* pnCount
 		if (!pObj->m_pSData)
 			return;
 
-#ifndef LT_SERVER_BUILD
-		if (sub_10027be0Inline(pCtx->m_pMgr, pObj))
-#else
 		if (sub_10027be0(pCtx->m_pMgr, pObj))
-#endif
 		{
 			(*pppList)[*pnCount] = pObj;
 			(*pnCount)++;
@@ -9425,31 +9424,8 @@ void sm_WriteObjectUpdate(CUpdateContext* pCtx, LTObject* pObject,
 // Neither has an out-of-line lithtech.exe copy (0x00464a00 is followed
 // directly by sub_10027ad0 at 0x00464da0, and 0x00464ed0 sm_VisCallbackA
 // expands the filter too), so both were `inline` in the original and /O1
-// declined them. The twins below are stand-ins for those inline bodies.
-inline int sub_10027be0Inline(CServerMgr* pMgr, LTObject* pObject)
-{
-	uint32 nFlags = pObject->m_Flags;
-
-	if (!(nFlags & FLAG_FORCECLIENTUPDATE))
-	{
-		if (!(nFlags & FLAG_VISIBLE) && !(nFlags & (FLAG_RAYHIT | FLAG_SOLID)))
-			return 0;
-
-		if (pObject->m_ObjectType == OT_NORMAL &&
-			pObject->m_pSData->m_Unknown2c == 0)
-			return 0;
-	}
-
-	if (!(pObject->m_ChangeFlags & 4))
-		return 0;
-
-	if (pObject->m_ObjectType == OT_MODEL &&
-		((CModelInstView*)pObject)->m_pModel == pMgr->m_pPlaceholderModel)
-		return 0;
-
-	return 1;
-}
-
+// declined them. sub_10027be0 is (see above); sm_WriteObjectUpdateInline is
+// still a stand-in twin for the other.
 void sub_10027918(LTObject* pObject, CUpdateContext* pCtx)
 {
 	Attachment* pAttach;
@@ -9464,7 +9440,7 @@ void sub_10027918(LTObject* pObject, CUpdateContext* pCtx)
 		pObject->m_pWorldBsp->IsBusy() == 1)
 		return;
 
-	if (!sub_10027be0Inline(pCtx->m_pMgr, pObject))
+	if (!sub_10027be0(pCtx->m_pMgr, pObject))
 		return;
 
 	sm_WriteObjectUpdateInline(pCtx, pObject,
@@ -9476,7 +9452,7 @@ void sub_10027918(LTObject* pObject, CUpdateContext* pCtx)
 	{
 		LTObject* pChild = sm_FindObjectByID(pCtx->m_pMgr, pAttach->m_nChildID);
 
-		if (pChild && sub_10027be0Inline(pCtx->m_pMgr, pChild))
+		if (pChild && sub_10027be0(pCtx->m_pMgr, pChild))
 		{
 			sm_WriteObjectUpdateInline(pCtx, pChild,
 				&pCtx->m_pClient->m_pObjInfos[pChild->m_ObjectID]);
