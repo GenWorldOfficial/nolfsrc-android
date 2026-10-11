@@ -1744,6 +1744,9 @@ int ws_ShiftBox()
 // always ends it. The timing counter exists only in the server build
 // (lithtech 0x417da0 has no CBaseCounter), and fStepHeight lives only in the
 // step-up block, which is what lets it share bStepped's slot as shipped.
+// Each global is saved and replaced in turn (state, then result): lithtech
+// 0x417deb reads g_pMoveResult only after the copy, and with both saves
+// written first /O2 hoists that read above the rep movs.
 void ws_MoveObject(CMoveState* pIn, CBounceState* pState)
 {
 #ifdef LT_SERVER_TIMERS
@@ -1775,11 +1778,10 @@ void ws_MoveObject(CMoveState* pIn, CBounceState* pState)
 
 	state = *pIn;
 
-	pOldState  = g_pMoveState;
-	pOldResult = g_pMoveResult;
-
-	g_pMoveResult = pState;
+	pOldState     = g_pMoveState;
 	g_pMoveState  = &state;
+	pOldResult    = g_pMoveResult;
+	g_pMoveResult = pState;
 
 	pState->m_pStandingPoly = NULL;
 	pState->m_vMomentum.Init();
