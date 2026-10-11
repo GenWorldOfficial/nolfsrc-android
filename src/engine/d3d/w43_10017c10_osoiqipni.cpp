@@ -2322,6 +2322,16 @@ void CD3DModelDraw::sub_1001b840(LTMat* pMat)
 //  (cone cosine strictly between -1 and 1) is dropped outside its cone
 //  and otherwise blends its inner colour (+0x78) towards its outer colour
 //  (+0x94) across the cone.
+//
+//  NEAR (738 of 737 bytes of body).  Ship's layout comes from the early
+//  `return` on the radius test (the epilogue sits right after it), the
+//  blend as the `fCone <= fDot` arm with `else return` (inline, not a cold
+//  block), the record colours stored R, G, B (that order is what gives the
+//  x87 spill slots ship's assignment) and the position through MatVMul.
+//  LEFT: (a) the dot product -- ship forms dir.z*dZ, dir.y*dY, dir.x*dX
+//  and then scales each by fInv; ours scales dir.y and dir.x by fInv
+//  first (tried: fInv first, d first, parenthesised, terms reversed); (b)
+//  MatVMul's second row sums y, z, x where ship (and rows 1, 3) go z, y, x.
 // ----------------------------------------------------------------------- //
 struct Light19a70
 {
@@ -2333,6 +2343,15 @@ struct Light19a70
 	float           m_fCone90;                          // +0x90
 	LTVector        m_vColor94;                         // +0x94
 };
+
+// ltmatrix.h's MatVMul (with the translation term), inlined: written
+// through it, the first row's sum comes out z, y, x as shipped.
+static inline void MatVMul19a70(LTVector *pDest, LTMat *pMat, LTVector *pSrc)
+{
+	pDest->x = pMat->m[0][0]*pSrc->x + pMat->m[0][1]*pSrc->y + pMat->m[0][2]*pSrc->z + pMat->m[0][3];
+	pDest->y = pMat->m[1][0]*pSrc->x + pMat->m[1][1]*pSrc->y + pMat->m[1][2]*pSrc->z + pMat->m[1][3];
+	pDest->z = pMat->m[2][0]*pSrc->x + pMat->m[2][1]*pSrc->y + pMat->m[2][2]*pSrc->z + pMat->m[2][3];
+}
 
 extern "C" void sub_10019a70(Light19a70* pLight, Callback19a70Data* pData)
 {
@@ -2360,7 +2379,8 @@ extern "C" void sub_10019a70(Light19a70* pLight, Callback19a70Data* pData)
 		fDist = (float)sqrt(fDX*fDX + fDY*fDY + fDZ*fDZ);
 		fEdge = fDist - pOwner->m_pModel00->m_fRadiusa8;
 
-		if (fEdge < fRadius)
+		if (fEdge >= fRadius)
+			return;
 		{
 			// The cone test normalises the light-to-model vector by the
 			// DISTANCE, not by the edge distance the radius test uses: the
@@ -2374,25 +2394,25 @@ extern "C" void sub_10019a70(Light19a70* pLight, Callback19a70Data* pData)
 			{
 				fInv = 1.0f / fDist;
 				fDot = pLight->m_vDir84.x*fDX*fInv + pLight->m_vDir84.y*fDY*fInv + pLight->m_vDir84.z*fDZ*fInv;
-				if (fCone > fDot)
+				if (fCone <= fDot)
+				{
+					fT = (1.0f - (0.5f*fDot + 0.5f)) / (1.0f - (0.5f*fCone + 0.5f));
+
+					fR = fR*(1.0f - fT) + fR2*fT;
+					fG = fG*(1.0f - fT) + fG2*fT;
+					fB = fB*(1.0f - fT) + fB2*fT;
+				}
+				else
 					return;
-
-				fT = (1.0f - (0.5f*fDot + 0.5f)) / (1.0f - (0.5f*fCone + 0.5f));
-
-				fR = fR*(1.0f - fT) + fR2*fT;
-				fG = fG*(1.0f - fT) + fG2*fT;
-				fB = fB*(1.0f - fT) + fB2*fT;
 			}
 
 			pRec = &pOwner->m_Lights3c[pOwner->m_nLights2fc];
 
-			pRec->m_fB28 = fB;
-			pRec->m_fG24 = fG;
 			pRec->m_fR20 = fR;
+			pRec->m_fG24 = fG;
+			pRec->m_fB28 = fB;
 
-			pRec->m_vPos00.x = pData->m_mInv.m[0][0]*pLight->m_vPos68.x + pData->m_mInv.m[0][1]*pLight->m_vPos68.y + pData->m_mInv.m[0][2]*pLight->m_vPos68.z + pData->m_mInv.m[0][3];
-			pRec->m_vPos00.y = pData->m_mInv.m[1][0]*pLight->m_vPos68.x + pData->m_mInv.m[1][1]*pLight->m_vPos68.y + pData->m_mInv.m[1][2]*pLight->m_vPos68.z + pData->m_mInv.m[1][3];
-			pRec->m_vPos00.z = pData->m_mInv.m[2][0]*pLight->m_vPos68.x + pData->m_mInv.m[2][1]*pLight->m_vPos68.y + pData->m_mInv.m[2][2]*pLight->m_vPos68.z + pData->m_mInv.m[2][3];
+			MatVMul19a70(&pRec->m_vPos00, &pData->m_mInv, &pLight->m_vPos68);
 
 			pRec->m_vDir0c = pRec->m_vPos00;
 			pRec->m_vDir0c.Norm();
