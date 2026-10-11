@@ -9528,6 +9528,12 @@ public:
 	float    m_f4c;                          // +0x4c
 	LTVector m_vPos;                         // +0x50
 	uint32   m_Unknown5c;                    // +0x5c
+
+	// Stand-in accessors (names ours): a float RETURNED from an inline
+	// reaches its use on the x87 stack, which is how sub_100298d9 reads both
+	// fields in lithtech.exe (0x0046855c, 0x0046857c).
+	float    GetF4c() { return m_f4c; }
+	float    GetStartTime() { return m_fStartTime; }
 };
 
 // The two little records the sound points at. The one at +0x0c has its dword
@@ -9630,8 +9636,8 @@ public:
 	void WriteWord(uint32 nValue);
 };
 
-// 0x100298d9 / lithtech.exe 0x00468330 (1326 bytes, near; see the
-// WriteFloat site) — write one sound's state into the update (name ours).
+// 0x100298d9 / lithtech.exe 0x00468330 (1326 bytes, identical in both) —
+// write one sound's state into the update (name ours).
 //
 // NOT RECONSTRUCTED (587 bytes). Every callee and every constant in it is
 // identified below, so what is left is transcription rather than reading.
@@ -9695,7 +9701,7 @@ public:
 //     truncating `mov 0x34(%ebx),%ax` with a dead upper half, which is what
 //     the shipped code has; sm_WriteQueuedMessageBody forced the spelling
 //     first.
-//   * The elapsed-time subtraction: a volatile read of the start time, see
+//   * The elapsed-time subtraction: an inline accessor read of the start time, see
 //     the site.
 //   * The client-record index at 0x10029972: shipped pushes the dword
 //     whole. That is a WriteWord declared with a uint32 parameter; see
@@ -9821,26 +9827,28 @@ void sub_100298d9(CServerMgr* pMgr, SoundInstance* pSound, CObjInfo* pInfo,
 		if (nFlags & 0x40)
 			pMsg->WriteByte(pSnd->m_Unknown48);
 
-		// The volatile read is lithtech.exe's: its call (0x00468562, to
-		// WriteType<float> 0x00466700) passes the float through x87, `flds
-		// 0x4c(%edx) ; fstps (%esp)`, where a plain read at /O2 pushes it
-		// with `mov ; push` -- 4 bytes short, and the shifted frame cost the
-		// whole function its pairing (1322 of 1326). Read through volatile
-		// it is 1326 of 1326 with only two load/push orders swapped
-		// (0x00468559, 0x00468578). server.dll's /O1 code (0x10029a99) is
-		// `flds` either way and still matches.
+		// Read through an inline float accessor: lithtech.exe's call
+		// (0x00468562, to WriteType<float> 0x00466700) passes the float
+		// through x87, `push %ecx ; mov %esi,%ecx ; flds 0x4c(%edx) ; fstps
+		// (%esp)`, where a plain read at /O2 pushes it with `mov ; push` --
+		// 4 bytes short. A volatile read gets the flds too, but scheduled
+		// ahead of the reserve push (0x00468559); the accessor's returned
+		// value lands exactly where shipped has it. server.dll's /O1 code
+		// (0x10029a99) is `flds` either way and still matches.
 		if (nFlags & 0x80)
-			((CMsgFloatWriteView*)pMsg)->WriteFloat(*(volatile float*)&pSnd->m_f4c);
+			((CMsgFloatWriteView*)pMsg)->WriteFloat(pSnd->GetF4c());
 
 		if (nFlags & 0x400)
 		{
-			// The start time is read through a volatile lvalue: shipped
+			// The start time is read through an inline accessor: shipped
 			// loads it on its own (`flds 0x1c(%ebx)`, 0x10029aad) and
 			// subtracts from m_Time with `fsubrs`, and lithtech.exe does the
-			// same at 0x0046857c. A plain read folds it into `fsubs` as a
-			// memory operand instead.
+			// same at 0x0046857c, after the pMgr load. A plain read folds it
+			// into `fsubs` as a memory operand instead; a volatile read
+			// gets the fsubrs but schedules the flds before the pMgr load
+			// (0x00468578).
 			nMs = (uint16)((pMgr->m_Time -
-				*(volatile float*)&pSnd->m_fStartTime) * 1000.0 + 0.5);
+				pSnd->GetStartTime()) * 1000.0 + 0.5);
 
 			// These four, and ONLY these four, are the WriteType spelling:
 			// lithtech.exe calls the out-of-line instantiations at every one
