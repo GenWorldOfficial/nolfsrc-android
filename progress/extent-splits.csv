@@ -41,3 +41,4 @@ Object.lto,0x100e7c30,"a 7-byte destructor (vptr store; ret) after the ret and p
 Object.lto,0x100e7c60,"a 7-byte destructor (vptr store; ret) after the ret 4 that ends the 0x100e7c40 deleting destructor; its own deleting destructor at 0x100e7c70 stores the same vptr"
 Object.lto,0x100e7cc0,"a 7-byte destructor (vptr store; ret) after the ret 4 that ends the 0x100e7ca0 deleting destructor"
 Object.lto,0x10012c60,"an 11-byte destructor (vptr store; jmp base dtor) after the ret and pad that end the 0x10012aa0 row"
+d3d.ren,0x100235d0,"the volumetric fog routine (w15_100235d0.cpp sub_100235d0, 860 bytes) that the enumerator merges into the 0x100234b0 row: that row's 1152 bytes hold four byte-identical functions back to back (0x100234b0, 0x100234d0, 0x100234e0, 0x10023570; the last ends `ret` at 0x100235cf) and then this one, up to 0x10023930; its address is installed as a function pointer by `movl $0x100235d0,0x1008ce8c` at 0x1002b179"
