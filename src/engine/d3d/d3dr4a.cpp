@@ -743,23 +743,14 @@ T10050& Arr10050::sub_100507e0(uint32 nIndex) const
 
 
 // ======================================================================= //
-//  0x10050dc0 -- 28 bytes.  ONE MORE of the 28-byte member forwarders, but
-//  this one is not a dynarray member: 0x10050d60 is a real body that takes a
-//  pointer, calls 0x1000a6e0 twice on `arg+0x10` and `arg+0x1c`, and copies
-//  `this->m_1c` into `*arg`.  All that is decidable from 0x10050dc0's own
-//  bytes is the shape: __thiscall, one dword in, forwarded unchanged, and
-//  the callee's answer left in %eax.
+//  0x10050dc0 -- 28 bytes.  ONE MORE of the 28-byte member forwarders:
+//  ObjectBank<Node56ab4>::FreeVoid (`Free((T*)ptr);`, slot +0x08 of the
+//  bank's vtable 0x100897d0), forwarding to Free 0x10050d60 -- the node's
+//  destructor (0x1000a6e0 twice, on +0x10 and +0x1c) and sb_Free.  Now the
+//  template's own, byte-identical: d3dr5b.cpp instantiates it at
+//  /Os /Qip.  The stand-in C10050dc0::sub_10050dc0 that was defined here
+//  was a second copy.
 // ======================================================================= //
-struct C10050dc0
-{
-	void	sub_10050d60(void* pParam);                   // declared only
-	void	sub_10050dc0(void* pParam);
-};
-
-void C10050dc0::sub_10050dc0(void* pParam)
-{
-	sub_10050d60(pParam);
-}
 
 
 // ======================================================================= //

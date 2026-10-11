@@ -360,23 +360,11 @@ LTBOOL C1007ede0::sub_1007ede0()
 //      e8 <0x10050d30>          call
 //      8b e5 / 5d / c3          ret
 //
-//  No outgoing area is written and no argument is popped: the callee takes
-//  none.  d3dr2c.cpp reconstructs 0x10050d30 as a bank allocator returning
-//  a node pointer, and %eax survives the epilogue untouched.
+//  It is ObjectBank<Node56ab4>::AllocVoid (`return Allocate();`, slot +0x04
+//  of the bank's vtable 0x100897d0), and is now the template's own,
+//  byte-identical: d3dr5b.cpp instantiates it at /Os /Qip.  The stand-in
+//  C10050da0::sub_10050da0 that was defined here was a second copy.
 // ----------------------------------------------------------------------- //
-struct Node10050d30;                                    // opaque
-
-class C10050da0
-{
-public:
-	Node10050d30*	sub_10050d30();                     // 0x10050d30
-	Node10050d30*	sub_10050da0();
-};
-
-Node10050d30* C10050da0::sub_10050da0()
-{
-	return sub_10050d30();
-}
 
 
 // ======================================================================= //

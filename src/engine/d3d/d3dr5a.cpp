@@ -1317,27 +1317,15 @@ void C100592a0::sub_100592a0(void* pA, uint8* pB, uint32 nUnused)
 // *********************************************************************** //
 
 
-// 0x10050cc0 -- MEASURED, NOT CLOSED.  Ours is the shipped function plus
-// ONE instruction: `83 c4 00` (add $0x0,%esp) in front of the two pushes
-// for 0x1007fba0.  That instruction occurs nowhere in d3d.ren (a scan of
-// .text finds zero), and it is the unexplained icl 4.0
-// artefact.  Tried, every one still emits it: /O1, /Os /Qip, /Os /Oi-,
-// /Os /Qrcd, /Os /G5, /Os /G6, /O2 /Os, the function alone in a probe TU,
-// and the same body as a real class pair (empty virtual base destructor,
-// derived destructor calling 0x1007fba0) whose icl-generated destructor
-// carries the identical `add $0x0,%esp`.  /O2 drops it but uses `mov`
-// arguments and duplicates the epilogue (the shipped code cross-jumps),
-// 30 -> 38.  Out of reach from the source.
-void C10050cc0::sub_10050cc0(uint32 nFlags)
-{
-	m_pVTable = g_vtbl_100897d0;
-
-	sub_1007fba0(&m_Hash04, 1);
-
-	m_pVTable = g_vtbl_100894c0;
-
-	if ((nFlags & 1) == 0)
-		return;
-
-	sub_10080479(this);
-}
+// 0x10050cc0 is ObjectBank<Node56ab4>'s scalar deleting destructor, and is
+// now the template's own (d3dr5b.cpp instantiates it, /Os /Qip): the
+// stand-in C10050cc0::sub_10050cc0 that was written here was the same
+// function a second time, and left the real one unplaced.  It is NEAR, by
+// the one icl 4.0 artefact recorded here before: ours is the shipped
+// function plus `83 c4 00` (add $0x0,%esp) in front of the two pushes for
+// 0x1007fba0 (sb_Term2).  That instruction occurs nowhere in d3d.ren, and
+// every variant tried emits it: /O1, /Os /Qip, /Os /Oi-, /Os /Qrcd,
+// /Os /G5, /Os /G6, /O2 /Os, the function alone in a probe TU, and this
+// very class pair (empty virtual base destructor, derived destructor
+// calling sb_Term2).  /O2 drops it but uses `mov` arguments and duplicates
+// the epilogue (the shipped code cross-jumps), 30 -> 38.

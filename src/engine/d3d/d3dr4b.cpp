@@ -1257,11 +1257,10 @@ void __cdecl sub_1003b760(void* pA, void* pB)
 // icl artefact d3dr5a.cpp records at 0x10050cc0.  Also measured here,
 // unchanged: /Qsfalign8, /Qsfalign16, /Qsfalign-, a pPool local, the
 // member address spelled as `this + 4`, and 0x1007fba0 declared varargs.
-void C10050de0::sub_10050de0()
-{
-	sub_1007fba0(&m_Pool, 1);
-	sub_1007fb20(&m_Pool, 0x28, 0x20);
-}
+// 0x10050de0 is ObjectBank<Node56ab4>::Term (sb_Term2, then sb_Init with
+// 0x28-byte nodes, 0x20 per block), now the template's own: d3dr5b.cpp
+// instantiates it (/Os /Qip), with this same near residual.  The stand-in
+// C10050de0::sub_10050de0 that was defined here was a second copy of it.
 
 
 // ----------------------------------------------------------------------- //
