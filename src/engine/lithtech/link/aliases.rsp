@@ -1076,10 +1076,6 @@
 /ALTERNATENAME:?Enter@LCritSecQ478@@QAEXXZ=?Enter@LCriticalSection@@QAEXXZ
 # 0x444190
 /ALTERNATENAME:?Leave@LCritSecQ478@@QAEXXZ=?Leave@LCriticalSection@@QAEXXZ
-# 0x444180
-/ALTERNATENAME:?Enter@LCriticalSectionQ43C@@QAEXXZ=?Enter@LCriticalSection@@QAEXXZ
-# 0x444190
-/ALTERNATENAME:?Leave@LCriticalSectionQ43C@@QAEXXZ=?Leave@LCriticalSection@@QAEXXZ
 # 0x45a390
 /ALTERNATENAME:?sub_10024419@CModelSub14@Model@@QAEXXZ=?sub_10024419@CModelSub14@@QAEXXZ
 # 0x45f1b0
@@ -1608,16 +1604,12 @@
 /ALTERNATENAME:?sb_FreeChunks@@YAXPAVStructBank@@H@Z=?sb_Term2@@YAXPAUStructBank_t@@H@Z
 # 0x490bd0
 /ALTERNATENAME:?sb_FreeChunks@@YAXPAVStructBankView@@H@Z=?sb_Term2@@YAXPAUStructBank_t@@H@Z
-# 0x490bd0
-/ALTERNATENAME:?sb_FreeChunksQ43C@@YAXPAVStructBankQ43C@@H@Z=?sb_Term2@@YAXPAUStructBank_t@@H@Z
 # 0x490c20
 /ALTERNATENAME:?sb_Grow@@YAXPAVStructBank@@K@Z=?sb_AllocateNewStructPage@@YAHPAUStructBank_t@@K@Z
 # 0x490c20
 /ALTERNATENAME:?sb_GrowQ11@@YAXPAVCStructBankQ11@@K@Z=?sb_AllocateNewStructPage@@YAHPAUStructBank_t@@K@Z
 # 0x490c20
 /ALTERNATENAME:?sb_GrowQ414@@YAXPAVStructBankQ414@@K@Z=?sb_AllocateNewStructPage@@YAHPAUStructBank_t@@K@Z
-# 0x490c20
-/ALTERNATENAME:?sb_GrowQ43C@@YAXPAVStructBankQ43C@@K@Z=?sb_AllocateNewStructPage@@YAHPAUStructBank_t@@K@Z
 # 0x490c20
 /ALTERNATENAME:?sb_GrowQ46C@@YAXPAUStructBankQ46C@@K@Z=?sb_AllocateNewStructPage@@YAHPAUStructBank_t@@K@Z
 # 0x490c20
@@ -1638,8 +1630,6 @@
 /ALTERNATENAME:?sb_InitL10@@YAXPAUStructBankL10@@KK@Z=?sb_Init@@YAXPAUStructBank_t@@KK@Z
 # 0x490b50
 /ALTERNATENAME:?sb_InitQ19@@YAXPAUCisStructBankQ19@@KK@Z=?sb_Init@@YAXPAUStructBank_t@@KK@Z
-# 0x490b50
-/ALTERNATENAME:?sb_InitQ43C@@YAXPAVStructBankQ43C@@KK@Z=?sb_Init@@YAXPAUStructBank_t@@KK@Z
 # 0x490b50
 /ALTERNATENAME:?sb_InitQ46C@@YAXPAUStructBankQ46C@@KK@Z=?sb_Init@@YAXPAUStructBank_t@@KK@Z
 # 0x490c10
@@ -2609,12 +2599,6 @@
 /ALTERNATENAME:?GetFileName@CRezFileDirectoryEmulationFileRf90@@UAEPBDXZ=?GetFileName@CRezFileDirectoryEmulationFileRf80@@UAEPBDXZ
 /ALTERNATENAME:?CloseFile@CRezFileDirectoryEmulationFileRf90@@QAEHXZ=?CloseFile@CRezFileDirectoryEmulationFileRf80@@QAEHXZ
 /ALTERNATENAME:?InsertFirst@CVirtBaseListRf90@@QAEXPAVCVirtBaseListItemRf90@@@Z=?InsertFirst@CVirtBaseList@@QAEXPAVCVirtBaseListItem@@@Z
-# wgrid.cpp. _$E1 (0x43c3f0) / _$E6 (0x43c480) call 0x444150 and 0x490ba0; _$E2
-# (0x43c440), _$E7 (0x43c4a0) and CNodeBankQ43C's ??_G (0x43c690) call 0x444170:
-# lthread.cpp's LCriticalSection ctor/dtor and Lith.lib's sb_Init2.
-/ALTERNATENAME:??0LCriticalSectionQ43C@@QAE@XZ=??0LCriticalSection@@QAE@XZ
-/ALTERNATENAME:??1LCriticalSectionQ43C@@QAE@XZ=??1LCriticalSection@@QAE@XZ
-/ALTERNATENAME:?sb_Init2Q43C@@YAXPAVStructBankQ43C@@KKK@Z=?sb_Init2@@YAHPAUStructBank_t@@KKK@Z
 # 0x426480 -- CWorldBsp::Inherit (0x426670) calls Term first, at 0x426679: worldbsp.cpp's
 # CWorldBsp::Term, placed there.
 /ALTERNATENAME:?Term@CWorldBspQ43C@@QAEXXZ=?Term@CWorldBsp@@QAEXXZ

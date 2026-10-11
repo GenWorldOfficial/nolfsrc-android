@@ -4,13 +4,12 @@
 //  TWO UNRELATED JOBS IN ONE FILE.  They are NOT one module; the evidence
 //  is given at each part below.
 //
-//    PART A   0x0043c3e0..0x0043cd00   a client-only geometry-helper TU:
-//             a locked struct bank of 12-byte nodes, a uniform 3-D grid,
-//             a 3x3 basis and the six cardinal-side bases.  Three
-//             consecutive .CRT$XCU slots (0x004a707c / 0x004a7080 /
-//             0x004a7084 hold 0x0043c3e0 / 0x0043c470 / 0x0043c840) say
-//             these three file-scope objects are ONE translation unit.
-//             NO server.dll twin exists for any of it.
+//    PART A   0x0043c6d0..0x0043cd00   a client-only geometry-helper TU:
+//             a uniform 3-D grid, a 3x3 basis and the six cardinal-side
+//             bases (.CRT$XCU slot 0x004a7084 holds the latter's
+//             initializer, 0x0043c840).  NO server.dll twin exists for any
+//             of it.  (0x0043c3e0..0x0043c6cf, once read as part of it, is
+//             serverengine.cpp's; see A.1 / A.2 below.)
 //
 //    PART B   0x00426670 / 0x00426c40   CWorldBsp::Inherit and its private
 //             node-pointer remap.  src/engine/server/worldbsp.h already
@@ -44,72 +43,6 @@
 void* dalloc(uint32 nSize);
 void  dfree(void* pMem);
 
-// 0x00444150 / 0x00444170 / 0x00444180 / 0x00444190 — lthread.h's
-// LCriticalSection, identified outright: the four bodies are one-line
-// forwarders to InitializeCriticalSection / DeleteCriticalSection /
-// EnterCriticalSection / LeaveCriticalSection through the IAT at
-// 0x004a105c / 0x004a1058 / 0x004a104c / 0x004a1048.  The constructor also
-// `rep stos` six dwords first (0x00444154), which is the 0x18-byte
-// CRITICAL_SECTION cleared before the API call.
-class LCriticalSectionQ43C
-{
-public:
-	LCriticalSectionQ43C();                  // 0x00444150
-	~LCriticalSectionQ43C();                 // 0x00444170
-
-	void Enter();                            // 0x00444180
-	void Leave();                            // 0x00444190
-
-public:
-	CRITICAL_SECTION m_CS;
-};
-
-// 0x00490b50 / 0x00490ba0 / 0x00490bd0 / 0x00490c20 — stdlith's struct
-// bank, the same four servermgr.h declares for the server at 0x1003d170 /
-// 0x1003d1c0 / 0x1003d1f0 / 0x1003e1e0.  0x00490ba0 is sb_Init2 exactly:
-// it forwards (a1,a2,a3) to 0x00490b50 and then (a1,a4) to 0x00490c20.
-class StructBankQ43C
-{
-public:
-	uint32 m_StructSize;                     // +0x00
-	uint32 m_Unknown04;                      // +0x04
-	uint32 m_Unknown08;                      // +0x08  sb_Grow's count
-	uint8  m_pad_0c[0x18 - 0x0c];
-	void*  m_pFreeList;                      // +0x18
-};
-
-void sb_InitQ43C(StructBankQ43C* pBank, uint32 structSize, uint32 cacheSize);
-void sb_Init2Q43C(StructBankQ43C* pBank, uint32 structSize, uint32 cacheSize,
-                  uint32 growSize);
-void sb_FreeChunksQ43C(StructBankQ43C* pBank, int bAll);
-void sb_GrowQ43C(StructBankQ43C* pBank, uint32 nCount);
-
-// servermgr.h's inline pair, repeated here so this TU expands them exactly
-// as the shipped /Ot build does (0x0043c5c0 and 0x0043c630 both carry the
-// body in the clear).
-inline void* sb_AllocateQ43C(StructBankQ43C* pBank)
-{
-	void* pStruct = pBank->m_pFreeList;
-
-	if (!pStruct)
-	{
-		sb_GrowQ43C(pBank, pBank->m_Unknown08);
-
-		pStruct = pBank->m_pFreeList;
-		if (!pStruct)
-			return LTNULL;
-	}
-
-	pBank->m_pFreeList = *(void**)pStruct;
-
-	return pStruct;
-}
-
-inline void sb_FreeQ43C(StructBankQ43C* pBank, void* pStruct)
-{
-	*(void**)pStruct = pBank->m_pFreeList;
-	pBank->m_pFreeList = pStruct;
-}
 
 
 // ======================================================================= //
@@ -145,176 +78,18 @@ inline void sb_FreeQ43C(StructBankQ43C* pBank, void* pStruct)
 
 
 // ----------------------------------------------------------------------- //
-//  A.1  The 12-byte node the bank hands out.
-//
-//  Size and construction are read straight off two sites: sb_Init2's
-//  0x0043c408 pushes 0xc as the record size, and both the bank's Allocate
-//  (0x0043c605..0x0043c618) and the free function at 0x0043c542..0x0043c555
-//  zero +0x00, +0x04 and +0x08 in that order after popping the free list —
-//  which is the placement `new(pRet) T` of a type whose constructor clears
-//  three dwords.  What the three hold is not reached from this file.
+//  A.1 / A.2  (0x0043c3e0..0x0043c6cf) are NOT this file's.  The locked
+//  bank of twelve-byte nodes at 0x004b3e40 (initializer 0x0043c3e0, the
+//  {0x0043c690, 0x0043c5c0, 0x0043c630, 0x0043c660} table at 0x004a2438)
+//  and the lock at 0x004b3e28 (initializer 0x0043c470) are
+//  src/engine/server/serverengine.cpp's g_DepLinkBank and g_DepLinkCS --
+//  that file's client compile matches 0x0043c5c0, 0x0043c630, 0x0043c660
+//  and its dl_UnlinkAndFree at 0x0043c4b0 -- and the previous transcription
+//  of them here (CNodeBankQ43C, g_NodeBankQ43C, g_ListLockQ43C) compiled
+//  both objects' initializers a second time.  Consecutive .CRT$XCU slots
+//  do not make one translation unit: serverengine.obj's two and this
+//  file's one are consecutive because the objects are.
 // ----------------------------------------------------------------------- //
-class CBankNodeQ43C
-{
-public:
-	CBankNodeQ43C()
-	{
-		m_n00 = 0;
-		m_n04 = 0;
-		m_n08 = 0;
-	}
-
-	uint32 m_n00;                            // +0x00
-	uint32 m_n04;                            // +0x04
-	uint32 m_n08;                            // +0x08
-};                                           //      = 0x0c
-
-
-// objbank.cpp's interface, repeated rather than included so this file's
-// include set stays as it is.  The three pure slots are why 0x004a14c8
-// carries _purecall (0x004928e7) three times.
-class CObjectBankBaseQ43C
-{
-public:
-	virtual ~CObjectBankBaseQ43C() {}
-	virtual void* Allocate() = 0;
-	virtual void  Free(void* pObj) = 0;
-	virtual void  Init() = 0;
-};
-
-
-// ----------------------------------------------------------------------- //
-//  A.2  The locked bank itself — 0x004b3e40 in .data.
-//
-//  LAYOUT, read off the four bodies:
-//    +0x00  vptr          (0x004a2438 derived, 0x004a14c8 base)
-//    +0x04  StructBank    (sb_Init2's first argument is 0x004b3e44)
-//    +0x20  LCriticalSection  (Enter/Leave are always on 0x004b3e60)
-//  and 0x004b3e5c — the free-list head the two free functions poke — is
-//  m_Bank.m_pFreeList at 0x004b3e44 + 0x18.  The three agree.
-//
-//  Written as a PLAIN CLASS, not objbank.cpp's template: one instantiation,
-//  one object, and a template would emit a non-deleting destructor this
-//  image does not have.
-// ----------------------------------------------------------------------- //
-class CNodeBankQ43C : public CObjectBankBaseQ43C
-{
-public:
-	// >>> ROW 0x0043c3f0, 50 bytes (0x0043c3f0..0x0043c421). <<<
-	//
-	// This body is the CONSTRUCT HALF of the file-scope object's dynamic
-	// initializer, with the constructor expanded into it.  VC6 splits
-	// `??__E` into three COMDATs here: 0x0043c3e0 is
-	// `call 0x0043c3f0 ; jmp 0x0043c430`, 0x0043c3f0 is this body, and
-	// 0x0043c430 is `push 0x0043c440 ; call atexit`, which is what says the
-	// object has a destructor (0x0043c440).
-	//
-	// The three-store order is forced:
-	//   0x0043c3f5  mov ds:0x004b3e40,0x004a14c8   base vptr, FIRST
-	//   0x0043c3ff  call 0x00444150                m_Lock's constructor
-	//   0x0043c40f  mov ds:0x004b3e40,0x004a2438   derived vptr, AFTER it
-	// which is "VC6 emits a constructor's derived-class vptr
-	// store AFTER the member constructors" verbatim.  %ecx is loaded with
-	// &m_Lock at 0x0043c3f0, one instruction before the base vptr store —
-	// scheduling, not source.
-	//
-	// The body is one statement.  0x0043c404..0x0043c419 pushes
-	// 0x20, 0x20, 0xc, &m_Bank and calls 0x00490ba0, i.e.
-	// sb_Init2(&m_Bank, 0xc, 0x20, 0x20); the 0xc is sizeof(CBankNodeQ43C)
-	// and both 0x20s are the bank's cache and pre-grow counts.
-	// IN CLASS, and the shipped bytes insist on it: 0x0043c3f0 reaches
-	// 0x004b3e40 / 0x004b3e44 / 0x004b3e60 as ABSOLUTE addresses with no
-	// `this` register anywhere, so the constructor is EXPANDED into the
-	// initializer.  The second object in this TU shows the contrast --
-	// 0x0043c480 is `mov ecx,0x004b3e28 ; jmp 0x00444150`, a `this` and a
-	// tail call, because LCriticalSection's constructor is out of line.
-	// There is no standalone body for this one anywhere in the image, and
-	// the only construction site is the global, so marking it inline costs
-	// no other match.
-	CNodeBankQ43C()
-	{
-		sb_Init2Q43C(&m_Bank, sizeof(CBankNodeQ43C), 0x20, 0x20);
-	}
-
-	// 0x0043c440 (the atexit body 0x0043c430 registers) and 0x0043c690
-	// (slot 0 of 0x004a2438, the scalar deleting form) are the same
-	// destructor: sb_FreeChunks(&m_Bank, 1), then ~LCriticalSection on
-	// +0x20, then the base vptr restored.
-	virtual ~CNodeBankQ43C()                 // 0x0043c690 / 0x0043c440
-	{
-		sb_FreeChunksQ43C(&m_Bank, 1);
-	}
-
-	// 0x0043c5c0, slot 1.  sb_Allocate expanded between Enter and Leave,
-	// with the placement new guarded by the null the pop produced
-	// (0x0043c601 `test eax,eax ; je`), exactly as objbank.cpp's
-	// CObjectBank<T>::Allocate.
-	virtual void* Allocate()                 // 0x0043c5c0
-	{
-		CBankNodeQ43C* pRet;
-
-		m_Lock.Enter();
-
-		pRet = (CBankNodeQ43C*)sb_AllocateQ43C(&m_Bank);
-
-		if (pRet)
-			new(pRet, (DummyClassBlahBlah*)0) CBankNodeQ43C;
-
-		m_Lock.Leave();
-
-		return pRet;
-	}
-
-	// 0x0043c630, slot 2.  `ret 0x4`, and the body is sb_Free inlined —
-	// 0x0043c642 reads m_Bank.m_pFreeList (this+0x1c) into the freed
-	// record and 0x0043c649 stores the record back.  No destructor runs on
-	// the node, which is what says CBankNodeQ43C has none.
-	virtual void Free(void* pObj)            // 0x0043c630
-	{
-		m_Lock.Enter();
-
-		sb_FreeQ43C(&m_Bank, pObj);
-
-		m_Lock.Leave();
-	}
-
-	// 0x0043c660, slot 3.  Both bank calls inside the lock; the sizes are
-	// the constructor's, minus the pre-grow.
-	virtual void Init()                      // 0x0043c660
-	{
-		m_Lock.Enter();
-
-		sb_FreeChunksQ43C(&m_Bank, 1);
-		sb_InitQ43C(&m_Bank, sizeof(CBankNodeQ43C), 0x20);
-
-		m_Lock.Leave();
-	}
-
-public:
-	StructBankQ43C       m_Bank;             // +0x04
-	LCriticalSectionQ43C m_Lock;             // +0x20
-};
-
-
-
-// The file-scope object.  0x004a707c — the first of this TU's three
-// consecutive .CRT$XCU slots — points at its thunk.
-CNodeBankQ43C g_NodeBankQ43C;
-
-
-// The TU's SECOND file-scope object, 0x004b3e28, carried here so that the
-// three .CRT$XCU slots of this translation unit are all accounted for.
-// Its four functions are not written: the
-// constructor thunk 0x0043c470 is `call 0x0043c480 ; jmp 0x0043c490`,
-// 0x0043c480 is `mov ecx,0x004b3e28 ; jmp 0x00444150`, 0x0043c490
-// registers 0x0043c4a0 with atexit, and 0x0043c4a0 is the matching
-// `mov ecx,0x004b3e28 ; jmp 0x00444170`.  The declaration alone is what
-// emits all four.
-//
-// What it guards is 0x0043c580 — a list push that links through +0x08 of a
-// node this file's bank hands out — which is not written either
-// and needs the type at .data 0x004a8380 pinned first.
-LCriticalSectionQ43C g_ListLockQ43C;
 
 
 // A second, unwrapped release entry point.  0x004290c0 forwards one
@@ -1145,14 +920,6 @@ CWorldItem18Q43C* CWorldBspQ43C::RemapItem(CWorldBspQ43C* pSrc,
 //     `m_Sides[2]` (the two-trip loop at 0x00426724 is the proof).  The
 //     m_Sides change also rewrites CWorldItem18::Init's two zero stores,
 //     which stay in the same order (+0x08 then +0x04).
-//   * Part A's LCriticalSectionQ43C is src/engine/server/lthread.h's
-//     LCriticalSection and its StructBankQ43C / sb_* set is
-//     src/engine/server/servermgr.h's, sb_Allocate and sb_Free included.
-//     Both should come from those headers rather than be repeated.
-//   * CObjectBankBaseQ43C is src/engine/server/objbank.cpp's
-//     CObjectBankBase; if that class is ever promoted to a header this
-//     file should use it, since the base vtable 0x004a14c8 is shared with
-//     whatever emits 0x004041b0.
 //
 //  UNSETTLED, WITH BOTH SPELLINGS.
 //
