@@ -686,14 +686,45 @@ public:
 //    +0x42       the stage                (0x1000b451, 0x1000b493, ...)
 //    +0x44       the dirty flag           (0x1000b562, 0x1000b622)
 // ======================================================================= //
-struct Link0ae20
+struct Link0ae20                                        // ltlink.h CheapLTLink
 {
 	Link0ae20*	m_pPrev;                                // +0x00
 	Link0ae20*	m_pNext;                                // +0x04
 	void*		m_pData;                                // +0x08
+
+	inline void Remove()
+	{
+		m_pPrev->m_pNext = m_pNext;
+		m_pNext->m_pPrev = m_pPrev;
+		TieOff();
+	}
+
+	inline void TieOff()
+	{
+		m_pPrev = m_pNext = this;
+	}
+
+	inline void AddAfter(Link0ae20* pLink)
+	{
+		pLink->m_pPrev = this;
+		pLink->m_pNext = m_pNext;
+		pLink->m_pPrev->m_pNext = pLink->m_pNext->m_pPrev = pLink;
+	}
 };
 
-struct Tex0ae20
+inline void dl_Insert0ae20(Link0ae20* pAfter, Link0ae20* pLink)
+{
+	pAfter->AddAfter(pLink);
+}
+
+inline void dl_Remove0ae20(Link0ae20* pLink)
+{
+	pLink->Remove();
+}
+
+// The texture's base part (big729c0.cpp's TexBase729c0): the bind goes
+// through a base-class pointer.
+struct TexBase0ae20
 {
 	void*		m_pVtbl00;                              // +0x00
 	float		m_fInvW04;                              // +0x04
@@ -705,6 +736,10 @@ struct Tex0ae20
 	uint8		m_pad_18[0x1c - 0x18];
 	Link0ae20	m_Link1c;                               // +0x1c
 	uint8		m_pad_28[0x30 - 0x28];
+};
+
+struct Tex0ae20 : public TexBase0ae20
+{
 	Tex0ae20*	m_pNext30;                              // +0x30
 	uint8		m_pad_34[0x42 - 0x34];
 	uint16		m_nStage42;                             // +0x42
@@ -884,6 +919,148 @@ extern "C" void* sub_1006a860(CLightDesc0ae20* pDesc, Surf0ae20* pSurf,
 // it with the same (block, stage, bLink) triple.
 extern "C" Tex0ae20* sub_10039bd0(TexBlock0ae20* pBlock, uint32 nStage,
                                   uint32 bLink);
+
+
+// ======================================================================= //
+//  THE BIND: big729c0.cpp's BindBlock729c0 (w24_10059380_os.cpp's
+//  BindBlock59380, w3_10014580_os.cpp's 0x10015320 as an inline; also
+//  big47230.cpp's three) over this file's types.  Both 0x1000ae20 and
+//  0x1000b6c0 end in one copy of it with a LOD of 0.
+//
+//  FindRec is the one departure: big729c0.cpp's `return pCur` inside the
+//  loop / `return LTNULL` after it gives the shipped search exactly (the
+//  `xor` on the exhausted path) in BOTH functions, but in this TU it also
+//  makes icl give 0x1000b6c0 the aligned-stack shim (`push %ebx ; mov
+//  %esp,%ebx ; and $-16,%esp`) for its register call to 0x1000b910, which
+//  the shipped 0x1000b6c0 does not have (with 0x1000b910 out of the TU the
+//  shim goes away; `for`+`break`+`return pCur` and a `while` with the test
+//  in the condition shim too).  The pRet spelling below avoids the shim and
+//  leaves `mov $0` for `xor` plus the break trampolines' order:
+//  0x1000b6c0 598 of 592 bytes, 4 blocks (was 609, 31); 0x1000ae20 2212 of
+//  2196, 11 blocks (was 2208, 27; with the return spelling its bind is
+//  exact and 0x1000b6c0 shims).
+// ======================================================================= //
+static inline Tex0ae20* FindRec0ae20(Tex0ae20* pHead, uint32 nStage)
+{
+	Tex0ae20* pCur;
+
+	Tex0ae20* pRet = LTNULL;
+	for (pCur = pHead; pCur; pCur = pCur->m_pNext30)
+	{
+		if (pCur->m_nStage42 == (uint8)nStage)
+		{
+			pRet = pCur;
+			break;
+		}
+	}
+
+	return pRet;
+}
+
+static inline uint32 StageOf0ae20(Tex0ae20* pRec)
+{
+	return pRec->m_nStage42;
+}
+
+static inline void SetScale0ae20(TexScale0ae20* pScales, uint32 nStage, float fInvW, float fInvH)
+{
+	pScales[nStage].m_fInvW00 = fInvW;
+	pScales[nStage].m_fInvH04 = fInvH;
+}
+
+static inline void BindRec0ae20(Tex0ae20* pRec)
+{
+	TexBase0ae20* pTex = pRec;
+
+	g_a1008e684[StageOf0ae20(pRec)] = (Tex0ae20*)pTex;
+
+	if (pTex->m_nStamp14 != g_w1008bea8)
+	{
+		dl_Remove0ae20(&pRec->m_Link1c);
+		dl_Insert0ae20(g_Link1008e634.m_pPrev, &pRec->m_Link1c);
+
+		g_p1008cbcc->m_nBytes48 += pTex->m_nBytes10;
+
+		pTex->m_nStamp14 = g_w1008bea8;
+	}
+
+	g_pD3DDevice->lpVtbl->SetTexture(g_pD3DDevice, (uint8)StageOf0ae20(pRec),
+	                                 pTex->m_pSurface0c);
+
+	if (pTex->m_nAlphaRef16)
+		g_pD3DDevice->lpVtbl->SetRenderState(g_pD3DDevice, 0x18,
+		                                     pTex->m_nAlphaRef16);
+
+	SetScale0ae20(g_a1008e664, StageOf0ae20(pRec), pTex->m_fInvW04, pTex->m_fInvH08);
+
+	g_n1008bd80++;
+}
+
+static inline int32 BindBlock0ae20(TexBlock0ae20* pBlock, uint32 nStage, uint32 nLOD)
+{
+	Tex0ae20* pRec;
+	Tex0ae20* pHead;
+	Tex0ae20* pNew;
+
+	if (!pBlock)
+		return 0;
+
+	pBlock->m_nStamp30 = g_w1008b870;
+
+	pHead = pBlock->m_pHead0c;
+	pRec  = LTNULL;
+
+	if (pHead)
+		pRec = FindRec0ae20(pHead, nStage);
+
+	if (!pRec)
+		goto L_MakeRec;
+
+	if (pRec == g_a1008e684[nStage])
+		goto L_ElseLOD;
+
+L_Bind:
+	BindRec0ae20(pRec);
+
+	if (pRec->m_nDirty44 != nLOD)
+	{
+		pRec->m_pSurface0c->lpVtbl->SetLOD(pRec->m_pSurface0c, nLOD);
+		pRec->m_nDirty44 = (uint16)nLOD;
+	}
+
+	return 1;
+
+L_ElseLOD:
+	if (pRec->m_nDirty44 != nLOD)
+	{
+		pRec->m_pSurface0c->lpVtbl->SetLOD(pRec->m_pSurface0c, nLOD);
+		pRec->m_nDirty44 = (uint16)nLOD;
+	}
+
+	return 1;
+
+L_MakeRec:
+	if (pBlock->m_pHead0c)
+	{
+		pNew = sub_10039bd0(pBlock, nStage, 1);
+
+		if (!pNew)
+			return 0;
+
+		pNew->m_pNext30  = pHead->m_pNext30;
+		pHead->m_pNext30 = pNew;
+		pRec = pNew;
+
+		goto L_Bind;
+	}
+
+	pRec = sub_10039bd0(pBlock, nStage, 0);
+
+	if (!pRec)
+		return 0;
+
+	goto L_Bind;
+}
 
 
 // ======================================================================= //
@@ -1120,160 +1297,11 @@ static void sub_1000ae20(Surf0ae20* pThis, Vert0ae20* pVerts, uint32 nVerts)
 	//  every failure simply leaves the function, so all of them land on
 	//  the destructor tail at 0x1000b589.
 	// =================================================================== //
-	pBlock = g_p1008beb8->m_pBlock00;
-	nStage = g_n1008d7d0;
+	BindBlock0ae20(g_p1008beb8->m_pBlock00, g_n1008d7d0, 0);
 
-	if (!pBlock)
-		goto L_Done;						// 0x1000b42c
-
-	pBlock->m_nStamp30 = g_w1008b870;
-
-	pRec = LTNULL;
-
-	// The list head is tested TWICE off ONE `test %esi,%esi` -- 0x1000b442
-	// and 0x1000b44a -- because icl 4.0 does not fold a redundant null
-	// test.  The first `je` goes straight to L_MakeRec, icl having folded
-	// "the loop never ran, so pRec is still null"; the second is the
-	// while's own entry test.  big2ef34.cpp and big61a30.cpp record the
-	// identical pair.
-	if (pBlock->m_pHead0c)
-	{
-		pCur = pBlock->m_pHead0c;
-
-		while (pCur)
-		{
-			// `cmp %ecx,%edx` at 0x1000b455 puts the RECORD's field in the
-			// destination, so it is the source's left operand.  The two
-			// `break` trampolines are sunk at 0x1000b658 / 0x1000b65f;
-			// the loop itself was unrolled twice by the compiler.
-			if (pCur->m_nStage42 == (uint8)nStage)
-			{
-				pRec = pCur;
-				break;
-			}
-
-			pCur = pCur->m_pNext30;
-		}
-	}
-
-	// 0x1000b47d.  A freshly-made record joins the bind at 0x1000b493
-	// WITHOUT going through the comparison below -- both create arms
-	// `jmp 0x1000b493` -- which is why the comparison sits inside the
-	// found-it arm and not after the two of them.
-	if (!pRec)
-		goto L_MakeRec;						// 0x1000b47d
-
-	if (pRec == g_a1008e684[nStage])
-		goto L_ElseLOD;						// 0x1000b48d
-
-L_Bind:
-	// -- 0x1000b493 ----------------------------------------------------- //
-	g_a1008e684[pRec->m_nStage42] = pRec;
-
-	if (pRec->m_nStamp14 != g_w1008bea8)
-	{
-		// dl_Remove / dl_TieOff / dl_Insert, ltlink.h:100..145 --
-		// 0x1000b4af..0x1000b4df, prev at +0x00 and next at +0x04.
-		pRec->m_Link1c.m_pPrev->m_pNext = pRec->m_Link1c.m_pNext;
-		pRec->m_Link1c.m_pNext->m_pPrev = pRec->m_Link1c.m_pPrev;
-		pRec->m_Link1c.m_pPrev = &pRec->m_Link1c;
-		pRec->m_Link1c.m_pNext = &pRec->m_Link1c;
-
-		pRec->m_Link1c.m_pPrev = g_Link1008e634.m_pPrev;
-		pRec->m_Link1c.m_pNext = g_Link1008e634.m_pPrev->m_pNext;
-		pRec->m_Link1c.m_pNext->m_pPrev = &pRec->m_Link1c;
-		pRec->m_Link1c.m_pPrev->m_pNext = &pRec->m_Link1c;
-
-		g_p1008cbcc->m_nBytes48 += pRec->m_nBytes10;
-
-		pRec->m_nStamp14 = g_w1008bea8;
-	}
-
-	// 0x1000b518 -- vtable +0x8c, three dwords, the stage narrowed with
-	// `movzbl %al,%eax`.
-	g_pD3DDevice->lpVtbl->SetTexture(g_pD3DDevice, (uint8)pRec->m_nStage42,
-	                                 pRec->m_pSurface0c);
-
-	if (pRec->m_nAlphaRef16)
-	{
-		// 0x1000b543 -- vtable +0x50, state 0x18 = D3DRENDERSTATE_ALPHAREF.
-		g_pD3DDevice->lpVtbl->SetRenderState(g_pD3DDevice, 0x18,
-		                                     pRec->m_nAlphaRef16);
-	}
-
-	// 0x1000b54f -- the pair goes out BEFORE the counter, as in
-	// big2ef34.cpp's and big6d910.cpp's copies.  Both moves are INTEGER
-	// moves of floats, and the base 0x1008e664 is materialised into %edx
-	// once for the two of them.
-	g_a1008e664[pRec->m_nStage42].m_fInvW00 = pRec->m_fInvW04;
-	g_a1008e664[pRec->m_nStage42].m_fInvH04 = pRec->m_fInvH08;
-
-	g_n1008bd80++;
-
-	if (pRec->m_nDirty44)
-	{
-		// 0x1000b57d -- vtable +0xbc.
-		pRec->m_pSurface0c->lpVtbl->SetLOD(pRec->m_pSurface0c, 0);
-		pRec->m_nDirty44 = 0;
-	}
-
-L_Done:
 	// -- 0x1000b589..0x1000b61c: the four destructors, in reverse
 	//    construction order, then the single `jmp 0x1000ae3f` to the one
-	//    epilogue.  Nothing sets %eax and the caller ignores the result,
-	//    so this returns void.
-	return;
-
-
-	// ================================================================== //
-	//  THE SUNK TAIL, 0x1000b622..0x1000b6b0, in shipped address order.
-	//  These are cold arms of the tests above; /O2 put them after the
-	//  epilogue and they are placed here by hand so the emitted call
-	//  sequence matches.  The two `break` trampolines at 0x1000b658 and
-	//  0x1000b65f live between them and have no source of their own.
-	// ================================================================== //
-
-L_ElseLOD:
-	// -- 0x1000b622: the record is already bound to this stage, so only
-	//    the LOD reset survives.  The same three statements as the tail
-	//    of L_Bind; big2ef34.cpp, big61a30.cpp and big6d910.cpp all
-	//    record the same duplication.  It works off %edx rather than
-	//    %ebx and spills it across the call at -0x8, which is the
-	//    argument slot that is dead by this point.
-	if (pRec->m_nDirty44)
-	{
-		pRec->m_pSurface0c->lpVtbl->SetLOD(pRec->m_pSurface0c, 0);
-		pRec->m_nDirty44 = 0;
-	}
-
-	goto L_Done;						// 0x1000b653
-
-L_MakeRec:
-	// -- 0x1000b666: `test %esi,%esi ; je 0x1000b692` on the head still
-	//    cached in %esi from 0x1000b439 -- a third test of it.  The third
-	//    argument is 1 when the list is non-empty and 0 when it is empty.
-	//    Both calls push four dwords and pop 0x10: three real arguments
-	//    plus icl's dead reserve, which is the leading `push %edi`.
-	if (pBlock->m_pHead0c)
-	{
-		pRec = sub_10039bd0(pBlock, nStage, 1);
-
-		if (!pRec)
-			goto L_Done;				// 0x1000b67c
-
-		pRec->m_pNext30              = pBlock->m_pHead0c->m_pNext30;
-		pBlock->m_pHead0c->m_pNext30 = pRec;
-
-		goto L_Bind;					// 0x1000b68d
-	}
-
-	// -- 0x1000b692: the empty-list arm.
-	pRec = sub_10039bd0(pBlock, nStage, 0);
-
-	if (!pRec)
-		goto L_Done;					// 0x1000b6a6
-
-	goto L_Bind;						// 0x1000b6ac
+	//    epilogue.
 }
 
 
@@ -1659,92 +1687,14 @@ static void sub_1000b910(Objb910* pObj);                // below: register-only
 
 void sub_1000b6c0()
 {
-	TexBlock0ae20*	pBlock;
-	Tex0ae20*		pHead;
-	Tex0ae20*		pCur;
-	Tex0ae20*		pRec;
-	uint32			nStage;
 	Elem24024*		pElem;
 	Elem24024*		pNext;
 
 	if (!g_1008ad90)
 		return;
 
-	pBlock = g_p1008beb8->m_pBlock00;
-	nStage = g_n1008d7d0;
+	BindBlock0ae20(g_p1008beb8->m_pBlock00, g_n1008d7d0, 0);
 
-	if (!pBlock)
-		goto L_Done;
-
-	pBlock->m_nStamp30 = g_w1008b870;
-
-	pHead = pBlock->m_pHead0c;
-
-	pRec = LTNULL;
-
-	if (pHead)
-	{
-		pCur = pHead;
-
-		while (pCur)
-		{
-			if (pCur->m_nStage42 == (uint8)nStage)
-			{
-				pRec = pCur;
-				break;
-			}
-
-			pCur = pCur->m_pNext30;
-		}
-	}
-
-	if (!pRec)
-		goto L_MakeRec;
-
-	if (pRec == g_a1008e684[nStage])
-		goto L_ElseLOD;
-
-L_Bind:
-	g_a1008e684[pRec->m_nStage42] = pRec;
-
-	if (pRec->m_nStamp14 != g_w1008bea8)
-	{
-		pRec->m_Link1c.m_pPrev->m_pNext = pRec->m_Link1c.m_pNext;
-		pRec->m_Link1c.m_pNext->m_pPrev = pRec->m_Link1c.m_pPrev;
-		pRec->m_Link1c.m_pPrev = &pRec->m_Link1c;
-		pRec->m_Link1c.m_pNext = &pRec->m_Link1c;
-
-		pRec->m_Link1c.m_pPrev = g_Link1008e634.m_pPrev;
-		pRec->m_Link1c.m_pNext = g_Link1008e634.m_pPrev->m_pNext;
-		pRec->m_Link1c.m_pNext->m_pPrev = &pRec->m_Link1c;
-		pRec->m_Link1c.m_pPrev->m_pNext = &pRec->m_Link1c;
-
-		g_p1008cbcc->m_nBytes48 += pRec->m_nBytes10;
-
-		pRec->m_nStamp14 = g_w1008bea8;
-	}
-
-	g_pD3DDevice->lpVtbl->SetTexture(g_pD3DDevice, (uint8)pRec->m_nStage42,
-	                                 pRec->m_pSurface0c);
-
-	if (pRec->m_nAlphaRef16)
-	{
-		g_pD3DDevice->lpVtbl->SetRenderState(g_pD3DDevice, 0x18,
-		                                     pRec->m_nAlphaRef16);
-	}
-
-	g_a1008e664[pRec->m_nStage42].m_fInvW00 = pRec->m_fInvW04;
-	g_a1008e664[pRec->m_nStage42].m_fInvH04 = pRec->m_fInvH08;
-
-	g_n1008bd80++;
-
-	if (pRec->m_nDirty44)
-	{
-		pRec->m_pSurface0c->lpVtbl->SetLOD(pRec->m_pSurface0c, 0);
-		pRec->m_nDirty44 = 0;
-	}
-
-L_Done:
 	sub_1000da50();
 
 	for (pElem = g_1008ad90; pElem; pElem = pNext)
@@ -1758,37 +1708,6 @@ L_Done:
 	}
 
 	g_1008ad90 = LTNULL;
-	return;
-
-L_ElseLOD:
-	if (pRec->m_nDirty44)
-	{
-		pRec->m_pSurface0c->lpVtbl->SetLOD(pRec->m_pSurface0c, 0);
-		pRec->m_nDirty44 = 0;
-	}
-
-	goto L_Done;
-
-L_MakeRec:
-	if (pHead)
-	{
-		pRec = sub_10039bd0(pBlock, nStage, 1);
-
-		if (!pRec)
-			goto L_Done;
-
-		pRec->m_pNext30 = pHead->m_pNext30;
-		pHead->m_pNext30 = pRec;
-
-		goto L_Bind;
-	}
-
-	pRec = sub_10039bd0(pBlock, nStage, 0);
-
-	if (!pRec)
-		goto L_Done;
-
-	goto L_Bind;
 }
 
 
