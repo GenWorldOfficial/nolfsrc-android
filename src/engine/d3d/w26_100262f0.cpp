@@ -26,16 +26,14 @@
 //    * then 0x1008ce90 (big2d1c0.cpp's frame counter) is zeroed and the
 //      rectangle goes to the dirty-rect list (0x1003b3d0).
 //
-//  NEAR: the only residual is block placement -- the shipped
-//  code puts the CLEARSCREEN_RENDER arm (`or $2 ; call 0x10032990 ; or $4`)
-//  out of line, after the epilogue, where ours keeps it on the fall-
-//  through.  It is icl's name-based branch prediction (mcpcom.exe's cold
-//  words: abort denied dump err exit fail fatal fault halt interrupt
-//  invalid quit rare stop timeout trace trap warn): calling the stencil
-//  query by any name containing one of them (measured: `ErrorStencil`)
-//  makes this function byte-identical.  0x10032990's real name is not
-//  known, so it keeps its sub_ name and this stays near.  Measured with no
-//  effect: `!= 0` on the flag test and on the call, `== LTTRUE`, an empty
+//  IDENTICAL.  The shipped code puts the CLEARSCREEN_RENDER arm (`or $2 ;
+//  call 0x10032990 ; or $4`) out of line, after the epilogue.  As an `if`
+//  icl keeps it on the fall-through; written as a `switch` on the flag
+//  whose default arm does the work (the lever of w59_1007dd24_osoi.cpp and
+//  0x1007da80), icl sinks it exactly as shipped.  Calling the stencil
+//  query by a name containing one of mcpcom.exe's cold words (`Error...`)
+//  does the same, but 0x10032990's real name is not known.  No effect as
+//  an `if`: `!= 0` on the flag test and on the call, `== LTTRUE`, an empty
 //  then-arm with the work in the else, renaming a global in the arm.
 //
 // *********************************************************************** //
@@ -138,11 +136,14 @@ void sub_100262f0(LTRect* pRect, uint32 dwFlags)
 		}
 	}
 
-	if (dwFlags & CLEARSCREEN_RENDER_26)
+	switch (dwFlags & CLEARSCREEN_RENDER_26)
 	{
-		dwClear |= 2;                                   // D3DCLEAR_ZBUFFER
-		if (sub_10032990())
-			dwClear |= 4;                               // D3DCLEAR_STENCIL
+		case 0:
+			break;
+		default:
+			dwClear |= 2;                               // D3DCLEAR_ZBUFFER
+			if (sub_10032990())
+				dwClear |= 4;                           // D3DCLEAR_STENCIL
 	}
 
 	if (dwClear)
