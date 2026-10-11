@@ -68,6 +68,8 @@
 /ALTERNATENAME:?sub_1000a6a0@@YAPAXPAX@Z=?sub_1000a6a0@@YAPAXPAUPool1000a6a0@@@Z
 # 0x1000a6e0
 /ALTERNATENAME:?dl_Remove_1000a6e0@@YAXPAUCheapLink@@@Z=?sub_1000a6e0@@YAXPAUDLink@@@Z
+# 0x1000a6e0 -- dl_Remove, called twice by ObjectBank<Node56ab4>::Free (calls at 0x10050d71, 0x10050d7c)
+/ALTERNATENAME:?dl_Remove@@YAXPAULink56ab4@@@Z=?sub_1000a6e0@@YAXPAUDLink@@@Z
 # 0x1003b760
 /ALTERNATENAME:?sub_1003b760@@YAXXZ=?sub_1003b760@@YAXPAX0@Z
 # 0x10050bf0

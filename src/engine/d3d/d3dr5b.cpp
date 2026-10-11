@@ -41,6 +41,19 @@
 //  0x1007e030, 0x1007e3c0) and are almost certainly one shipped /Os TU;
 //  0x10059ef0 is on its own.  Those four belong in a split-out /Os file.
 //
+//  NOW /Os /Qip (build/engine.sh).  The file was built /Os, and the
+//  templates it instantiates for 0x10059ef0 -- CMoArray<SavedVert589c4>'s
+//  virtuals and ObjectBank<Node56ab4>'s members -- then came out INLINED
+//  (GenAppend 356 bytes, GenRemoveAt 412 ...) where the shipped ones
+//  (0x1005a0b0..0x1005a386, 0x10050d00..0x10050dd9) call each other out of
+//  line: those COMDATs were code the shipped d3d.ren does not have.  Built
+//  /Os /Qip, the stock dynarray.h / object_bank.h bodies are the shipped
+//  bytes (GenFindElement, GenAppendList, GenCopyList, GenRemoveAll,
+//  GenRemoveAt, GenAppend, GenGetAt, GenGetNext, Allocate, AllocVoid,
+//  FreeVoid, Free, the node constructor), and every function of this file
+//  that matched at /Os still matches.  (/O2 /Qip or /Qip_no_inlining
+//  give other shapes; plain /Os inlines.)
+//
 //  TWO ROWS HAVE A REGISTER ENTRY AND WILL BE FOUR BYTES SHORT.
 //  0x10043780 and 0x10026500 each begin with a four-byte stack shim
 //  (`mov 0x4(%esp),%eax`) that falls through into the real prologue at
@@ -794,20 +807,43 @@ struct Link56ab4
 	void*		m_pData;                                // +0x08
 };
 
+// ltlink.h's dl_Remove, out of line in the shipped build (0x1000a6e0);
+// this spelling is aliased onto it in link/aliases.rsp.
+void dl_Remove(Link56ab4* pLink);                       // 0x1000a6e0
+
 // A queued-poly node (0x10050d00's layout): the polys hang off the head
 // at +0x00; +0x0c is the bucket key; two links at +0x10 and +0x1c tie the
 // node into its bucket and into the pass's node list.
 struct Node56ab4
 {
-	// 0x10050d00, the same constructor out of line (thiscall, returns
-	// this); here it is expanded behind the placement new's null test.
+	// 0x10050d00, the constructor out of line (thiscall, returns this):
+	// ObjectBank<>::Allocate (0x10050d30) calls it behind the placement
+	// new's null test.  The two links first and `m_pNext04 = m_pPrev00`
+	// last is the shipped store order (+0x04 and +0x00 first, then the
+	// links' owners): BYTE-IDENTICAL at /Os /Qip.  The previous spelling
+	// (the pair first, `m_pPrev00 = m_pNext04`) stored +0x24, +0x18, +0x00,
+	// +0x04 first, 6 bytes off.  w27_10056ab0_osqipni.cpp keeps that older
+	// spelling on purpose: there the constructor is expanded inside
+	// 0x10056ab4, whose shipped stores come in the other order (1 byte off
+	// with it, 13 with this one; measured, no spelling tried gives both).
 	Node56ab4()
 	{
-		m_pPrev00 = m_pNext04 = (W7Poly56c60*)this;
 		m_Link10.m_pPrev = m_Link10.m_pNext = &m_Link10;
 		m_Link10.m_pData = this;
 		m_Link1c.m_pPrev = m_Link1c.m_pNext = &m_Link1c;
 		m_Link1c.m_pData = this;
+		m_pNext04 = m_pPrev00 = (W7Poly56c60*)this;
+	}
+
+	// The node unlinks itself: ObjectBank<>::Free (0x10050d60) is this
+	// destructor, two calls of the out-of-line dl_Remove (0x1000a6e0) on
+	// the two links, then sb_Free's push onto the bank's free list (+0x1c)
+	// -- BYTE-IDENTICAL.  Without it Free was the bare push (19 bytes) and
+	// matched nothing.
+	~Node56ab4()
+	{
+		dl_Remove(&m_Link10);
+		dl_Remove(&m_Link1c);
 	}
 
 	W7Poly56c60*	m_pPrev00;                          // +0x00

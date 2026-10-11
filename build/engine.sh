@@ -187,11 +187,11 @@ build_engine_scaffold_os() {  # same, /Os without /Og
 # /Qsfalign16: realign the stack only for 16-byte locals; /G5: Pentium
 # scheduling. Files named w<N>_*_<flags>.cpp join a group by their suffix.
 D3D_QIP_TUS=$'d3dqip.cpp\nd3dqip2.cpp'
-D3D_QIP_OS_TUS=$'d3dqip3.cpp\nbig7cc90.cpp'
+D3D_QIP_OS_TUS=$'d3dqip3.cpp\nbig7cc90.cpp\nd3dr5b.cpp'
 D3D_RCD_TUS=$'big8fd0.cpp\nbig2b1b0.cpp\nbig051a0.cpp\nbig5dca0.cpp\nbig40e10.cpp\nw4_100234d0.cpp\nw16_10042e80.cpp'
 D3D_OI_TUS=$'big4b720.cpp'
 D3D_QIP_OI_TUS=''
-D3D_OS_TUS=$'big729c0.cpp\nd3d.cpp\nd3dr5a.cpp\nd3dr5b.cpp\nd3dr5d_os.cpp\nd3dbatchb_os.cpp\nd3dmid.cpp\nd3dr2a_os.cpp\nd3dr2c_os.cpp\nd3dr3a_os.cpp\nd3ddraw_os.cpp\nd3dmid_os.cpp\nd3dneutral.cpp\nd3dopt2d.cpp\nd3dlow.cpp\nd3dhigh.cpp\nd3dbatchc.cpp\nd3dbatcha.cpp\nd3dr2b.cpp\nd3dr3b.cpp\nd3dr3d.cpp\nd3dr4a.cpp\nd3dr4c.cpp\nd3dr4b.cpp\nd3dr3c_os.cpp'
+D3D_OS_TUS=$'big729c0.cpp\nd3d.cpp\nd3dr5a.cpp\nd3dr5d_os.cpp\nd3dbatchb_os.cpp\nd3dmid.cpp\nd3dr2a_os.cpp\nd3dr2c_os.cpp\nd3dr3a_os.cpp\nd3ddraw_os.cpp\nd3dmid_os.cpp\nd3dneutral.cpp\nd3dopt2d.cpp\nd3dlow.cpp\nd3dhigh.cpp\nd3dbatchc.cpp\nd3dbatcha.cpp\nd3dr2b.cpp\nd3dr3b.cpp\nd3dr3d.cpp\nd3dr4a.cpp\nd3dr4c.cpp\nd3dr4b.cpp\nd3dr3c_os.cpp'
 D3D_OS_OI_TUS=$'d3dr5c.cpp\nd3dr2d_os.cpp\nd3dbatchd.cpp\nbig4e3e4.cpp'
 D3D_QIP_NI_TUS=$'d3dqip4.cpp'
 D3D_QIP_NI_SF_TUS=$'big24090.cpp'
