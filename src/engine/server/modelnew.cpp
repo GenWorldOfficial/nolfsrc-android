@@ -235,9 +235,15 @@ public:
 // sizes come from their own SetSize2 bodies, which multiply the count by
 // 0x20 (`shl $0x5` at 0x0044ba31 and 0x0044bbb1). They are two DIFFERENT
 // types because the two collections have two different vtables (0x004a27e4
-// at 0x00445fdd and 0x004a27b4 at 0x00445fff).
-class CPieceVert20AQ444 { public: uint32 m_n[8]; };
-class CPieceVert20BQ444 { public: uint32 m_n[8]; };
+// at 0x00445fdd and 0x004a27b4 at 0x00445fff) -- and they are collection.cpp's
+// CCollElem20F and CCollElem20A (collelem20.h), not two types of this
+// file's own. The vtables say so: 0x004a27e4's GenAppend (0x00448bd0) calls
+// the constructor-running BaseNew 0x0044c970 (CCollElem20F's constructor is
+// 0x00445410), and 0x004a27b4's (0x00449030) carries CCollElem20A's
+// three-trip word/record assignment expanded. Two opaque 0x20 PODs here
+// compiled a second CMoArray instance per virtual that the shipped image
+// does not have (rep-movs copies, no constructor), and placed none of them.
+#include "collelem20.h"
 
 
 // ----------------------------------------------------------------------- //
@@ -366,8 +372,8 @@ public:
 	// CALLS it (0x0044601d).
 	void SetModelQ444(ModelQ444* pModel);
 
-	CMoArray<CPieceVert20AQ444, NoCache> m_Array00;     // 0x000 .. 0x010
-	CMoArray<CPieceVert20BQ444, NoCache> m_Array10;     // 0x010 .. 0x020
+	CMoArray<CCollElem20F, NoCache>      m_Array00;    // 0x000 .. 0x010
+	CMoArray<CCollElem20A, NoCache>      m_Array10;    // 0x010 .. 0x020
 	ModelQ444* m_pModel20;                              // 0x020
 };
 
