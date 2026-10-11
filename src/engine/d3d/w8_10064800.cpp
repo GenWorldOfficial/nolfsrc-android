@@ -27,6 +27,21 @@
 //  843 bytes positionally equal (was 104) -- pairs as near.  LEFT: frame
 //  0xb4 against 0xbc and the down-counter the shipped loop keeps.
 //
+//  Then: the plane distance from the fLightX/Y/Z copies (the shipped
+//  code loads each position float TWICE at the top, one copy spilled and
+//  one fed to the dot product before the counter store -- read back from
+//  the light after the store, ours reloaded it), and the vertex loop as a
+//  walking pointer under an unsigned `while (nLeft > 0)` down-counter
+//  (`test ; jbe` in front, `dec ; jne` at the bottom; `while (nLeft)`
+//  gives `je`): 879 bytes, 6 instructions differ.  NEAR: the frame is
+//  0xb4 against 0xbc (every slot the same offset; the shipped frame just
+//  has 12 unused bytes at the top to our 4), and the loop guard's `test`
+//  sits one store later.  Unchanged by: the five radius/count statements
+//  in seven orders, fAtten / fDistSqr / fDist / fRadius / the light
+//  colours or position as doubles, `sqrt` without the (float), the light
+//  position as a struct local (copied whole or by member), a dead local,
+//  float arrays for the colours or the position (worse).
+//
 //  (Earlier:) NEAR: 876 bytes against 879, the same blocks and calls.  The shipped
 //  code loads the three colour bytes and the six light-position floats at
 //  the top of the light loop and spills the position as doubles before the
@@ -129,9 +144,9 @@ extern "C" void sub_10064800(Obj10064800* pObj, Vert10064800* pVerts,
 		g_1008be48++;
 
 		pPlane = pObj->m_p28->m_pPlane34;
-		fDist  = pPlane->m_vNormal.x * pRef->m_vPos.x
-		       + pPlane->m_vNormal.y * pRef->m_vPos.y
-		       + pPlane->m_vNormal.z * pRef->m_vPos.z
+		fDist  = pPlane->m_vNormal.x * fLightX
+		       + pPlane->m_vNormal.y * fLightY
+		       + pPlane->m_vNormal.z * fLightZ
 		       - pPlane->m_fDist;
 
 		if (fDist < 0.0f)
@@ -144,9 +159,9 @@ extern "C" void sub_10064800(Obj10064800* pObj, Vert10064800* pVerts,
 			fRadiusSqr = fRadius * fRadius;
 
 			nLeft = pObj->m_nCount50;
-			for (i = 0; i < nLeft; i++)
+			pWalk = pVerts;
+			while (nLeft > 0)
 			{
-				pWalk = &pVerts[i];
 
 				fDistSqr =
 				    (pWalk->m_vPos.x - fLightX) * (pWalk->m_vPos.x - fLightX)
@@ -182,6 +197,8 @@ extern "C" void sub_10064800(Obj10064800* pObj, Vert10064800* pVerts,
 					pWalk->m_Diffuse10[0] = (uint8)nB;
 				}
 
+				pWalk++;
+				nLeft--;
 			}
 		}
 	}
