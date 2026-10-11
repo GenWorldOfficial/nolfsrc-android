@@ -381,13 +381,18 @@ void CLTServer::SetModelLooping(HOBJECT hObj, LTBOOL bLoop)
 		return;
 
 	// Direct field read-modify-write: the compiler loads m_Flags into ax
-	// once, keeps the arithmetic 16-bit, and stores once.
-	if (((pInst->m_AnimTracker.m_Flags >> 1) & 1) != (bLoop != 0))
+	// once, keeps the arithmetic 16-bit, and stores once. Through a tracker
+	// pointer, for the test AND the update: lithtech.exe (0x0046e582) keeps
+	// the inlined change-flag's `mov 0x120(%esi),%cl` BELOW the 16-bit store,
+	// which it only does when the store is not off the object's own base;
+	// spelled `pInst->m_AnimTracker.m_Flags` the load is hoisted above it.
+	LTAnimTracker* pTracker = &pInst->m_AnimTracker;
+	if (((pTracker->m_Flags >> 1) & 1) != (bLoop != 0))
 	{
 		if (bLoop)
-			pInst->m_AnimTracker.m_Flags |= AT_LOOPING;
+			pTracker->m_Flags |= AT_LOOPING;
 		else
-			pInst->m_AnimTracker.m_Flags &= ~AT_LOOPING;
+			pTracker->m_Flags &= ~AT_LOOPING;
 
 		sm_SetObjectChangeFlag(g_pServerMgr, hObj, CF_MODELINFO);
 	}
