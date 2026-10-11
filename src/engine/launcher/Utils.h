@@ -16,7 +16,6 @@
 #pragma warning( disable : 4786 )
 
 #include "shlwapi.h"
-#include <string>
 
 // Macros
 
@@ -27,15 +26,11 @@
 BOOL	ExistProcess(const char* sExe, int thresh = 0, HANDLE* phProcess = NULL);
 
 
-class CaselessLesser
-{
-public:
-	
-	bool operator()(const std::string & x, const std::string & y) const
-	{
-		return (stricmp(x.c_str(), y.c_str()) < 0 );
-	}
-};
+// (The NOLF2 launcher's Utils.h also has <string> and a CaselessLesser
+// std::string comparator here. Neither is the shipped era's: nothing uses
+// the comparator, and <string> made every file including this header emit
+// std::ctype<unsigned short>::id's guarded initialiser and its atexit thunk
+// (Utils.obj, launcher.obj), which NOLF.exe does not have.)
 
 // EOF...
 
