@@ -673,6 +673,23 @@ inline CSndVec3J SubQ(const CSndVec3J& a, const CSndVec3J& b)
 	return a - b;
 }
 
+// The listener distance at 0x0047eb3b.  LTVector::Dist's shape -- the
+// difference made through two const references, then a magnitude of the
+// temporary -- but the squares come out z, x, y, which LTVector::Mag's
+// flat x+y+z (z, y, x) cannot give.  `y*y + (z*z + x*x)` is the spelling
+// that emits them in the shipped order; the accumulator (z; += x; += y)
+// orders the squares right but loses the stack cleanup after the fsqrt,
+// and a named difference vector moves the listener copy.  Names ours.
+inline float SndMagQ(const LTVector& v)
+{
+	return (float)sqrt(v.y * v.y + (v.z * v.z + v.x * v.x));
+}
+
+inline float SndDistQ(const LTVector& a, const LTVector& b)
+{
+	return SndMagQ(a - b);
+}
+
 LTBOOL CSndInstanceAmbientJ::Update(uint32 nUnknown)
 {
 	float     fDistance;
@@ -693,14 +710,10 @@ LTBOOL CSndInstanceAmbientJ::Update(uint32 nUnknown)
 	{
 		if (m_h3DSample)
 		{
-			// LTVector's own Dist (see UpdateImportance below).  NEAR: the
-			// squares are summed z, y, x here where 0x0047eb3b sums z, x, y;
-			// the same spelling gives z, x, y in UpdateImportance.
-			// Also measured, no better: a named LTVector* for m_vPos, the
-			// operand cast as const LTVector&, and the listener copied into
-			// vListenerOffset first (749 bytes, 3 blocks).  In the same
-			// function shipped's DistSqr (0x0047ebd5) sums z, y, x, as ours.
-			fDistance = ((LTVector*)&m_vPos)->Dist(
+			// Not LTVector's own Dist: with it the squares are summed z, y, x
+			// where 0x0047eb3b sums z, x, y (see SndDistQ above).  In the
+			// same function shipped's DistSqr (0x0047ebd5) sums z, y, x.
+			fDistance = SndDistQ(*(LTVector*)&m_vPos,
 			    *(LTVector*)&sub_0040f7f0()->m_vListenerPos);
 
 			vListenerOffset = sub_0040f7f0()->m_vListenerFront;
