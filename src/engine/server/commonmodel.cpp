@@ -1556,28 +1556,8 @@ Model* CUnknownD974::sub_1001671c()
 	return m_pOwner2c->m_pModel;
 }
 
-// 0x10016723 (42 bytes) / 0x004457e0 (55) — one keyframe transform copied
-// onto another, and the reason it is HERE rather than in the header is the
-// reason it is a call in both images: /Ob1 never expands a non-template
-// function declared out of class. Its two statements are visibly different in
-// the shipped bytes — the twelve-byte head is the compiler's memberwise copy
-// (three `movsl` at /O1, three dword move pairs at /O2) and the sixteen-byte
-// tail is CModelXformRot::operator= expanded to four — which is what says the
-// members are two sub-objects of different kinds rather than one seven-dword
-// block. See commonmodel.h.
-//
-// It returns void: the shipped body ends `mov 0x18(%eax),%eax; ret $0x4` with
-// `this` left in no register at all.
-//
-// This body is byte-identical to collection.cpp's CCollElem1CV::operator=,
-// which is the stand-in built for this very address and matches it in both
-// images already; the two COMDATs fold together, so nothing is lost either
-// way.
-void CModelXform::operator=(const CModelXform& other)
-{
-	m_Pos = other.m_Pos;
-	m_Rot = other.m_Rot;
-}
+// 0x10016723 (42 bytes) / 0x004457e0 (55) -- CModelXform::operator= -- is
+// defined in class in commonmodel.h; see the note there.
 
 // 0x1001662c — both collections handed back to the model's own data block.
 // The model is fetched twice, once per collection, which is two calls in the

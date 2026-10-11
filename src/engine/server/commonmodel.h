@@ -115,7 +115,7 @@ public:
 // made of: a three-float position at +0x00 read by w_ReadVector and a
 // four-float quaternion at +0x0c read by w_ReadRotation (name ours).
 //
-// IT HAS A USER-DECLARED, OUT-OF-LINE, void-RETURNING ASSIGNMENT OPERATOR, and
+// IT HAS A USER-DECLARED, void-RETURNING ASSIGNMENT OPERATOR, and
 // the shipped image says so at both optimisation levels:
 //
 //   * 0x10016723 (42 bytes) in server.dll and 0x004457e0 (55) in lithtech.exe
@@ -147,7 +147,8 @@ public:
 // in-class operator= assigning m_Quat[0..3] and returning *this), and the
 // `(LTVector*)` / `(LTRotation*)` casts in Model::CModelSub1D4::sub_1001bf0d
 // say the real source used them -- for the OTHER 0x1c record, CChildNodeXform
-// below, which is exactly that pair.
+// below, which is exactly that pair -- and for this one too (see the
+// operator's own note).
 //
 // CModelXform DOES have an empty default constructor and an in-class copy
 // constructor that assigns its two members. The earlier "no constructor"
@@ -159,30 +160,6 @@ public:
 //     (0x1001b6a3, 0x1001a2b4, 0x1001a371, 0x10019633) missed.
 //   * GenGetNext/GenGetAt (0x10018124/0x10018148) CALL a copy (0x100195b8)
 //     where an implicit copy constructor gives a `rep movsl`.
-class CModelXformPos
-{
-public:
-	float x, y, z;
-};
-
-class CModelXformRot
-{
-public:
-	// In class, so /Ob1 may expand it — and it is expanded, at both
-	// optimisation levels, inside CModelXform::operator= below.
-	CModelXformRot& operator=(const CModelXformRot& other)
-	{
-		m_x = other.m_x;
-		m_y = other.m_y;
-		m_z = other.m_z;
-		m_w = other.m_w;
-
-		return *this;
-	}
-
-	float m_x, m_y, m_z, m_w;
-};
-
 class CModelXform
 {
 public:
@@ -194,14 +171,31 @@ public:
 		m_Rot = other.m_Rot;
 	}
 
-	// 0x10016723 (42 bytes) / 0x004457e0 (55). Declared here and DEFINED IN
-	// THE .cpp: a non-template function declared out of class is the one
-	// construct /Ob1 never expands, which is what keeps the call in both
-	// images.
-	void operator=(const CModelXform& other);
+	// 0x10016723 (42 bytes) / 0x004457e0 (55). DEFINED IN CLASS, and the
+	// members are the SDK's own LTVector and LTRotation, not look-alikes of
+	// them. lithtech.exe's /O2 CMoArray<CModelXform, NoCache> (vtable
+	// 0x004a2708: GenAppend 0x00447a20, GenRemoveAt 0x00447b80, GenCopyList
+	// 0x00447d10, GenAppendList 0x00447e60) EXPANDS this body -- the head as
+	// dword moves, then a CALL to LTRotation::operator= (0x0047c460) -- which
+	// an out-of-class definition can never give (/Ob1). The out-of-line copy
+	// is still emitted for the sites that decline it (0x00445794 in
+	// lithtech.exe, every element loop of server.dll's /Os arrays), so both
+	// addresses stay matched. With local stand-ins for the two member types
+	// (a float triple and a four-float class with its own operator=)
+	// GenRemoveAt came out 405 bytes against 387 -- a different loop shape
+	// -- so the member types are load-bearing too. Those five /O2 functions
+	// used to be credited to collection.cpp's CMoArray<CCollElem1CS,
+	// NoCache>, an instantiation the shipped image does not have (server.dll
+	// says the NoCache 0x1c array assigns through this VOID operator, not
+	// through CCollElem1CS's `this`-returning 0x100195b8).
+	void operator=(const CModelXform& other)
+	{
+		m_Pos = other.m_Pos;
+		m_Rot = other.m_Rot;
+	}
 
-	CModelXformPos m_Pos;                    // 0x00
-	CModelXformRot m_Rot;                    // 0x0c
+	LTVector   m_Pos;                        // 0x00
+	LTRotation m_Rot;                        // 0x0c
 };
 
 // 0x1c bytes, and NOT CModelXform: the per-node record of a child-model

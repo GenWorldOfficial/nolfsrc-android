@@ -920,7 +920,10 @@ template class CMoArray<CCollElem18, DefaultCache>;
 // the element's copy constructor and assignment are expansion candidates at
 // all, and /O1 declines the expansion either way.
 template class CMoArray<CCollElem1CS, DefaultCache>;
-template class CMoArray<CCollElem1CS, NoCache>;
+// No NoCache array of it: the shipped NoCache 0x1c array is commonmodel.h's
+// CModelXform's (vtable 0x004a2708), whose void assignment server.dll's
+// element loops call (0x10016723). This file's CMoArray<CCollElem1CS,
+// NoCache> was a look-alike that stood in for it in lithtech.exe.
 // NO array holds the plain 0x20 POD. Both of its instantiations used to
 // stand here and neither existed in either shipped image; every "match"
 // they ever scored was a byte collision with a sibling.

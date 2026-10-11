@@ -1087,8 +1087,9 @@ LTBOOL ModelQ444::sub_10017b8aQ444(uint32 iSlot, CModelSub1D4Q444* pRec,
 //  one body serves two instantiations and only one of them can be credited.
 //
 //  UPDATE: the element is commonmodel.h's CModelXform itself (void,
-//  out-of-line operator= at 0x10016723; empty default constructor; in-class
-//  assigning copy constructor), so m_Xforms above uses it and the
+//  in-class operator= whose out-of-line copy is 0x10016723; empty default
+//  constructor; in-class assigning copy constructor; SDK LTVector and
+//  LTRotation members), so m_Xforms above uses it and the
 //  CAnimXformQ444 stand-in is no longer referenced. The NoCache array is
 //  CModelXform's and the DefaultCache one is CChildNodeXform's; the two
 //  GenGetNext/GenGetAt bodies fold together at link time.
