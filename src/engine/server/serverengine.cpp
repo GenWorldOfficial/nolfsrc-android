@@ -283,17 +283,21 @@ public:
 // the base vftable goes in first (0x1004d260, CBankBase's), then the embedded
 // lock is constructed, then this class's own vftable (0x1004d7d8), then the
 // body's single sb_Init2. The destructor unwinds exactly that.
-CDepLinkBank    g_DepLinkBank;               // 0x100585d8
-LCriticalSection g_DepLinkCS;                // 0x100585c0
-
 // 0x100140ad — hand the chunks back and let the embedded lock and the base
-// take themselves down. Out of class, because the shipped destructor is a
-// standalone body at /O1 (the atexit thunk jumps to it and the compiler's
-// deleting destructor at 0x1001415d calls it) rather than anything expanded.
-CDepLinkBank::~CDepLinkBank()
+// take themselves down. A standalone body at /O1 (the atexit thunk jumps to
+// it and the compiler's deleting destructor at 0x1001415d calls it), but
+// `inline`, and defined above the global: lithtech.exe's atexit thunk
+// (0x0043c440) carries the whole teardown at the global's own addresses --
+// the vptr store, sb_FreeChunks, the lock's destructor, the base vptr --
+// with no `this` register and no destructor of its own.
+inline CDepLinkBank::~CDepLinkBank()
 {
 	sb_FreeChunks(&m_Bank, 1);
 }
+
+CDepLinkBank    g_DepLinkBank;               // 0x100585d8
+LCriticalSection g_DepLinkCS;                // 0x100585c0
+
 // ---- end of the separable addition ----
 
 // 0x1002446d — take one link back out of the list. The cursor is a pointer
