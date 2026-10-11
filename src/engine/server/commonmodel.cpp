@@ -6374,15 +6374,18 @@ WorldPortal* w_FindPortal(CServerWorld* pWorld, char* pName,
 }
 
 
-// 0x10016478 — one element of Model::m_Unknown054, zeroed. The dword at
-// +0x10 goes first (as `andl $0x0`) and the floats follow from the top.
+// 0x10016478 / 0x004453f0 — one element of Model::m_Unknown054, zeroed.
+// The floats go from the top and the dword at +0x10 LAST: that is
+// lithtech.exe's order (0x004453f0, one zero register, +0xc +8 +4 +0 then
+// +0x10), and server.dll's /O1 hoists the dword's `andl $0x0` to the front
+// whichever way the statements are written, so only this order gives both.
 CModelVertRec::CModelVertRec()
 {
-	m_n10 = 0;
 	m_f[3] = 0.0f;
 	m_f[2] = 0.0f;
 	m_f[1] = 0.0f;
 	m_f[0] = 0.0f;
+	m_n10 = 0;
 }
 
 
