@@ -554,3 +554,5 @@
 /ALTERNATENAME:_htons_A=__imp__htons@4
 # 0x10025a1b -- objbank.cpp's am_RemoveAttachment, the one definition
 /ALTERNATENAME:?am_RemoveAttachment@@YAKPAVCUnknown390@@PAVLTObject@@PAVAttachment@@@Z=?am_RemoveAttachment@@YAKPAVCObjMgrView@@PAVCObjLinked@@PAVAttachment@@@Z
+# 0x10023e86 -- smgr.cpp's CMsgCursorView::Init (smgrnew.cpp's view of it)
+/ALTERNATENAME:?Init@CMsgCursorViewQ474@@QAEPAVServerMessage@@PAV2@@Z=?Init@CMsgCursorView@@QAEPAVServerMessage@@PAV2@@Z

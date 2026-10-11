@@ -210,12 +210,20 @@ public:
 	virtual void AddRef();                   // slot 0x0c
 };
 
-// smgr.cpp's CMsgCursorView (line ~68), restated.  KEEP the real one.
+// smgr.cpp's CMsgCursorView, restated.  server.dll's /Os declines the
+// inline and calls smgr.cpp's out-of-line copy (0x10023e86), so the server
+// build only DECLARES it and link/aliases.rsp binds it there: compiled here
+// it was a second 35-byte body (this file's ServerMessage view orders the
+// AddRef/Release slots for its own purposes).  lithtech.exe's /O2 expands
+// it, so the client build keeps the body.
 class CMsgCursorViewQ474
 {
 public:
 	ServerMessage* m_pMsg;
 
+#ifdef LT_SERVER_BUILD
+	ServerMessage* Init(ServerMessage* pMsg);
+#else
 	inline ServerMessage* Init(ServerMessage* pMsg)
 	{
 		if (m_pMsg)
@@ -228,6 +236,7 @@ public:
 
 		return m_pMsg;
 	}
+#endif
 };
 
 class CClassInfo
