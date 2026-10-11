@@ -561,16 +561,13 @@ LTBOOL sub_10033fa0(D3DRenderData* pData, void* pUnknown, uint32 nColorKey)
 // Release every tile texture, free the grid, null the pointer.  The tile
 // count is m_nCols * m_nRows, which is what fixes those two header dwords
 // (the shipped code does `imul 0x4(%eax)` against `(%eax)`).
-void d3d_UnoptimizeSurface(D3DRenderData* pData)
+// The teardown proper, inlined into d3d_OptimizeSurface's two failure
+// paths WITHOUT the null test on pData (the shipped copies at 0x100345f1
+// and 0x10034899 go straight to +0x84), so that test is not part of it.
+static inline void FreeOptimized(D3DRenderData* pData)
 {
 	uint32 nCount, i;
 
-	if (!pData)
-		return;
-
-	// From here on the body is 0x10033f30's (w5_10033f30_osoi.cpp), and the
-	// bytes are too: the grid test wraps the teardown rather than returning
-	// early, and the texture pointer is re-read for the Release.
 	if (pData->m_pOptimized)
 	{
 		nCount = pData->m_pOptimized->m_nCols * pData->m_pOptimized->m_nRows;
@@ -589,6 +586,17 @@ void d3d_UnoptimizeSurface(D3DRenderData* pData)
 		d3d_Free(pData->m_pOptimized);
 		pData->m_pOptimized = LTNULL;
 	}
+}
+
+void d3d_UnoptimizeSurface(D3DRenderData* pData)
+{
+	if (!pData)
+		return;
+
+	// From here on the body is 0x10033f30's (w5_10033f30_osoi.cpp), and the
+	// bytes are too: the grid test wraps the teardown rather than returning
+	// early, and the texture pointer is re-read for the Release.
+	FreeOptimized(pData);
 }
 
 
@@ -624,20 +632,40 @@ void d3d_UnoptimizeSurface(D3DRenderData* pData)
 // that global is also the record whose +0x0c is the DDPIXELFORMAT the tiles
 // are created with, so it is passed as itself, not derived.  Its type is
 // unknown here.
+//
+// IDENTICAL.  What closed it (it was 918 bytes against 930):
+//  * the size search is an inline helper that RETURNS the entry (and the
+//    [5] default after the loop): the default is loaded on loop exit, not
+//    before it, and the width search is then unrolled by three as shipped;
+//  * x and y are not variables: `nCol * 64` / `nRow * 64`, which icl
+//    strength-reduces itself (the row loop then compares y against
+//    nRows*64 with no row counter, as shipped);
+//  * the tile pointer is taken after the height search;
+//  * the three leading failures are one `||` guard (one shared return);
+//  * the two teardowns are FreeOptimized, not d3d_UnoptimizeSurface;
+//  * the column/row counts are both shifted before either is rounded up,
+//    and the four desc stores are written size, flags, caps, caps2 (icl
+//    emits them in reverse).
+static inline uint32 GetTextureSize(uint32 nSize)
+{
+	uint32 i;
+
+	for (i = 0; i < 6; ++i)
+	{
+		if (nSize < g_TextureSizes[i])
+			return g_TextureSizes[i];
+	}
+
+	return g_TextureSizes[5];
+}
+
 LTBOOL d3d_OptimizeSurface(D3DRenderData* pData, uint32 nColorKey)
 {
 	void*          pFormat;
 	uint32         nCols, nRows;
-	uint32         x, y, nCol, nRow;
-	uint32         i;
+	uint32         nCol, nRow;
 
-	if (!pData)
-		return LTFALSE;
-
-	if (!g_bFlag_1008cb60)
-		return LTFALSE;
-
-	if (g_nCaps_1008d938 & 0x20)
+	if (!pData || !g_bFlag_1008cb60 || (g_nCaps_1008d938 & 0x20))
 		return LTFALSE;
 
 	pFormat = g_pUnknown_1008e6c0;
@@ -647,10 +675,11 @@ LTBOOL d3d_OptimizeSurface(D3DRenderData* pData, uint32 nColorKey)
 	if (!pData->m_pOptimized)
 	{
 		nCols = pData->m_Desc.dwWidth  >> 6;
+		nRows = pData->m_Desc.dwHeight >> 6;
+
 		if ((nCols << 6) != pData->m_Desc.dwWidth)
 			++nCols;
 
-		nRows = pData->m_Desc.dwHeight >> 6;
 		if ((nRows << 6) != pData->m_Desc.dwHeight)
 			++nRows;
 
@@ -667,37 +696,15 @@ LTBOOL d3d_OptimizeSurface(D3DRenderData* pData, uint32 nColorKey)
 		pData->m_pOptimized->m_nCols = nCols;
 		pData->m_pOptimized->m_nRows = nRows;
 
-		x = 0;
-
 		for (nCol = 0; nCol < nCols; ++nCol)
 		{
-			uint32 nTileWidth = g_TextureSizes[5];
-
-			for (i = 0; i < 6; ++i)
-			{
-				if (pData->m_Desc.dwWidth - x < g_TextureSizes[i])
-				{
-					nTileWidth = g_TextureSizes[i];
-					break;
-				}
-			}
-
-			y = 0;
+			uint32 nTileWidth = GetTextureSize(pData->m_Desc.dwWidth - nCol * 64);
 
 			for (nRow = 0; nRow < nRows; ++nRow)
 			{
+				uint32         nTileHeight = GetTextureSize(pData->m_Desc.dwHeight - nRow * 64);
 				D3DOptTile*    pTile = &pData->m_pOptimized->m_Tiles[nRow * nCols + nCol];
 				DDSurfaceDesc2 desc;
-				uint32         nTileHeight = g_TextureSizes[5];
-
-				for (i = 0; i < 6; ++i)
-				{
-					if (pData->m_Desc.dwHeight - y < g_TextureSizes[i])
-					{
-						nTileHeight = g_TextureSizes[i];
-						break;
-					}
-				}
 
 				if (g_nCaps_1008d938 & 0x20)
 				{
@@ -713,11 +720,11 @@ LTBOOL d3d_OptimizeSurface(D3DRenderData* pData, uint32 nColorKey)
 				}
 
 				memset(&desc, 0, sizeof(desc));
-				desc.ddsCaps.dwCaps2 = DDSCAPS2_TEXTUREMANAGE;
-				desc.ddsCaps.dwCaps  = DDSCAPS_TEXTURE;
+				desc.dwSize          = sizeof(desc);
 				desc.dwFlags         = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH
 				                     | DDSD_PIXELFORMAT;
-				desc.dwSize          = sizeof(desc);
+				desc.ddsCaps.dwCaps  = DDSCAPS_TEXTURE;
+				desc.ddsCaps.dwCaps2 = DDSCAPS2_TEXTUREMANAGE;
 				desc.dwWidth         = pTile->m_nWidth;
 				desc.dwHeight        = pTile->m_nHeight;
 
@@ -728,21 +735,17 @@ LTBOOL d3d_OptimizeSurface(D3DRenderData* pData, uint32 nColorKey)
 				                                         &pTile->m_pTexture,
 				                                         LTNULL))
 				{
-					d3d_UnoptimizeSurface(pData);
+					FreeOptimized(pData);
 					return LTFALSE;
 				}
-
-				y += 64;
 			}
-
-			x += 64;
 		}
 	}
 
 	if (sub_10033fa0(pData, pFormat, nColorKey))
 		return LTTRUE;
 
-	d3d_UnoptimizeSurface(pData);
+	FreeOptimized(pData);
 
 	return LTFALSE;
 }
