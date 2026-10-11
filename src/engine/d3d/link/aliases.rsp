@@ -120,8 +120,8 @@
 /ALTERNATENAME:?sub_10009ef0@Arr1001d200@@QBEAAUT1001d200@@K@Z=?sub_10009ef0@C10009ef0@@QAEPAUElem10009ef0@@K@Z
 # 0x10009ef0  defined in d3dbatchc.obj (identical); read back from identical callers
 /ALTERNATENAME:?sub_10009ef0@C1001d1c0@@QAEPAUElem10009ef0@@K@Z=?sub_10009ef0@C10009ef0@@QAEPAUElem10009ef0@@K@Z
-# 0x10009f10  defined in d3dr5d.obj (identical); read back from identical callers
-/ALTERNATENAME:?sub_10009f10@C10009f10@@QAEJPAX0PAUC10091df0@@@Z=?InternalNiceSetSize@Arr10009f10@@QAEJKJPAVIAllocator@@@Z
+# 0x10009f10  CMoArray<SavedVert589c4>::InternalNiceSetSize, w64_10009f10_qip.obj (identical); read back from identical callers
+/ALTERNATENAME:?sub_10009f10@C10009f10@@QAEJPAX0PAUC10091df0@@@Z=?InternalNiceSetSize@?$CMoArray@USavedVert589c4@@VDefaultCache@@@@AAEHKHPAVLAlloc@@@Z
 # 0x1000a3c0  defined in d3dr2a.obj (identical); read back from identical callers
 /ALTERNATENAME:?sub_1000a3c0@Arr1005a2d0@@QAEXK@Z=?sub_1000a3c0@C1000a3c0@@QAEXK@Z
 # 0x1000a600  defined in d3dr2b.obj (identical); read back from identical callers
@@ -555,8 +555,8 @@
 # helpers, named ctors/methods). 'read back' = an identical caller's shipped
 # call lands on the address; 'source' = the address the declaration's own
 # comment gives, which is where the definition is placed.
-# 0x10009f10  InternalNiceSetSize, d3dr5d.obj (identical); read back from identical callers
-/ALTERNATENAME:?sub_10009f10@C10009f10@@QAEJPAX0PAUC10091df0@@@Z=?InternalNiceSetSize@Arr10009f10@@QAEJKJPAVIAllocator@@@Z
+# 0x10009f10  InternalNiceSetSize, w64_10009f10_qip.obj (identical); read back from identical callers
+/ALTERNATENAME:?sub_10009f10@C10009f10@@QAEJPAX0PAUC10091df0@@@Z=?InternalNiceSetSize@?$CMoArray@USavedVert589c4@@VDefaultCache@@@@AAEHKHPAVLAlloc@@@Z
 # 0x10009d60  Insert2, d3dr5d.obj (identical); read back from identical callers
 /ALTERNATENAME:?sub_10009d60@C10009d60@@QAEJPAX0PAUC10091df0@@@Z=?Insert2@Arr10009d60@@QAEJKABKPAVIAllocator@@@Z
 # 0x10021ad0  Insert2, d3dr5d_os.obj (identical); read back from identical callers

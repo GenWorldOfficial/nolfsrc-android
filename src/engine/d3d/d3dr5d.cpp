@@ -27,6 +27,7 @@
 //                         two objects, two flags.
 //      0x1007c290  /O2    five duplicated epilogues, `mov $0x1,%eax`.
 //      0x10009f10  /O2    five duplicated epilogues, `mov $0x1,%eax`.
+//                         (Now the template itself, w64_10009f10_qip.cpp.)
 //      0x10032f30  /O2    SIX duplicated `mov (%esp),%ebx; mov %ebp,%esp;
 //                         pop %ebp; ret` epilogues, and `mov $0x1,%eax`
 //                         at 0x10033048.
@@ -514,92 +515,15 @@ int32 Arr1007c290::InternalNiceSetSize(uint32 newSize, int32 bFast,
 }
 
 
-// ---- 0x10009f10 -- the SAME source with a SIXTEEN-byte T.  Two
-//      independent witnesses to the element size: its _AllocateTArray
-//      (0x1000a0e0) is `shl $0x4,%eax`, and the non-fast loop copies four
-//      dwords per element with the index stepping by 0x10 while the bound
-//      is `nToCopy << 4`.  The fast arm is `shl $0x2,%edx; mov %edx,%ecx;
-//      rep movsl` -- the same memcpy call, expanded knowing 16*n is a
-//      whole number of dwords.  /O2.
-// The element type: sixteen bytes copied FIELD BY FIELD (four dword movs
-// at 0x10009fa5..0x10009fc5), not by `rep movsl`.  Four NAMED dwords are
-// written here rather than a uint32[4] because an array member's implicit
-// copy is the block form; whether the four are integers or floats the
-// shipped bytes cannot say (icl copies float lvalues with integer movs),
-// so they are named by offset.
-struct Elem10009f10
-{
-	uint32 m_n00;                                       // +0x00
-	uint32 m_n04;                                       // +0x04
-	uint32 m_n08;                                       // +0x08
-	uint32 m_n0c;                                       // +0x0c
-};
-
-struct Arr10009f10
-{
-	uint32*      m_pVTable;                             // +0x00
-	Elem10009f10* m_pArray;                             // +0x04
-	uint32       m_nElements;                           // +0x08
-	DefaultCache m_Cache;                               // +0x0c
-
-	Elem10009f10* _AllocateTArray(uint32 nElements, IAllocator* pAlloc); // 0x1000a0e0
-	void    _DeleteAndDestroyArray(IAllocator* pAlloc, uint32 n);        // 0x1002e6c0
-	uint32  GetNumAllocatedElements();                                   // 0x10009c90
-
-	int32   InternalNiceSetSize(uint32 newSize, int32 bFast,
-	                            IAllocator* pAlloc);                     // 0x10009f10
-};
-
-int32 Arr10009f10::InternalNiceSetSize(uint32 newSize, int32 bFast,
-                                       IAllocator* pAlloc)
-{
-	Elem10009f10* pNewArray;
-	uint32        i, nToCopy;
-
-	if (newSize < m_nElements)
-	{
-		m_Cache.SetCacheSize(m_Cache.GetCacheSize() + (m_nElements - newSize));
-		m_nElements = newSize;
-		return 1;
-	}
-	else if (newSize > m_nElements && (m_nElements + m_Cache.GetCacheSize()) >= newSize)
-	{
-		m_Cache.SetCacheSize(m_Cache.GetCacheSize() - (newSize - m_nElements));
-		m_nElements = newSize;
-		return 1;
-	}
-	else if (newSize == m_nElements)
-	{
-		return 1;
-	}
-
-	pNewArray = _AllocateTArray(newSize + m_Cache.GetWantedCache(), pAlloc);
-	if (!pNewArray)
-		return 0;
-
-	nToCopy = m_nElements;
-	if (nToCopy > newSize)
-		nToCopy = newSize;
-
-	if (bFast)
-	{
-		memcpy(pNewArray, m_pArray, sizeof(Elem10009f10) * nToCopy);
-	}
-	else
-	{
-		for (i = 0; i < nToCopy; i++)
-		{
-			pNewArray[i] = m_pArray[i];
-		}
-	}
-
-	_DeleteAndDestroyArray(pAlloc, GetNumAllocatedElements());
-	m_pArray = pNewArray;
-	m_nElements = newSize;
-	m_Cache.SetCacheSize(m_Cache.GetWantedCache());
-
-	return 1;
-}
+// ---- 0x10009f10 -- the SAME source with a SIXTEEN-byte T (four dword
+//      movs per element, `shl $0x4` in its _AllocateTArray 0x1000a0e0).
+//      It is CMoArray<SavedVert589c4>'s, the array of DrawPolyMgr's saved
+//      vertices, and is now the template itself: w64_10009f10_qip.cpp
+//      instantiates the stock dynarray.h body, byte-identical at /O2 /Qip.
+//      It was written here as a hand transcription over a stand-in
+//      Arr10009f10 (identical too), while d3dr5b.cpp's copy of the real
+//      template -- the one its NiceSetSize calls -- was a second, unplaced
+//      definition of the same function.
 
 
 // ---- 0x1001d810 (316 bytes, /Os) -- the SAME source with T = WORD, and
@@ -1272,6 +1196,8 @@ extern LTPlane g_Planes1008bc50[6];                     // 0x1008bc50
 //     (`struct { LTVector v; float f; };` is the obvious candidate for a
 //     renderer) and the assignment has to be spelled as four member
 //     assignments instead of one struct assignment.
+//     (It is: SavedVert589c4, {LTVector; uint32}, and the copy is the
+//     template's own -- w64_10009f10_qip.cpp.)
 //
 //  5. 0x10021ad0 / 0x10009d60's `newSize`.  The header keeps
 //     `newSize = m_nElements + 1;` above the branch and icl folds the +1
