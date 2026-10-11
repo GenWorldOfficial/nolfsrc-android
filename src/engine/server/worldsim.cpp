@@ -1127,7 +1127,11 @@ WSProjectFn g_BoxProjectFns[7] = {
 // tell the caller about the impact, then answer the contact either by pushing
 // the box clear of the plane or by stopping the move at it, and shift the box
 // to wherever that leaves it.
-int ws_HitPoly(WorldPoly* pPoly, CBounceState* pState, CPolyTest* pTest)
+//
+// `inline`, defined above its one caller: lithtech.exe's /O2 ws_MoveBox
+// (0x00418650, 3189 bytes) carries this body and the client has no copy of
+// its own; server.dll's /Os declines it and ws_MoveBox calls 0x10004167.
+inline int ws_HitPoly(WorldPoly* pPoly, CBounceState* pState, CPolyTest* pTest)
 {
 	LTPlane* pPlane = pPoly->GetPlane();
 
