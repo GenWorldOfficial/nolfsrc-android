@@ -802,45 +802,6 @@ void xfer_TermQ464(void* pState)
 
 
 // ======================================================================= //
-//  MOVE-ME: src/engine/server/smgr.cpp:4515, si_GetModelCommandString.
-//
-//  0x00472c10 (169 bytes, /O2).  smgr.cpp's body is a one-register near
-//  here (170 bytes: the first error arm's g_pErrorFormat goes to %ecx where
-//  shipped reuses the dead %eax).  The fix is the local: name the MODEL,
-//  not its command string, and read m_pCommandString at both uses.  Naming
-//  the string (smgr.cpp's spelling), no local at all, or either of two
-//  if/else inversions all measured 170 with the %ecx choice.
-// ======================================================================= //
-
-class CModelCmdQ464
-{
-public:
-	uint8 m_pad_00[0x80];
-	char* m_pCommandString;                             // +0x80
-};
-
-class CModelCmdInstQ464
-{
-public:
-	uint8          m_pad_00[0x1dc];
-	CModelCmdQ464* m_pModel;                            // +0x1dc
-};
-
-LTRESULT si_GetModelCommandStringQ464(LTObject* hObj, char* pStr, uint32 maxLen)
-{
-	if (!hObj || !pStr || hObj->m_ObjectType != OT_MODEL)
-		RETURN_ERROR(1, "ILTPhysics::GetModelCommandString", LT_INVALIDPARAMS);
-
-	CModelCmdQ464* pModel = ((CModelCmdInstQ464*)hObj)->m_pModel;
-	if (!pModel->m_pCommandString)
-		RETURN_ERROR(1, "ILTPhysics::GetModelCommandString", LT_ERROR);
-
-	strncpy(pStr, pModel->m_pCommandString, maxLen);
-	return LT_OK;
-}
-
-
-// ======================================================================= //
 //  MOVE-ME: src/engine/server/smgr.cpp:6117, sm_DetachClient.
 //
 //  0x00463f00 (349 bytes, /O2) / 0x10027259 (/O1).  smgr.cpp's body (a
