@@ -27,16 +27,16 @@
 //  early returns (only the NULL case returns) 138; containment as an
 //  inline pointer helper 114; the areas as an inline RectArea(const
 //  LTRect*) 10 (695 bytes, size-exact); NULL case's `return` 9.
-//  STILL NEAR: the 99-entry recursive call sits on the fall-through into
-//  the epilogue where the shipped code puts it out of line, after the
-//  first-pick arm.  That is icl's name-based prediction (mcpcom.exe's
-//  cold words): measured, calling the collapse as
-//  `d3d_InvalidateRect(0)` instead of the recursion leaves 3 lines, which
-//  are only relocations, so the function's real name probably holds
-//  "Invalid" (InvalidateRect is the Win32 name for exactly this).  Not
-//  renamed: the name is not known.  Measured with no effect: `> 98`,
-//  `< 99` with the arms swapped, `LTNULL`, a `return` after the call,
-//  else-if chains.
+//  IDENTICAL: the 99-entry recursive call is placed out of line, after
+//  the first-pick arm.  As an `if` icl keeps it on the fall-through into
+//  the epilogue (3 bytes over); written as a `switch` on the comparison
+//  with the call in the `default` arm (the lever of w26_100262f0.cpp and
+//  w59_1007dd24_osoi.cpp) icl sinks it as shipped.  Calling the collapse
+//  by a name holding one of mcpcom.exe's cold words (`d3d_InvalidateRect`)
+//  also sinks it, but the real name is not known.  Measured as an `if`
+//  with no effect: `> 98`, `< 99` with the arms swapped, `LTNULL`, a
+//  `return` after the call, else-if chains; as a switch on `< 99` with the
+//  call in `case 0` it stays inline (700 bytes).
 
 //  References: d3dblit.cpp's d3d_AddDirtyRect(LTRect*), aliased onto this
 //  definition in link/aliases.rsp.
@@ -97,12 +97,12 @@ void sub_1003b3d0(LTRect* pRect)
 		LTRect merged;
 		int32  iBest = -1;
 
-		if (g_1008e730 >= 99)
+		switch (g_1008e730 >= 99)
 		{
+		default:
 			sub_1003b3d0(0);
-		}
-		else
-		{
+			break;
+		case 0:
 			for (i = 0; i < g_1008e730; i++)
 			{
 				if (RectInside3b3d0(&g_DirtyRects[i], pRect))
@@ -136,6 +136,7 @@ void sub_1003b3d0(LTRect* pRect)
 			{
 				g_DirtyRects[iBest] = UnionRect3b3d0(&g_DirtyRects[iBest], pRect);
 			}
+			break;
 		}
 	}
 }
