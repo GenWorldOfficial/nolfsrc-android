@@ -103,7 +103,7 @@
 #include "ltrect.h"            // LTRect -- CCmgSub11F0::m_rcArea
 #include "ltlink.h"            // LTLink, LTList  (0x00410e00 IS LTList::LTList)
 #include "ltcodes.h"           // LT_OK
-#include "de_error.h"          // REPORT_ERROR_INFO -- CPacket::WriteType
+#include "de_error.h"          // RETURN_ERROR (CClientMgr::Init)
 #include "iltstream.h"         // ILTStream -- the demo file, slots 0x08/0x24
 #include "iclientshell.h"      // the game DLL's shell -- slots 0x30/0x34/0x38/
                                // 0x48/0x5c are reached below
@@ -821,8 +821,9 @@ public:
 	uint8           m_pad_44[0x50 - 0x44];
 	CMoArray<uint8> m_Data;                                     // 0x50 .. 0x63
 
-	// Defined OUT of the class, below: /Ob1 does not expand it, which is
-	// what keeps 0x00415810's three writes calls to 0x004159f0.
+	// Declared, not defined: CPacket::WriteType<uint8> (0x004159f0) through
+	// link/aliases.rsp. Out of the class, so 0x00415810's three writes stay
+	// calls.
 	void WriteType(uint8 val);
 
 	// 0x0045c390 -- ServerMessage::WriteData (server 0x1002616a).  The
@@ -858,30 +859,10 @@ LTBOOL CCmgMsg::AppendBody(CCmgServerMessage* pMsg)
 	return LTFALSE;
 }
 
-// 0x004159f0 -- CPacket::WriteType<uint8>.
-void CCmgMsg::WriteType(uint8 val)
-{
-	typedef uint8 T;
-
-	if (m_Pos + sizeof(T) < m_MaxDataLen)
-	{
-		while (m_DataLen + sizeof(T) >= m_Data.GetSize())
-		{
-			uint8 dummy = 0;
-
-			m_Data.Insert2(m_Data.GetSize(), dummy, &g_DefAlloc);
-		}
-
-		*(T*)&m_Data.m_pArray[m_Pos] = val;
-		m_Pos += sizeof(T);
-		m_DataLen += sizeof(T);
-	}
-	else
-	{
-		REPORT_ERROR_INFO(1, "CPacket::WriteType", LT_ERROR, "ERROR: Packet write overrun!");
-		m_Flags |= 4;
-	}
-}
+// 0x004159f0 -- CPacket::WriteType<uint8>: the real one (the same offsets
+// from `this`), bound by link/aliases.rsp. The transcription that stood here
+// was a register-allocation near (355 of 348 bytes) of a function another
+// translation unit already matches, so it was a second body for one address.
 
 // clientshell.cpp's CMsgRef.
 class CCmgMsgRef

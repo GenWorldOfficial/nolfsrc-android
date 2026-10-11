@@ -3032,3 +3032,5 @@
 /ALTERNATENAME:?am_RemoveAttachment@@YAKPAVCUnknown390@@PAVLTObject@@PAVAttachment@@@Z=?am_RemoveAttachment@@YAKPAVCObjMgrView@@PAVCObjLinked@@PAVAttachment@@@Z
 # 0x45aaa0 -- ltobject.cpp's LTObject::SetPos (predobj.cpp's view of the object)
 /ALTERNATENAME:?SetPos@LTObjectQ460@@QAEXV?$_CVector@M@@@Z=?SetPos@LTObject@@QAEXV?$_CVector@M@@@Z
+# 0x4159f0 -- CPacket::WriteType<uint8> (clientmgr3.cpp's message view)
+/ALTERNATENAME:?WriteType@CCmgMsg@@QAEXE@Z=?WriteType@CPacket@@QAEXE@Z
