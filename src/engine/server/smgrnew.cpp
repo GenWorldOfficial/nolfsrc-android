@@ -632,24 +632,24 @@ LTRESULT sub_100332e8(CServerMgr* pMgr, ObjectCreateStruct* pStruct,
 	pSData->m_ClientChangeFlags = 0;                         // 0x004748a7
 	pSData->m_NetFlags          = 0;                         // 0x004748ab
 
-	// COIN-FLIP SETTLED BY BUILD. Casting inside the expression makes VC6
-	// narrow the LOAD (`mov X(%edi),%al`); the shipped bytes load the whole
-	// dword and mask twice (`mov X(%edi),%eax ; and $0xff ; and $0x1`),
-	// which is an EXPLICIT MASK on a uint32, not a narrowing conversion.
-	// Measured, all three spellings: a `(uint8)` cast in the expression and
-	// a `uint8` local both make VC6 narrow the LOAD (`mov X(%edi),%al`);
-	// only `& 0xff` on a uint32 keeps the dword load. The residual is that
-	// shipped masks TWICE (`and $0xff` then `and $0x1`) where we fold the
-	// pair into one -- so the original had something that stops the fold,
-	// and none of the three spellings tried does.
-	// NEAR on both images for that alone (lithtech 346/351, server 275/276,
-	// where 8447 turns the unfolded `and $0xff` into `movzbl`).  Also
-	// measured, all fold or narrow: a uint32 local then `(uint8)local & 1`;
-	// `(x & 0xff) & 1`; `(uint8)(x & 1)`; a uint8 local; an inline helper
-	// taking uint8 (called with a cast, a uint32 local or a uint8 local);
-	// inline accessors returning uint8 or uint32; the store split into `=`
-	// then `&=` on the field.
-	nAutoLoad = pStruct->m_CreateFlags & 0xff;               // 0x004748bc
+	// THE READ IS VOLATILE. Both images keep a zero-extension that a plain
+	// read folds away: server.dll `movzbl 0x4(%edi),%eax ; and $0x1`
+	// (0x10033388) and lithtech.exe `mov 0x4(%edi),%eax ; and $0xff ; ... ;
+	// and $0x1` (0x004748af). Probed over 42 spellings (field plain or
+	// volatile; local uint32/int/long; (uint8)x, x & 0xff, (uint8)(x & 0xff),
+	// ...): every plain read folds the narrowing into the load (`mov
+	// X,%al`) or drops the mask, and ONLY a volatile dword read narrowed as
+	// `(uint8)(x & 0xff)` gives both shipped forms at once -- /O1 movzbl
+	// and /O2 dword-load-and-mask. server.dll 0x100332e8 is byte-identical
+	// with it. What made the original read volatile (a volatile-qualified
+	// view, or a field declared that way in an engine-private copy of the
+	// struct) is not recoverable; the cast says only what the bytes need.
+	// lithtech.exe 0x00474810 is now size-exact (351/351); what is left
+	// there is the hash table load scheduled ahead of strlen's `not %ecx`
+	// into %eax (shipped loads it after the length push, into %ecx). A
+	// named length, a `(uint32)` cast, `&m_Name[0]` and a name local
+	// leave it.
+	nAutoLoad = (uint8)(*(volatile uint32*)&pStruct->m_CreateFlags & 0xff); // 0x004748af
 	*(uint32*)((uint8*)pSData + 0x4c) =
 		nAutoLoad & OCS_AUTOLOAD;                            // 0x004748c0
 
