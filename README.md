@@ -73,9 +73,9 @@ of each binary's code, by size, those functions make up.
 Every function in that table is recorded in `progress/identical.txt`, and
 `make progress` re-scores the current build against the retail binaries and
 fails if any of them stops matching. See `progress/README.md` for how the
-scoring works and how to run it. The game DLLs (`CShell.dll`, `Object.lto`,
-`CRes.dll`), built from Monolith's own source, and the resource-only
-`ltmsg.dll` and `sres.dll` are not scored yet.
+scoring works and how to run it. The GameSpy library linked into the game
+DLLs is third-party middleware and is not scored, and neither are the
+resource-only `ltmsg.dll` and `sres.dll` yet.
 
 ## Build
 

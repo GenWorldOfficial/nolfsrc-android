@@ -53,6 +53,7 @@ Each retail function gets one status (`out/progress/functions.csv`):
 | `attempted` | no match, but the address is cited in `src/` or recorded in the CSVs here |
 | `todo` | nothing of ours corresponds to it yet |
 | `crt` | the statically linked C runtime / MFC: listed, not counted |
+| `middleware` | third-party code linked among Monolith's (the GameSpy library in `CShell.dll` and `Object.lto`, `MIDDLEWARE` in `tools/progress.py`): listed, not counted. `src/lithshared/gamespy/` stands in for it and is not meant to match |
 
 Three more statuses are for functions of OURS, not shipped ones, so none of
 them is counted in the denominator:
