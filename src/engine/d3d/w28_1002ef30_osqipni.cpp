@@ -1421,6 +1421,12 @@ void sub_1002ef30(Obj2ef34* pObj)
 	//  guard; 128 is 0x1000a740's own `cmpl $0x80,arg ; jg` AND the
 	//  array's frame footprint (0x15fc - 0x5fc = 0x1000 = 128 * 32).
 	// ------------------------------------------------------------------ //
+	// aVerts is named BEFORE the fetch (measured): that puts aVerts at
+	// -0x15fc with pSrc / nVerts above it at -0x5fc / -0x5f8, as shipped.
+	// Named after the call, the two scalars land below the array instead
+	// (and declaration order changes nothing).
+	pWalk = aVerts;
+
 	sub_1000a700(pObj, (void**)&pSrc, &nVerts);
 
 	if (!sub_1000a740(nVerts))
@@ -1440,7 +1446,6 @@ void sub_1002ef30(Obj2ef34* pObj)
 	//  address went to 0x1000a700; the source therefore steps pSrc itself
 	//  and does not cache it in a register-eligible local.
 	// ------------------------------------------------------------------ //
-	pWalk = aVerts;
 	nLeft = nVerts;
 
 	while (nLeft--)
