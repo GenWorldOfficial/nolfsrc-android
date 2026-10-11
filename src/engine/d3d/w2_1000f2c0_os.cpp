@@ -25,6 +25,15 @@
 //  lightmap TU w30_1000f020_osqipni.cpp).  The same class as 0x10023230
 //  (w4_10023fb0.cpp): icl's sum order follows TU history.
 //
+//  NEAR (483 = 483 bytes, 3 instructions differ, 0 mnemonic blocks): only
+//  the z row's first two products swap (shipped y*m200 then z*m204, ours
+//  z then y); five more term orders/groupings of that row, re-measured
+//  after the loop change below, all give the same bytes.  The last loop
+//  is 0x1000a8a0's `for (nLeft = *pnVerts; nLeft; nLeft--, pWalk++)`:
+//  as `while (nLeft--)` (and as a `for` without pWalk++ in its step, an
+//  if/do-while, a fresh counter, int32) the count was loaded into %edx
+//  and copied to %ecx, 485 bytes.
+//
 // *********************************************************************** //
 
 #include "ltbasedefs.h"
@@ -132,16 +141,14 @@ LTBOOL sub_1000f2c0(TVert1000f2c0** ppVerts, uint32* pnVerts,
 	if (!sub_1000f4b0(g_1008b874, (void**)ppVerts, pnVerts))
 		return 0;
 
-	nLeft = *pnVerts;
 	pWalk = *ppVerts;
-	while (nLeft--)
+	for (nLeft = *pnVerts; nLeft; nLeft--, pWalk++)
 	{
 		fOOW = 1.0f / pWalk->m_vPos.z;
 		pWalk->m_fRHW = fOOW;
 		pWalk->m_vPos.x = (pWalk->m_vPos.x * pM->m_f31c + pWalk->m_vPos.z * pM->m_f320) * fOOW;
 		pWalk->m_vPos.y = (pWalk->m_vPos.y * pM->m_f324 + pWalk->m_vPos.z * pM->m_f328) * pWalk->m_fRHW;
 		pWalk->m_vPos.z = (pWalk->m_vPos.z * pM->m_f32c + pM->m_f330) * pWalk->m_fRHW;
-		pWalk++;
 	}
 	}
 	return 1;
