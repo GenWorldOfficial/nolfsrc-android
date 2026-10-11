@@ -1771,8 +1771,8 @@ void sub_100124a0(Obj124a4* pObj)
 			// untransformed source and rebuild through the five-argument
 			// form.  Both stores are here in the shipped bytes
 			// (0x10012656 and 0x10012662).
-			nVerts    = nSrcCount;
 			pSrcVerts = aVerts;
+			nVerts    = nSrcCount;
 			sub_1000f0a0(nFlagBit, (Obj1000f020*)pObj, aVerts,
 			             (WorldVert1000f020*)pData, nSrcCount);
 			bTransform = LTTRUE;
@@ -1807,8 +1807,8 @@ void sub_100124a0(Obj124a4* pObj)
 		//  not elide the second pair of stores (no dead-store
 		//  elimination through memory), so they are in the source.
 		// -------------------------------------------------------------- //
-		pDest    = pVertBuf;
 		pSrcWalk = pSrcVerts;
+		pDest    = pVertBuf;
 		nLeft    = nVerts;
 
 		while (nLeft--)
@@ -1841,8 +1841,8 @@ void sub_100124a0(Obj124a4* pObj)
 			                                 pSavedTexture);
 
 		// 0x10012811 -- swap in texture pair TWO.
-		pDest    = pVertBuf;
 		pSrcWalk = pSrcVerts;
+		pDest    = pVertBuf;
 		nLeft    = nVerts;
 
 		while (nLeft--)
@@ -1884,8 +1884,8 @@ void sub_100124a0(Obj124a4* pObj)
 	{
 		// 0x1001296f -- SINGLE PASS: the 0x20-byte vertex and texture pair
 		// TWO in one go.
-		pDest    = pVertBuf;
 		pSrcWalk = pSrcVerts;
+		pDest    = pVertBuf;
 		nLeft    = nVerts;
 
 		while (nLeft--)
@@ -1943,8 +1943,8 @@ L_Done:
 	if (!sub_1000f640())
 	{
 		// 0x100142a8 -- texture pair ONE back into the draw vertices.
-		pDest    = pVertBuf;
 		pSrcWalk = pSrcVerts;
+		pDest    = pVertBuf;
 		nLeft    = nVerts;
 
 		while (nLeft--)
