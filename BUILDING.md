@@ -37,7 +37,7 @@ parts of it by hand.
 | 2b. launcher art | the splash bitmap, palette, music, icon and cursors `launcher.rc` compiles into `NOLF.exe`, read out of the retail `NOLF.exe`'s resources on the disc | `src/engine/launcher/res/` |
 | 2c. Game of the Year text | the strings of the Game of the Year content (the "Rest and Relaxation" mission) and the GOTY credits, which Monolith's v1.003 source of `CRes.dll` lacks, read out of the retail GOTY `CRES.dll` on the disc; compiled into our `CRes.dll` beside `ClientRes.rc`, so its resources are the retail ones | `src/game/ClientRes/goty/` |
 | 3. clean | every object and image from a previous run is removed | |
-| 4. libraries | `build/libs.sh all` | `src/lithshared/out/*.lib` |
+| 4. libraries | `build/libs.sh all`; `RegMgr` twice, as Monolith built it for each game DLL: the Release build for `NOLF.exe` and `Object.lto`, the Debug build (`RegMgr_Debug.lib`) for `CShell.dll`, which the Game of the Year `CShell.dll` linked | `src/lithshared/out/*.lib` |
 | 5. game DLLs | `build/build.sh all final`: `CRes.dll`, `CShell.dll`, `Object.lto` | `src/game/*/Release`, `Final_Release` |
 | 6. engine | `build/engine.sh`: `ltmsg.dll`, `sres.dll`, `NOLF.exe`, `server.dll`, `lithtech.exe`, `d3d.ren` | `src/engine/*/Release` |
 | 7. assemble | the built binaries into the game directory; the game DLLs and `sres.dll` go in `custom/`, the rez directory the engine searches last | `out/game/` |

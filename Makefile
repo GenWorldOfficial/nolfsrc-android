@@ -106,7 +106,7 @@ shell: image
 
 clean:
 	rm -rf out
-	rm -rf src/engine/*/Release src/lithshared/*/Release src/lithshared/out \
+	rm -rf src/engine/*/Release src/lithshared/*/Release src/lithshared/*/Debug src/lithshared/out \
 	  src/game/*/Release src/game/*/Final_Release src/game/*/Debug \
 	  src/engine/launcher/res src/game/ClientRes/goty
 	rm -f src/engine/*/link/aliases.obj src/engine/*/link/vtables.obj \

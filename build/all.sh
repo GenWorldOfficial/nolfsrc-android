@@ -108,12 +108,13 @@ step "2c. Game of the Year text: the retail CRES.dll on $ISOS -> src/game/Client
 python3 tools/discextract.py goty "$ISOS" src/game/ClientRes/goty
 
 step "3. clean: previous build outputs"
-rm -rf src/engine/*/Release src/lithshared/*/Release src/lithshared/out \
+rm -rf src/engine/*/Release src/lithshared/*/Release src/lithshared/*/Debug \
+       src/lithshared/out \
        src/game/*/Release src/game/*/Final_Release
 
 step "4. libraries: build/libs.sh all"
 bash build/libs.sh all
-for l in StdLith CryptMgr Lith RezMgr RegMgr MFCStub ButeMgrNoMFC ltguimgr_LT2 \
+for l in StdLith CryptMgr Lith RezMgr RegMgr RegMgr_Debug MFCStub ButeMgrNoMFC ltguimgr_LT2 \
          LithFontMgr_LT2 GameSpyMgr GameSpyClientMgr; do
     need "src/lithshared/out/$l.lib" "$l.lib"
 done

@@ -74,6 +74,7 @@ rm -rf "$TREE/src" "$TREE/build" "$TREE/tools" "$TREE/ISOS"
 mkdir -p "$TREE"
 tar -C "$REPO" -cf - \
     --exclude='src/engine/*/Release' --exclude='src/lithshared/*/Release' \
+    --exclude='src/lithshared/*/Debug' \
     --exclude='src/lithshared/out' --exclude='src/game/*/Release' \
     --exclude='src/game/*/Final_Release' --exclude='src/game/*/Debug' \
     --exclude='__pycache__' \

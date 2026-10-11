@@ -149,7 +149,7 @@ build_cshell() {
     local DEFS="/D NDEBUG /D _CLIENTBUILD /D WIN32 /D _WINDOWS /D _NOLFBUILD /D NO_PRAGMA_LIBS $FINAL_DEFS"
     local INCS='/I ..\shared /I ..\..\LT2\sdk\inc /I ..\..\LT2\lithshared\incs /I .'"$MODERN_INCS"
     mkdir -p "$D/$OUT"
-    check_libs StdLith CryptMgr LithFontMgr_LT2 ltguimgr_LT2 MFCStub ButeMgrNoMFC GameSpyClientMgr RegMgr
+    check_libs RegMgr_Debug StdLith CryptMgr LithFontMgr_LT2 ltguimgr_LT2 MFCStub ButeMgrNoMFC GameSpyClientMgr
 
     mapfile -t SRCS < <(python3 tools/dsp2files.py "$D/ClientShellDLL.dsp" Release cpp)
 
@@ -179,7 +179,10 @@ build_cshell() {
         echo '/nologo /subsystem:windows /dll /machine:I386 /nodefaultlib:LIBCMTD'
         echo "/out:\"$OUT/CShell.dll\" /map:\"$OUT/CShell.map\""
         for o in "${objs[@]}"; do echo "\"${o//\//\\}\""; done
-        for l in StdLith CryptMgr LithFontMgr_LT2 ltguimgr_LT2 MFCStub ButeMgrNoMFC GameSpyClientMgr RegMgr; do
+        # RegMgr_Debug, not RegMgr: the GOTY CShell.dll linked the Debug
+        # build of regmgr.lib, first of the libraries (build/libs.sh,
+        # build_regmgr_debug; the .dsp's /nodefaultlib:"LIBCMTD" is for it)
+        for l in RegMgr_Debug StdLith CryptMgr LithFontMgr_LT2 ltguimgr_LT2 MFCStub ButeMgrNoMFC GameSpyClientMgr; do
             echo "\"$(libpath $l)\""
         done
         echo 'kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib'"$MODERN_LIBS"

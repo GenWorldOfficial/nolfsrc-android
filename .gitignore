@@ -14,6 +14,7 @@
 /.worktrees/
 src/engine/*/Release/
 src/lithshared/*/Release/
+src/lithshared/*/Debug/
 src/lithshared/out/
 src/game/*/Release/
 src/game/*/Debug/

@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Build the lithshared static libraries the engine and game DLLs link, from
 # src/lithshared/, into src/lithshared/out/: StdLith, CryptMgr, Lith, RezMgr,
-# RegMgr, MFCStub, ButeMgrNoMFC (the attribute parser plus the zTools
-# containers), ltguimgr_LT2, LithFontMgr_LT2, and GameSpyMgr /
-# GameSpyClientMgr (our own replacements for the GameSpy middleware). The
+# RegMgr (and RegMgr_Debug: build_regmgr_debug), MFCStub, ButeMgrNoMFC (the
+# attribute parser plus the zTools containers), ltguimgr_LT2,
+# LithFontMgr_LT2, and GameSpyMgr / GameSpyClientMgr (our own replacements
+# for the GameSpy middleware). The
 # LT2-era headers in src/LT2/lithshared take precedence over the newer copies
 # beside the sources. Compiled with cl 12.00.8447, the revision the original
 # libraries were built with, /MT /O2 like the game projects.
@@ -58,6 +59,25 @@ build_lith() {
 }
 build_regmgr() {
     build_generic RegMgr RegMgr '/I ..\\..\\LT2\\lithshared\\incs /I .' regmgr.cpp
+}
+# The same regmgr.cpp built with regmgr60.dsp's *Debug* settings (/ZI /Od
+# /D _DEBUG; /MTd, which is what the -defaultlib:LIBCMTD directive in the
+# source release's libs/Debug/RegMgr.lib says it was built with -- the .dsp
+# says /MDd). The Game of the Year CShell.dll linked this build, not the
+# Release one: its five CRegMgr functions (0x100e1460..0x100e1797) are the
+# unoptimised code, byte for byte, and sit ahead of StdLith, right after the
+# last game object -- which is also why ClientShellDLL.dsp's Release link
+# says /nodefaultlib:"LIBCMTD". Only CShell links it (build/build.sh);
+# NOLF.exe and Object.lto keep the Release RegMgr.lib, which stays the one
+# scored against the source release's Release library. All 14 functions
+# match libs/Debug/RegMgr.lib's.
+build_regmgr_debug() {
+    local D="src/lithshared/RegMgr" OUT=Debug
+    echo "==== $D -> src/lithshared/out/RegMgr_Debug.lib"
+    mkdir -p "$D/$OUT" src/lithshared/out
+    ( cd "$D" && run_cl /nologo /MTd /W3 /GX /ZI /Od /D WIN32 /D _DEBUG /D _WINDOWS /D NO_PRAGMA_LIBS \
+        /I ..\\..\\LT2\\lithshared\\incs /I . /Fo"$OUT/" /Fd"$OUT/" /c regmgr.cpp )
+    ( cd "$D" && run_lib /nologo /out:"..\\out\\RegMgr_Debug.lib" "$OUT\\regmgr.obj" )
 }
 build_mfcstub() {
     build_generic MFCStub MFCStub '/I ..\\..\\LT2\\lithshared\\mfcstub /I ..\\..\\LT2\\lithshared\\incs /I ..\\..\\LT2\\lithshared\\lith /I .' mfcs_string.cpp mfcs_rect.cpp mfcs_point.cpp
@@ -132,7 +152,7 @@ case "${1:-all}" in
     cryptmgr) build_cryptmgr ;;
     rezmgr)   build_rezmgr ;;
     lith)     build_lith ;;
-    regmgr)   build_regmgr ;;
+    regmgr)   build_regmgr; build_regmgr_debug ;;
     mfcstub)  build_mfcstub ;;
     ztools)   build_ztools ;;
     butemgr)  build_butemgr;  assemble_butemgr_lib ;;
@@ -140,7 +160,7 @@ case "${1:-all}" in
     lithfontmgr) build_lithfontmgr ;;
     gamespy)  build_gamespy ;;
     all)      build_stdlith; build_cryptmgr; build_lith; build_rezmgr
-              build_regmgr; build_mfcstub
+              build_regmgr; build_regmgr_debug; build_mfcstub
               build_ztools; build_butemgr; assemble_butemgr_lib
               build_ltguimgr; build_lithfontmgr; build_gamespy ;;
     *) echo "usage: $0 [stdlith|lith|rezmgr|cryptmgr|regmgr|mfcstub|ztools|butemgr|ltguimgr|lithfontmgr|gamespy|all]"; exit 1 ;;
