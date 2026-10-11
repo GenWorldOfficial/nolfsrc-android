@@ -60,15 +60,15 @@ of each binary's code, by size, those functions make up.
 
 | Binary | | Byte-identical functions | Byte-identical code | | Unwritten | Unplaced |
 |---|---|--:|--:|---|--:|--:|
-| `lithtech.exe` | the engine | 3,032 / 3,432 | 437,196 / 571,030 bytes | `███████████████░░░░░` 76.5% | 0 | 12 |
-| `server.dll` | the server | 2,027 / 2,272 | 211,857 / 249,622 bytes | `████████████████░░░░` 84.8% | 0 | 4 |
+| `lithtech.exe` | the engine | 3,042 / 3,432 | 442,993 / 571,030 bytes | `███████████████░░░░░` 77.5% | 0 | 12 |
+| `server.dll` | the server | 2,031 / 2,272 | 212,941 / 249,622 bytes | `█████████████████░░░` 85.3% | 0 | 4 |
 | `d3d.ren` | the Direct3D renderer | 750 / 944 | 134,188 / 515,553 bytes | `█████░░░░░░░░░░░░░░░` 26.0% | 0 | 15 |
 | `NOLF.exe` | the launcher | 172 / 221 | 34,056 / 35,033 bytes | `███████████████████░` 97.2% | 0 | 0 |
 | lithshared | the shared libraries | 807 / 812 | 96,039 / 98,226 bytes | `███████████████████░` 97.7% | 0 | 0 |
 | `CShell.dll` | the game: client | 3,715 / 4,928 | 914,920 / 933,114 bytes | `███████████████████░` 98.0% | 0 | 0 |
 | `Object.lto` | the game: server objects | 4,885 / 6,919 | 1,239,233 / 1,261,040 bytes | `███████████████████░` 98.2% | 0 | 0 |
 | `CRes.dll` | the game's resources, not in the total | 411 / 411 resources | 704,745 / 704,745 bytes | `████████████████████` 100.0% | 0 | -- |
-| **All** | | **15,388 / 19,528** | **3,067,489 / 3,663,618 bytes** | `████████████████░░░░` **83.7%** | **0** | **31** |
+| **All** | | **15,402 / 19,528** | **3,074,370 / 3,663,618 bytes** | `████████████████░░░░` **83.9%** | **0** | **31** |
 <!-- progress:end -->
 
 Every function in that table is recorded in `progress/identical.txt`, and
