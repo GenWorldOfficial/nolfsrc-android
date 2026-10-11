@@ -105,15 +105,17 @@ void sub_1001e920()
 
 
 // ======================================================================= //
-//  The two reciprocals are applied in their own statements
+//  IDENTICAL.  The two reciprocals are applied in their own statements
 //  (written as `x * fInvH * (fTop - fBottom)` icl folds them into one
 //  `(fTop - fBottom) / H` and never forms 1/H, which the shipped code
-//  does: `fild ; fdivrs 1.0f` twice); the Near/Far stores follow the
-//  reciprocals; fRight before fLeft.  252 -> 248 bytes (= shipped), 77 of
-//  224 bytes positionally equal (was 17).  LEFT: the shipped code loads
-//  the four float arguments first and stores Near/Far before touching
-//  pXForm with pOut in %eax / pXForm in %ecx; every order of the two
-//  stores that gives that schedule keeps m_nTop in %esi (an extra push).
+//  does: `fild ; fdivrs 1.0f` twice).  The order is Near/Far stores, the
+//  lens window, the four pixel offsets (`fMinY - top`), THEN the
+//  reciprocals, then the scaling: the offsets formed before the integer
+//  differences are what keep `fildl 0x20(%ecx)` / `fildl 0x1c(%ecx)` reading
+//  memory (offsets after the reciprocals reuse the integer register through
+//  a stack slot and push %esi).  Found with a 300-variant statement-order
+//  probe; only this order (with `*=` or `x = x * f`, explicit or implicit
+//  conversion) is exact.
 // ======================================================================= //
 // ======================================================================= //
 //  0x10020d80 -- the lens for a sub-rectangle of the viewport: map the
@@ -130,9 +132,6 @@ void sub_10020d80(D3DLens* pOut, float fNear, float fFar, D3DXForm* pXForm,
 	float fLeft, fRight, fTop, fBottom;
 	float fX0, fX1, fY0, fY1;
 
-	fInvW = 1.0f / (float)(pXForm->m_nRight - pXForm->m_nLeft);
-	fInvH = 1.0f / (float)(pXForm->m_nBottom - pXForm->m_nTop);
-
 	pOut->m_fNear = fNear;
 	pOut->m_fFar  = fFar;
 
@@ -141,10 +140,19 @@ void sub_10020d80(D3DLens* pOut, float fNear, float fFar, D3DXForm* pXForm,
 	fRight  = pLens->m_fOffX + pLens->m_fHalfW;
 	fLeft   = pLens->m_fOffX - pLens->m_fHalfW;
 
-	fY0 = (fMinY - (float)pXForm->m_nTop) * fInvH;
-	fY1 = (fMaxY - (float)pXForm->m_nTop) * fInvH;
-	fX0 = (fMinX - (float)pXForm->m_nLeft) * fInvW;
-	fX1 = (fMaxX - (float)pXForm->m_nLeft) * fInvW;
+	fY0 = fMinY - (float)pXForm->m_nTop;
+	fY1 = fMaxY - (float)pXForm->m_nTop;
+	fX0 = fMinX - (float)pXForm->m_nLeft;
+	fX1 = fMaxX - (float)pXForm->m_nLeft;
+
+	fInvW = 1.0f / (float)(pXForm->m_nRight - pXForm->m_nLeft);
+	fInvH = 1.0f / (float)(pXForm->m_nBottom - pXForm->m_nTop);
+
+	fY0 *= fInvH;
+	fY1 *= fInvH;
+	fX0 *= fInvW;
+	fX1 *= fInvW;
+
 	fY0 = -(fBottom + fY0 * (fTop - fBottom));
 	fY1 = -(fBottom + fY1 * (fTop - fBottom));
 	fX0 = fLeft + fX0 * (fRight - fLeft);
