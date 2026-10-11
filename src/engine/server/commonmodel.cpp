@@ -981,63 +981,51 @@ void Model::sub_10017016(LTBOOL bFlag)
 }
 
 
-// 0x10017145 — the child-model table back to just this model's own record.
-// The walk is over a pointer into the table held in a frame slot, with the
-// table's own base kept in a register because three separate expressions
-// need it; the slot-held cursor and the memory-resident counter are what say
-// both are locals rather than one induction variable.
+// 0x10017145 / 0x00446a00 — the child-model table back to just this model's
+// own record. Every other record loses a reference on the model it stands
+// for and, if the flag is set and that was the last one, that model is
+// deleted outright; then the record itself is reset and, unless it is one of
+// the two the model owns, handed back.
 //
-// Three tests guard the unhooking and each is a different fact: a record that
-// IS the first entry is the model's own and is left whole; a record with no
-// model behind it has nothing to unreference; and a record whose model is
-// this one is again our own. Only past all three does the other model lose a
-// reference — and only if the caller's flag is set is a model whose last
-// reference just went deleted on the spot. The second read of the record's
-// model for that test is a second read in the shipped bytes too.
-//
-// NEAR (168 of 172 bytes, 60 of 60 instructions). Two differences and both
-// are our compiler finding a peephole the shipped one did not, the same
-// flavour as the three nears already documented in this file:
-//  - the tail. `m_pChildModels[0] = &m_Sub1d4` reuses the CSE'd address of
-//    the table (`add $0x1d4,%esi; mov %esi,(%ebx)`, 8 bytes) where the
-//    shipped build lets it die at the end of the loop and addresses the slot
-//    by displacement (`lea 0x1d4(%esi),%eax; mov %eax,0x190(%esi)`, 12).
-//    That is the four bytes. A separate `ppFirst` local for the two in-loop
-//    comparisons, in its own scope, does not shorten the range — VC6 folds
-//    it back into the same CSE.
-//  - `mov %ebx,-X(%ebp)` (the cursor's initialisation) is emitted with the
-//    `lea` in ours and one block later in the shipped build.
-// cl 8168, 8804 and 8966 emit what 8447 emits.
+// m_pChildModels[0] is re-read from memory at BOTH tests (0x00446a2a and
+// 0x00446a70) and pRec->m_pOwner28 is re-read for the second half of the
+// reference test (0x00446a52), which is what says neither is cached.
+// `delete` goes through vtable slot 0 with a literal 1 (0x00446a65), the
+// shape of a virtual destructor. The release is LDelete against the model's
+// own allocator, EXPANDED at /O2 (0x00446a8a, 0x00446a94) with no null
+// retest -- the record is already known non-null. Byte-identical on both
+// images; modelnew.cpp's ModelQ444::sub_10017145Q444, where this spelling
+// was found, is the same function and is no longer compiled twice.
 void Model::sub_10017145(LTBOOL bFlag)
 {
 	uint32 i;
-	CModelSub1D4** ppChild;
-	CModelSub1D4* pChild;
-
-	ppChild = m_pChildModels;
+	CModelSub1D4* pRec;
+	Model* pModel;
 
 	for (i = 0; i < m_nChildModels; i++)
 	{
-		pChild = *ppChild;
-
-		if (pChild)
+		pRec = m_pChildModels[i];
+		if (pRec)
 		{
-			if (pChild != m_pChildModels[0] && pChild->m_pOwner28 &&
-			    pChild->m_pOwner28 != this)
+			if (pRec != m_pChildModels[0])
 			{
-				pChild->m_pOwner28->m_CacheCount--;
+				pModel = pRec->m_pOwner28;
+				if (pModel && pModel != this)
+				{
+					pModel->m_CacheCount--;
 
-				if (bFlag && pChild->m_pOwner28->m_CacheCount == 0)
-					delete pChild->m_pOwner28;
+					if (bFlag && pRec->m_pOwner28->m_CacheCount == 0)
+						delete pRec->m_pOwner28;
+				}
 			}
 
-			pChild->sub_10016501();
+			pRec->sub_10016501();
 
-			if (pChild != m_pChildModels[0] && pChild != &m_Sub1d4)
-				BaseDelete((LAlloc*)m_pDataBlock, pChild, 1);
+			if (pRec != m_pChildModels[0] && pRec != &m_Sub1d4)
+			{
+				LDelete(GetAlloc(), pRec);
+			}
 		}
-
-		ppChild++;
 	}
 
 	m_nChildModels = 1;

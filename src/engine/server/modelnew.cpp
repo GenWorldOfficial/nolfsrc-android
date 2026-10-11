@@ -515,7 +515,6 @@ public:
 	// (0x00445a9f, 0x0044626a, 0x004462ca).
 	class LAlloc* GetAllocQ444() { return (class LAlloc*)m_pDataBlock; }
 
-	void   sub_10017145Q444(LTBOOL bFlag);              // 0x00446a00
 	void   sub_10017517Q444();                          // 0x00446f20
 	char*  sub_100173faQ444(char* pName);               // 0x00446db0
 	uint32 sub_1001761dQ444(uint32 iLOD);               // 0x004470c0
@@ -786,61 +785,9 @@ ModelWeightSetQ444::~ModelWeightSetQ444()
 
 
 // ======================================================================= //
-//  0x00446a00, 207 bytes -- Model::sub_10017145
-//  server.dll twin 0x10017145 (175 bytes).  thiscall, one LTBOOL, void.
-//
-//  The child-model table reset to just this model's own record.  Every
-//  other record loses a reference on the model it stands for and, if the
-//  flag is set and that was the last one, that model is deleted outright;
-//  then the record itself is reset and, unless it is one of the two the
-//  model owns, handed back.
-//
-//  m_pChildModels[0] is re-read from memory at BOTH tests (0x00446a2a and
-//  0x00446a70) and pRec->m_pOwner28 is re-read for the second half of the
-//  reference test (0x00446a52), which is what says neither is cached.
-//  `delete` goes through vtable slot 0 with a literal 1 (0x00446a65), the
-//  shape of a virtual destructor.
-//  The final BaseDelete is EXPANDED: the destructor call at 0x00446a8a and
-//  the allocator release at 0x00446a94, with no null retest -- the record
-//  is already known non-null.
+//  0x00446a00, 207 bytes -- Model::sub_10017145: commonmodel.cpp's, which
+//  now carries this file's spelling and matches both images.
 // ======================================================================= //
-
-void ModelQ444::sub_10017145Q444(LTBOOL bFlag)
-{
-	uint32 i;
-	CModelSub1D4Q444* pRec;
-	ModelQ444* pModel;
-
-	for (i = 0; i < m_nChildModels; i++)
-	{
-		pRec = m_pChildModels[i];
-		if (pRec)
-		{
-			if (pRec != m_pChildModels[0])
-			{
-				pModel = pRec->m_pOwner28;
-				if (pModel && pModel != this)
-				{
-					pModel->m_CacheCount--;
-
-					if (bFlag && pRec->m_pOwner28->m_CacheCount == 0)
-						delete pRec->m_pOwner28;
-				}
-			}
-
-			pRec->sub_10016501Q444();
-
-			if (pRec != m_pChildModels[0] &&
-			    pRec != (CModelSub1D4Q444*)m_Sub1d4)
-			{
-				LDelete(GetAllocQ444(), pRec);
-			}
-		}
-	}
-
-	m_nChildModels = 1;
-	m_pChildModels[0] = (CModelSub1D4Q444*)m_Sub1d4;
-}
 
 
 // ======================================================================= //
