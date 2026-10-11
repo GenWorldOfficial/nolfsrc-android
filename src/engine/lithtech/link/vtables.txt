@@ -127,7 +127,8 @@ vtable ??_7CArray340@@6B@ 0x004a1c24  # compiled with 1 slots
     ?GenSetCacheSize@?$CMoArray@VCWorldSimple@@VDefaultCache@@@@UAEXK@Z
 vtable ??_7CClass4A38A4@@6B@ 0x004a38a4  # compiled with 10 slots
     ??_GCClass4A38A4@@UAEPAXI@Z
-    ?_v04@CUnknown4A147C@@UAEXXZ
+    # slot 1 is VideoInst::Release (0x0048b390), shared with the Bink instance table
+    ?Release@BinkVideoInstK@@UAEXXZ
     ?Restore@SmackVideoInstQ428@@UAEXXZ
     ?FreeSurfaces@SmackVideoInstQ428@@UAEXXZ
     ?Slot04@CClass4A38A4@@QAEKXZ
@@ -260,6 +261,14 @@ vtable ??_7CDeviceObjectList@@6B@ 0x004a23e4  # compiled with 1 slots
     ?GenAppendList@LMessageList@@UAEIABV?$GenList@PAVLThreadMessage@@@@@Z
     ?GenFindElement@CMessageQueueBase@@UBEIABQAVLThreadMessage@@AAVGenListPos@@@Z
     ?GenSetCacheSize@?$GenList@VCCmgElem08@@@@UAEXK@Z
+# The client's file-record bank: slots 1..3 are concrete in lithtech.exe (only
+# server.dll's banks leave them at _purecall, which CBankBase's aliases give).
+# The bodies are the shared bank routines already placed at those addresses.
+vtable ??_7CFileBank@@6B@ 0x004a1dbc
+    ??_GCFileBank@@UAEPAXI@Z
+    ?Allocate@?$CObjectBank@VCBankElem70@@@@UAEPAXXZ
+    ?Free@?$CObjectBank@VCBankElem70@@@@UAEXPAX@Z
+    ?Init@?$CObjectBank@VCBankElem14@@@@UAEXXZ
 vtable ??_7CGlobalBankBaseQ464@@6B@ 0x004a14c8  # compiled with 1 slots
     ??_GCGlobalBankBaseQ464@@UAEPAXI@Z
     __purecall
@@ -542,6 +551,13 @@ vtable ??_7CMsgWriteQ18@@6B@ 0x004a2b68  # compiled with 1 slots
     ?ResetPos@LMessageImpl@@QAEKXZ
     ?GetStatus@LMessageImpl@@QAEKAAK@Z
     ?Last@CConsoleNameList@@UAEIXZ
+# The net packet bank, likewise concrete in lithtech.exe: Allocate 0x00459c30,
+# the Free forwarder (slot 2, servermgr.h), and 0x0045a000 in slot 3.
+vtable ??_7CNetBank@@6B@ 0x004a2b30
+    ??_GCNetBank@@UAEPAXI@Z
+    ?Allocate@CNetBankQ11@@QAEPAVCNetSentPacketQ11@@XZ
+    ?_v08@CNetBank@@UAEXPAX@Z
+    ?Init@?$CObjectBank@VCBankElem70@@@@UAEXXZ
 vtable ??_7CNetQueueA@@6B@ 0x004a2a70  # compiled with 1 slots
     ?GenBegin@CMessageQueueBase@@UBE?AVGenListPos@@XZ
     ?GenIsValid@CMessageQueueBase@@UBEIABVGenListPos@@@Z
