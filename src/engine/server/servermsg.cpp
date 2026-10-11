@@ -1720,3 +1720,57 @@ void CServerMessageInitQ12::Init(uint16 nMaxDataLen, uint16 nGrowSize)
 	}
 }
 #endif
+
+
+// 0x10013585 (91 bytes) — the object's facing as ONE byte: the rotation is
+// turned into a matrix, the matrix gives up its basis vectors, and the
+// forward vector's yaw goes out scaled to a byte.
+//
+// Read off the bytes, nothing here is guessed:
+//
+//   * the frame is exactly 0x64 = 64 + 3*12, so the four locals are a 4x4
+//     matrix at -0x64 and three vectors at -0x24 / -0x18 / -0xc, in
+//     GetBasisVectors' own right/up/forward argument order.
+//   * 0x10015bcd is sharedcommon.h's quat_ConvertToMatrix and takes
+//     (pRot, pMat) cdecl; 0x1001210b is ltmatrix.h's GetBasisVectors,
+//     thiscall on the matrix, which server.dll CALLS -- /Os declines the
+//     header's inline, the same split sb_Allocate and CMessageRef::Init
+//     already record.
+//   * the atan2 arguments are pushed -0x4 first and -0xc second
+//     (0x100135ad / 0x100135b5), and cdecl pushes right to left, so the
+//     FIRST argument is vForward.x and the second vForward.z -- the yaw,
+//     not the pitch.
+//   * 0x1004d7d0 is 0x4221b390 = 40.42535400390625 = 127/PI, and it is a
+//     FLOAT constant: `fmuls`, not `fmull`, so it is folded from float
+//     arithmetic and multiplies atan2's double straight off the stack.
+//   * 0x1003e0f0 is __ftol and only %al is used, so the conversion target
+//     is one byte wide; it lands in the dead pRot parameter slot, which is
+//     allocator leftover and not a source fact.
+//   * the byte goes out through CPacket::WriteType<uint8> itself: server.dll
+//     calls it (0x1001393e), lithtech.exe EXPANDS it (0x0043620b..
+//     0x004362ba, in its twin 0x004361e0).
+//
+// Here, not in smgr.cpp: both images put it in this file's run (server.dll
+// between SetBasisVectors 0x10013509 and the end of the message code;
+// lithtech.exe 0x004361e0 among 0x00435ad0 / 0x00435d90).
+//
+// lithtech.exe: NEAR, size-exact (219/219, 74/74 instructions): register
+// allocation inside the expanded WriteType -- shipped puts m_Pos+1 in edx
+// and m_MaxDataLen in eax, ours the reverse. Without the named byte local
+// server.dll's copy (identical with it) comes out 86 bytes.
+void quat_ConvertToMatrix(LTRotation* pRot, LTMatrix* pMat);   // 0x10015bcd
+
+void sub_10013585(ServerMessage* pMsg, LTRotation* pRot)
+{
+	LTMatrix mat;
+	LTVector vRight, vUp, vForward;
+	uint8    nYaw;
+
+	quat_ConvertToMatrix(pRot, &mat);
+
+	mat.GetBasisVectors(&vRight, &vUp, &vForward);
+
+	nYaw = (uint8)((float)atan2(vForward.x, vForward.z) * (127.0f / MATH_PI));
+
+	((CPacket*)pMsg)->WriteType(nYaw);
+}

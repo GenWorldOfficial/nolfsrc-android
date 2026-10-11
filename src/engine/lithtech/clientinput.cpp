@@ -3098,28 +3098,8 @@ void quat_ConvertToMatrix(LTRotation* pRot, LTMatrix* pMat);
 void rot_SetupEuler(float x, float y, float z, LTRotation* pRot);
 
 
-// 0x004361e0 (219 bytes).  The forward vector's yaw, scaled by 127/PI
-// (0x004a23dc) into one byte.  GetBasisVectors is inlined at /O2, so the
-// two atan2 operands are read straight out of the matrix -- m[0][2] and
-// m[2][2], forward.x and forward.z -- and the three vectors never get a slot.
-//
-// NEAR, size-exact (219/219, 74/74 instructions, 3 blocks): pure register
-// allocation inside the expanded WriteType -- shipped puts m_Pos+1 in edx
-// and m_MaxDataLen in eax, this build the reverse, with the yaw byte's
-// spill scheduled one instruction apart.  A named uint8/uint32/int/char
-// yaw local changes nothing (or adds 4 bytes); a named float yaw local is
-// worse (6 blocks); CL_REV=8168 for the TU changes nothing.
-void cin_WriteYawByte(CPacket* pPacket, LTRotation* pRot)
-{
-	LTMatrix mat;
-	LTVector vRight, vUp, vForward;
-
-	quat_ConvertToMatrix(pRot, &mat);
-
-	mat.GetBasisVectors(&vRight, &vUp, &vForward);
-
-	pPacket->WriteType((uint8)((float)atan2(vForward.x, vForward.z) * (127.0f / MATH_PI)));
-}
+// 0x004361e0 -- the writer: servermsg.cpp's sub_10013585 (moved; its
+// spelling there gives server.dll exactly and this image size-exact).
 
 
 // 0x004362c0 (163 bytes).  The other end: one SIGNED byte (`movsbl` at
