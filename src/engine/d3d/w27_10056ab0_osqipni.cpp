@@ -651,6 +651,17 @@ extern D3DDevTSSR5C* g_1008d988;                                    // 0x1008d98
 //  are (1626 bytes, 693 differ, the same as alone at /Os -- the
 //  residual is the allocation above).  The fields are read through
 //  W7View56c60 because C1008f620 carries the drawers' layout.
+//
+//  Later (1624 bytes, 22 -> 13 mnemonic blocks): icl emits each run of
+//  equal-value stores in its own order, and the reversed chains below put
+//  three of the runs into ship's; the first-in-list pointer is read once
+//  into pWalk and that local is what the TextureSrcInitFn calls take
+//  (ship's -0x38 slot).  LEFT: the 4s take %edx where ship reloads %eax
+//  (every order of the four default groups measured: the current one is
+//  best), ship re-reads m_pFirst04 at the head of each walk loop where we
+//  read it once after the init loop (a single loop with the iPass test
+//  inside, an if/else nNextPass and `!iPass` do not move it), and the frame
+//  is 0x58 against ship's 0x60.
 // ======================================================================= //
 struct W7Link56c60
 {
@@ -798,12 +809,12 @@ void C1008f620::sub_10056c60()
 	if (g_1008f600)
 	{
 		v->m_n40 = v->m_n34 = v->m_n20 = 1;
-		v->m_n24 = v->m_n38 = v->m_n3c = v->m_n5c = v->m_n60 = 0;
+		v->m_n60 = v->m_n5c = v->m_n3c = v->m_n38 = v->m_n24 = 0;
 	}
 	else if (g_1008f5e0)
 	{
 		v->m_nc4 = v->m_nc0 = v->m_n60 = v->m_n5c = v->m_n3c = v->m_n38 = v->m_n34 = v->m_n24 = 0;
-		v->m_n40 = v->m_nb0 = v->m_nc8 = v->m_ncc = v->m_ne8 = v->m_nec = 1;
+		v->m_nec = v->m_ne8 = v->m_ncc = v->m_nc8 = v->m_nb0 = v->m_n40 = 1;
 		v->m_n20 = 2;
 		v->m_n530 = 9;
 		v->m_n534 = 3;
@@ -811,8 +822,8 @@ void C1008f620::sub_10056c60()
 	else
 	{
 		v->m_n394 = v->m_n388 = v->m_n84 = v->m_n80 = v->m_n20 = 1;
-		v->m_n24 = v->m_n34 = v->m_n38 = v->m_n5c = v->m_n60 = v->m_n3c = v->m_n370 = v->m_n37c = 0;
-		v->m_n40 = v->m_n36c = v->m_n378 = v->m_n384 = v->m_n390 = 2;
+		v->m_n37c = v->m_n370 = v->m_n3c = v->m_n60 = v->m_n5c = v->m_n38 = v->m_n34 = v->m_n24 = 0;
+		v->m_n390 = v->m_n384 = v->m_n378 = v->m_n36c = v->m_n40 = 2;
 		v->m_n368 = v->m_n374 = v->m_n380 = v->m_n38c = 4;
 	}
 
@@ -872,12 +883,13 @@ void C1008f620::sub_10056c60()
 				pPoly      = pEntry->m_pPoly08;
 				pNextEntry = pEntry->m_pNext04;
 
-				if (pPoly->m_pFirst04 != pPoly)
+				pWalk = pPoly->m_pFirst04;
+				if (pWalk != pPoly)
 				{
 					for (iStage = 0; iStage < pMatPass->m_nStages1c; iStage++)
 					{
 						if (!(this->*g_10089718[pMatPass->m_Stages20[iStage].m_nDrawFn1c])(
-						        (W7Poly56c60*)pPoly->m_pFirst04, iStage))
+						        (W7Poly56c60*)pWalk, iStage))
 						{
 							sub_10021d60(1, "Material '%s', pass %d, stage %d: TextureSrcInitFn failed.",
 							             pMat, iPass, iStage);
