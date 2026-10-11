@@ -4849,37 +4849,11 @@ LTRESULT si_GetModelCommandString(LTObject* hObj, char* pStr, uint32 maxLen)
 	return LT_OK;
 }
 
-// Unlink one attachment record from its parent and push it onto the
-// manager's spare list (the named "ILTServer::RemoveAttachment" worker).
-//
-// The walk is a `for` with ONE `RETURN_ERROR` inside it, not a guard before
-// the loop plus a second copy in the body: written the second way our build
-// keeps pCur in eax, forms the link address with a `lea` into a register of
-// its own and comes out five bytes long (108 of 103), and written this way
-// it is byte-identical — the single error site lets VC6 host one shared
-// block that both the entry test and the loop's own null test fall into,
-// which in turn frees the dead pParent register for the `add $0x98,%eax`
-// that forms the first link address in place.
-LTRESULT am_RemoveAttachment(CUnknown390* pAttachMgr, LTObject* pParent, Attachment* pAttachment)
-{
-	Attachment* pCur;
-	Attachment** ppLink;
-
-	for (ppLink = &pParent->m_pAttachments; ; ppLink = &pCur->m_pNext)
-	{
-		pCur = *ppLink;
-		if (!pCur)
-			RETURN_ERROR(1, "ILTServer::RemoveAttachment", LT_ERROR);
-
-		if (pCur == pAttachment)
-			break;
-	}
-
-	*ppLink = pCur->m_pNext;
-	*(Attachment**)pAttachment = ((CAttachMgrView*)pAttachMgr)->m_pFreeList;
-	((CAttachMgrView*)pAttachMgr)->m_pFreeList = pAttachment;
-	return LT_OK;
-}
+// am_RemoveAttachment (0x10025a1b / 0x0045bf10) is objbank.cpp's, the one
+// definition; servermgr.h's declaration reaches it through link/aliases.rsp,
+// as am_CreateAttachment's does. The second definition that stood here
+// matched server.dll too but was two bytes off in lithtech.exe, and so was a
+// function the client image has no counterpart for.
 
 // The masked flag word is the `flags` PARAMETER, narrowed in place, not a
 // local initialised from it — and that one word of source is what decides

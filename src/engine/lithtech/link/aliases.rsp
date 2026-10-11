@@ -3053,3 +3053,5 @@
 /ALTERNATENAME:?GetTcpIpAddress@CLocalDriverBase@@UAEIPADKAAG@Z=?GetTcpIpAddress@CBaseDriverDefaultsView@@UAEIPADKAAG@Z
 /ALTERNATENAME:?_p54@CLocalDriverBase@@UAEIPAX@Z=?_p54@CBaseDriverDefaultsView@@UAEIPAX@Z
 /ALTERNATENAME:?SendTo@CLocalDriverBase@@UAEKPBXKPBDK@Z=?SendTo@CBaseDriverDefaultsView@@UAEIPBXKPBDK@Z
+# 0x45bf10 -- objbank.cpp's am_RemoveAttachment, the one definition
+/ALTERNATENAME:?am_RemoveAttachment@@YAKPAVCUnknown390@@PAVLTObject@@PAVAttachment@@@Z=?am_RemoveAttachment@@YAKPAVCObjMgrView@@PAVCObjLinked@@PAVAttachment@@@Z

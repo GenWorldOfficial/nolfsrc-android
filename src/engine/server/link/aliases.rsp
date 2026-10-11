@@ -554,3 +554,5 @@
 # to get the shipped six-byte `call *0x1004d1d4`; 0x1004d1d4 is the import-table slot
 # for WSOCK32 ordinal 9 (htons), i.e. the linker's __imp__htons@4.
 /ALTERNATENAME:_htons_A=__imp__htons@4
+# 0x10025a1b -- objbank.cpp's am_RemoveAttachment, the one definition
+/ALTERNATENAME:?am_RemoveAttachment@@YAKPAVCUnknown390@@PAVLTObject@@PAVAttachment@@@Z=?am_RemoveAttachment@@YAKPAVCObjMgrView@@PAVCObjLinked@@PAVAttachment@@@Z
