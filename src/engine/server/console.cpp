@@ -363,55 +363,32 @@ void con_Term(ConsoleState* pState)
 // including a bracket or a quote. A token longer than 0x100 characters simply
 // stops growing — the last character is overwritten rather than the buffer.
 //
-// NEAR (238 of 238 bytes, eight residual blocks under an esi/edi swap): every
-// instruction is accounted for; what is left is the shape of the token loop's
-// head. The shipped build keeps the `**ppPos == 0` test at the top of the loop
-// and jumps back to it; ours deletes the entry test -- the guard above already
-// proved it -- and tail-duplicates the load and compare onto the back edge.
-//
-// The two reads at the loop head are not a redundancy in the source: they are
-// what puts the character in a callee-saved register at the top, which is the
-// only shape that survives the iscntrl call. Four shapes were probed and each
-// fails in one of exactly two ways:
-//   * `for (;;) { c = **ppPos; if (c == 0) break; ... }` and
-//     `while ((c = **ppPos) != 0)` keep the test at the top but let VC6 hoist
-//     the load into the guard (the guard's `cmpb $0,(%eax)` becomes
-//     `mov (%eax),%bl`) and onto the back edge -- 240 bytes;
-//   * `while (**ppPos != 0) { c = **ppPos; ... }`, the same with a `goto`
-//     instead of `break`, and this one all rotate to a do-while -- 238 bytes
-//     with the test duplicated at the bottom.
-// Re-reading `**ppPos` at every comparison instead of keeping `c` gives 242
-// and reloads after iscntrl, so the local is real. Revisions 8168, 8447, 8966
-// and 8804 all produce the same rotation, and /Os is not close (471 bytes).
-// This is the tail-duplicated-loop-head near class.
+// The token loop is `while (TRUE)` with the zero test as a `break` at its
+// head, and that alone is what keeps it UNROTATED as shipped (the test at
+// the top, a bare `jmp` back): `for (;;)` with the same body rotates it,
+// tail-duplicating the load and compare onto the back edge, and every other
+// head shape measured (c-first, `while ((c = **ppPos) != 0)`, `while
+// (**ppPos)`, a goto loop) rotates or peels too. The two "skip this
+// character" exits -- the opening bracket and the opening quote -- are
+// `goto next` onto the loop's own `(*ppPos)++` at the bottom: shipped jumps
+// both of them there (0x10005e90, 0x10005eb2 -> 0x10005ed9); written as
+// `(*ppPos)++; continue;` VC6 hosts the shared increment-and-jump in the
+// bracket arm instead and the bottom jumps back up to it.
 #define PARSE_DONE  0
 #define PARSE_ARG   1
 #define PARSE_END   2
 
-// 0x10005e24 — NEAR (238 of 238 bytes, 99 instructions against 98). One
-// structural residual and one register rotation, and they are one fault: the
-// shipped main loop is NOT rotated -- the zero test sits at the top as
-// `mov (%eax),%bl; test %bl,%bl` and the bottom is a bare `jmp` back -- while
-// ours rotates it, moving the test to the bottom and using the `return
-// PARSE_DONE` guard above as the loop's entry test. With the loop kept as
-// `if (**ppPos == 0) break; c = **ppPos;` VC6 rotates; written as
-// `c = **ppPos; if (c == 0) break;` it peels instead, folding the guard's own
-// byte compare into the first iteration's load and coming out 240. The
-// shipped build does neither: it reloads the pointer for the guard AND again
-// at the loop head. Nothing in the source shape reaches that, and the
-// rotation is what also swaps ppPos and ppOut between esi and edi.
-// Also measured, none better: `while ((c = **ppPos) != 0)` (240), `if
-// (!(c = **ppPos)) break;` (240), `while (**ppPos) { c = **ppPos;` (238, 19
-// blocks), a goto loop with either head (240 / 238), pStart assigned before
-// the space skip (237), nDepth initialised after the guard (239), the skip
-// and guard as an inline helper (240), block-scoped c / pStart (240). Every
-// c-first head lets VC6 reuse the guard's load. The lithtech twin 0x0041b710
-// also reloads at an unrotated head, so something in the source blocks it.
-// On lithtech (/O2, 272 shipped against our 269) the same fault: measured
-// there, `while ((c = **ppPos) != 0)` 278, `while (**ppPos) { c = **ppPos;`
-// 268, `for (; **ppPos; (*ppPos)++)` with the increments as the for-step 274,
-// a c-first `for(;;)` head 279, and a literal goto loop 269 (byte-for-byte
-// the same as this form). All rotate.
+// 0x10005e24. lithtech.exe 0x0041b710 (272 bytes) is BYTE-IDENTICAL.
+//
+// server.dll is NEAR, 238 of 238 and 98 instructions of 98, and the one
+// residual is the shared-exit host of the two statement-end returns: shipped
+// keeps `pop %eax; jmp <epilogue>` in the PARSE_END arm (`push $2; pop %eax`)
+// and has PARSE_ARG's `push $1` jump back into it; ours hosts it in the
+// PARSE_ARG arm. Measured, none moving it: an explicit else, the tests
+// inverted (`if (*pStart) return PARSE_ARG;`, je and worse), a goto to an
+// `arg:` label, `?:` with a comma, an nRet local set on both arms, literal
+// 1/2, and `else if` (234). The esi/edi swap and the rotation that used to
+// sit here went with the loop shape above.
 static int parse_Token(char** ppPos, char** ppOut)
 {
 	char* pStart;
@@ -426,7 +403,7 @@ static int parse_Token(char** ppPos, char** ppOut)
 
 	pStart = *ppOut;
 
-	for (;;)
+	while (TRUE)
 	{
 		if (**ppPos == 0)
 			break;
@@ -459,10 +436,7 @@ static int parse_Token(char** ppPos, char** ppOut)
 			nDepth++;
 
 			if (nDepth == 1)
-			{
-				(*ppPos)++;
-				continue;
-			}
+				goto next;
 		}
 		else if (c == ')')
 		{
@@ -483,8 +457,7 @@ static int parse_Token(char** ppPos, char** ppOut)
 			}
 
 			nDepth = 1;
-			(*ppPos)++;
-			continue;
+			goto next;
 		}
 		else if (c == ' ' && nDepth == 0)
 		{
@@ -500,6 +473,7 @@ static int parse_Token(char** ppPos, char** ppOut)
 		}
 
 		(*ppOut)++;
+	next:
 		(*ppPos)++;
 	}
 
