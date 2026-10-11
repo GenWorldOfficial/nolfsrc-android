@@ -18,7 +18,8 @@
 #     Productions\No One Lives Forever\1.0: the extra rez archives the
 #     launcher adds to the command line (the update, then the GOTY content
 #     and -- ours -- the custom/ directory holding the game DLLs built from
-#     source), and movies off.
+#     source), and movies off (on in the modern build, whose own Bink
+#     player plays them).
 # It also starts the game in a 640x480 window (++windowed 1 ...): the
 # launcher appends its own arguments to the command file, and full screen
 # fails under many Wine setups ("Couldn't set D3D Emulation mode").
@@ -43,11 +44,22 @@ ln -sf ../../nolf.rez cd/DATA/NOLF.REZ
 ln -sfn "$HERE/cd" "$WINEPREFIX/dosdevices/n:"
 
 KEY='HKLM\Software\Monolith Productions\No One Lives Forever\1.0'
-reg() { "$WINE" reg add "$@" /f >/dev/null 2>&1; }
+# Both registry views: in a 64-bit prefix `wine reg` writes the 64-bit one,
+# while NOLF.exe, a 32-bit program, reads HKLM\Software through the 32-bit
+# one (Wow6432Node) -- written only there, it would find no update or GOTY
+# archives and leave nolfu003.rez and nolfgoty.rez off the command line.
+# (A 32-bit prefix has one view; the /reg:64 write then fails, harmlessly.)
+reg() { "$WINE" reg add "$@" /reg:32 /f >/dev/null 2>&1
+        "$WINE" reg add "$@" /reg:64 /f >/dev/null 2>&1 || true; }
+# The movies: off with RAD's binkw32.dll, which misrenders or stalls under
+# many Wine setups; on with the modern build's own player (MANIFEST.txt
+# lists it as EXT).
+MOVIES_OFF=1
+grep -q '^EXT .*	binkw32\.dll$' MANIFEST.txt 2>/dev/null && MOVIES_OFF=0
 reg 'HKLM\Software\Wine\Drives' /v 'n:' /t REG_SZ /d cdrom
 reg "$KEY" /v 'Update Command Line'  /t REG_SZ /d '-rez nolfu003.rez'
 reg "$KEY" /v 'Content Command Line' /t REG_SZ /d '-rez nolfgoty.rez -rez custom'
-reg "$KEY" /v 'Disable Movies'       /t REG_DWORD /d 1
+reg "$KEY" /v 'Disable Movies'       /t REG_DWORD /d $MOVIES_OFF
 # Wine reads the drive types when its server starts: restart it, or the
 # first run after this setup still finds no CD-ROM.
 "${WINESERVER:-wineserver}" -k >/dev/null 2>&1 || true
