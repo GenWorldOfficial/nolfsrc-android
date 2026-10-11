@@ -90,13 +90,13 @@ You need Linux with Docker, the two disc images, and the compilers:
 3. Run
 
 ```sh
-make            # -> out/game/ and out/nolf-game.tar  (about 3 minutes,
+make            # -> out/nolf-legacy-release/ and out/nolf-legacy-release.tar  (about 3 minutes,
                 #    plus about 3 for the docker image the first time)
 make test       # optional: plays two levels under Xvfb with scripted input
 make debug      # optional: the same game with symbols and debug logging,
-                #    in out/game-debug/
+                #    in out/nolf-legacy-debug/
 make modern     # optional: the game with the retail bugs fixed, in
-                #    out/game-modern/ (both: BUILDING.md, "Variant builds")
+                #    out/nolf-modern-release/ (both: BUILDING.md, "Variant builds")
 make progress   # optional: how much of it matches the retail binaries
 ```
 
@@ -105,17 +105,17 @@ detail.
 
 ## Play
 
-`out/game/` is a complete game directory. On a Linux machine with Wine
+`out/nolf-legacy-release/` is a complete game directory. On a Linux machine with Wine
 (32-bit support needed):
 
 ```sh
-out/game/run.sh                      # windowed, 640x480
-out/game/run.sh --res 1024x768
-out/game/run.sh --world 'Worlds\T01S01'
+out/nolf-legacy-release/run.sh                      # windowed, 640x480
+out/nolf-legacy-release/run.sh --res 1024x768
+out/nolf-legacy-release/run.sh --world 'Worlds\T01S01'
 ```
 
-To play elsewhere, copy `out/nolf-game.tar` (one file, about 1.1 GB), unpack
-it and run `game/run.sh`. `game/run-launcher.sh` starts the game through the
+To play elsewhere, copy `out/nolf-legacy-release.tar` (one file, about 1.1 GB), unpack
+it and run `nolf-legacy-release/run.sh`. `nolf-legacy-release/run-launcher.sh` starts the game through the
 `NOLF.exe` launcher instead. Both scripts document their options in their
 headers. Sound needs Wine's audio to work on that machine.
 

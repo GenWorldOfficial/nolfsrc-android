@@ -32,19 +32,19 @@ parts of it by hand.
 
 | Step | What | Output |
 |---|---|---|
-| 1. resources | game data off the discs: the four `.rez` archives, configs, text, movies -- with the retail game DLLs inside the archives overwritten with zeros | `out/game/` |
-| 2. third-party runtime | Miles Sound System (`mss32.dll` and its `.flt` / `.m3d` / `.asi` / `.as6` providers) and Bink (`binkw32.dll`) off the discs: licensed middleware with no source, which the engine imports | `out/game/` |
+| 1. resources | game data off the discs: the four `.rez` archives, configs, text, movies -- with the retail game DLLs inside the archives overwritten with zeros | `out/nolf-legacy-release/` |
+| 2. third-party runtime | Miles Sound System (`mss32.dll` and its `.flt` / `.m3d` / `.asi` / `.as6` providers) and Bink (`binkw32.dll`) off the discs: licensed middleware with no source, which the engine imports | `out/nolf-legacy-release/` |
 | 2b. launcher art | the splash bitmap, palette, music, icon and cursors `launcher.rc` compiles into `NOLF.exe`, read out of the retail `NOLF.exe`'s resources on the disc | `src/engine/launcher/res/` |
 | 2c. Game of the Year text | the strings of the Game of the Year content (the "Rest and Relaxation" mission) and the GOTY credits, which Monolith's v1.003 source of `CRes.dll` lacks, read out of the retail GOTY `CRES.dll` on the disc; compiled into our `CRes.dll` beside `ClientRes.rc`, so its resources are the retail ones | `src/game/ClientRes/goty/` |
 | 3. clean | every object and image from a previous run is removed | |
 | 4. libraries | `build/libs.sh all`; `RegMgr` twice, as Monolith built it for each game DLL: the Release build for `NOLF.exe` and `Object.lto`, the Debug build (`RegMgr_Debug.lib`) for `CShell.dll`, which the Game of the Year `CShell.dll` linked | `src/lithshared/out/*.lib` |
 | 5. game DLLs | `build/build.sh all final`: `CRes.dll`, `CShell.dll`, `Object.lto` | `src/game/*/Release`, `Final_Release` |
 | 6. engine | `build/engine.sh`: `ltmsg.dll`, `sres.dll`, `NOLF.exe`, `server.dll`, `lithtech.exe`, `d3d.ren` | `src/engine/*/Release` |
-| 7. assemble | the built binaries into the game directory; the game DLLs and `sres.dll` go in `custom/`, the rez directory the engine searches last | `out/game/` |
-| 8. audit | every PE file in `out/game/` listed with its origin (`out/game/MANIFEST.txt`); the build fails if one is unaccounted for, or if a `.rez` archive still holds one | |
-| 9. package | `out/game/` as one tar | `out/nolf-game.tar` |
+| 7. assemble | the built binaries into the game directory; the game DLLs and `sres.dll` go in `custom/`, the rez directory the engine searches last | `out/nolf-legacy-release/` |
+| 8. audit | every PE file in `out/nolf-legacy-release/` listed with its origin (`out/nolf-legacy-release/MANIFEST.txt`); the build fails if one is unaccounted for, or if a `.rez` archive still holds one | |
+| 9. package | `out/nolf-legacy-release/` as one tar | `out/nolf-legacy-release.tar` |
 
-Every binary in `out/game/` is built from this repository except the 35
+Every binary in `out/nolf-legacy-release/` is built from this repository except the 35
 Miles and Bink files of step 2; the audit prints them all. The steps are
 idempotent: running `make` again rebuilds every binary and leaves the data
 in place.
@@ -91,7 +91,7 @@ build/reference.sh                    # the retail images, into out/reference/
 build/engine.sh server verify         # compile, then match every function
                                       #   against the retail server.dll
 build/engine.sh server-one smgr.cpp PlaySound   # recompile one file, match it
-tools/playtest.sh out/game 'Worlds\M01S01' 60   # idle for 60 s on a level
+tools/playtest.sh out/nolf-legacy-release 'Worlds\M01S01' 60   # idle for 60 s on a level
 ```
 
 `build/env.sh`, which every script sources, defines `run_cl`, `run_link`,
@@ -112,20 +112,21 @@ project defines add to it, each in a build of its own:
 
 | | define | for | into |
 |---|---|---|---|
-| `make debug` | `NOLFSRC_DEBUG` | symbols, logging and crash backtraces: finding out why something goes wrong | `out/game-debug/` |
-| `make modern` | `NOLFSRC_MODERN` | the retail bugs fixed (`RETAIL_BUGS.md`), and later new features | `out/game-modern/` |
-| `make modern-debug` | both | debugging the modern build | `out/game-modern-debug/` |
+| `make debug` | `NOLFSRC_DEBUG` | symbols, logging and crash backtraces: finding out why something goes wrong | `out/nolf-legacy-debug/` |
+| `make modern` | `NOLFSRC_MODERN` | the retail bugs fixed (`RETAIL_BUGS.md`), and later new features | `out/nolf-modern-release/` |
+| `make modern-debug` | both | debugging the modern build | `out/nolf-modern-debug/` |
 
 All three are `build/variant.sh <variant>`. Each copies the source (without
 any build output) into `out/build-<variant>/` and builds it there with the
 same `build/all.sh`, so `src/*/Release` (what `make progress` scores),
-`out/game/` and the release command lines are left exactly as they were.
+`out/nolf-legacy-release/` and the release command lines are left exactly as they were.
 `build/env.sh` passes the extra flags to the compilers only inside those
 copies, and refuses them anywhere else, so neither define can reach the
 release build or the scoring by accident. The first run of each variant
 extracts the game data again (about 1.1 GB); later runs take about three
-minutes. Play them as the release game: `out/game-<variant>/run.sh`, or
-`tools/playtest.sh out/game-<variant> 'Worlds\T01S01'`.
+minutes. Play them as the release game, from the directory the table gives:
+`out/nolf-modern-release/run.sh`, or
+`tools/playtest.sh out/nolf-modern-release 'Worlds\T01S01'`.
 
 ### The modern build: `NOLFSRC_MODERN`
 
@@ -218,7 +219,7 @@ and the crash then goes on as it would have (Wine's own crash dialog, or the
 playtest's CRASHED). A frame with no name is in code without debug
 information -- the static C runtime, or a `d3d.ren` file compiled with
 `/Qip`, for which Intel C/C++ 4.0 writes none -- and is given at the
-binary's preferred base; `tools/mapaddr.py out/game-debug/d3d.map
+binary's preferred base; `tools/mapaddr.py out/nolf-legacy-debug/d3d.map
 0x10036d1c` names it from the map.
 
 The playtest runs the game in `out/play/<name>/`, so a playtest's
@@ -232,7 +233,7 @@ The playtest runs the game in `out/play/<name>/`, so a playtest's
   binaries do not.)
 * The game DLLs are the `Final_Release` configuration (`_REZFILE`, `_FINAL`),
   which reading data from `.rez` archives requires.
-* `out/game/nolfcmds.txt` is the command file `run.sh` and the playtest
+* `out/nolf-legacy-release/nolfcmds.txt` is the command file `run.sh` and the playtest
   start the engine with: the rez stack of the retail GOTY install with
   `custom/` last, a 640x480 window, and the intro movies off (they stall
   under some Wine setups).

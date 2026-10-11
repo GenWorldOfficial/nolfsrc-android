@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# THE build: a runnable No One Lives Forever (GOTY) in out/game/, with every
+# THE build: a runnable No One Lives Forever (GOTY) in out/nolf-legacy-release/, with every
 # binary compiled from this repository's source and only DATA taken from the
 # two disc images.
 #
 #   make                    (on the host: builds the docker image, checks
 #                            the disc images, runs this in a container)
 #   build/all.sh            (inside the build container, e.g. `make shell`)
-#   make test               (then: play it -- tools/playtest.sh on out/game/)
+#   make test               (then: play it -- tools/playtest.sh on out/nolf-legacy-release/)
 #
 # Needs: the toolchain (toolchains/, see toolchains/README.md), Wine (the build
 # container has it), and the disc images NOLF1-CD1.iso / NOLF1-CD2.iso in
@@ -40,14 +40,14 @@
 #                         lithtech.exe, d3d.ren from src/engine/
 #                         (build/engine.sh: each target's objects, then its
 #                         whole link).
-#   7. assemble           the built binaries into out/game/, laid out like a
+#   7. assemble           the built binaries into out/nolf-legacy-release/, laid out like a
 #                         retail install: the engine beside the data, the game
 #                         DLLs in the custom/ rez directory the engine
 #                         searches last-first (nolfcmds.txt: `-rez custom`).
-#   8. audit              every PE file in out/game/ listed with its origin;
+#   8. audit              every PE file in out/nolf-legacy-release/ listed with its origin;
 #                         the build fails if any is unaccounted for or if a
 #                         .rez archive still holds one.
-#   9. package            out/nolf-game.tar: the game directory as one file,
+#   9. package            out/nolf-legacy-release.tar: the game directory as one file,
 #                         to copy to the machine that plays it (unpack, then
 #                         ./run.sh -- see its header; Wine needed there).
 #
@@ -68,7 +68,7 @@ export WINEDEBUG=-all
 
 cd "$REPO"
 source build/isos.sh
-OUT="${NOLF_GAME_OUT:-out/game}"
+OUT="${NOLF_GAME_OUT:-out/nolf-legacy-release}"
 ISOS="$(iso_dir)"
 iso_verify
 T0=$(date +%s)
@@ -165,11 +165,11 @@ python3 tools/discextract.py audit "$OUT"
 
 # (NOLF_PACKAGE=0 skips it: build/variant.sh makes no tar)
 if [ "${NOLF_PACKAGE:-1}" = 1 ]; then
-    step "9. package: $OUT -> ${OUT%/*}/nolf-game.tar"
+    step "9. package: $OUT -> ${OUT%/*}/nolf-legacy-release.tar"
     # One file to copy to the machine that plays it: unpack anywhere, ./run.sh.
     # Links are stored as the files they point to (-h); the per-machine state
     # run.sh / run-launcher.sh create is left out.
-    PKG="${OUT%/*}/nolf-game.tar"
+    PKG="${OUT%/*}/nolf-legacy-release.tar"
     tar -C "$(dirname "$OUT")" -h -cf "$PKG.part" \
         --exclude=run-cmds.txt --exclude=cd --exclude='*.part' "$(basename "$OUT")"
     mv "$PKG.part" "$PKG"

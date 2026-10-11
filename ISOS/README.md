@@ -25,6 +25,6 @@ An image that does not match -- a different edition, a different language, a
 damaged rip -- is rejected before anything is built.
 
 Nothing from the discs is part of this repository: the build reads them
-into `out/game/` (and the launcher's art into `src/engine/launcher/res/`,
+into `out/nolf-legacy-release/` (and the launcher's art into `src/engine/launcher/res/`,
 which is gitignored) every time. Which files are taken, and how, is
 `tools/discextract.py`.

@@ -131,7 +131,7 @@ static LONG WINAPI NolfsrcCrashFilter(EXCEPTION_POINTERS *ep)
             /* no symbols (the CRT, or a d3d.ren file built with /Qip, for
                which icl 4.0 emits no debug information): give the address
                at the image's preferred base too, which is what its .map
-               file (beside it in out/game-debug/) lists */
+               file (beside it in out/nolf-legacy-debug/) lists */
             IMAGE_DOS_HEADER *dos = (IMAGE_DOS_HEADER *)base;
             IMAGE_NT_HEADERS *nt = (IMAGE_NT_HEADERS *)(base + dos->e_lfanew);
             NOLFSRC_CRASH_LOG(("  #%-2d 0x%08lx %s+0x%lx  (0x%08lx in its .map)", i, addr, modname,

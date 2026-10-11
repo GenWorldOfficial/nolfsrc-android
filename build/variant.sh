@@ -3,13 +3,13 @@
 # build never has -- never for measuring: progress is only ever scored on the
 # release build (`make`, `make progress`).
 #
-#   build/variant.sh debug         make debug          -> out/game-debug/
-#   build/variant.sh modern        make modern         -> out/game-modern/
-#   build/variant.sh modern-debug  make modern-debug   -> out/game-modern-debug/
+#   build/variant.sh debug         make debug          -> out/nolf-legacy-debug/
+#   build/variant.sh modern        make modern         -> out/nolf-modern-release/
+#   build/variant.sh modern-debug  make modern-debug   -> out/nolf-modern-debug/
 #
 # (on the host the make targets run this in the build container; inside
-# `make shell` run it directly). Play the result exactly like out/game/:
-# out/game-<variant>/run.sh, or tools/playtest.sh out/game-<variant> ...
+# `make shell` run it directly). Play the result exactly like out/nolf-legacy-release/:
+# out/<name>/run.sh, or tools/playtest.sh out/<name> ...
 #
 #   debug    NOLFSRC_DEBUG and symbols, for finding out why something goes
 #            wrong. Compile + /Z7 /Oy- /D NOLFSRC_DEBUG (debug information,
@@ -41,8 +41,8 @@
 # It never touches the release build. The source is copied (without any
 # build output) into out/build-<variant>/ and built there by the same
 # build/all.sh, so src/*/Release -- what `make progress` scores -- and
-# out/game/ are left exactly as they were. The game data are extracted into
-# out/game-<variant>/ on its first run (about 1.1 GB, a few minutes) and kept
+# out/nolf-legacy-release/ are left exactly as they were. The game data are extracted into
+# out/<name>/ on its first run (about 1.1 GB, a few minutes) and kept
 # after that; no tar is made.
 set -e
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -60,6 +60,12 @@ case "$VARIANT" in
                   LDFLAGS="/DEBUG /OPT:REF /INCREMENTAL:NO"
                   RCFLAGS="/d NOLFSRC_DEBUG /d NOLFSRC_MODERN" ;;
     *) echo "usage: build/variant.sh debug|modern|modern-debug" >&2; exit 2 ;;
+esac
+# the game directory it builds: out/nolf-<legacy|modern>-<release|debug>/
+case "$VARIANT" in
+    debug)        NAME=nolf-legacy-debug ;;
+    modern)       NAME=nolf-modern-release ;;
+    modern-debug) NAME=nolf-modern-debug ;;
 esac
 
 if ! command -v wine >/dev/null 2>&1; then
@@ -86,19 +92,19 @@ export NOLF_ISOS="${NOLF_ISOS:-$REPO/ISOS}"
 export NOLFSRC_CFLAGS="$CFLAGS"
 export NOLFSRC_LDFLAGS="$LDFLAGS"
 export NOLFSRC_RCFLAGS="$RCFLAGS"
-export NOLF_GAME_OUT="$REPO/out/game-$VARIANT"
+export NOLF_GAME_OUT="$REPO/out/$NAME"
 export NOLF_PACKAGE=0
 bash "$TREE/build/all.sh"
 
 case "$VARIANT" in modern*)
     echo
-    echo "== modern data: src/modern/data/ recipes -> out/game-$VARIANT/custom/"
+    echo "== modern data: src/modern/data/ recipes -> out/$NAME/custom/"
     python3 "$TREE/tools/moddata.py" apply "$NOLF_GAME_OUT" "$TREE/src/modern/data" ;;
 esac
 
 case "$VARIANT" in *debug)
     echo
-    echo "== symbols: each built binary's .pdb (and .map) beside it in out/game-$VARIANT/"
+    echo "== symbols: each built binary's .pdb (and .map) beside it in out/$NAME/"
     # MANIFEST.txt has `built <source>\t<installed path>` for every binary we
     # built; its .pdb is the link output's name with .pdb, and the debugger
     # looks for it by that name in the binary's own directory.
@@ -117,4 +123,4 @@ case "$VARIANT" in *debug)
         [ -f "$map" ] && cp "$map" "$NOLF_GAME_OUT/$(dirname "$dest")/"
     done ;;
 esac
-echo "== done: out/game-$VARIANT/ -- play it with out/game-$VARIANT/run.sh"
+echo "== done: out/$NAME/ -- play it with out/$NAME/run.sh"

@@ -1,9 +1,9 @@
 # No One Lives Forever, built from source.
 #
-#   make          build the whole game into out/game/ (and out/nolf-game.tar)
-#   make test     scripted playtest of out/game/ on two levels
-#   make debug    the same game with symbols and debug logging, in out/game-debug/
-#   make modern   the game with the retail bugs fixed (NOLFSRC_MODERN), in out/game-modern/
+#   make          build the whole game into out/nolf-legacy-release/ (and out/nolf-legacy-release.tar)
+#   make test     scripted playtest of out/nolf-legacy-release/ on two levels
+#   make debug    the same game with symbols and debug logging, in out/nolf-legacy-debug/
+#   make modern   the game with the retail bugs fixed (NOLFSRC_MODERN), in out/nolf-modern-release/
 #   make progress how much of the build is byte-identical to the retail game;
 #                 fails if a function recorded as identical stops matching
 #   make help     everything else
@@ -42,12 +42,12 @@ TOOLCHAIN_FILES = toolchains/msvc-6.00-9782/VC98/Bin/CL.EXE \
 all: game
 
 help:
-	@echo "make            build everything into out/game/ and out/nolf-game.tar"
-	@echo "make debug      the game with symbols and NOLFSRC_DEBUG logging, in out/game-debug/"
-	@echo "make modern     the game with NOLFSRC_MODERN (the retail bugs fixed), in out/game-modern/"
-	@echo "make modern-debug  both, in out/game-modern-debug/"
+	@echo "make            build everything into out/nolf-legacy-release/ and out/nolf-legacy-release.tar"
+	@echo "make debug      the game with symbols and NOLFSRC_DEBUG logging, in out/nolf-legacy-debug/"
+	@echo "make modern     the game with NOLFSRC_MODERN (the retail bugs fixed), in out/nolf-modern-release/"
+	@echo "make modern-debug  both, in out/nolf-modern-debug/"
 	@echo "                (none of these is ever scored; build/variant.sh)"
-	@echo "make test       scripted playtest of out/game/ ($(TEST_LEVELS)), under Xvfb"
+	@echo "make test       scripted playtest of out/nolf-legacy-release/ ($(TEST_LEVELS)), under Xvfb"
 	@echo "make progress   score the build against the retail binaries; fails if a"
 	@echo "                function recorded in progress/identical.txt stops matching"
 	@echo "make progress-update  record the score in progress/ and README.md"
@@ -80,11 +80,11 @@ check-toolchain:
 	done
 
 test: image
-	@[ -f out/game/lithtech.exe ] || { echo "error: no out/game/ -- run make first" >&2; exit 1; }
+	@[ -f out/nolf-legacy-release/lithtech.exe ] || { echo "error: no out/nolf-legacy-release/ -- run make first" >&2; exit 1; }
 	@rc=0; for w in $(TEST_LEVELS); do \
 	  echo "== playtest: Worlds\\$$w (tools/playtest-basic.txt)"; \
 	  $(DOCKER_RUN) env PLAYTEST_SCRIPT=tools/playtest-basic.txt PLAYTEST_NAME=test-$$w \
-	    bash tools/playtest.sh out/game "Worlds\\$$w" || rc=1; \
+	    bash tools/playtest.sh out/nolf-legacy-release "Worlds\\$$w" || rc=1; \
 	done; \
 	if [ $$rc = 0 ]; then echo "== make test: every level ALIVE (shots in out/play/test-*/)"; \
 	else echo "== make test: FAILED (see out/play/test-*/result.txt, wine.log)"; fi; exit $$rc

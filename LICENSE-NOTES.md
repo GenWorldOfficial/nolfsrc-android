@@ -18,9 +18,9 @@ This file says which is which; it is not legal advice and grants nothing.
 
 | What | Origin | Where it goes |
 |---|---|---|
-| the game data: `.rez` archives, configs, text, movies | Monolith Productions / Fox Interactive / Sierra | `out/game/` |
-| `mss32.dll` and its `.flt`, `.m3d`, `.asi`, `.as6` providers | Miles Sound System, RAD Game Tools | `out/game/` (the only binaries in the game not built from source) |
-| `binkw32.dll` | Bink Video, RAD Game Tools | `out/game/` |
+| the game data: `.rez` archives, configs, text, movies | Monolith Productions / Fox Interactive / Sierra | `out/nolf-legacy-release/` |
+| `mss32.dll` and its `.flt`, `.m3d`, `.asi`, `.as6` providers | Miles Sound System, RAD Game Tools | `out/nolf-legacy-release/` (the only binaries in the game not built from source) |
+| `binkw32.dll` | Bink Video, RAD Game Tools | `out/nolf-legacy-release/` |
 | the launcher's bitmap, palette, music, icon and cursors | Monolith, from the retail `NOLF.exe`'s resources | `src/engine/launcher/res/` (gitignored), compiled into our `NOLF.exe` |
 | the Game of the Year strings and credits | Monolith, from the retail GOTY `CRES.dll`'s resources | `src/game/ClientRes/goty/` (gitignored), compiled into our `CRes.dll` |
 

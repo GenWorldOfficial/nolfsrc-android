@@ -47,7 +47,7 @@ comes from.
 * **Release unchanged.** After every change: the release build's objects for
   that file still match (`build/engine.sh <target>-one <file>` for the engine;
   `make progress` for everything), and `make modern` builds and plays
-  (`tools/playtest.sh out/game-modern ...`).
+  (`tools/playtest.sh out/nolf-modern-release ...`).
 
 ## Status legend
 

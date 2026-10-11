@@ -17,12 +17,12 @@ override the retail copies. The release build never sees any of it.
 | `gamedir/...` | the same four kinds for a file the engine reads from the game directory itself rather than from the archives (`gamedir/defctrls.cfg.patch`); the retail original is kept beside it as `<file>.retail` and put back if the recipe goes |
 
 To make a patch, edit a copy of the file and let the tool write the diff
-(after a `make modern`, so `out/game-modern/` exists):
+(after a `make modern`, so `out/nolf-modern-release/` exists):
 
 ```sh
-python3 tools/moddata.py show out/game-modern ATTRIBUTES/WEAPONS.txt > /tmp/weapons.txt
+python3 tools/moddata.py show out/nolf-modern-release ATTRIBUTES/WEAPONS.txt > /tmp/weapons.txt
 # ... edit /tmp/weapons.txt ...
-python3 tools/moddata.py diff out/game-modern ATTRIBUTES/WEAPONS.txt /tmp/weapons.txt \
+python3 tools/moddata.py diff out/nolf-modern-release ATTRIBUTES/WEAPONS.txt /tmp/weapons.txt \
     > src/modern/data/ATTRIBUTES/WEAPONS.txt.patch
 ```
 
