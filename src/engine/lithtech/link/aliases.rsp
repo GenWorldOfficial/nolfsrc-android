@@ -3032,3 +3032,8 @@
 /ALTERNATENAME:?SetPos@LTObjectQ460@@QAEXV?$_CVector@M@@@Z=?SetPos@LTObject@@QAEXV?$_CVector@M@@@Z
 # 0x4159f0 -- CPacket::WriteType<uint8> (clientmgr3.cpp's message view)
 /ALTERNATENAME:?WriteType@CCmgMsg@@QAEXE@Z=?WriteType@CPacket@@QAEXE@Z
+# 0x43ef90 -- dm_NotInitError (ltnew1.cpp). clientmusic.cpp calls it under a
+# second name for the level-not-initialised refusals: with ONE callee symbol
+# VC6 /O2 tail-merges ChangeIntensity's two refusals (777 bytes) where the
+# shipped 0x00440620 keeps both (798, byte-identical with two symbols).
+/ALTERNATENAME:?dm_NotLevelInitError@@YAXPAD@Z=?dm_NotInitError@@YAXPAD@Z

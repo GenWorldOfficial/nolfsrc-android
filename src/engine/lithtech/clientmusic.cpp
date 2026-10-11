@@ -12,6 +12,18 @@
 
 
 // Playing is asking for the level's starting intensity, immediately.
+// The level-not-initialised refusal's callee, under a name of its own. It is
+// the same 0x0043ef90 as dm_NotInitError (link/aliases.rsp), but it has to be
+// a SECOND SYMBOL to the compiler: with both refusals calling one function,
+// VC6 /O2 tail-merges ChangeIntensity's second refusal into the first (`push
+// ; jmp`, 777 bytes) where the shipped 0x00440620 keeps both whole (798).
+// No one-symbol spelling stops that merge (an inline wrapper, a cast or a
+// local for the name, else-if, a literal return value: all 777). Two
+// identical refusal functions that the linker folded into one would explain
+// it; that is a guess, the second symbol is what the bytes need. Every
+// function here uses it for the level test, so the eight sites stay alike.
+void dm_NotLevelInitError(char* pFnName);
+
 LTRESULT CLTDirectMusicMgr::Play()
 {
 	dm_Printf(4, "CLTDirectMusicMgr::Play\n");
@@ -24,7 +36,7 @@ LTRESULT CLTDirectMusicMgr::Play()
 
 	if (!m_bLevelInitialized)
 	{
-		dm_NotInitError("CLTDirectMusicMgr::Play");
+		dm_NotLevelInitError("CLTDirectMusicMgr::Play");
 		return LT_ERROR;
 	}
 
@@ -49,7 +61,7 @@ LTRESULT CLTDirectMusicMgr::SetVolume(const long nVolume)
 
 	if (!m_bLevelInitialized)
 	{
-		dm_NotInitError("CLTDirectMusicMgr::SetVolume");
+		dm_NotLevelInitError("CLTDirectMusicMgr::SetVolume");
 		return LT_ERROR;
 	}
 
@@ -95,7 +107,7 @@ LTRESULT CLTDirectMusicMgr::StopSecondary(const char* sSecondarySegment,
 
 	if (!m_bLevelInitialized)
 	{
-		dm_NotInitError("CLTDirectMusicMgr::StopSecondary");
+		dm_NotLevelInitError("CLTDirectMusicMgr::StopSecondary");
 		return LT_ERROR;
 	}
 
@@ -159,7 +171,7 @@ LTRESULT CLTDirectMusicMgr::StopMotif(const char* sMotifName, const LTDMEnactTyp
 
 	if (!m_bLevelInitialized)
 	{
-		dm_NotInitError("CLTDirectMusicMgr::StopMotif");
+		dm_NotLevelInitError("CLTDirectMusicMgr::StopMotif");
 		return LT_ERROR;
 	}
 
@@ -240,7 +252,7 @@ LTRESULT CLTDirectMusicMgr::PlaySecondary(const char* sSecondarySegment,
 
 	if (!m_bLevelInitialized)
 	{
-		dm_NotInitError("CLTDirectMusicMgr::PlaySecondary");
+		dm_NotLevelInitError("CLTDirectMusicMgr::PlaySecondary");
 		return LT_ERROR;
 	}
 
@@ -326,7 +338,7 @@ LTRESULT CLTDirectMusicMgr::PlayMotif(const char* sMotifName,
 
 	if (!m_bLevelInitialized)
 	{
-		dm_NotInitError("CLTDirectMusicMgr::PlayMotif");
+		dm_NotLevelInitError("CLTDirectMusicMgr::PlayMotif");
 		return LT_ERROR;
 	}
 
@@ -414,7 +426,7 @@ LTRESULT CLTDirectMusicMgr::Stop(const LTDMEnactTypes nStart)
 
 	if (!m_bLevelInitialized)
 	{
-		dm_NotInitError("CLTDirectMusicMgr::Stop");
+		dm_NotLevelInitError("CLTDirectMusicMgr::Stop");
 		return LT_ERROR;
 	}
 
@@ -819,12 +831,11 @@ LTRESULT CLTDirectMusicMgr::InitLevel(const char* sWorkingDirectory, const char*
 // arm materialises the zero with `xor %eax,%eax` and then stores through it -
 // which is what says `new` and not a written-out allocate-and-test.
 //
-// A near: 777 bytes against the shipped 798, and the whole residual is the
-// second not-initialised block. The shipped build emits that block whole, with
-// its own `mov $0x1,%eax` ahead of the pops. The first block's epilogue has the
-// mov between the pops instead. Ours finds the two tails identical and
-// cross-jumps the second block into the first from the call onwards (see
-// NOPOOL_TUS in build/engine.sh for the same effect across this file).
+// Byte-identical (798). It was 777 while both not-initialised blocks called
+// one symbol: VC6 found the two tails identical and cross-jumped the second
+// block into the first from the call onwards, where the shipped build emits
+// it whole. The level test now calls dm_NotLevelInitError (see its
+// declaration at the top of this file).
 //
 // The four allocations are three shapes, and that part now matches:
 // * PLAYTRANSITION and PLAYSEGMENT (0x00440755, 0x00440805) are
@@ -899,7 +910,7 @@ LTRESULT CLTDirectMusicMgr::ChangeIntensity(const int nNewIntensity,
 
 	if (!m_bLevelInitialized)
 	{
-		dm_NotInitError("CLTDirectMusicMgr::ChangeIntensity");
+		dm_NotLevelInitError("CLTDirectMusicMgr::ChangeIntensity");
 		return LT_ERROR;
 	}
 
