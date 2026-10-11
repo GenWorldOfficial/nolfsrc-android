@@ -4815,25 +4815,25 @@ void CServerWorldRec::Clear()
 	m_pCurrent  = LTNULL;
 }
 
-// 0x10007ecc — and the teardown. IDENTICAL on the server; lithtech.exe
-// 0x004222a0 is a SIZE-EXACT NEAR (70 of 70 bytes, 28 of 28 instructions)
-// and the only difference is that the /O2 build puts `this` in %edi and
-// the object being deleted in %esi where ours has them the other way
-// round. Which register holds `this` is a settled dead end in this
-// project; nothing in the source moves it.
+// 0x10007ecc — and the teardown, identical in both images (lithtech.exe
+// 0x004222a0).
 //
 // Two flag bits, one per geometry object,
 // tested as BYTES (`testb $0x1,(%esi)`): VC6 narrows `dword & 1` to the low
-// byte by itself, so the field stays a uint32. Each arm is a bare `delete`
-// with no null test of its own -- the `test %edi,%edi; je` inside each arm
-// is delete's, not the source's -- and the record is cleared at the end
-// through the same member the constructor calls.
+// byte by itself, so the field stays a uint32. Each arm carries its OWN null
+// test as well as delete's: the two fold into the one `test; je` per arm, so
+// /O1 cannot tell them apart, but /O2 can -- with a bare `delete` it puts
+// `this` in %esi and the object in %edi, the reverse of the shipped
+// assignment (13 instructions differing). A local `this` copy, a block-scoped
+// pointer per arm, or the flags in a local all leave that reversal in place.
+// The record is cleared at the end through the same member the constructor
+// calls.
 void CServerWorldRec::Term()
 {
-	if (m_Flags & 1)
+	if ((m_Flags & 1) && m_pWorldBsp)
 		delete m_pWorldBsp;
 
-	if (m_Flags & 2)
+	if ((m_Flags & 2) && m_pOriginal)
 		delete m_pOriginal;
 
 	Clear();
