@@ -60,6 +60,7 @@ class Prop : public GameBase
 		void	CacheFiles();
 
 		void	HandleTouch(HOBJECT hObj);
+		LTBOOL	HandleGotyCommand(char* pCmd);	// GOTY
 };
 
 class CPropPlugin : public IObjectPlugin

@@ -40,6 +40,7 @@ BEGIN_CLASS(Prop)
 	ADD_STRINGPROP_FLAG(TouchSound, "", PF_FILENAME)
 	ADD_REALPROP_FLAG(TouchSoundRadius, 500.0, PF_RADIUS)
 	ADD_STRINGPROP_FLAG(DetailLevel, "Low", PF_STATICLIST)
+    ADD_BOOLPROP(ModelKeys, LTFALSE)	// GOTY
 END_CLASS_DEFAULT_FLAGS_PLUGIN(Prop, GameBase, NULL, NULL, 0, CPropPlugin)
 
 LTRESULT CPropPlugin::PreHook_EditStringList(
@@ -197,6 +198,26 @@ uint32 Prop::EngineMessageFn(uint32 messageID, void *pData, LTFLOAT fData)
 		}
 		break;
 
+		// GOTY: reconstructed from the Game of the Year Object.lto --
+		// model string keys can trigger the goty_ commands below.
+
+		case MID_MODELSTRINGKEY:
+		{
+			ArgList* pArgList = (ArgList*)pData;
+
+			char szBuffer[256];
+			szBuffer[0] = '\0';
+
+			for ( int iArg = 0 ; iArg < pArgList->argc ; iArg++ )
+			{
+				strcat(szBuffer, pArgList->argv[iArg]);
+				strcat(szBuffer, " ");
+			}
+
+			HandleGotyCommand(szBuffer);
+		}
+		break;
+
 		default : break;
 	}
 
@@ -325,6 +346,16 @@ void Prop::ReadProp(ObjectCreateStruct *pData)
     if (g_pLTServer->GetPropGeneric("TouchSoundRadius", &genProp) == LT_OK)
 	{
 		m_fTouchSoundRadius = genProp.m_Float;
+	}
+
+	// GOTY: reconstructed from the Game of the Year Object.lto
+
+    if (g_pLTServer->GetPropGeneric("ModelKeys", &genProp) == LT_OK)
+	{
+		if (genProp.m_Bool)
+		{
+			m_dwFlags |= FLAG_MODELKEYS;
+		}
 	}
 }
 
@@ -566,4 +597,96 @@ void Prop::Load(HMESSAGEREAD hRead, uint32 dwLoadFlags)
     m_hstrTouchSound = g_pLTServer->ReadFromMessageHString(hRead);
     g_pLTServer->ReadFromMessageVector(hRead, &m_vScale);
     g_pLTServer->ReadFromMessageVector(hRead, &m_vObjectColor);
+}
+
+
+// ----------------------------------------------------------------------- //
+//
+//	GOTY: reconstructed from the Game of the Year Object.lto.
+//
+//	Commands a prop's model string keys can send: a muzzle flash at the
+//	prop, and a sound played from it.
+//
+// ----------------------------------------------------------------------- //
+
+typedef LTBOOL (*GotyCmdFn)(Prop* pProp, ConParse* pParse);
+
+struct GOTY_CMD_STRUCT
+{
+	char*		pCmdName;
+	int			nMinArgs;
+	int			nMaxArgs;
+	GotyCmdFn	pProcessFn;
+};
+
+static LTBOOL goty_MuzzleFlash(Prop* pProp, ConParse* pParse);
+static LTBOOL goty_PlaySound(Prop* pProp, ConParse* pParse);
+
+static GOTY_CMD_STRUCT s_GotyCmds[] =
+{
+	{ "goty_muzzleflash", 2, 2, goty_MuzzleFlash },
+	{ "goty_playsound", 2, 3, goty_PlaySound },
+};
+
+const int c_nNumGotyCmds = sizeof(s_GotyCmds)/sizeof(s_GotyCmds[0]);
+
+static LTBOOL goty_MuzzleFlash(Prop* pProp, ConParse* pParse)
+{
+	if (pParse->m_nArgs > s_GotyCmds[0].nMaxArgs || pParse->m_nArgs < s_GotyCmds[0].nMinArgs)
+	{
+		return LTFALSE;
+	}
+
+	LTVector vPos;
+	g_pLTServer->GetObjectPos(pProp->m_hObject, &vPos);
+
+	HMESSAGEWRITE hMessage = g_pLTServer->StartInstantSpecialEffectMessage(&vPos);
+	hMessage->WriteByte(SFX_MUZZLEFLASH_ID);
+	hMessage->WriteObject(pProp->m_hObject);
+	g_pLTServer->EndMessage2(hMessage, MESSAGE_NAGGLEFAST);
+
+	return LTTRUE;
+}
+
+static LTBOOL goty_PlaySound(Prop* pProp, ConParse* pParse)
+{
+	if (pParse->m_nArgs > s_GotyCmds[0].nMaxArgs || pParse->m_nArgs < s_GotyCmds[0].nMinArgs)
+	{
+		return LTFALSE;
+	}
+
+	LTFLOAT fRadius = 2048.0f;
+	if (pParse->m_nArgs > 2)
+	{
+		fRadius = (LTFLOAT)atof(pParse->m_Args[3]);
+	}
+
+	g_pServerSoundMgr->PlaySoundFromObject(pProp->m_hObject, pParse->m_Args[1], fRadius,
+		SOUNDPRIORITY_MISC_HIGH, 0, 100, 1.0f);
+
+	return LTTRUE;
+}
+
+LTBOOL Prop::HandleGotyCommand(char* pCmd)
+{
+	if (!pCmd) return LTFALSE;
+
+	ConParse parse;
+	parse.Init(pCmd);
+
+	while (g_pLTServer->Common()->Parse(&parse) == LT_OK)
+	{
+		if (parse.m_nArgs > 0 && parse.m_Args[0])
+		{
+			for (int i=0; i < c_nNumGotyCmds; i++)
+			{
+				if (_stricmp(s_GotyCmds[i].pCmdName, parse.m_Args[0]) == 0)
+				{
+					return s_GotyCmds[i].pProcessFn(this, &parse);
+				}
+			}
+		}
+	}
+
+	return LTFALSE;
 }

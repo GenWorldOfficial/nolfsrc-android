@@ -57,6 +57,8 @@ struct PROPTYPE
 
 	int			nTouchSoundRadius;
 	int			nHitPoints;
+
+	LTBOOL		bModelKeys;		// GOTY: reconstructed from the Game of the Year Object.lto
 };
 
 typedef CTList<PROPTYPE*> PropTypeList;

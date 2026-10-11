@@ -38,6 +38,7 @@
 #define PTMGR_SKIN					"Skin"
 #define PTMGR_TOUCHSOUND			"TouchSound"
 #define PTMGR_DEBRISTYPE			"DebrisType"
+#define PTMGR_MODELKEYS				"ModelKeys"	// GOTY
 
 static char s_aTagName[30];
 static char s_aAttName[100];
@@ -258,6 +259,9 @@ PROPTYPE::PROPTYPE()
 	szSkin[0]		= '\0';
 	szDebrisType[0]	= '\0';
 	szTouchSound[0]	= '\0';
+
+	// GOTY: reconstructed from the Game of the Year Object.lto
+	bModelKeys		= LTFALSE;
 }
 
 // ----------------------------------------------------------------------- //
@@ -321,6 +325,11 @@ LTBOOL PROPTYPE::Init(CButeMgr & buteMgr, char* aTagName)
 	{
 		strncpy(szDebrisType, (char*)(LPCSTR)str, ARRAY_LEN(szDebrisType));
 	}
+
+	// GOTY: reconstructed from the Game of the Year Object.lto -- the
+	// attribute is read, but every prop type gets model keys regardless.
+	buteMgr.GetInt(aTagName, PTMGR_MODELKEYS);
+	bModelKeys		= LTTRUE;
 
     return LTTRUE;
 }

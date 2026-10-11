@@ -230,6 +230,12 @@ void PropType::ReadProp(ObjectCreateStruct *pData)
 		m_dwFlags |= FLAG_TOUCH_NOTIFY;
 	}
 
+	// GOTY: reconstructed from the Game of the Year Object.lto
+	if (pPropType->bModelKeys)
+	{
+		m_dwFlags |= FLAG_MODELKEYS;
+	}
+
 	m_damage.SetArmorPoints(0.0f);
 	m_damage.SetMaxArmorPoints(0.0f);
     m_damage.SetCanHeal(LTFALSE);
