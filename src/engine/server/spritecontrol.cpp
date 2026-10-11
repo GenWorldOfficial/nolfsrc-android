@@ -224,7 +224,7 @@ inline LTRESULT sm_SetSoundTrackChangeFlags(CServerMgr* pServerMgr,
                                             SoundInstance* pSound, uint32 dwFlag)
 {
 	CObjectMapEntry* pEntry =
-		&pServerMgr->m_Unknown8fc.m_pEntries[((uint32*)pSound->m_pUnknown0c)[2]];
+		&pServerMgr->m_Unknown8fc.m_pArray[((uint32*)pSound->m_pUnknown0c)[2]];
 
 	if (pEntry->m_nFlags != 2 || pEntry->m_pRecord == LTNULL)
 		RETURN_ERROR(1, "SetSoundTrackChangeFlags", LT_ERROR);
@@ -444,8 +444,8 @@ LTBOOL SoundInstance::Init(PlaySoundInfo* pInfo, float fTime, void* hFile, void*
 	if (sm_ClaimObjectID(g_pServerMgr, (void**)&m_pUnknown0c, 0xffff))
 		return LTFALSE;
 
-	g_pServerMgr->m_Unknown8fc.m_pEntries[((CSoundIDRec*)m_pUnknown0c)->m_nIndex].m_nFlags = 2;
-	g_pServerMgr->m_Unknown8fc.m_pEntries[((CSoundIDRec*)m_pUnknown0c)->m_nIndex].m_pRecord = this;
+	g_pServerMgr->m_Unknown8fc.m_pArray[((CSoundIDRec*)m_pUnknown0c)->m_nIndex].m_nFlags = 2;
+	g_pServerMgr->m_Unknown8fc.m_pArray[((CSoundIDRec*)m_pUnknown0c)->m_nIndex].m_pRecord = this;
 
 	sm_SetSoundTrackChangeFlags(g_pServerMgr, this, 3);
 

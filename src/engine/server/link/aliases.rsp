@@ -542,9 +542,6 @@
 # CObjectBank<CBankElem54>::Init (placed there; the 0x54 sb_Init)
 /ALTERNATENAME:?_v08@CMessageBank@@UAEXPAX@Z=?Free@CMsgRecordBank@@UAEXPAX@Z
 /ALTERNATENAME:?Term@CMessageBank@@UAEXXZ=?Init@?$CObjectBank@VCBankElem54@@@@UAEXXZ
-# 0x1004e328 -- the object map's vftable (CServerMgr's destructor stores it at +0x8fc,
-# 0x1002c991). Slot 1 = 0x1000b2b7, where every CMoArray<>::GenIsValid instance is placed
-/ALTERNATENAME:?_v04@CUnknown8FC@@UAEXXZ=?GenIsValid@?$CMoArray@KVDefaultCache@@@@UBEIABVGenListPos@@@Z
 # 0x1004e8c8 -- the object mover's vftable (CServerMgr::Init stores it into the new
 # +0x6a8 object at 0x10031fbe). smgr.cpp constructs it as objmover.cpp's CObjectMoverQ47C;
 # the three slots that file leaves unnamed are spritecontrol.cpp's CObjectMover bodies,

@@ -167,9 +167,15 @@ int tcp_BuildSockaddrFromString(char* pString, struct sockaddr_in* pAddr);
 //     112 bytes against 94 and 102).
 //   * the destructor is `Term()`, as CMoArray's is, not a direct SetSize2.
 // SetSize2's allocating arm is spelled with LNew_Array rather than through
-// an _AllocateTArray member: adding that member flipped HandleConnPacket
-// (0x10036ee5) to its two-instruction reload-swap near, the count
-// sensitivity described at TCPMsgView above.
+// the _AllocateTArray member, which is DECLARED, as collection.h declares
+// it, and not defined. Both the declaration and its absence have been
+// load-bearing for HandleConnPacket (0x10036ee5), by the count sensitivity
+// described at TCPMsgView above: without it the function was identical
+// while servermgr.h's object map was a hand-written class, and with
+// servermgr.h holding a CMoArray<CObjectMapEntry> (whose implicit
+// instantiation declares that template's members in every TU) it is the
+// declaration that keeps it identical; missing either way it is a
+// two-instruction reload swap.
 //
 // IT IS A MEMBER, NOT A SECOND BASE, and that was measured rather than
 // guessed. Every derived-to-base POINTER conversion cl 8447 emits at a
@@ -237,6 +243,7 @@ public:
 	               CMoAllocator* pAlloc);
 	LTBOOL SetSize2(uint32 newSize, CMoAllocator* pAlloc);
 	void   _DeleteAndDestroyArray(LAlloc* pAlloc, uint32 nElements);
+	T*     _AllocateTArray(uint32 nElements, LAlloc* pAlloc);
 	uint32 GetNumAllocatedElements() { return m_nElements + m_Cache.GetCacheSize(); }
 
 	LTBOOL Insert(uint32 iItem, const T& toInsert)

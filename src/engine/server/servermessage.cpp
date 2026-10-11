@@ -2243,10 +2243,10 @@ LTRESULT CMessageObjectHelper::ReadObjectID(IMessageWrite* pMsg, LTObject** ppOb
 	{
 		if (nID == 0xffff)
 			return LT_OK;
-		if (nID >= m_pServerMgr->m_Unknown8fc.m_nEntries)
+		if (nID >= m_pServerMgr->m_Unknown8fc.m_nElements)
 			return LT_OK;
 
-		CObjectMapEntry* pEntry = &m_pServerMgr->m_Unknown8fc.m_pEntries[nID];
+		CObjectMapEntry* pEntry = &m_pServerMgr->m_Unknown8fc.m_pArray[nID];
 
 		if (pEntry->m_nFlags != 1)
 			return LT_OK;

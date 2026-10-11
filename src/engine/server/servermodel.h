@@ -97,7 +97,7 @@ inline LTRESULT sm_SetObjectChangeFlag(CServerMgr* pServerMgr, LTObject* pObj,
 		                  pObj->m_pSData->m_pClass->m_pClassName);
 
 	CObjectMapEntry* pEntry =
-		&pServerMgr->m_Unknown8fc.m_pEntries[pObj->m_ObjectID];
+		&pServerMgr->m_Unknown8fc.m_pArray[pObj->m_ObjectID];
 
 	if (pEntry->m_nFlags != 1 || !pEntry->m_pRecord)
 		RETURN_ERROR_INFO(1, "SetObjectChangeFlags", LT_ERROR,

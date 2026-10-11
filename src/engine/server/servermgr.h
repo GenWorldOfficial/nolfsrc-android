@@ -458,35 +458,22 @@ public:
 	void*  m_pRecord;                        // +0x04  zeroed on removal
 };
 
-// The object map: the same growable array shape as the manager's connection
-// and driver lists, with the same Init and the same allocator, but its own
-// SetSize — which is why the two Inits are byte-for-byte the same code and
-
-// 0x10058c7c — the one allocator instance. Declared here as well as further
-// down, because the inline destructors above expand a call that takes it.
-extern class CMoAllocator g_MoAlloc;
-
-// still could not be folded, the call inside them going somewhere else.
-class CUnknown8FC
-{
-public:
-	CUnknown8FC();                           // 0x1002cbe3
-	void   Init(int nSize, int nGrowBy);     // 0x1000c4cf
-	LTBOOL SetSize(uint32 nItems, class CMoAllocator* pAlloc);  // 0x1002ccee
-
-	// Its own allocate, because the entries are not pointers and the size
-	// calculation differs; the release folded with the pointer array's.
-	void*  AllocItems(uint32 nItems, class CMoAllocator* pAlloc);  // 0x1002cecf
-
-	// Inline: CServerMgr's destructor expands it, and the vptr restore it
-	// starts with is why the pad here had to become a real virtual.
-	virtual ~CUnknown8FC() { SetSize(0, &g_MoAlloc); }
-	virtual void _v04();                     //        the vptr
-	CObjectMapEntry* m_pEntries;             // +0x04 (0x900)  indexed by object id
-	uint32           m_nEntries;             // +0x08 (0x904)
-	uint32           m_nSlack;               // +0x0c
-	uint32           m_nGrowBy;              // +0x10
-};
+// The object map, CServerMgr+0x8fc: collection.h's CMoArray<CObjectMapEntry>
+// itself, as CConnList and CDriverList already are, and not a look-alike of
+// it. The shipped constructor (0x1002cbe3) is the template's -- vptr
+// 0x1004e328, Clear()'s four zero stores, Init(0, 0) -- and that vptr is a
+// full twelve-slot GenList table (GenBegin 0x1000ba8f, GenIsValid
+// 0x1000b2b7, ...), so the class has no virtual destructor and no `??_G`.
+// Init (0x1000c4cf) is the DefaultCache Init every other instantiation
+// shares, SetSize (0x1002ccee) is its SetSize2 and AllocItems (0x1002cecf)
+// its _AllocateTArray. The hand-written class that stood here (a virtual
+// destructor, its own Init/SetSize/AllocItems over m_pEntries / m_nEntries /
+// m_nSlack / m_nGrowBy) compiled a `??_G`, a second constructor and a second
+// Init that the shipped images do not have. A typedef, not a derived class:
+// an (empty) derived class has a vtable of its own, and CServerMgr's
+// constructor then stores it after calling 0x1002cbe3, which the shipped one
+// (0x1002c7f7) does not.
+typedef CMoArray<CObjectMapEntry> CUnknown8FC;
 
 class CUnknownA14
 {
@@ -1130,7 +1117,7 @@ public:
 	virtual void  Free(void* pMem);          // slot 8
 };
 
-extern CMoAllocator g_MoAlloc;               // 0x10058c7c (declared above too)
+extern CMoAllocator g_MoAlloc;               // 0x10058c7c
 
 // The two drivers the manager knows how to build (names ours).
 class CBaseDriver* ldrv_Create();            // 0x10014d65

@@ -1975,8 +1975,9 @@
 /ALTERNATENAME:?InsertFirst@CVirtBaseListX720@@QAEXPAVCVirtBaseListItemX720@@@Z=?InsertFirst@CVirtBaseList@@QAEXPAVCVirtBaseListItem@@@Z
 # clientshell.cpp's views of CServerMgr's members, onto the real definitions
 #. Each comment gives the shipped address and why the target is it.
-# 0x414b20 CServerMgr+0x8fc is servermgr.h's CUnknown8FC (m_Unknown8fc); ours is a near, not placed
-/ALTERNATENAME:??0CSub8fc@@QAE@XZ=??0CUnknown8FC@@QAE@XZ
+# 0x414b20 CServerMgr+0x8fc is servermgr.h's CUnknown8FC, which is CMoArray<CObjectMapEntry>:
+# its constructor is the 8-byte-element DefaultCache CMoArray default constructor
+/ALTERNATENAME:??0CSub8fc@@QAE@XZ=??0?$CMoArray@VCCollElem08@@VDefaultCache@@@@QAE@XZ
 # 0x47bec0 CServerMgr+0xac4 is CServerThread (m_Thread); bytes occur twice, the other copy is CLoaderThreadQ415 at 0x415660
 /ALTERNATENAME:??0CThreadView@@QAE@XZ=??0CServerThread@@QAE@XZ
 # 0x411d40 LTVector's three-float constructor (all three definitions at 0x411d40 are _CVector<float>'s)
@@ -2750,9 +2751,6 @@
 /ALTERNATENAME:?_v04@CBankBase@@UAEXXZ=__purecall
 /ALTERNATENAME:?_v08@CBankBase@@UAEXPAX@Z=__purecall
 /ALTERNATENAME:?Term@CBankBase@@UAEXXZ=__purecall
-# 0x412590 -- the object map's vftable 0x4a1d7c (stored by its constructor at 0x414b26),
-# slot 1: every CMoArray<>::GenIsValid instance is placed there (/OPT:ICF-shared)
-/ALTERNATENAME:?_v04@CUnknown8FC@@UAEXXZ=?GenIsValid@?$CMoArray@KVDefaultCache@@@@UBEIABVGenListPos@@@Z
 # 0x47c480 / 0x47c4b0 / 0x473540 -- the object mover's vftable 0x4a33d4 (CServerMgr::Init
 # stores it at 0x4731c7), slots 6, 8 and 12: spritecontrol.cpp's CObjectMover bodies are
 # placed at those addresses (objmover.cpp's slot table names the same three)

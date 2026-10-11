@@ -401,7 +401,7 @@ inline LTRESULT sm_SetSoundTrackChangeFlags(CServerMgr* pServerMgr,
                                             SoundInstance* pSound, uint32 dwFlag)
 {
 	CObjectMapEntry* pEntry =
-		&pServerMgr->m_Unknown8fc.m_pEntries[((uint32*)pSound->m_pUnknown0c)[2]];
+		&pServerMgr->m_Unknown8fc.m_pArray[((uint32*)pSound->m_pUnknown0c)[2]];
 
 	if (pEntry->m_nFlags != 2 || pEntry->m_pRecord == LTNULL)
 		RETURN_ERROR(1, "SetSoundTrackChangeFlags", LT_ERROR);
@@ -713,44 +713,8 @@ public:
 	}
 };
 
-// 0x1002ccee — the object map's own resize. Word for word the pointer
-// array's, but the allocate it calls is its own: the entries are not
-// pointers, so the size calculation differs and the two could not fold. The
-// release did fold — it never looks at the element size.
-//
-// Defined above Term rather than beside the rest of the map, and `inline`:
-// lithtech.exe's Term carries this body expanded (nItems folded to zero takes
-// the equality guard and the whole grow arm with it, leaving the two pointer
-// tests, the m_nEntries+m_nSlack the release never reads parked in the dead
-// argument slot, and three zero stores) where server.dll calls 0x1002ccee.
-// VC6's inliner only looks forward, and /Os declines a body this size, which
-// is why the /O1 image keeps the call and the out-of-line copy both.
-inline LTBOOL CUnknown8FC::SetSize(uint32 nItems, CMoAllocator* pAlloc)
-{
-	if (nItems == m_nEntries && nItems)
-		return LTTRUE;
-
-	if (m_pEntries)
-		((CConnListFreeView*)this)->FreeItems(pAlloc, m_nEntries + m_nSlack);
-
-	m_nEntries = nItems;
-
-	if (nItems > 0)
-	{
-		m_pEntries = (CObjectMapEntry*)AllocItems(nItems + m_nGrowBy, pAlloc);
-
-		if (!m_pEntries)
-		{
-			m_nEntries = 0;
-			m_nSlack = 0;
-			return LTFALSE;
-		}
-
-		m_nSlack = m_nGrowBy;
-	}
-
-	return LTTRUE;
-}
+// 0x1002ccee — the object map's resize is CMoArray<CObjectMapEntry>::SetSize2
+// (servermgr.h): lithtech.exe's Term carries it expanded, server.dll calls it.
 
 void CServerMgr::Term()
 {
@@ -799,7 +763,7 @@ void CServerMgr::Term()
 	m_Link8c4.TieOff();
 	m_Unknown8bc = 0;
 
-	m_Unknown8fc.SetSize(0, (CMoAllocator*)&g_PacketDataBank);
+	m_Unknown8fc.SetSize2(0, (LAlloc*)&g_PacketDataBank);
 	m_World.Term();
 	sm_TermModels(this);
 
@@ -1212,7 +1176,7 @@ LTBOOL CServerMgr::Init()
 		m_pAppHandler = LTNULL;
 		m_pCurProps = LTNULL;
 		m_ErrorString[0] = 0;
-		m_Unknown8fc.m_nGrowBy = 100;
+		m_Unknown8fc.SetCacheSize(100);
 		m_Unknown91c = LTNULL;
 		m_Unknown924 = 0;
 		m_Unknown920 = 0;
@@ -2582,8 +2546,8 @@ LTRESULT sm_RemoveObjectFromWorld(CServerMgr* pMgr, BaseClass* pClass)
 			sm_Free28(pMgr, pObject->m_pSData->m_Unknown28);
 
 			// Free the object's id.
-			pMgr->m_Unknown8fc.m_pEntries[pObject->m_ObjectID].m_nFlags = 0;
-			pMgr->m_Unknown8fc.m_pEntries[pObject->m_ObjectID].m_pRecord = LTNULL;
+			pMgr->m_Unknown8fc.m_pArray[pObject->m_ObjectID].m_nFlags = 0;
+			pMgr->m_Unknown8fc.m_pArray[pObject->m_ObjectID].m_pRecord = LTNULL;
 		}
 
 		obj_UnlinkTrackersA(pObject);
@@ -2772,10 +2736,10 @@ LTObject* sm_FindObjectByID(CServerMgr* pMgr, uint16 nID)
 {
 	CObjectMapEntry* pEntry;
 
-	if (nID >= pMgr->m_Unknown8fc.m_nEntries)
+	if (nID >= pMgr->m_Unknown8fc.m_nElements)
 		return LTNULL;
 
-	pEntry = &pMgr->m_Unknown8fc.m_pEntries[nID];
+	pEntry = &pMgr->m_Unknown8fc.m_pArray[nID];
 	if (pEntry->m_nFlags == 1)
 		return (LTObject*)pEntry->m_pRecord;
 
@@ -5181,46 +5145,8 @@ LTRESULT sm_CacheFile(CServerMgr* pMgr, uint32 fileType, char* pFilename)
 
 // ---- the object map's array ---------------------------------------------- //
 
-// Word for word CConnList::Init, and still its own copy: the SetSize it calls
-// is the object map's, not the pointer array's, so the two never folded.
-//
-// NEAR (53 of 53 bytes), and near for exactly the same reason CConnList::Init
-// is: the shipped build schedules the second SetSize's argument pushes ahead
-// of the last two field stores.
-void CUnknown8FC::Init(int nSize, int nGrowBy)
-{
-	SetSize(0, (CMoAllocator*)&g_PacketDataBank);
-
-	m_pEntries = LTNULL;
-	m_nEntries = 0;
-	m_nGrowBy = nGrowBy;
-	m_nSlack = 0;
-
-	SetSize(nSize, (CMoAllocator*)&g_PacketDataBank);
-}
-
-// 0x1002cbe3 — the object map's constructor, which stores a vtable at +0x00
-// (0x1004e328) before zeroing the four fields. servermgr.h's CUnknown8FC has
-// a virtual destructor now, so the store is the implicit vptr store (the
-// hand-written store through a g_ObjectMapVtbl name that stood here gave the
-// same bytes and named a global nothing defined).
-
-// NEAR (34 of 34 bytes, 14 of 14 instructions): the shipped build sinks the
-// first of Init's two zero pushes between the +0x0c and +0x10 field stores
-// and materialises `this` before the zero; ours hoists both pushes above the
-// vptr store. Probed to a negative — an implicit vptr through a view class
-// with a real virtual, Init(m_nEntries, 0) so the push has to wait for the
-// store, and cl 8168 all reproduce our schedule exactly. Argument-push
-// scheduling, the same class as CUnknown8FC::Init beside it.
-CUnknown8FC::CUnknown8FC()
-{
-	m_pEntries = LTNULL;
-	m_nEntries = 0;
-	m_nSlack = 0;
-	m_nGrowBy = 0;
-
-	Init(0, 0);
-}
+// 0x1000c4cf (Init) and 0x1002cbe3 (the constructor) are
+// CMoArray<CObjectMapEntry>'s own; see servermgr.h.
 
 
 // ---- the world teardown -------------------------------------------------- //
@@ -5759,35 +5685,8 @@ LTRESULT w_ApplyObjectFilenames(CServerMgr* pMgr, LTObject* pObj,
 }
 
 
-// 0x1002cecf — the object map's own allocate. Identical to the pointer
-// array's but for the element size, which is why the two could not fold.
-//
-// The null test that branches nowhere is an early return — see
-// CConnList::AllocItems, which is this function with a different element
-// size, and collection.cpp, which is the same shape once more.
-void* CUnknown8FC::AllocItems(uint32 nItems, CMoAllocator* pAlloc)
-{
-	CObjectMapEntry* pRet =
-		(CObjectMapEntry*)pAlloc->Alloc(nItems * sizeof(CObjectMapEntry));
-	CObjectMapEntry* p;
-	uint32           n;
-
-	if (!pRet)
-		return pRet;
-
-	p = pRet;
-	n = nItems;
-
-	while (n)
-	{
-		new(p) CObjectMapEntry;
-
-		p++;
-		n--;
-	}
-
-	return pRet;
-}
+// 0x1002cecf — the object map's allocate is CMoArray<CObjectMapEntry>::
+// _AllocateTArray (servermgr.h).
 
 // 0x1002a239 — may the sweep deactivate this object? Anything the engine
 // still owes work on is left alone, and so is anything carrying one of the
@@ -7691,8 +7590,8 @@ LTRESULT sm_QueueMessageToClient2(CServerMgr* pMgr, Client* pClient, int nPacket
 // object behind it).
 CObjectMapEntry* sm_FindObjectMapEntry(CServerMgr* pMgr, uint16 nID)
 {
-	if (nID < pMgr->m_Unknown8fc.m_nEntries)
-		return &pMgr->m_Unknown8fc.m_pEntries[nID];
+	if (nID < pMgr->m_Unknown8fc.m_nElements)
+		return &pMgr->m_Unknown8fc.m_pArray[nID];
 
 	return LTNULL;
 }
@@ -8371,8 +8270,8 @@ LTRESULT sm_CreateObjectInWorld(CServerMgr* pMgr, LPBASECLASS pObject,
 		pLTObject->m_ObjectID = (uint16)nID;
 	}
 
-	pMgr->m_Unknown8fc.m_pEntries[pLTObject->m_ObjectID].m_nFlags = 1;
-	pMgr->m_Unknown8fc.m_pEntries[pLTObject->m_ObjectID].m_pRecord = pLTObject;
+	pMgr->m_Unknown8fc.m_pArray[pLTObject->m_ObjectID].m_nFlags = 1;
+	pMgr->m_Unknown8fc.m_pArray[pLTObject->m_ObjectID].m_pRecord = pLTObject;
 
 	pLTObject->m_pSData->m_pBaseClass = pObject;
 
