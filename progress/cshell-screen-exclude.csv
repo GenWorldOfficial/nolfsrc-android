@@ -1,0 +1,2 @@
+"addr","reason"
+"0x100b4b6b","NOT A FUNCTION: 0x90 alignment padding (0x100b4b67..0x100b4b6f) between SFXMgr.cpp's _$E initializer at 0x100b4b10, whose `ret` is at 0x100b4b66, and the next initializer thunk at 0x100b4b70 (`call 0x100b4b80 ; jmp 0x100b4ba0`); the enumerator gives it 0 bytes. Its one 'call' source is the e8 at 0x100efde3, which is the displacement byte of `mov -0x18(%ebp),%esp` (8b 65 e8) at 0x100efde1 inside the static CRT's SEH code, not a call."

@@ -33,8 +33,17 @@ the Year). Monolith's source release builds the Game of the Year ones:
 `CRes.dll` has no code of Monolith's -- its only code is the C runtime's DLL
 entry -- so each of its resources (string tables, dialogs, bitmaps, text) is
 a row, sized by its data, `identical` when our bytes are the retail bytes.
+
 The README lists it after `Object.lto`, marked as not in the total, which
 counts code only.
+
+The lithshared libraries a game DLL links are scored twice: on their own
+(above), and again inside the DLL, where they are placed like the game's own
+functions -- except that a library function too short to anchor (claimed by
+shape) or one that does not match (paired as `near`) is only placed inside
+its library's block of the image: its anchored span, out to the nearest
+function matched from anything else. The latter are the nears of the
+library's own score, such as ButeMgrNoMFC's `zErrHandler::set_ef`.
 
 The retail images have no symbols, so their functions are enumerated from the
 code itself (call targets, vtables, callbacks, exports, ...), and each of our
@@ -154,9 +163,11 @@ Python 3 only, so inside `make shell` (or on a host with Python)
 
 The seven lithshared libraries are scored against the prebuilt `.lib`s that
 came with Monolith's *NOLF Source Code v1.003* release
-(`LT2/lithshared/libs/Release/`). Like the disc images, they are not in this
+(`LT2/lithshared/libs/Release/`), and the Debug build of RegMgr, which the
+Game of the Year `CShell.dll` links, against the release's
+`libs/Debug/RegMgr.lib`. Like the disc images, they are not in this
 repository: set `NOLF_SOURCE` to your extracted copy of the release (the
-directory holding `LT2/`, or a directory holding the `.lib`s themselves).
+directory holding `LT2/`).
 They are checked against `shipped-libs.sha256`, and a mismatch is an error.
 
 Without `NOLF_SOURCE`, the engine images are still scored and checked, and
@@ -168,8 +179,8 @@ the libraries are skipped with a note; `make progress-update` needs them.
 |---|---|
 | `identical.txt` | every function verified identical (`target<TAB>function`): the baseline the test holds the build to. Written by `make progress-update` |
 | `summary.json` | per-target counts and bytes of the recorded run; the README table is rendered from it |
-| `shipped-libs.sha256` | the source release's seven `.lib`s |
-| `*-screen-exclude.csv` | per image: enumerated addresses examined by hand. A reason that starts `NOT A FUNCTION` or `NOT GAME CODE` removes the row from the count (an operand byte, a jump target inside another function, padding); any other reason only marks the address as `attempted` |
+| `shipped-libs.sha256` | the source release's `.lib`s that are scored (paths relative to `libs/Release/`) |
+| `*-screen-exclude.csv` | per image (`lithtech`, `server`, `d3d`, and for the game DLLs `cshell`, `object`): enumerated addresses examined by hand. A reason that starts `NOT A FUNCTION` or `NOT GAME CODE` removes the row from the count (an operand byte, a jump target inside another function, padding); any other reason only marks the address as `attempted` (not in the game DLLs, where only the removal applies) |
 | `extent-splits.csv` | function starts the enumeration misses (a function hidden behind a thunk), with the evidence |
 | `lithtech-decoded-map.csv` | `lithtech.exe` addresses a function of ours has been mapped to, marking them `attempted` |
 | `*-enum-suspect.csv` | per image: enumerated rows judged wrong (`addr,severity,reason`); `bogus` rows are not functions, and `tools/uncovered.py`, `decoded.py` and `d3dwork.py` leave them off their worklists. Not read by the scoring |
