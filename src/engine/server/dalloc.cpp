@@ -49,8 +49,15 @@ public:
 
 extern CFlushHook* g_pFlushHooks;            // 0x10058370
 
-// 0x1000e443 — the engine's out-of-memory stop (name ours).
+// 0x1000e443 — the engine's out-of-memory stop (name ours). lithtech.exe's
+// dalloc calls the client's own, clientdsi.cpp's dsi_OnOutOfMemory
+// (`call 0x0042e560` at 0x00429001), as dsi.cpp's new-handler already does;
+// the server's is not in the client image at all.
+#ifdef LT_SERVER_BUILD
 void dsi_OutOfMemory();
+#else
+void dsi_OnOutOfMemory();
+#endif
 
 
 // One measured block. The counter is constructed cold and started by hand,
@@ -112,7 +119,11 @@ void* dalloc(uint32 nSize)
 		pRet = malloc(nSize);
 
 		if (!pRet)
+#ifdef LT_SERVER_BUILD
 			dsi_OutOfMemory();
+#else
+			dsi_OnOutOfMemory();
+#endif
 	}
 
 	g_nOutstanding++;
@@ -205,6 +216,7 @@ CTimedScope::~CTimedScope()
 // belongs to the game rather than to the engine; the engine then says so
 // itself and stops. The SDK's own comment says the handler should exit and
 // that the engine exits right after it if it does not — this is that.
+#ifdef LT_SERVER_BUILD
 void dsi_OutOfMemory()
 {
 	if (g_pServerMgr && g_pServerMgr->m_pAppHandler)
@@ -214,3 +226,4 @@ void dsi_OutOfMemory()
 
 	exit(0x8ae);
 }
+#endif
