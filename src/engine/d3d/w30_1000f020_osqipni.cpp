@@ -493,10 +493,11 @@ extern void   sub_1000ef60(void* pA, void* pB);
 // and keeps 0x100124a4's bind-failure call inline; the shipped code sinks it.
 extern int32  sub_1000efa0(void* pObj, uint32 nStage);
 
-// 0x1000eef0 -- d3dr3c.cpp, decoded field for field.  The fourth argument
-// is dead; the call site pushes four and unwinds 0x10.
+// 0x1000eef0 -- d3dr3c.cpp, decoded field for field.  Called with THREE
+// arguments: the fourth dword the call site pushes is icl's alignment pad
+// (`push %edi`, as before every 0x10011420 call), not a zero.
 extern Elem124a4* sub_1000eef0(void* pOwner, Bucket124a4** ppList,
-                               uint32 nIndex, uint32 nUnused);
+                               uint32 nIndex);
 
 // 0x10011420 -- d3dbatcha.cpp, three arguments plus icl's dead fourth.
 extern LTBOOL sub_10011420(SrcVert** ppVerts, int32* pnVerts, void* pXForm);
@@ -1821,7 +1822,7 @@ void sub_100124a0(Obj124a4* pObj)
 
 		// 0x10012766 -- four arguments, 0x10 unwound; d3dr3c.cpp records
 		// the fourth as dead.
-		pElem = sub_1000eef0(pObj, &g_1008d4c4, 0, 0);
+		pElem = sub_1000eef0(pObj, &g_1008d4c4, 0);
 
 		pElem->m_n04 = g_1008d520;
 		pElem->m_n08 = nVerts;

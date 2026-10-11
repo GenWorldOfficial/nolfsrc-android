@@ -161,6 +161,8 @@
 /ALTERNATENAME:?sub_1000d9d0@Vert70d10@@QAEXMM@Z=?sub_1000d9d0@Obj1000d9d0@@QAEXKK@Z
 # 0x1000eef0  defined in d3dr3c.obj (identical); name-carried address
 /ALTERNATENAME:?sub_1000eef0@@YAPAUElem124a4@@PAXPAPAUBucket124a4@@KK@Z=?sub_1000eef0@@YAPAUElem1000eef0@@PAUOwner1000eef0@@PAPAUBucket1000eef0@@KK@Z
+# 0x1000eef0  the same, called with three arguments in w30_1000f020_osqipni.cpp
+/ALTERNATENAME:?sub_1000eef0@@YAPAUElem124a4@@PAXPAPAUBucket124a4@@K@Z=?sub_1000eef0@@YAPAUElem1000eef0@@PAUOwner1000eef0@@PAPAUBucket1000eef0@@KK@Z
 # 0x1000ef60  defined in d3dlow.obj (identical); name-carried address
 /ALTERNATENAME:?sub_1000ef60@@YAXPAX0@Z=?sub_1000ef60@@YAXPAXPAUStruct1000ef60@@@Z
 # 0x1000efa0  defined in d3dbatchd.obj (identical); name-carried address
