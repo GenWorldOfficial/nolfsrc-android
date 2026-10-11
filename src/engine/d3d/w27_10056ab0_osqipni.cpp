@@ -1972,6 +1972,14 @@ void C1008f620::sub_100589c0(W7Poly56c60* pPoly, W7MatPass56c60* pPass,
 //  vertices are built straight from the saved positions (the fog
 //  function then reads the source position).  Then each stage, the draw,
 //  and the queue for the next pass.
+//
+//  NEAR (825 of 825 bytes, 7 mnemonic blocks).  The T-junction arm reads
+//  the vertex pointer before the count (ship loads +0x4c ahead of the
+//  count's store).  LEFT: the first build loop -- ship carries pOut + stride
+//  into the next iteration in %edi (the rep movsl destination) and ours
+//  reloads it from the frame; unchanged by the increment in the for
+//  header (either order), a while loop, `pOut = &pOut[nStride]`, and the
+//  fog call without the volatile double read (worse).
 // ======================================================================= //
 void C1008f620::sub_10058e60(W7Poly56c60* pPoly, W7MatPass56c60* pPass,
                              uint32 nNextPass)
@@ -1996,8 +2004,8 @@ void C1008f620::sub_10058e60(W7Poly56c60* pPoly, W7MatPass56c60* pPass,
 
 	if (g_CV_FixTJunc)
 	{
-		nVerts = pPoly->m_nFixVerts52;
 		pSrc   = pPoly->m_pFixVerts4c;
+		nVerts = pPoly->m_nFixVerts52;
 	}
 	else
 	{
