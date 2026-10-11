@@ -10382,6 +10382,9 @@ d3d.ren	sub_1007f8e0
 d3d.ren	sub_1007f9f0
 d3d.ren	sub_1007fa20
 d3d.ren	sub_1007fa50
+d3d.ren	sub_1007fae0
+d3d.ren	sub_1007faf0
+d3d.ren	sub_1007fb00
 lithtech.exe	sub_401030
 lithtech.exe	sub_4010e0
 lithtech.exe	sub_401100
@@ -11392,6 +11395,7 @@ lithtech.exe	sub_42bb60
 lithtech.exe	sub_42bbd0
 lithtech.exe	sub_42bcc0
 lithtech.exe	sub_42bd30
+lithtech.exe	sub_42bfa0
 lithtech.exe	sub_42bfd0
 lithtech.exe	sub_42bff0
 lithtech.exe	sub_42c020
@@ -11941,6 +11945,7 @@ lithtech.exe	sub_445250
 lithtech.exe	sub_445280
 lithtech.exe	sub_445350
 lithtech.exe	sub_445361
+lithtech.exe	sub_4453f0
 lithtech.exe	sub_445410
 lithtech.exe	sub_445430
 lithtech.exe	sub_4454c0

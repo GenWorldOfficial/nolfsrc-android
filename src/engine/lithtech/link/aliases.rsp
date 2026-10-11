@@ -1738,8 +1738,6 @@
 /ALTERNATENAME:?sub_42e6a0Q42D@@YAXPAD@Z=?sub_42e6a0@@YAXPAD@Z
 # 0x42f780
 /ALTERNATENAME:?sub_42f780@@YAXPAX@Z=?sub_42f780@@YAXPAVCHookRecord@@@Z
-# 0x42ffa0
-/ALTERNATENAME:?sub_42ffa0@@YAXPAVCRecordQueueView@@PAVCQueuedRecord@@@Z=?xfer_FreeFile@@YAXPAVCClientFiles@@PAVCXferFile@@@Z
 # 0x4359c0
 /ALTERNATENAME:?sub_4359c0@@YAXPAVLMessageReadViewQ478@@PAV?$_CVector@M@@PAVCClientMgrQ478@@@Z=?lmsg_ReadCompPos@@YAXPAVLMessageImpl@@PAV?$_CVector@M@@PAVCPosRef@@@Z
 # 0x4362c0
@@ -2324,9 +2322,9 @@
 /ALTERNATENAME:?SetSize2@CMsgArrayQ12@@QAEIKPAVLAlloc@@@Z=?SetSize2@?$CMoArray@EVDefaultCache@@@@QAEIKPAVLAlloc@@@Z
 # 0x4159f0 (placed), as server.dll's pairing
 /ALTERNATENAME:?WriteByte@ServerMessage@@QAEXE@Z=?WriteType@CPacket@@QAEXE@Z
-# xfer_HandleMessage is 0x430080 here (clientdsi.cpp's sub_430080 matches it, ReadWord
-# expanded); its lookup call 0x43011e -> 0x430190 is clientdsi.cpp's sub_430190. ReadWord is
-# server.dll's pairing (CPacket::ReadType<uint16>, packet.cpp, compiled into both images).
+# xfer_HandleMessage is 0x430080 here (servermessage.cpp's, ReadType<uint16> expanded); its
+# lookup call 0x43011e -> 0x430190 is clientdsi.cpp's sub_430190. ReadWord is server.dll's
+# pairing (CPacket::ReadType<uint16>, packet.cpp, compiled into both images).
 /ALTERNATENAME:?xfer_FindFileByID@@YAPAVCXferFile@@PAVCClientFiles@@G@Z=?sub_430190@@YAPAVCQueuedRecord@@PAVCRecordQueueView@@G@Z
 /ALTERNATENAME:?ReadWord@CMsgWriteView@@QAEGPAG@Z=?ReadType@CPacket@@QAEGPAG@Z
 # servermath.cpp: quat_GetVectors 0x433fb0 calls 0x444ac0, quat_Slerp 0x433fd0 calls 0x444b20

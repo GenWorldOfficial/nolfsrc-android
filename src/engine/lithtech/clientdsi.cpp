@@ -2031,48 +2031,11 @@ public:
 };
 
 CQueuedRecord* sub_430190(CRecordQueueView* pQueue, uint16 nID);  // 0x00430190
-void sub_42ffa0(CRecordQueueView* pQueue, CQueuedRecord* pRecord); // 0x0042ffa0
 
-// 0x00430080 -- 266 bytes.  The queue's packet handler; its one caller is
-// 0x00468ed8.  The packet's first byte, low six bits, is the message id.
-// 0x36 carries a run of 16-bit record ids read to the end of the packet
-// (ReadType<uint16> expanded inline): the low fifteen bits pick a record,
-// the top bit hands it to 0x0042ffa0 and without it the record's flags get
-// bit 1.  0x38 clears +0x80 when +0x50 is 1.  Anything else answers 0.
-int sub_430080(CRecordQueueView* pQueue, CPacket* pPacket)
-{
-	uint8          nMsgID = pPacket->m_Data.m_pArray[0] & 0x3f;
-	uint16         nID;
-	CQueuedRecord* pRecord;
-
-	if (nMsgID == 0x36)
-	{
-		while ((int)(pPacket->m_DataLen - pPacket->m_Pos) > 0)
-		{
-			nID = pPacket->ReadType((uint16*)0);
-
-			pRecord = sub_430190(pQueue, nID & 0x7fff);
-			if (pRecord)
-			{
-				if (nID & 0x8000)
-					sub_42ffa0(pQueue, pRecord);
-				else
-					pRecord->m_nFlags |= 2;
-			}
-		}
-
-		return 1;
-	}
-	else if (nMsgID == 0x38)
-	{
-		if (pQueue->m_nUnknown50 == 1)
-			pQueue->m_nUnknown80 = 0;
-
-		return 1;
-	}
-
-	return 0;
-}
+// 0x00430080 -- 266 bytes, the queue's packet handler: servermessage.cpp's
+// xfer_HandleMessage, whose CPacket::ReadType<uint16> this image expands
+// (0x00468ed8 in sm_ProcessPackets is its one caller).  Written there; the
+// transcription that stood here is gone.
 
 // 0x00430190 -- 44 bytes.  Walk the circular list and answer the record
 // whose id matches, or null.

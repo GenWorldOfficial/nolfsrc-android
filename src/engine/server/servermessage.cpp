@@ -2048,7 +2048,9 @@ int xfer_HandleMessage(CClientFiles* pState, ServerMessage* pMsg)
 	{
 		while (pMsg->m_Unknown34 - pMsg->m_Unknown38 > 0)
 		{
-			uint16 nWord = ((CMsgWriteView*)pMsg)->ReadWord(LTNULL);
+			// CPacket::ReadType<uint16> itself: server.dll calls it
+			// (0x1000ebd0), lithtech.exe expands it (0x00430080).
+			uint16 nWord = ((CPacket*)pMsg)->ReadType((uint16*)0);
 
 			CXferFile* pFile = xfer_FindFileByID(pState, nWord & 0x7fff);
 			if (pFile)
