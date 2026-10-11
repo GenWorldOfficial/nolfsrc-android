@@ -385,99 +385,11 @@ void mat_GetEulerBasisVectorsQ438(LTVectorQ438 vAngles,
 
 
 // ======================================================================= //
-//  PART D -- 0x004335d0, a file-scope object's constructor in
-//            ..\server\saveio.cpp
-//
-//  *** THE ROW 0x004335c0 / 75 IS AN EXTENT DEFECT: IT IS TWO COMDATS. ***
-//
-//  0x004335c0..0x004335c9 is `mov $0x004b3394,%ecx ; jmp 0x00490200`, ten
-//  bytes, followed by six `nop`s of 16-byte alignment padding; the real
-//  function starts at 0x004335d0 and is 59 bytes (0x004335d0..0x0043360a).
-//  The ten-byte head is COMPILER-GENERATED and has no source text: it is
-//  `??__F`, the destructor thunk, and 0x004335b0 hands its address to
-//  atexit (`push $0x004335c0 ; call 0x0049307e ; pop %ecx ; ret`).  That
-//  atexit push is also the whole of the row's `cb` provenance.
-//
-//  The full VC6 file-scope-object quartet is visible in address order:
-//      0x00433590  call 0x004335a0 ; jmp 0x004335b0     the __xc entry
-//      0x004335a0  mov $0x4b3394,%ecx ; jmp 0x004335d0  ??__E  (construct)
-//      0x004335b0  push $0x4335c0 ; call atexit ; ...   registers the dtor
-//      0x004335c0  mov $0x4b3394,%ecx ; jmp 0x00490200  ??__F  (destruct)
-//      0x004335d0  the constructor                      <- the only source
-//  0x00490200 is a bare `ret`: the destructor body is empty, and the linker
-//  has folded it with every other trivial body in the image.  An atexit
-//  registration exists at all, so the destructor is USER-DECLARED and
-//  empty, not absent.
-//
-//  MODULE, AND IT IS A SHARED TU.  The surrounding run is saveio.cpp's
-//  client compile: 0x004332af compares the SAVE_SENTINEL 0xabcdefaf,
-//  0x004332db pushes "LOAD ERROR: Couldn't restore object (%d of %d)
-//  '%s'!!!" with 0x004b338c and 0x004b3390 as the two counters -- which
-//  src/engine/server/saveio.cpp:1068 already spells g_iRestoreObject,
-//  g_nRestoreObjects.  The object below sits at 0x004b3394, the next dword.
-//
-//  THE SERVER TWIN CONFIRMS EVERY BYTE OF THE BODY.  the retail server.dll has
-//  the identical quartet at 0x1001110d / 0x10011117 / 0x10011121 /
-//  0x1001112d / 0x10011137, immediately after sav_WriteVector (0x100110dc,
-//  already ours) -- which is what puts the object in saveio.cpp's object
-//  and not a neighbour's.  The eight stores are at the SAME EIGHT OFFSETS
-//  relative to the object, in the SAME order, with the same values:
-//
-//      offset   +0x0b +0x0a +0x06 +0x07 +0x05 +0x04 +0x08 +0x09
-//      value      0     1     2     3     4     5     6     7
-//
-//  The only difference is that /Os spells the zero store `andb $0x0,mem`
-//  (0x10011137) where /Ot spells it `movb $0x0,mem` (0x004335d2) -- both
-//  seven bytes, and the flag picks it, not the source.  Note also that /Os
-//  hoists that store ABOVE the `mov %ecx,%eax` and /Ot does not.
-//
-//  WHAT THE TABLE IS.  Nothing reads it.  A four-byte-window scan of the
-//  whole .text of BOTH images finds exactly one reference to each of the
-//  eight bytes -- the store in this constructor -- and none to the object
-//  itself beyond the two thunks.  So the names below are placeholders and
-//  the layout question (a file-scope array next to a one-byte object, or a
-//  static member of the class) is not decidable; the two spellings give the
-//  same COMDAT bytes once all eight relocated addresses are masked, and
-//  only the VALUE order and the byte width are load-bearing.
+//  PART D -- 0x004335d0, the save translation table's constructor: MERGED
+//  into src/engine/server/saveio.cpp (CSaveXlatInit, g_SaveXlatInit), whose
+//  client compile is the shipped 0x00433590..0x0043360a quartet and
+//  constructor.  The copy that stood here defined the object a second time.
 // ======================================================================= //
-
-// 0x004b3398, eight bytes -- written once, never read.
-uint8 g_SaveXlatQ438[8];
-
-class CSaveXlatInitQ438
-{
-public:
-	CSaveXlatInitQ438();
-
-	// Empty and user-declared: the atexit registration at 0x004335b5
-	// proves it exists, 0x00490200 proves the body is `ret`.  OUT OF CLASS,
-	// not inline: the ??__F at 0x004335c0 is `mov $obj,%ecx ; jmp dtor`,
-	// and an in-class `{}` is expanded into it, leaving a bare `ret`.
-	~CSaveXlatInitQ438();
-};
-
-// The empty destructor; the linker folds it into 0x00490200.
-CSaveXlatInitQ438::~CSaveXlatInitQ438()
-{
-}
-
-// 0x004335d0, 59 bytes.  Out of class so it is a real COMDAT, which is what
-// the `jmp 0x004335d0` in ??__E needs.
-CSaveXlatInitQ438::CSaveXlatInitQ438()
-{
-	g_SaveXlatQ438[7] = 0;                   // 0x004335d2
-	g_SaveXlatQ438[6] = 1;                   // 0x004335d9
-	g_SaveXlatQ438[2] = 2;                   // 0x004335e0
-	g_SaveXlatQ438[3] = 3;                   // 0x004335e7
-	g_SaveXlatQ438[1] = 4;                   // 0x004335ee
-	g_SaveXlatQ438[0] = 5;                   // 0x004335f5
-	g_SaveXlatQ438[4] = 6;                   // 0x004335fc
-	g_SaveXlatQ438[5] = 7;                   // 0x00433603
-}
-
-// 0x004b3394 -- the object.  Its presence is what makes the compiler emit
-// 0x00433590, 0x004335a0, 0x004335b0 and 0x004335c0.
-static CSaveXlatInitQ438 g_SaveXlatInitQ438;
 
 
 // ======================================================================= //
@@ -634,7 +546,7 @@ inline void di_FreeBindNodeQ438(SBindNodeQ438* pNode)
 //     0x00436880  call 0x00436890 ; jmp 0x004368b0
 // and the initialiser at 0x00436890 (`g_004b348c = 0 ; g_004b3490 = 1`).
 // So this IS the `??__F` of a file-scope object in clientinput.cpp -- but
-// unlike saveio.cpp's in PART D it carries NO `mov $obj,%ecx ; jmp`,
+// unlike saveio.cpp's (PART D) it carries NO `mov $obj,%ecx ; jmp`,
 // because the destructor is inline and has been EXPANDED into the thunk.
 // The matching `??__E` is 0x00436890, expanded the same way (`g_004b348c =
 // 0 ; g_004b3490 = 1`, both absolute, no %ecx), and 0x00436880 is the
@@ -1115,7 +1027,7 @@ LTRESULTQ40E ci_FillRectQ40E(CSurfaceQ40E* hDest, LTRectQ438* pRect,
 //
 //    0x0043a070  100  rect_IntersectQ438              surface / cissurf
 //    0x00434070  114  mat_GetEulerBasisVectorsQ438    ltmatrix.h helper run
-//    0x004335d0   59  CSaveXlatInitQ438::ctor         ..\server\saveio.cpp
+//    0x004335d0   59  CSaveXlatInit::ctor (saveio.cpp)
 //                     (the enumerated row says 0x004335c0/75 -- see below)
 //    0x00436ae0   82  CBindRecQ438::DeleteQ438        clientinput.cpp
 //    0x004368c0  125  ~CBindNodeOwnerQ438 (??__F)     clientinput.cpp
@@ -1206,9 +1118,10 @@ LTRESULTQ40E ci_FillRectQ40E(CSurfaceQ40E* hDest, LTRectQ438* pRect,
 //       versus four locals stored and then compared.  Same comparisons;
 //       the interleaving of the pOut load with the first LTMAX is the only
 //       evidence and it is weak.
-//    3. PART D's layout.  `uint8 g_SaveXlatQ438[8]` beside a one-byte
-//       object (written) versus a static member array of the class.  All
-//       eight addresses are relocations, so byte matching cannot tell.
+//    3. PART D's layout (now saveio.cpp's).  A `uint8 [8]` beside a
+//       one-byte object (written) versus a static member array of the
+//       class.  All eight addresses are relocations, so byte matching
+//       cannot tell.
 //    4. PART E's 0x00436ae0.  Written as an explicit member; if VC6 emits
 //       `??_GCBindRecQ438@@QAEPAXI@Z` for this class the stand-in is a
 //       duplicate and should be deleted, keeping the destructor.
@@ -1223,10 +1136,7 @@ LTRESULTQ40E ci_FillRectQ40E(CSurfaceQ40E* hDest, LTRectQ438* pRect,
 //    PART B            -> the same file, or cissurf.cpp with ci_FillRect
 //    PART C            -> a new clientcommon.cpp / the ltmatrix.h helper run
 //                         that transform.cpp already describes
-//    PART D            -> src/engine/server/saveio.cpp (SHARED TU: adding
-//                         it changes server.dll too, and the server twin
-//                         0x10011137 is currently unclaimed, so it should
-//                         score on BOTH images)
+//    PART D            -> src/engine/server/saveio.cpp (DONE)
 //    PART E            -> src/engine/lithtech/clientinput.cpp
 //
 // *********************************************************************** //
