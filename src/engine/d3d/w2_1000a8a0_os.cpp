@@ -21,6 +21,8 @@
 //  /Os: frameless with pushes, `xor %eax,%eax; inc %eax` for TRUE, 0x90
 //  padding.
 //
+//  BYTE-IDENTICAL now: the last 4 bytes (the z row's product order) closed
+//  with MatVMulH_a8a0 below.  History, when it was a near --
 //  NEAR (131 bytes, same size and instruction count): the 1/w row's
 //  `(float)(...)` cast with matrix-first products is what loads 0x214
 //  first as shipped (measured); what remains is the scheduling of the z
@@ -101,6 +103,25 @@ struct XForm1000a8a0
 };
 
 
+// ltmatrix.h's MatVMul_H, with the z row's first and third matrix terms
+// read through a float pointer to the matrix.  icl canonicalises the
+// term order of a sum, but which product it emits first follows the
+// operands' address forms: this spelling gives the shipped z, x, y
+// (the header's gives y, x, z).  Found by sweeping m[r][c] / f[k] per
+// column x member / v[c] per component (128 spellings, 4 identical).
+inline float MatVMulH_a8a0(LTVector *pDest, LTMatrix *pMat, LTVector *pSrc)
+{
+	const float* f = &pMat->m[0][0];
+	float one_over_w = 1.0f / (pMat->m[3][0]*pSrc->x + pMat->m[3][1]*pSrc->y + pMat->m[3][2]*pSrc->z + pMat->m[3][3]);
+
+	pDest->x = one_over_w * (pMat->m[0][0]*pSrc->x + pMat->m[0][1]*pSrc->y + pMat->m[0][2]*pSrc->z + pMat->m[0][3]);
+	pDest->y = one_over_w * (pMat->m[1][0]*pSrc->x + pMat->m[1][1]*pSrc->y + pMat->m[1][2]*pSrc->z + pMat->m[1][3]);
+	pDest->z = one_over_w * (f[8]*pSrc->x + pMat->m[2][1]*pSrc->y + f[10]*pSrc->z + pMat->m[2][3]);
+
+	return one_over_w;
+}
+
+
 LTBOOL sub_1000a8a0(TVert1000a8a0** ppVerts, uint32* pnVerts,
                     XForm1000a8a0* pM, uint32 nUnused)
 {
@@ -115,7 +136,7 @@ LTBOOL sub_1000a8a0(TVert1000a8a0** ppVerts, uint32* pnVerts,
 		pWalk = *ppVerts;
 		while (nLeft--)
 		{
-			fOOW = MatVMul_H(&vScreen, &pM->m_Mat1dc, &pWalk->m_vPos);
+			fOOW = MatVMulH_a8a0(&vScreen, &pM->m_Mat1dc, &pWalk->m_vPos);
 			pWalk->m_vPos = vScreen;
 			pWalk->m_fRHW = fOOW;
 			pWalk++;
