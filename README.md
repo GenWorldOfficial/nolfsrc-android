@@ -86,7 +86,7 @@ You need Linux with Docker, the two disc images, and the compilers:
    are checked against `ISOS/SHA256SUMS`).
 2. Fetch the compilers, which are the `toolchains/` submodule:
    `git submodule update --init` (or clone with `--recurse-submodules`;
-   about 540 MB, see `toolchains/README.md`).
+   about 560 MB, see `toolchains/README.md`).
 3. Run
 
 ```sh

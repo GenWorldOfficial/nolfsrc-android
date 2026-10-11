@@ -10,7 +10,7 @@ parts of it by hand.
 * **The disc images**, `ISOS/NOLF1-CD1.iso` and `ISOS/NOLF1-CD2.iso` (or
   `NOLF_ISOS=<dir>`), matching `ISOS/SHA256SUMS`. See `ISOS/README.md`.
 * **The compilers**, the `toolchains/` submodule: `git submodule update
-  --init` (about 540 MB). See `toolchains/README.md`.
+  --init` (about 560 MB). See `toolchains/README.md`.
 * About 6 GB of disk: 2.6 GB for the docker image, 2.8 GB for `out/` (the
   game directory, its tar, and the 0.6 GB Wine prefix), a few hundred MB of
   objects.
