@@ -34,9 +34,31 @@ LTBOOL CMuzzleFlashFX::Init(HLOCALOBJ hServObj, HMESSAGEREAD hMessage)
     if (!CSpecialFX::Init(hServObj, hMessage)) return LTFALSE;
     if (!hMessage) return LTFALSE;
 
-	// Don't support server-side versions of this fx...
+	// GOTY: reconstructed from the Game of the Year CShell.dll -- server-side
+	// versions of this fx are supported: the message names the character
+	// whose (third-person) weapon flashes.
 
-    return LTFALSE;
+	m_cs.hParent		= hMessage->ReadObject();
+	m_hServerObject		= m_cs.hParent;
+	m_cs.bPlayerView	= LTFALSE;
+	m_cs.vPos.Init();
+	m_cs.rRot.Init();
+
+	// Make sure we get notified when our server object goes away...
+
+	uint32 dwCFlags = g_pLTClient->GetObjectClientFlags(m_hServerObject);
+	g_pLTClient->SetObjectClientFlags(m_hServerObject, dwCFlags | CF_NOTIFYREMOVE);
+
+	if (m_pMuzzleFX)
+	{
+		debug_delete(m_pMuzzleFX);
+		m_pMuzzleFX = LTNULL;
+	}
+
+	m_pMuzzleFX = new CMuzzleFX;
+	if (!m_pMuzzleFX) return LTFALSE;
+
+	return m_pMuzzleFX->Init(*g_pFXButeMgr->GetButeMgr(), "MuzzleFX3") ? LTTRUE : LTFALSE;
 }
 
 // ----------------------------------------------------------------------- //
@@ -153,19 +175,23 @@ LTBOOL CMuzzleFlashFX::ResetFX()
 
 	// Create/Reset the fx specified by the weapon...
 
-    if (!m_cs.pWeapon) return LTFALSE;
+	// GOTY: reconstructed from the Game of the Year CShell.dll -- a
+	// server-created flash has its own fx (see Init()) and no weapon
 
-    CMuzzleFX* pMuzzleFX = LTNULL;
-	if (m_cs.bPlayerView)
+    CMuzzleFX* pMuzzleFX = m_pMuzzleFX;
+	if (!pMuzzleFX)
 	{
-		pMuzzleFX = m_cs.pWeapon->pPVMuzzleFX;
-	}
-	else
-	{
-		pMuzzleFX = m_cs.pWeapon->pHHMuzzleFX;
-	}
+		if (m_cs.bPlayerView)
+		{
+			pMuzzleFX = m_cs.pWeapon->pPVMuzzleFX;
+		}
+		else
+		{
+			pMuzzleFX = m_cs.pWeapon->pHHMuzzleFX;
+		}
 
-    if (!pMuzzleFX) return LTFALSE;
+		if (!pMuzzleFX) return LTFALSE;
+	}
 
 
 	// Create/Update the dynamic light...
@@ -321,7 +347,22 @@ LTBOOL CMuzzleFlashFX::Update()
         LTRotation rRot;
         LTVector vPos;
 
-		GetAttachmentSocketTransform(m_cs.hParent, "Flash", vPos, rRot);
+		// GOTY: reconstructed from the Game of the Year CShell.dll -- a
+		// server-created flash sits on its character's own "Flash" socket
+
+		if (m_pMuzzleFX)
+		{
+			HMODELSOCKET hSocket = LTNULL;
+			g_pModelLT->GetSocket(m_cs.hParent, "Flash", hSocket);
+
+			LTransform transform;
+			g_pModelLT->GetSocketTransform(m_cs.hParent, hSocket, transform, LTTRUE);
+			g_pTransLT->Get(transform, vPos, rRot);
+		}
+		else
+		{
+			GetAttachmentSocketTransform(m_cs.hParent, "Flash", vPos, rRot);
+		}
 
 		if (m_bUsingScale)
 		{
@@ -601,4 +642,12 @@ void CMuzzleFlashFX::Term()
 	m_Particle.Term();
 	m_Scale.Term();
 	m_Light.Term();
+
+	// GOTY: reconstructed from the Game of the Year CShell.dll
+
+	if (m_pMuzzleFX)
+	{
+		debug_delete(m_pMuzzleFX);
+		m_pMuzzleFX = LTNULL;
+	}
 }

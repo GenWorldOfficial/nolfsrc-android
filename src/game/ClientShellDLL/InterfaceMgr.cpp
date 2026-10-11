@@ -63,9 +63,12 @@ CInterfaceMgr*  g_pInterfaceMgr = LTNULL;
 #define MAX_FRAME_DELTA		0.1f
 #define INVALID_ANI			((HMODELANIM)-1)
 
-#define MOVIE_FOX_LOGO		0
-#define MOVIE_MONOLITH_LOGO	1
-#define MOVIE_LITHTECH_LOGO	2
+// GOTY: reconstructed from the Game of the Year CShell.dll -- the Sierra
+// logo movie plays first, ahead of the other three
+#define MOVIE_SIERRA_LOGO	0
+#define MOVIE_FOX_LOGO		1
+#define MOVIE_MONOLITH_LOGO	2
+#define MOVIE_LITHTECH_LOGO	3
 
 LTFLOAT      g_fSplashSndDuration = 0.0f;
 LTFLOAT      g_fFailScreenDuration = 0.0f;
@@ -5297,6 +5300,10 @@ char* CInterfaceMgr::GetCurrentMovie()
 
 	switch (m_nCurMovie)
 	{
+		case MOVIE_SIERRA_LOGO :
+			pMovie = "Movies\\SierraLogo.bik";
+		break;
+
 		case MOVIE_FOX_LOGO :
 			pMovie = "Movies\\foxpc.bik";
 		break;

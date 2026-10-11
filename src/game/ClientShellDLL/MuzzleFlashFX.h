@@ -50,6 +50,7 @@ class CMuzzleFlashFX : public CSpecialFX
             m_bUsingScale       = LTFALSE;
             m_bUsingLight       = LTFALSE;
             m_bHidden           = LTFALSE;
+			m_pMuzzleFX			= LTNULL;	// GOTY
 		}
 
 		void Term();
@@ -84,6 +85,10 @@ class CMuzzleFlashFX : public CSpecialFX
         LTBOOL                       m_bUsingScale;
         LTBOOL                       m_bUsingLight;
         LTBOOL                       m_bHidden;
+
+		// GOTY: reconstructed from the Game of the Year CShell.dll -- the
+		// third-person muzzle flash a server-created flash uses ("MuzzleFX3")
+		CMuzzleFX*					m_pMuzzleFX;
 };
 
 #endif // __MUZZLE_FLASH_FX_H__

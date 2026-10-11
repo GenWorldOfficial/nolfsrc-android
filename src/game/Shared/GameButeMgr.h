@@ -32,6 +32,10 @@ class CGameButeMgr
 
         inline void SetInRezFile(LTBOOL bInRezFile) { m_bInRezFile = bInRezFile; }
 
+		// GOTY: reconstructed from the Game of the Year CShell.dll
+		// (CMuzzleFlashFX::Init reads g_pFXButeMgr's bute file directly)
+		CButeMgr*	GetButeMgr() { return &m_buteMgr; }
+
 	protected :
 
 		CString		m_strAttributeFile;
