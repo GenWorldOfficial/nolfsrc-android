@@ -187,7 +187,7 @@ build_engine_scaffold_os() {  # same, /Os without /Og
 # /Qsfalign16: realign the stack only for 16-byte locals; /G5: Pentium
 # scheduling. Files named w<N>_*_<flags>.cpp join a group by their suffix.
 D3D_QIP_TUS=$'d3dqip.cpp\nd3dqip2.cpp'
-D3D_QIP_OS_TUS=$'d3dqip3.cpp'
+D3D_QIP_OS_TUS=$'d3dqip3.cpp\nbig7cc90.cpp'
 D3D_RCD_TUS=$'big8fd0.cpp\nbig2b1b0.cpp\nbig051a0.cpp\nbig5dca0.cpp\nbig40e10.cpp\nw4_100234d0.cpp\nw16_10042e80.cpp'
 D3D_OI_TUS=$'big4b720.cpp'
 D3D_QIP_OI_TUS=''

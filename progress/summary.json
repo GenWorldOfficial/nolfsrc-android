@@ -212,25 +212,25 @@
       "unwritten_bytes": 0
     },
     "d3d.ren": {
-      "attempted": 1,
+      "attempted": 0,
       "bytes_identical": 129857,
-      "bytes_total": 514531,
+      "bytes_total": 514535,
       "crt": 243,
       "crt_bytes": 32782,
       "driver": 0,
       "driver_bytes": 0,
-      "funcs": 935,
+      "funcs": 936,
       "identical": 739,
-      "near": 156,
-      "small": 39,
+      "near": 157,
+      "small": 40,
       "started": true,
       "todo": 0,
       "unlinked": 220,
       "unlinked_bytes": 61231,
-      "unplaced": 50,
-      "unplaced_bytes": 7954,
-      "unwritten": 1,
-      "unwritten_bytes": 2448
+      "unplaced": 49,
+      "unplaced_bytes": 5618,
+      "unwritten": 0,
+      "unwritten_bytes": 0
     },
     "lithtech.exe": {
       "attempted": 0,
@@ -297,17 +297,17 @@
     }
   },
   "total": {
-    "attempted": 1,
+    "attempted": 0,
     "bytes_identical": 2867257,
-    "bytes_total": 3675486,
-    "funcs": 19687,
+    "bytes_total": 3675490,
+    "funcs": 19688,
     "identical": 15069,
-    "near": 680,
-    "small": 3727,
+    "near": 681,
+    "small": 3728,
     "todo": 210,
-    "unplaced": 200,
-    "unplaced_bytes": 23646,
-    "unwritten": 211,
-    "unwritten_bytes": 30270
+    "unplaced": 199,
+    "unplaced_bytes": 21310,
+    "unwritten": 210,
+    "unwritten_bytes": 27822
   }
 }

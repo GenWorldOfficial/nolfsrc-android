@@ -6,6 +6,16 @@
 //  constant, bound and branch below is read off the shipped bytes and
 //  cited by address.
 //
+//  Built /Os /Qip (build/engine.sh D3D_QIP_OS_TUS), which gives the
+//  shipped two-entry pair: `sub_1007cc90`, the 4-byte stack entry,
+//  byte-identical at 0x1007cc90, and `sub_1007cc90$`, the register entry
+//  and body, NEAR at 0x1007cc94 -- 2,424 bytes against the shipped
+//  2,439 (0x1007cc94..0x1007d61b), frame 0x50 as shipped, all 6 calls in
+//  agreement (tools/callseq.py), the first 272 bytes and the whole
+//  descent from 0x1007d546 on byte-exact.  What is left is x87 scheduling
+//  inside the two MatMuls and one register swap in REGION 5 -- see
+//  MEASURED at the bottom.
+//
 //  ===================================================================== //
 //  THE EXTENT -- CONFIRMED AT BOTH ENDS
 //  ===================================================================== //
@@ -176,11 +186,10 @@
 //      The two 893- and 1,185-byte runs are the two MatMuls, and the
 //      census above is what stands in for the call test there.
 //
-//  EXPECTED CALL SEQUENCE: 6 shipped, 6 ours, 5 in agreement, with ONE
-//  shipped-only / ours-only pair at 0x1007d5ee -- the /Qip +4 pattern:
-//  the shipped self-call goes to the REGISTER entry
-//  0x1007cc94 and ours goes to the symbol at 0x1007cc90.  See the
-//  RESIDUALS banner at the bottom for how to close it.
+//  CALL SEQUENCE: 6 shipped, 6 ours, 6 in agreement -- the self-call at
+//  0x1007d5ee goes to the REGISTER entry 0x1007cc94 on both sides now
+//  that the file is built /Qip (it was the one predicted /Qip +4 pair
+//  before).  See the RESIDUALS banner at the bottom.
 //
 //  /Qrcd: NOT NEEDED.  The census has zero float-to-int conversions --
 //  no fistp of any width, no cvt, no byte lerps.  There is no colour
@@ -283,6 +292,21 @@ inline void d3d_MatMul(LTMat *pDest, LTMat *pMat1, LTMat *pMat2)
 
 #undef M1
 #undef M2
+
+//  ltmatrix.h's Mat_SetTranslation(mat, vec) -> LTMatrix::SetTranslation(
+//  LTVector vec), which takes the vector BY VALUE.  The copy is what the
+//  bytes show: REGION 3's then-arm loads all three of pNode's dwords
+//  (0x1007cd61..0x1007cd67) before the first store (0x1007cd6a), which
+//  three plain assignments through a pointer that may alias m_Mat148
+//  cannot do -- they came out load/store/load/store, two more frame
+//  slots were needed and the frame was 0x58 against the shipped 0x50.
+//  With the by-value copy the frame is 0x50 and the arm is byte-exact.
+inline void d3d_SetTranslation(LTMat &mat, LTVec vec)
+{
+	mat.m[0][3] = vec.x;
+	mat.m[1][3] = vec.y;
+	mat.m[2][3] = vec.z;
+}
 
 
 // ======================================================================= //
@@ -712,7 +736,14 @@ void D3DRenderInfo::sub_1007cc90(uint32 nNodeIndex, LTMat *pParentXForm)
 		//      the destination.  The element order differs between the
 		//      arms (x,y,z against y,z,x) which is scheduling, not
 		//      source: the else-arm's %eax is loaded first and spent
-		//      last.  Written x,y,z in both.
+		//      last.
+		//    * the then-arm does all three LOADS before the first store.
+		//      Through pNode, which may alias m_Mat148, three plain
+		//      assignments cannot be reordered that way; a by-value LTVec
+		//      copy can.  So both arms are ltmatrix.h's
+		//      Mat_SetTranslation, written d3d_SetTranslation (see TYPES).
+		//      Measured: the three assignments gave load/store pairs and a
+		//      0x58 frame; the helper gives this arm byte-exact and 0x50.
 		// ------------------------------------------------------------- //
 		pNode = m_pModel1a4->m_ppNodes28[nNodeIndex];
 
@@ -720,15 +751,11 @@ void D3DRenderInfo::sub_1007cc90(uint32 nNodeIndex, LTMat *pParentXForm)
 
 		if (pNode->m_nFlags12 & 2)
 		{
-			m_Mat148.m[0][3] = pNode->m_vPos04.x;
-			m_Mat148.m[1][3] = pNode->m_vPos04.y;
-			m_Mat148.m[2][3] = pNode->m_vPos04.z;
+			d3d_SetTranslation(m_Mat148, pNode->m_vPos04);
 		}
 		else
 		{
-			m_Mat148.m[0][3] = m_Vec198.x;
-			m_Mat148.m[1][3] = m_Vec198.y;
-			m_Mat148.m[2][3] = m_Vec198.z;
+			d3d_SetTranslation(m_Mat148, m_Vec198);
 		}
 
 		// ------------------------------------------------------------- //
@@ -825,9 +852,7 @@ void D3DRenderInfo::sub_1007cc90(uint32 nNodeIndex, LTMat *pParentXForm)
 
 			sub_10073400(&pXForm->m_Rot0c, &m_Mat104);
 
-			m_Mat104.m[0][3] = pXForm->m_vPos00.x;
-			m_Mat104.m[1][3] = pXForm->m_vPos00.y;
-			m_Mat104.m[2][3] = pXForm->m_vPos00.z;
+			d3d_SetTranslation(m_Mat104, pXForm->m_vPos00);
 		}
 
 		// ------------------------------------------------------------- //
@@ -1007,9 +1032,18 @@ void D3DRenderInfo::sub_1007cc90(uint32 nNodeIndex, LTMat *pParentXForm)
 		//
 		//    * the shared epilogue at 0x1007d5ab is hosted BETWEEN the
 		//      two arms, reached forward from 0x1007d58b and backward
-		//      from 0x1007d5bc.  That is the "shared-exit host"
-		//      near class and it is byte-level only; both arms return
-		//      and nothing about it moves a call.
+		//      from 0x1007d5bc.  Measured: both exits written `return`
+		//      put the epilogue at the END, after the last-child `jmp`,
+		//      with the child-count exit going through a second `jmp`
+		//      to it; written `break` out of the `for (;;)`, icl hosts
+		//      it between the arms exactly as shipped.
+		//
+		//    * `nLast` is a named local.  Shipped zeroes the counter
+		//      with `mov $0x0,%ebx` AFTER `add %esi,%eax` (0x1007d5c5,
+		//      flag-preserving, so the `je` still tests the add);
+		//      `iChild < nChildren - 1` in the loop condition gave
+		//      `xor %ebx,%ebx` before the add.  The last-child read
+		//      still indexes `-0x4(%eax,%esi,4)` either way.
 		//
 		//    * the two continues share the tail at 0x1007d5a3, which
 		//      assigns pParentXForm = pNodeMat.  So the assignment is
@@ -1019,7 +1053,7 @@ void D3DRenderInfo::sub_1007cc90(uint32 nNodeIndex, LTMat *pParentXForm)
 		if (m_pIndexStackf8)
 		{
 			if (m_nIndexStackCountfc <= 0)
-				return;
+				break;
 
 			nNodeIndex = m_pIndexStackf8[--m_nIndexStackCountfc];
 		}
@@ -1028,15 +1062,17 @@ void D3DRenderInfo::sub_1007cc90(uint32 nNodeIndex, LTMat *pParentXForm)
 			uint32  nChildren = pNode->m_nNumChildren20;
 
 			if (nChildren == 0)
-				return;
+				break;
 
-			for (uint32 iChild = 0; iChild < nChildren - 1; iChild++)
+			uint32  nLast = nChildren - 1;
+
+			for (uint32 iChild = 0; iChild < nLast; iChild++)
 				sub_1007cc90(pNode->m_ppChildren1c[iChild]->m_nIndex10,
 				             pNodeMat);
 
 			m_nIndexStackCountfc = 1;
 
-			nNodeIndex = pNode->m_ppChildren1c[nChildren - 1]->m_nIndex10;
+			nNodeIndex = pNode->m_ppChildren1c[nLast]->m_nIndex10;
 		}
 
 		pParentXForm = pNodeMat;
@@ -1080,8 +1116,11 @@ void D3DRenderInfo::sub_1007cc90(uint32 nNodeIndex, LTMat *pParentXForm)
 //        linkage.  This has been measured to produce
 //        the two-symbol pair (`?f@@...` and `?f$@@...`) with same-TU
 //        callers entering at the register one, which is exactly the
-//        shipped shape.  This is the right fix and it is free -- but it
-//        needs a build, which this task does not do.
+//        shipped shape.  DONE: the file is in D3D_QIP_OS_TUS (/Os
+//        /Qip), the self-call reaches `sub_1007cc90$`, and callseq
+//        reports 6 of 6.  The scorer places `sub_1007cc90$` at
+//        0x1007cc90 + the stack entry's 4 bytes, and the stack entry
+//        itself at 0x1007cc90 (progress/extent-splits.csv).
 //    (c) accept it and say so: it is recognisable by the small constant
 //        offset between the two addresses, and it costs one shipped-only
 //        and one ours-only row.
@@ -1233,9 +1272,10 @@ void D3DRenderInfo::sub_1007cc90(uint32 nNodeIndex, LTMat *pParentXForm)
 //      Written x, y, z at all three sites.  The shipped emission order is
 //      x,y,z at 0x1007cd6a, y,z,x at 0x1007cd90 and z,y,x at 0x1007d104 --
 //      three different orders for the same three statements in one
-//      function, which is what says the order is the scheduler's.  If a
-//      build disagrees, the site to try first is REGION 5's, where the
-//      `add $0x8,%esp` splits the three loads.  No call.
+//      function, which is what says the order is the scheduler's.  Built:
+//      all three are d3d_SetTranslation (by-value LTVec, see REGION 3),
+//      and REGION 3's two arms and REGION 5's moves come out as shipped.
+//      No call.
 //
 //  (4) THE POP EXPRESSION.  Written
 //          nNodeIndex = m_pIndexStackf8[--m_nIndexStackCountfc];
@@ -1308,10 +1348,27 @@ void D3DRenderInfo::sub_1007cc90(uint32 nNodeIndex, LTMat *pParentXForm)
 //      three declared-but-not-defined callees really do emit calls
 //      (they came back as undefined references, which is the point).
 //
-//  NOT done: this file has never been compiled by the real toolchain and
-//  the call-sequence figure above is a PREDICTION, not a measurement.  The
-//  build slot belonged to another session.  The one number to check on the
-//  first build is 5-of-6 with a single /Qip +4 pair at 0x1007d5ee; any
-//  other shape means something in the descent (REGION 7b) is wrong.
+//  MEASURED (build/engine.sh d3d-one big7cc90.cpp, tools/fndiff.py,
+//  tools/callseq.py):
+//    * flags.  /Os /Qip and /Os /Qip /Qip_no_inlining, /Os /Oi- /Qip,
+//      /Os /Qip /Qsfalign16 and /O1 /Qip all give the same 2,424 bytes;
+//      /O2 /Qip comes out ~80 bytes short with a 0x40 frame, /Os /G5
+//      /Qip ~100 long.  /Os /Qip is what the file's TU-mates use
+//      (d3dr4a.cpp and w10_1007cab4_os.cpp are /Os), so that is the group.
+//    * call sequence 6 of 6, the /Qip self-call included.
+//    * byte-exact: the stack entry; 0x1007cc94..0x1007cda2 (prologue,
+//      REGIONS 1-3); 0x1007d546..0x1007d61b (callback and descent).
+//      Different: the x87 code of both MatMuls, and in REGION 5 which
+//      of %eax / %ebx holds the record base and which `nNodeIndex*0x1c`
+//      (shipped: base in %eax and spilled to -0x3c, index in %ebx).
+//      In MatMul 1 the [0][c] elements start with term 2 where shipped
+//      starts with term 3 ([1..3][c] already agree), and in MatMul 2 the
+//      choice of which registers hold 0x10091d40 differs from the
+//      first element on.  Swapping the product operands, reversing the
+//      sums, the SDK's own LTMatrix / MatMul / Mat_SetTranslation, a
+//      non-static scratch matrix and three spellings of REGION 5's
+//      record pointer were all built: none moves it (or it gets worse),
+//      so it reads as the "FPU term ordering" near class rather than a
+//      source shape.
 //
 // *********************************************************************** //
