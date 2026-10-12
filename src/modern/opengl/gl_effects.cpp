@@ -185,14 +185,21 @@ void glr_DrawPolyGrid(LTObject* pObj)
     SharedTexture** ppFrame = rd<SharedTexture**>(p, 0x1b4 + 8);
     SharedTexture* pShared = ppFrame ? *ppFrame : NULL;
 
-    // The texture's environment map (EnvMapPolyGrids), on the second unit;
-    // FLAG_ENVIRONMENTMAPONLY draws it alone.
+    // The texture's environment map (EnvMapPolyGrids): the map on unit 0,
+    // the texture over it on unit 1 (glr_BeginEnvUnit);
+    // FLAG_ENVIRONMENTMAPONLY draws the map alone.
     GLRTexture* pEnv = cvi(CV_EnvMapPolyGrids) ? glr_EnvMapOf(pShared) : NULL;
     bool bEnvOnly = (pObj->m_Flags & FLAG_ENVIRONMENTMAPONLY) != 0;
     if (bEnvOnly && !pEnv)
         return;
-    GLRTexture* pTex = glr_BindShared(bEnvOnly ? pShared->m_pLinkedTexture : pShared);
-    bool bEnvUnit = pEnv && !bEnvOnly && glr_BeginEnvUnit(pEnv);
+    GLRTexture* pTex = NULL;
+    if (pShared)
+    {
+        glr_TextureId(pShared);
+        pTex = (GLRTexture*)pShared->m_pRenderData;
+    }
+    bool bEnvUnit = pEnv && !bEnvOnly && glr_BeginEnvUnit(pTex);
+    glr_BindShared(pEnv && (bEnvOnly || bEnvUnit) ? pShared->m_pLinkedTexture : pShared);
     float tu = pTex && pTex->m_nBaseWidth ? 1.0f / pTex->m_nBaseWidth : 0.0f;
     float tv = pTex && pTex->m_nBaseHeight ? 1.0f / pTex->m_nBaseHeight : 0.0f;
     float xPan = rd<float>(p, 0x1cc), yPan = rd<float>(p, 0x1d0);
@@ -203,6 +210,8 @@ void glr_DrawPolyGrid(LTObject* pObj)
     const float* pColors = (const float*)(p + 0x1f8);
     bool bUnsigned = (pObj->m_Flags & FLAG_UNSIGNED) != 0;
     float fA = pObj->m_ColorA / 255.0f;
+    // The colours go through d3d.ren's colour ramps, which Saturate doubles.
+    float fRamp = cvi(CV_Saturate) ? 2.0f : 1.0f;
 
     LTMatrix M;
     glr_ObjectMatrix(pObj, &M);
@@ -230,9 +239,9 @@ void glr_DrawPolyGrid(LTObject* pObj)
         int nValue = bUnsigned ? (int)(uint8_t)pData[idx] - 128 : (int)pData[idx];
         int nColor = bUnsigned ? (int)(uint8_t)pData[idx] : (int)pData[idx] + 128;
         const float* c = &pColors[nColor * 4];
-        float a = c[3] * fA;
-        glColor4ub((uint8_t)(c[0] > 255 ? 255 : c[0] < 0 ? 0 : c[0]), (uint8_t)(c[1] > 255 ? 255 : c[1] < 0 ? 0 : c[1]),
-                   (uint8_t)(c[2] > 255 ? 255 : c[2] < 0 ? 0 : c[2]), (uint8_t)(a > 255 ? 255 : a < 0 ? 0 : a));
+        float a = c[3] * fA, r = c[0] * fRamp, gg = c[1] * fRamp, b = c[2] * fRamp;
+        glColor4ub((uint8_t)(r > 255 ? 255 : r < 0 ? 0 : r), (uint8_t)(gg > 255 ? 255 : gg < 0 ? 0 : gg),
+                   (uint8_t)(b > 255 ? 255 : b < 0 ? 0 : b), (uint8_t)(a > 255 ? 255 : a < 0 ? 0 : a));
         float s = 0.0f, t = 0.0f;
         if (bEnvCoords)
         {
@@ -253,12 +262,13 @@ void glr_DrawPolyGrid(LTObject* pObj)
         }
         if (bEnvOnly)
             glTexCoord2f(s, t);
-        else
+        else if (bEnvUnit)
         {
-            glTexCoord2f((col + uPan) * uScale, (row + vPan) * vScale);
-            if (bEnvUnit)
-                g_Multi.glMultiTexCoord2f(GL_TEXTURE1_ARB, s, t);
+            glTexCoord2f(s, t);
+            g_Multi.glMultiTexCoord2f(GL_TEXTURE1_ARB, (col + uPan) * uScale, (row + vPan) * vScale);
         }
+        else
+            glTexCoord2f((col + uPan) * uScale, (row + vPan) * vScale);
         glVertex3f(col - fHalfW, (float)nValue, row - fHalfH);
     }
     glEnd();

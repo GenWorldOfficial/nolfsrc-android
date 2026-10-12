@@ -473,16 +473,19 @@ GLRTexture* glr_EnvMapOf(SharedTexture* pBase)
     return (GLRTexture*)pBase->m_pLinkedTexture->m_pRenderData;
 }
 
-// An object's environment map on unit 1 (r_SetEnvMapTextureStates): added
-// signed to unit 0's texture under DetailTextureAdd, else modulating it.
-bool glr_BeginEnvUnit(GLRTexture* pEnv)
+// An object's surface texture on unit 1 over its environment map on unit
+// 0, as both renderers stage them (r_SetEnvMapTextureStates, d3d.ren's
+// 0x10011450): the map times the vertex colour, the texture added signed
+// under DetailTextureAdd (else modulating), the alpha the texture's alone.
+bool glr_BeginEnvUnit(GLRTexture* pTex)
 {
-    if (!pEnv || !g_Multi.m_bCombine || g_Multi.m_nUnits < 2)
+    if (!pTex || !g_Multi.m_bCombine || g_Multi.m_nUnits < 2)
         return false;
     glr_ActiveUnit(1);
     glr_CombineUnit(cvi(CV_DetailTextureAdd) ? GL_ADD_SIGNED_ARB : GL_MODULATE, 1.0f);
+    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_TEXTURE);
     glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, pEnv->m_Id);
+    glBindTexture(GL_TEXTURE_2D, pTex->m_Id);
     glr_ActiveUnit(0);
     return true;
 }

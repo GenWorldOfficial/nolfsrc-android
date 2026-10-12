@@ -126,7 +126,7 @@ void glr_DrawTranslucentWorldModel(LTObject* pObj);
 bool glr_SeesSky(const LTVector& vFrom, const LTVector& vRay);
 void glr_ReflectCoords(const LTVector& vCam, const LTVector& pos, const LTVector& N, float* pS, float* pT);
 GLRTexture* glr_EnvMapOf(SharedTexture* pBase);
-bool glr_BeginEnvUnit(GLRTexture* pEnv);
+bool glr_BeginEnvUnit(GLRTexture* pTex);
 void glr_EndEnvUnit(void);
 float glr_WorldSize(void);
 
@@ -144,9 +144,11 @@ float glr_WorldSize(void);
 #define GL_SOURCE0_RGB_ARB    0x8580
 #define GL_SOURCE1_RGB_ARB    0x8581
 #define GL_SOURCE0_ALPHA_ARB  0x8588
+#define GL_SOURCE1_ALPHA_ARB  0x8589
 #define GL_OPERAND0_RGB_ARB   0x8590
 #define GL_OPERAND1_RGB_ARB   0x8591
 #define GL_OPERAND0_ALPHA_ARB 0x8598
+#define GL_OPERAND1_ALPHA_ARB 0x8599
 typedef void (APIENTRY* PFN_glActiveTexture)(GLenum);
 typedef void (APIENTRY* PFN_glMultiTexCoord2f)(GLenum, GLfloat, GLfloat);
 struct GLRMulti {
