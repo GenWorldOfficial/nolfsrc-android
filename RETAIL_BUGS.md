@@ -271,6 +271,10 @@ grows the allocation until the write fits. A write longer than `m_MaxDataLen`
 silently loses its tail, while the buffer is enlarged to a size that would
 have held it.
 
+Not fixed: the clip is the packet-size cap doing its job, and the fault is
+only that the loss is silent. `WriteData` returns nothing, so reporting it
+means changing the writer's interface and every caller.
+
 ### `CBaseStream::ReadString` never reports a short read
 `0x10011314` (server.dll) · `src/engine/server/basestream.cpp`
 
@@ -305,6 +309,10 @@ by NOLF Modernizer.
 enact type is honoured only for the primary segment, which is left to run out;
 the pending queue is emptied at once, and the secondary segments and motifs
 are stopped immediately, whatever was asked.
+
+Not fixed: honouring the request means queueing a stop to run when the
+segment ends, which the manager has no request type for, and the game only
+ever calls `Stop` with the default enact type (`CMusic::Stop`).
 
 ### `StopSecondary` and `StopMotif` test the wrong object when given a name
 `0x00440ae0`, `0x00440dc0` (lithtech.exe) · `src/engine/lithtech/clientmusic.cpp`
