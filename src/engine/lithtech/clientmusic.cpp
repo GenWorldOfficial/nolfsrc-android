@@ -90,6 +90,38 @@ LTRESULT CLTDirectMusicMgr::SetVolume(const long nVolume)
 //   test. The unguarded tail is `test %eax,%eax`, reached straight from the
 //   segment-state `je`. So a node with no segment state would spin forever;
 //   that is the same list invariant the by-name loop relies on.
+#ifdef NOLFSRC_MODERN
+// fixed: StopSecondary and StopMotif test the wrong object when given a name
+// (RETAIL_BUGS.md). One walk for both cases: each node is visited once, the
+// next link read before the node can go back to the bank, and only a node
+// with a segment state is stopped. Nothing is found twice, so a node that is
+// not playing, or one left to its next-segment stop, cannot hang the loop.
+static void dm_StopPlayingNodes(CLTDirectMusicMgr* pMgr, CDMPlayingList& List,
+                                const char* sName, const LTDMEnactTypes nStart)
+{
+	CDMPlayingNode* pNode = List.m_pHead;
+
+	while (pNode)
+	{
+		CDMPlayingNode* pNext   = pNode->m_pNext;
+		CDMSegment*     pSegment = pNode->m_pSegment;
+		LTDMEnactTypes  nEnact  = nStart;
+
+		if (pNode->m_pSegState &&
+		    (!sName || (pSegment && pSegment->GetName() &&
+		                stricmp(pSegment->GetName(), sName) == 0)))
+		{
+			if (nStart == LTDMEnactDefault && pSegment)
+				nEnact = pSegment->m_nStopEnact;
+
+			if (nEnact != LTDMEnactNextSegment)
+				List.StopNode(pMgr, pNode, nEnact, 0);
+		}
+
+		pNode = pNext;
+	}
+}
+#endif
 LTRESULT CLTDirectMusicMgr::StopSecondary(const char* sSecondarySegment,
                                           const LTDMEnactTypes nStart)
 {
@@ -113,6 +145,9 @@ LTRESULT CLTDirectMusicMgr::StopSecondary(const char* sSecondarySegment,
 
 	EnterCriticalSection(&m_CriticalSection);
 
+#ifdef NOLFSRC_MODERN
+	dm_StopPlayingNodes(this, m_SecondaryList, sSecondarySegment, nStart);
+#else
 	if (!sSecondarySegment)
 	{
 		pNode = m_SecondaryList.m_pHead;
@@ -148,6 +183,7 @@ LTRESULT CLTDirectMusicMgr::StopSecondary(const char* sSecondarySegment,
 				m_SecondaryList.StopNode(this, pNode, nEnact, 0);
 		}
 	}
+#endif
 
 	LeaveCriticalSection(&m_CriticalSection);
 	return LT_OK;
@@ -177,6 +213,9 @@ LTRESULT CLTDirectMusicMgr::StopMotif(const char* sMotifName, const LTDMEnactTyp
 
 	EnterCriticalSection(&m_CriticalSection);
 
+#ifdef NOLFSRC_MODERN
+	dm_StopPlayingNodes(this, m_MotifList, sMotifName, nStart);
+#else
 	if (!sMotifName)
 	{
 		pNode = m_MotifList.m_pHead;
@@ -212,6 +251,7 @@ LTRESULT CLTDirectMusicMgr::StopMotif(const char* sMotifName, const LTDMEnactTyp
 				m_MotifList.StopNode(this, pNode, nEnact, 0);
 		}
 	}
+#endif
 
 	LeaveCriticalSection(&m_CriticalSection);
 	return LT_OK;

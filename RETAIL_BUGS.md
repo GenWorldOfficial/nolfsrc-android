@@ -40,6 +40,7 @@ in.
 * [`CObjBase::InitFields` leaves `m_StandingLink` uninitialised](#cobjbaseinitfields-leaves-m_standinglink-uninitialised)
 * [`at_Advance` divides by the last keyframe's time](#at_advance-divides-by-the-last-keyframes-time)
 * [Model shadows are switched off for good by the first cinematic](#model-shadows-are-switched-off-for-good-by-the-first-cinematic)
+* [`StopSecondary` and `StopMotif` test the wrong object when given a name](#stopsecondary-and-stopmotif-test-the-wrong-object-when-given-a-name)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -251,6 +252,11 @@ are stopped immediately, whatever was asked.
 
 ### `StopSecondary` and `StopMotif` test the wrong object when given a name
 `0x00440ae0`, `0x00440dc0` (lithtech.exe) · `src/engine/lithtech/clientmusic.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`):
+> one walk serves both the by-name and the stop-everything case: each node is
+> visited once, its next link read first, and only a node with a segment
+> state is stopped, so no node can be found forever (`dm_StopPlayingNodes`).
 
 Stopping everything asks each node `pNode->m_pSegState` (is it playing?);
 stopping one by name asks `pNode->m_pSegment->m_pDMSegment` (is it loaded?)
