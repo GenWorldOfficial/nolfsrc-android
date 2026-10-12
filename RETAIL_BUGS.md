@@ -182,19 +182,6 @@ Three faults in one function:
 * The block half checks each `m_ppPolies` entry for null (`0x1000a4df`); the
   polygon half dereferences the same array (`0x1000a562`) without checking.
 
-### `SharedCommonLT::GetAttachmentTransform` asks the socket accessor for a node
-`0x10012378` (server.dll) · `src/engine/server/sharedcommon.cpp`
-
-For an attachment to a model node, the function means to call
-`ILTModel::GetNodeTransform` (vtable slot `+0x18`) with
-`Attachment::m_iNode`. It calls through `+0x1c` (`0x100123ff`), which is
-`GetSocketTransform`: the retail `ILTModel` table at `0x1004e5f4` has the two
-at slots 6 and 7, and each names itself in its own parameter check
-(`0x1001d478`, `0x1001d77f`). So the node index is looked up as a socket
-index. (The source reproduces it by calling through `ILTModelI` in
-`commonmodel.h`, which declares an extra leading slot.) The neighbouring `GetAttachedTransform` (`0x100124ce`)
-picks the two slots correctly.
-
 ### The box-intersect test reports the wrong plane on three of six faces
 `0x1000f1f7` (server.dll) · `src/engine/server/objbank.cpp`
 
