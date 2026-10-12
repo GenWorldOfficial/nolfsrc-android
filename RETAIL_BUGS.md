@@ -54,6 +54,7 @@ in.
 * [`ServerMessage::ReadData` and `WriteData` bound-check a truncated size](#servermessagereaddata-and-writedata-bound-check-a-truncated-size)
 * [The fragment-record allocator passes a null to the list splice](#the-fragment-record-allocator-passes-a-null-to-the-list-splice)
 * [Checks reported at the wrong debug level](#checks-reported-at-the-wrong-debug-level)
+* [The value-returning readers quote the shutdown message](#the-value-returning-readers-quote-the-shutdown-message)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -720,6 +721,11 @@ names, and in the client interface that is almost always 1:
 ### The value-returning readers quote the shutdown message
 `0x0041f150`-`0x0041fbd0` (lithtech.exe), and their server.dll twins ·
 `src/engine/server/csbase.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`): the two error
+> macros they use pass the single space every other check passes
+> (`src/engine/server/de_error.h`). The release build keeps the retail
+> description.
 
 `ILTCSBase`'s error reporter takes a description as its last argument. Every
 method returning `LTRESULT` passes a single space; every method returning
