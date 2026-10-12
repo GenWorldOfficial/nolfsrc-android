@@ -68,6 +68,9 @@ extern GLRGlobals g;
 void glr_Print(const char* pFormat, ...);
 void glr_Debug(int nLevel, const char* pFormat, ...);
 
+// gl_movie.cpp: DirectDraw stand-ins for the movie players (GetHook).
+void* glr_MovieHook(const char* pName);
+
 // ---- console variables -----------------------------------------------------
 
 struct GLRVar {

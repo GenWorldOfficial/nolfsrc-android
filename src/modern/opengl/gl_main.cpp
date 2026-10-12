@@ -387,15 +387,15 @@ static void r_RenderCommand(int argc, char** argv)
     }
 }
 
-// Named objects for the engine. The engine's own askers want DirectDraw
-// ("LPDIRECTDRAW", "BACKBUFFER": the screen-mode movie players), which an
-// OpenGL renderer has none of, so they get NULL and the movie is skipped.
-// The modern engine asks for "FillScreenRect" (MODERN.md M-P0-03).
+// Named objects for the engine. The screen-mode movie players want
+// DirectDraw ("LPDIRECTDRAW", "BACKBUFFER"): they get gl_movie.cpp's
+// stand-ins. The modern engine asks for "FillScreenRect" (MODERN.md
+// M-P0-03).
 static void* r_GetHook(const char* pName)
 {
     if (pName && !_stricmp(pName, "FillScreenRect"))
         return (void*)&glr_FillScreenRect;
-    return NULL;
+    return glr_MovieHook(pName);
 }
 
 static void r_SwapBuffers(uint32_t nFlags)
