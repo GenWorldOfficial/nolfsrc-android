@@ -461,6 +461,10 @@ void CString::Concat(LPCTSTR pString)
 	// shipped library — appending leaves GetLength() short — and it is what
 	// the bytes say, so it is what this reconstructs.
 	memcpy(&(GetBuffer()[GetLength()]), pString, otherLength + 1);
+#ifdef NOLFSRC_MODERN
+	// fixed: CString::Concat(LPCTSTR) leaves the length short (RETAIL_BUGS.md).
+	SetLength(GetLength() + otherLength);
+#endif
 }
 
 void CString::Concat(char ch)

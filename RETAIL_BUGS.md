@@ -49,6 +49,7 @@ in.
 * [The object-DLL temp name: one copy unterminated, two unbounded](#the-object-dll-temp-name-one-copy-unterminated-two-unbounded)
 * [`CBaseStream::ReadString` never reports a short read](#cbasestreamreadstring-never-reports-a-short-read)
 * [`CBaseStream::WriteStream`: the source offset is ignored](#cbasestreamwritestream-the-source-offset-is-ignored)
+* [`CString::Concat(LPCTSTR)`: appending leaves the length short](#cstringconcatlpctstr-appending-leaves-the-length-short)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -123,6 +124,11 @@ damping but cannot read it back unless it also asks for the decay time.
 
 ### `CString::Concat(LPCTSTR)`: appending leaves the length short
 `MFCStub.lib` (also in `ButeMgrNoMFC.lib`) · `src/lithshared/MFCStub/mfcs_string.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`):
+> the length is set after the copy
+> (`src/lithshared/MFCStub/mfcs_string.cpp`, the copy the game links). The
+> release build keeps the retail code.
 
 It expands the buffer, copies the new characters in and returns, without
 calling `SetLength`. The stored length stays what `ExpandBuffer` carried over,
