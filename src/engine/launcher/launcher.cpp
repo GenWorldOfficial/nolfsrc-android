@@ -606,12 +606,51 @@ BOOL LaunchGame(char* sCmdLine, BOOL bMultiplayer)
 	fclose(pFile);
 
 	PROCESS_INFORMATION pi;
+#ifdef NOLFSRC_MODERN
+	// fixed: on some Windows 10/11 machines the retail call fails although
+	// lithtech.exe starts fine by hand. It hands on the launcher's own
+	// STARTUPINFO (which carries whatever Explorer, a shortcut or Steam
+	// started the launcher with) and leaves Windows to search for a bare
+	// "lithtech.exe". Start it from a clean STARTUPINFO, by its full path
+	// beside the launcher, and if it still fails say why.
+	memset(&si, 0, sizeof(si));
+	si.cb = sizeof(si);
+
+	char sExe[MAX_PATH + 16];
+	DWORD nLen = GetModuleFileName(NULL, sExe, MAX_PATH);
+	char* pSlash = (nLen > 0 && nLen < MAX_PATH) ? strrchr(sExe, '\\') : NULL;
+	if (pSlash) strcpy(pSlash + 1, "lithtech.exe");
+	else strcpy(sExe, "lithtech.exe");
+
+	char sLine[MAX_PATH + 48];
+	sprintf(sLine, "\"%s\" -cmdfile nolfcmds.txt", sExe);
+
+	if (!CreateProcess(sExe, sLine, NULL, NULL, FALSE,
+			CREATE_DEFAULT_ERROR_MODE | CREATE_NEW_PROCESS_GROUP, NULL, NULL, &si, &pi))
+	{
+		DWORD nErr = GetLastError();
+		char sText[1024];
+		strcpy(sText, "Error.");
+		LoadString(g_hInst, 6, sText, 511);
+		int n = strlen(sText);
+		n += sprintf(sText + n, "\n\n%s\nWindows error %lu: ", sExe, nErr);
+		if (!FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+				NULL, nErr, 0, sText + n, sizeof(sText) - n, NULL))
+			strcpy(sText + n, "(no description)");
+		MessageBox(NULL, sText, g_csCaption, MB_ICONEXCLAMATION);
+		return(FALSE);
+	}
+
+	CloseHandle(pi.hThread);
+	CloseHandle(pi.hProcess);
+#else
 	if (!CreateProcess(NULL, "lithtech.exe -cmdfile nolfcmds.txt", NULL, NULL, FALSE,
 			CREATE_DEFAULT_ERROR_MODE | CREATE_NEW_PROCESS_GROUP, NULL, NULL, &si, &pi))
 	{
 		ErrorMsg(NULL, 6, g_csCaption, MB_ICONEXCLAMATION);
 		return(FALSE);
 	}
+#endif
 
 	return(TRUE);
 }
