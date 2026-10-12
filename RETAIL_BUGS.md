@@ -36,6 +36,7 @@ in.
 * [`ci_GetSurfaceDims` writes through unchecked pointers](#ci_getsurfacedims-writes-through-unchecked-pointers)
 * [`sm_WriteObjectFiles` dereferences the first file identifier unchecked](#sm_writeobjectfiles-dereferences-the-first-file-identifier-unchecked)
 * [Error messages that name the wrong function](#error-messages-that-name-the-wrong-function)
+* [`CSoundMgr::GetReverbProperties`: damping is guarded by the wrong flag](#csoundmgrgetreverbproperties-damping-is-guarded-by-the-wrong-flag)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -92,6 +93,10 @@ it right; this one is missing `== 0`.
 
 ### `CSoundMgr::GetReverbProperties`: damping is guarded by the wrong flag
 `0x00482230` (lithtech.exe) · `src/engine/lithtech/clientsound.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`):
+> `src/engine/lithtech/clientsound.cpp` tests `REVERBPARAM_DAMPING` (0x10) for
+> the damping. The release build keeps the retail test.
 
 `ReverbProperties::m_dwParams` says which fields the caller wants. The getter
 tests bit 1 for the volume, 2 for the room type, 4 for the reflection time,

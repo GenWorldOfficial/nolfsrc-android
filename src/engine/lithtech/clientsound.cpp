@@ -181,7 +181,12 @@ LTRESULT CSoundMgr::GetReverbProperties(ReverbProperties* pReverbProperties)
 		if (pReverbProperties->m_dwParams & REVERBPARAM_DECAYTIME)
 			pReverbProperties->m_fDecayTime = m_fDecayTime;
 
+#ifdef NOLFSRC_MODERN
+		// fixed: damping has its own flag, as SetReverbProperties uses (RETAIL_BUGS.md)
+		if (pReverbProperties->m_dwParams & REVERBPARAM_DAMPING)
+#else
 		if (pReverbProperties->m_dwParams & REVERBPARAM_DECAYTIME)
+#endif
 			pReverbProperties->m_fDamping = m_fDamping;
 
 		return LT_OK;
