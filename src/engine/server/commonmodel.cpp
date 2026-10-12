@@ -2958,7 +2958,13 @@ LTRESULT Model::LoadChildModels(CModelLoadRequest* pRequest)
 	// SUCCESS return, so a model whose table at 0x8c cannot be allocated loads
 	// as though nothing were wrong, with none of its four chunks read.
 	if (!m_Unknown08c.SetSize2(nOOBB, (LAlloc*)m_pDataBlock))
+#ifdef NOLFSRC_MODERN
+		// fixed: Model::LoadChildModels reports success when it cannot size
+		// one table (RETAIL_BUGS.md).
+		goto fail;
+#else
 		goto done;
+#endif
 
 	for (j = 0; j < nOOBB; j++)
 		pStream->Read(&m_Unknown08c.m_pArray[j], 4);

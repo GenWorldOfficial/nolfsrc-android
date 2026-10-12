@@ -50,6 +50,7 @@ in.
 * [`CBaseStream::ReadString` never reports a short read](#cbasestreamreadstring-never-reports-a-short-read)
 * [`CBaseStream::WriteStream`: the source offset is ignored](#cbasestreamwritestream-the-source-offset-is-ignored)
 * [`CString::Concat(LPCTSTR)`: appending leaves the length short](#cstringconcatlpctstr-appending-leaves-the-length-short)
+* [`Model::LoadChildModels` reports success when it cannot size one table](#modelloadchildmodels-reports-success-when-it-cannot-size-one-table)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -225,6 +226,11 @@ since calling the header would emit the missing line.)
 
 ### `Model::LoadChildModels` reports success when it cannot size one table
 `0x1001c604` (server.dll) · `src/engine/server/commonmodel.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`):
+> the failure goes to the shared exit with the recorded `LT_ERROR`, like
+> every other (`src/engine/server/commonmodel.cpp`). The release build keeps
+> the retail jump.
 
 Every failure in the function goes to the exit that returns the `LT_ERROR`
 recorded on entry, except one: when sizing the table at `+0x8c` fails, it
