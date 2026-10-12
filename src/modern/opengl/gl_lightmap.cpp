@@ -262,6 +262,10 @@ static void glr_StorePolyLM(const GLRPolyLM* pLM, uint32_t w, uint32_t h, const 
         }
     }
     pAtlas->m_bDirty = true;
+    if (pLM->m_Y - 1u < pAtlas->m_DirtyY0)
+        pAtlas->m_DirtyY0 = pLM->m_Y - 1;
+    if (pLM->m_Y + h + 1 > pAtlas->m_DirtyY1)
+        pAtlas->m_DirtyY1 = pLM->m_Y + h + 1;
 }
 
 // ---- packing --------------------------------------------------------------------------
@@ -326,13 +330,20 @@ static void glr_UploadAtlases(GLRContext* pContext)
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, pAtlas->m_nSize, pAtlas->m_nSize, 0,
                          GL_RGB, GL_UNSIGNED_BYTE, pAtlas->m_pRGB);
         }
-        else if (pAtlas->m_bDirty)
+        else if (pAtlas->m_bDirty && pAtlas->m_DirtyY0 < pAtlas->m_DirtyY1)
         {
+            // Whole rows, so the pixels need no row length of their own.
+            uint32_t y0 = pAtlas->m_DirtyY0, y1 = pAtlas->m_DirtyY1;
+            if (y1 > pAtlas->m_nSize)
+                y1 = pAtlas->m_nSize;
             glBindTexture(GL_TEXTURE_2D, pAtlas->m_Id);
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, pAtlas->m_nSize, pAtlas->m_nSize,
-                            GL_RGB, GL_UNSIGNED_BYTE, pAtlas->m_pRGB);
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, y0, pAtlas->m_nSize, y1 - y0, GL_RGB,
+                            GL_UNSIGNED_BYTE, pAtlas->m_pRGB + y0 * pAtlas->m_nSize * 3);
         }
         pAtlas->m_bDirty = false;
+        pAtlas->m_DirtyY0 = pAtlas->m_nSize;
+        pAtlas->m_DirtyY1 = 0;
     }
 }
 
@@ -417,7 +428,103 @@ void glr_FreeLightmaps(GLRContext* pContext)
     }
     free(pContext->m_pPolyLMs);
     pContext->m_pPolyLMs = NULL;
+    free(pContext->m_pLitPolys);
+    pContext->m_pLitPolys = NULL;
+    pContext->m_nLitPolys = pContext->m_nLitAlloc = 0;
     pContext->m_nPolyLMs = 0;
+}
+
+// The polys lit last frame get their plain lightmaps back; those still lit
+// are lit again as they draw.
+static void glr_RestoreLitPolys(GLRContext* pContext)
+{
+    uint16_t texels[LM_MAXTEXELS];
+    for (uint32_t i = 0; i < pContext->m_nLitPolys; i++)
+    {
+        WorldPoly* pPoly = pContext->m_pLitPolys[i];
+        GLRPolyLM* pLM = (GLRPolyLM*)pPoly->m_pLMPage;
+        if (!pLM)
+            continue;
+        pLM->m_bLit = false;
+        if (glr_ComposePolyLM(pContext->m_pWorld, pPoly, texels))
+            glr_StorePolyLM(pLM, pPoly->m_LMWidth, pPoly->m_LMHeight, texels);
+    }
+    pContext->m_nLitPolys = 0;
+}
+
+// r_LightData (docs/world.md C.6): the poly's lightmap with the lights
+// added, per texel at its world position, over its atlas texels until
+// glr_RestoreLitPolys.
+void glr_LightPolyLM(GLRContext* pContext, WorldPoly* pPoly, const GLRWorldLight* pLights,
+                     uint32_t nLights)
+{
+    GLRPolyLM* pLM = (GLRPolyLM*)pPoly->m_pLMPage;
+    uint16_t texels[LM_MAXTEXELS];
+    if (!pLM || !nLights || pLM->m_bLit || !glr_ComposePolyLM(pContext->m_pWorld, pPoly, texels))
+        return;
+    if (pContext->m_nLitPolys == pContext->m_nLitAlloc)
+    {
+        uint32_t n = pContext->m_nLitAlloc ? pContext->m_nLitAlloc * 2 : 256;
+        WorldPoly** p = (WorldPoly**)realloc(pContext->m_pLitPolys, n * sizeof(WorldPoly*));
+        if (!p)
+            return;
+        pContext->m_pLitPolys = p;
+        pContext->m_nLitAlloc = n;
+    }
+    pContext->m_pLitPolys[pContext->m_nLitPolys++] = pPoly;
+    pLM->m_bLit = true;
+
+    LTVector P, Q;
+    glr_LMVectors(pPoly->m_pSurface, &P, &Q);
+    float grid = pContext->m_pWorld->m_LMGridSize;
+    float pp = P.x * P.x + P.y * P.y + P.z * P.z, qq = Q.x * Q.x + Q.y * Q.y + Q.z * Q.z;
+    if (pp <= 0.0f || qq <= 0.0f)
+        return;
+    LTVector su = { P.x * grid / pp, P.y * grid / pp, P.z * grid / pp };
+    LTVector sv = { Q.x * grid / qq, Q.y * grid / qq, Q.z * grid / qq };
+    // r_InitSaturateTable: ramp[i] = min(1, i/63 * LightSaturate).
+    float fSat = cvf(CV_LightSaturate) / 63.0f;
+    uint32_t w = pPoly->m_LMWidth, h = pPoly->m_LMHeight;
+    for (uint32_t y = 0; y < h; y++)
+    {
+        for (uint32_t x = 0; x < w; x++)
+        {
+            uint16_t& t = texels[y * w + x];
+            int c[3] = { ((t >> 10) & 31) << 3, ((t >> 5) & 31) << 3, (t & 31) << 3 };
+            float wx = pPoly->m_LMOrigin.x + x * su.x + y * sv.x;
+            float wy = pPoly->m_LMOrigin.y + x * su.y + y * sv.y;
+            float wz = pPoly->m_LMOrigin.z + x * su.z + y * sv.z;
+            for (uint32_t l = 0; l < nLights; l++)
+            {
+                const GLRWorldLight& L = pLights[l];
+                float dx = wx - L.m_Pos.x, dy = wy - L.m_Pos.y, dz = wz - L.m_Pos.z;
+                float d2 = dx * dx + dy * dy + dz * dz, r2 = L.m_fRadius * L.m_fRadius;
+                if (d2 >= r2)
+                    continue;
+                if (L.m_bSolid)
+                {
+                    c[0] = L.m_Color[0];
+                    c[1] = L.m_Color[1];
+                    c[2] = L.m_Color[2];
+                    continue;
+                }
+                float ramp = (int)((1.0f - d2 / r2) * 63.0f) * fSat;
+                if (ramp > 1.0f)
+                    ramp = 1.0f;
+                for (int j = 0; j < 3; j++)
+                    c[j] += (int)(L.m_Add[j] * ramp);
+            }
+            for (int j = 0; j < 3; j++)
+                c[j] = c[j] < 0 ? 0 : c[j] > 255 ? 31 : c[j] >> 3;
+            t = (uint16_t)(c[0] << 10 | c[1] << 5 | c[2]);
+        }
+    }
+    glr_StorePolyLM(pLM, w, h, texels);
+}
+
+void glr_UploadLightmaps(GLRContext* pContext)
+{
+    glr_UploadAtlases(pContext);
 }
 
 // Light animations the engine changed this frame marked their polys
@@ -427,7 +534,7 @@ void glr_UpdateLightmaps(GLRContext* pContext)
 {
     MainWorld* pWorld = pContext->m_pWorld;
     uint16_t texels[LM_MAXTEXELS];
-    bool bAny = false;
+    glr_RestoreLitPolys(pContext);
     for (uint32_t i = 0; i < pWorld->m_Worlds.m_nElements; i++)
     {
         WorldData* pData = mw_World(pWorld, i);
@@ -440,12 +547,8 @@ void glr_UpdateLightmaps(GLRContext* pContext)
             pPoly->m_Flags &= ~POLYFLAG_LMCHANGED;
             GLRPolyLM* pLM = (GLRPolyLM*)pPoly->m_pLMPage;
             if (pLM && glr_ComposePolyLM(pWorld, pPoly, texels))
-            {
                 glr_StorePolyLM(pLM, pPoly->m_LMWidth, pPoly->m_LMHeight, texels);
-                bAny = true;
-            }
         }
     }
-    if (bAny)
-        glr_UploadAtlases(pContext);
+    // Uploaded as the polys draw (glr_UploadLightmaps), dynamic light and all.
 }

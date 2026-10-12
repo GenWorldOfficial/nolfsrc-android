@@ -280,6 +280,11 @@ enum {
 #define FLAG_NOLIGHT         0x200
 #define FLAG_PORTALVISIBLE   0x400
 
+// A light's own meanings of the same bits (OT_LIGHT).
+#define FLAG_SOLIDLIGHT          0x10   // unattenuated: the light's colour over its radius (FastLight)
+#define FLAG_DONTLIGHTBACKFACING 0x40
+#define FLAG_ONLYLIGHTOBJECTS    0x80   // not the world
+
 #define FLAG2_PORTALINVISIBLE 0x1
 #define FLAG2_CHROMAKEY       0x2
 #define FLAG2_ADDITIVE        0x4

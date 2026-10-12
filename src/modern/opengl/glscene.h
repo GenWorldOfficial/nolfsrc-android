@@ -40,6 +40,7 @@ struct GLRLMAtlas {
     uint32_t    m_ShelfX, m_ShelfY, m_ShelfH;
     uint8_t*    m_pRGB;                 // m_nSize^2 * 3, kept for animated updates
     bool        m_bDirty;
+    uint32_t    m_DirtyY0, m_DirtyY1;   // the rows changed since the last upload
     GLRLMAtlas* m_pNext;
 };
 
@@ -48,7 +49,19 @@ struct GLRLMAtlas {
 struct GLRPolyLM {
     GLRLMAtlas* m_pAtlas;
     uint16_t    m_X, m_Y;               // the lightmap's first texel (inside its border)
+    bool        m_bLit;                 // holds dynamic light this frame
 };
+
+// A dynamic light as a BSP's polys see it: in that BSP's own space.
+struct GLRWorldLight {
+    LTVector m_Pos;
+    float    m_fRadius;
+    float    m_Add[3];                  // 2c - 255: a colour below 128 darkens
+    uint8_t  m_Color[3];
+    bool     m_bSolid;                  // FLAG_SOLIDLIGHT or FastLight
+    bool     m_bFrontOnly;              // FLAG_DONTLIGHTBACKFACING
+};
+#define GLR_MAXWORLDLIGHTS 40           // r_DrawLight's cap
 
 struct GLRContext {
     MainWorld*  m_pWorld;
@@ -57,11 +70,16 @@ struct GLRContext {
     GLRPolyLM*  m_pPolyLMs;             // one block for every lightmapped poly
     uint32_t    m_nPolyLMs;
     uint32_t    m_nContextGen;          // GL context the atlases were made in
+    WorldPoly** m_pLitPolys;            // polys whose atlas texels hold dynamic light
+    uint32_t    m_nLitPolys, m_nLitAlloc;
 };
 
 bool glr_BuildLightmaps(GLRContext* pContext);
 void glr_FreeLightmaps(GLRContext* pContext);
 void glr_UpdateLightmaps(GLRContext* pContext);   // animated lightmaps, before drawing
+void glr_UploadLightmaps(GLRContext* pContext);   // the atlas rows changed since the last call
+void glr_LightPolyLM(GLRContext* pContext, WorldPoly* pPoly, const GLRWorldLight* pLights,
+                     uint32_t nLights);
 LMAnim* glr_FindLMAnim(MainWorld* pWorld, const char* pName);
 void glr_LMVectors(const Surface* pSurf, LTVector* pP, LTVector* pQ);
 WorldPoly* glr_GetLMPoly(MainWorld* pWorld, const LMPolyRef& ref);

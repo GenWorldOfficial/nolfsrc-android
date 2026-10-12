@@ -420,6 +420,107 @@ static inline uint8_t glr_Saturate(uint8_t c, float fTint, bool bDouble)
 // lit: base times the vertex colours (doubled under Saturate, the colour
 // map r_FillColorMap builds). Either way tinted by the drawing object's
 // colour (r_SetupWMColorScale) with its alpha.
+// ---- dynamic lights on the world (r_DrawLight, r_ProcessBspLight) -------------------
+
+static GLRWorldLight g_WLights[GLR_MAXWORLDLIGHTS];
+static uint32_t      g_nWLights;
+
+// The frame's lights that light the world, in the space of the BSP about to
+// draw (pBack: world -> model; NULL for the main world).
+static void glr_SetupWorldLights(const LTMatrix* pBack)
+{
+    g_nWLights = 0;
+    if (!cvi(CV_DynamicLight) || !g_Frame.m_pContext)
+        return;
+    bool bFast = cvi(CV_FastLight) != 0;
+    GLRObjList* pList = glr_ObjList(VS_LIGHTS);
+    for (uint32_t i = 0; i < pList->m_nObjects && g_nWLights < GLR_MAXWORLDLIGHTS; i++)
+    {
+        LTObject* L = pList->m_pObjects[i];
+        float r;
+        memcpy(&r, (const uint8_t*)L + 0x1a8, 4);
+        if ((L->m_Flags & FLAG_ONLYLIGHTOBJECTS) || r <= 0.0f)
+            continue;
+        GLRWorldLight& W = g_WLights[g_nWLights++];
+        const LTVector& v = L->m_Pos;
+        if (pBack)
+        {
+            const LTMatrix& M = *pBack;
+            W.m_Pos.x = M.m[0][0] * v.x + M.m[0][1] * v.y + M.m[0][2] * v.z + M.m[0][3];
+            W.m_Pos.y = M.m[1][0] * v.x + M.m[1][1] * v.y + M.m[1][2] * v.z + M.m[1][3];
+            W.m_Pos.z = M.m[2][0] * v.x + M.m[2][1] * v.y + M.m[2][2] * v.z + M.m[2][3];
+        }
+        else
+            W.m_Pos = v;
+        W.m_fRadius = r;
+        W.m_Color[0] = L->m_ColorR;
+        W.m_Color[1] = L->m_ColorG;
+        W.m_Color[2] = L->m_ColorB;
+        for (int j = 0; j < 3; j++)
+            W.m_Add[j] = 2.0f * W.m_Color[j] - 255.0f;
+        W.m_bSolid = bFast || (L->m_Flags & FLAG_SOLIDLIGHT);
+        W.m_bFrontOnly = (L->m_Flags & FLAG_DONTLIGHTBACKFACING) != 0;
+    }
+}
+
+// r_DoesLightTouchPoly: the light's sphere reaches the poly's plane and its
+// bounding sphere.
+static bool glr_LightTouchesPoly(const GLRWorldLight& L, const WorldPoly* pPoly)
+{
+    const LTPlane* pPlane = pPoly->m_pSurface->m_pPlane;
+    if (pPlane)
+    {
+        float d = pPlane->m_Normal.x * L.m_Pos.x + pPlane->m_Normal.y * L.m_Pos.y +
+                  pPlane->m_Normal.z * L.m_Pos.z - pPlane->m_Dist;
+        if (d >= L.m_fRadius || d <= -L.m_fRadius || (L.m_bFrontOnly && d < 0.0f))
+            return false;
+    }
+    float dx = pPoly->m_Center.x - L.m_Pos.x, dy = pPoly->m_Center.y - L.m_Pos.y,
+          dz = pPoly->m_Center.z - L.m_Pos.z, rr = L.m_fRadius + pPoly->m_Radius;
+    return dx * dx + dy * dy + dz * dz < rr * rr;
+}
+
+// The lights that reach the poly, into pOut; how many.
+static uint32_t glr_PolyLights(const WorldPoly* pPoly, GLRWorldLight* pOut)
+{
+    uint32_t n = 0;
+    for (uint32_t i = 0; i < g_nWLights; i++)
+        if (glr_LightTouchesPoly(g_WLights[i], pPoly))
+            pOut[n++] = g_WLights[i];
+    return n;
+}
+
+// A gouraud poly's vertex: its colour plus the lights, as r_LightData's
+// texel (r_DrawGouraudDynamicLight).
+static void glr_LightVertex(const LTVector& pos, const GLRWorldLight* pLights, uint32_t nLights,
+                            uint8_t* pRGB)
+{
+    float fSat = cvf(CV_LightSaturate) / 63.0f;
+    int c[3] = { pRGB[0], pRGB[1], pRGB[2] };
+    for (uint32_t l = 0; l < nLights; l++)
+    {
+        const GLRWorldLight& L = pLights[l];
+        float dx = pos.x - L.m_Pos.x, dy = pos.y - L.m_Pos.y, dz = pos.z - L.m_Pos.z;
+        float d2 = dx * dx + dy * dy + dz * dz, r2 = L.m_fRadius * L.m_fRadius;
+        if (d2 >= r2)
+            continue;
+        if (L.m_bSolid)
+        {
+            c[0] = L.m_Color[0];
+            c[1] = L.m_Color[1];
+            c[2] = L.m_Color[2];
+            continue;
+        }
+        float ramp = (int)((1.0f - d2 / r2) * 63.0f) * fSat;
+        if (ramp > 1.0f)
+            ramp = 1.0f;
+        for (int j = 0; j < 3; j++)
+            c[j] += (int)(L.m_Add[j] * ramp);
+    }
+    for (int j = 0; j < 3; j++)
+        pRGB[j] = (uint8_t)(c[j] < 0 ? 0 : c[j] > 255 ? 255 : c[j]);
+}
+
 static void glr_DrawPoly(WorldPoly* pPoly, GLRTexture* pTex, bool bLightmaps,
                          const float* pTint, uint8_t nAlpha)
 {
@@ -462,6 +563,9 @@ static void glr_DrawPoly(WorldPoly* pPoly, GLRTexture* pTex, bool bLightmaps,
         b = (uint8_t)(255 * pTint[2]);
     }
 
+    GLRWorldLight lights[GLR_MAXWORLDLIGHTS];
+    uint32_t nLights = !bFullbright && !pLM && g_nWLights ? glr_PolyLights(pPoly, lights) : 0;
+
     const WorldPolyVertex* pVerts = pPoly->m_Verts;
     uint32_t nVerts = pPoly->m_nVerts;
     if (cvi(CV_FixTJunc) && pPoly->m_pFixVerts)
@@ -477,8 +581,13 @@ static void glr_DrawPoly(WorldPoly* pPoly, GLRTexture* pTex, bool bLightmaps,
         if (bFullbright || pLM)
             glColor4ub(r, gg, b, nAlpha);
         else
-            glColor4ub(glr_Saturate(vert.m_R, pTint[0], bDouble), glr_Saturate(vert.m_G, pTint[1], bDouble),
-                       glr_Saturate(vert.m_B, pTint[2], bDouble), nAlpha);
+        {
+            uint8_t rgb[3] = { vert.m_R, vert.m_G, vert.m_B };
+            if (nLights)
+                glr_LightVertex(pos, lights, nLights, rgb);
+            glColor4ub(glr_Saturate(rgb[0], pTint[0], bDouble), glr_Saturate(rgb[1], pTint[1], bDouble),
+                       glr_Saturate(rgb[2], pTint[2], bDouble), nAlpha);
+        }
         glTexCoord2f(vert.m_U * fU, vert.m_V * fV);
         if (pDetail)
             g_Multi.glMultiTexCoord2f(GL_TEXTURE0_ARB + g_nDetailUnit,
@@ -498,12 +607,29 @@ static void glr_DrawPoly(WorldPoly* pPoly, GLRTexture* pTex, bool bLightmaps,
 
 static const float g_White[3] = { 1, 1, 1 };
 
-// Draw the queue, sorted by texture and lightmap atlas.
-static void glr_FlushPolys(const float* pTint, uint8_t nAlpha)
+// Draw the queue, sorted by texture and lightmap atlas. pBack brings the
+// frame's dynamic lights into the queued polys' space (world models).
+static void glr_FlushPolys(const float* pTint, uint8_t nAlpha, const LTMatrix* pBack)
 {
     qsort(g_pDrawList, g_nDrawList, sizeof(GLRDrawPoly), glr_CompareDrawPoly);
-    glr_ForgetBindings();
     bool bLightmaps = g_Frame.m_bLightmaps;
+    glr_SetupWorldLights(pBack);
+    if (bLightmaps)
+    {
+        GLRWorldLight lights[GLR_MAXWORLDLIGHTS];
+        for (uint32_t i = 0; g_nWLights && i < g_nDrawList; i++)
+        {
+            WorldPoly* pPoly = g_pDrawList[i].m_pPoly;
+            GLRTexture* pTex = g_pDrawList[i].m_pTex;
+            if (!pPoly->m_pLMPage || (pTex && (pTex->m_DtxFlags & DTX_FULLBRITE)))
+                continue;
+            uint32_t n = glr_PolyLights(pPoly, lights);
+            if (n)
+                glr_LightPolyLM(g_Frame.m_pContext, pPoly, lights, n);
+        }
+        glr_UploadLightmaps(g_Frame.m_pContext);
+    }
+    glr_ForgetBindings();
     glr_BeginUnits(bLightmaps);
     for (uint32_t i = 0; i < g_nDrawList; i++)
     {
@@ -512,6 +638,7 @@ static void glr_FlushPolys(const float* pTint, uint8_t nAlpha)
     }
     glr_EndUnits();
     g_nDrawList = 0;
+    g_nWLights = 0;
 }
 
 // ---- visibility -------------------------------------------------------------------
@@ -758,7 +885,7 @@ void glr_DrawSolidWorldModel(LTObject* pObj)
     glr_ObjectFog(pObj, true);
     glPushMatrix();
     glr_MultMatrix(pWM->m_Transform);
-    glr_FlushPolys(tint, pObj->m_ColorA);
+    glr_FlushPolys(tint, pObj->m_ColorA, &pWM->m_BackTransform);
     glPopMatrix();
     glr_ObjectFog(pObj, false);
 }
@@ -1052,7 +1179,7 @@ LTBOOL glr_RenderScene(SceneDesc* pScene)
     {
         if (g_Frame.m_bLightmaps)
             glr_UpdateLightmaps(pContext);
-        glr_FlushPolys(g_White, 255);
+        glr_FlushPolys(g_White, 255, NULL);
     }
     glr_FlushObjects();
 
