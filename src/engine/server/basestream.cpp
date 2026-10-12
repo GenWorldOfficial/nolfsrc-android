@@ -57,7 +57,21 @@ LTRESULT CBaseStream::ReadString(char* pStr, unsigned long maxBytes)
 	unsigned long nMaxChars;
 	LTRESULT dResult;
 
+#ifdef NOLFSRC_MODERN
+	// fixed: CBaseStream::ReadString never reports a short read
+	// (RETAIL_BUGS.md). A length that cannot be read is an error.
+	dResult = Read(&nLen, 2);
+
+	if (dResult != LT_OK)
+	{
+		if (maxBytes)
+			pStr[0] = 0;
+
+		return dResult;
+	}
+#else
 	Read(&nLen, 2);
+#endif
 
 	// Nested, not a run of guards: both early arms answer LT_OK and the
 	// shipped code hosts that answer at the FIRST of them, with the drain loop

@@ -47,6 +47,7 @@ in.
 * [The property-type guard normalises to a value that is also out of range](#the-property-type-guard-normalises-to-a-value-that-is-also-out-of-range)
 * [The tree-path builder ignores the buffer length it is given](#the-tree-path-builder-ignores-the-buffer-length-it-is-given)
 * [The object-DLL temp name: one copy unterminated, two unbounded](#the-object-dll-temp-name-one-copy-unterminated-two-unbounded)
+* [`CBaseStream::ReadString` never reports a short read](#cbasestreamreadstring-never-reports-a-short-read)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -233,6 +234,11 @@ have held it.
 
 ### `CBaseStream::ReadString` never reports a short read
 `0x10011314` (server.dll) · `src/engine/server/basestream.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`):
+> a length that cannot be read is returned as the error it is
+> (`src/engine/server/basestream.cpp`). The release build keeps the retail
+> code.
 
 The string is read in two parts, a two-byte length and then the body, and
 only the body read's result is returned. A stream that runs out between the
