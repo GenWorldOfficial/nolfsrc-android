@@ -6,6 +6,7 @@ engine can load in place of `d3d.ren` (MODERN.md, M-P0-04):
 | DLL | backend | device |
 |---|---|---|
 | `opengl.ren` | `gl/` | fixed-function OpenGL 1.x plus a few extensions, which is what the Mac renderer uses and what Wine maps to any host's OpenGL |
+| `d3d9.ren` | `d3d9/` | the Direct3D 9 fixed-function pipeline, which Proton runs on Vulkan (DXVK): `rdev.h`'s GL-shaped state kept by the backend and handed over when something is drawn, the projection moved to Direct3D's depth range and pixel centres, immediate-mode vertices drawn with `DrawPrimitiveUP`, textures made at their first use from the levels uploaded. Direct3D 9 has no depth clamping, which the really-close objects are drawn with: while it is on, the backend transforms the vertices itself, clamps their depth, and draws them pre-transformed |
 
 The core is new code, written from the Mac release's OpenGL renderer, which
 is the same renderer for the same engine version and whose functions all
@@ -15,15 +16,19 @@ draws through `rdev.h`, a small fixed-function device in the shape of
 OpenGL 1.x (state, texture units with combiners, matrix stacks, immediate
 primitives); a backend implements that and names its DLL.
 
-It is built by `build/ext.sh` with `zig c++` (no VC6: nothing here has to
-match anything), into `out/ext/opengl.ren`, and installed beside `d3d.ren`
-in the modern game directories. `d3d.ren` stays the default.
+They are built by `build/ext.sh` with `zig c++` (no VC6: nothing here has
+to match anything), into `out/ext/opengl.ren` and `out/ext/d3d9.ren`.
+Both are installed in the modern game directories, where `d3d9.ren` is the
+default renderer and our `d3d.ren` (DirectX 7, with the modern fixes) is
+installed as `d3d7.ren`, so the three can be compared (MODERN.md, M-P0-05).
 
 ## Using it
 
-Pick it like any renderer: `"RenderDll" "opengl.ren"` (and `"CardDesc"
-"OpenGL"`) in `autoexec.cfg`, `+RenderDll opengl.ren` on the command line,
-or the launcher, which lists it as "LithTech OpenGL Renderer". A playtest:
+Pick one like any renderer: `"RenderDll" "opengl.ren"` (and `"CardDesc"
+"OpenGL"`; for `d3d9.ren`, `"Direct3D9"`) in `autoexec.cfg`,
+`+RenderDll opengl.ren` on the command line, or the launcher, which lists
+them as "LithTech OpenGL Renderer" and "LithTech Direct3D 9 Renderer". A
+playtest:
 
     printf '"RenderDll" "opengl.ren"\n"CardDesc" "OpenGL"\n' > out/gl.cfg
     PLAYTEST_CFG=out/gl.cfg tools/playtest.sh out/nolf-modern-release -
@@ -32,7 +37,7 @@ Console variables it reads besides the engine's own (the names and defaults
 `d3d.ren` and the Mac renderer share): `Bilinear`, `Trilinear`,
 `Anisotropic`, `MipmapOffset`, `GroupOffset0`..`9`, `FilterOptimized`,
 `MaxTextureSize`, `S3TCEnable`, `LightMap`, `Saturate`, `DetailTextures`, `DetailTextureAdd`, `DetailTextureScale`, `DrawWorld`, `DrawSky`, `DrawWorldModels`, `DrawAll`, `DrawSorted`, `SkyScale`, `FixTJunc`, `LightAddPoly`, the `Fog*` and `SkyFog*` variables, `DrawModels`, `DrawGuns`, `TextureModels`, `ModelSaturation`, `MaxModelLights`, `ModelLODOffset`, `32BitTextures`, `RenderDebug` (3 and up also writes
-`opengl.log` beside the game, 4 logs every 2D call), and `VSync` (ours).
+`opengl.log` or `d3d9.log` beside the game, 4 logs every 2D call), and, ours, `VSync` and `Antialiasing` (0, 2, 4 or 8 samples per pixel: the renderers draw into a multisampled target and resolve it before a flip or a read).
 `RenderCommand info` prints the device in use.
 
 ## Status
@@ -68,6 +73,8 @@ Console variables it reads besides the engine's own (the names and defaults
 | `mr_movie.cpp` | DirectDraw stand-ins for the movie players |
 | `gl/gl_device.cpp` | `rdev.h` on OpenGL, and the WGL context |
 | `gl/opengl.def`, `gl/opengl.rc` | `opengl.ren`'s three exports; the launcher's name for it (string 5) |
+| `d3d9/d3d9_device.cpp` | `rdev.h` on Direct3D 9 |
+| `d3d9/d3d9.def`, `d3d9/d3d9.rc` | `d3d9.ren`'s exports and launcher name |
 | `docs/` | the research the renderer is written from: `device.md` (the device and 2D half of the contract), `world.md` (the world's data and how it is drawn), `objects.md` (objects, models and the engine services a render DLL reaches), `mac-cvars.txt` (the Mac renderer's console variables) |
 
 ## The Mac renderer, for reference

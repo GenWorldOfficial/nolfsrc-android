@@ -51,7 +51,7 @@ void mr_Debug(int nLevel, const char* pFormat, ...)
 }
 
 // The names and defaults d3d.ren and the Mac renderer register, where they
-// share one; VSync is ours.
+// share one; VSync and Antialiasing are ours.
 MRVar g_Vars[CV_Count] = {
     { "RenderDebug", 0 }, { "Bilinear", 1 }, { "Trilinear", 0 }, { "Anisotropic", 0 },
     { "MipmapOffset", 0 }, { "FilterOptimized", 0 }, { "MaxTextureSize", 16384 },
@@ -76,6 +76,7 @@ MRVar g_Vars[CV_Count] = {
     { "EnvMapWorld", 1 }, { "EnvMapEnable", 0 }, { "EnvMapAll", 0 }, { "EnvScale", 1 },
     { "EnvPanSpeed", 0.0005f }, { "EnvMapPolyGrids", 1 },
     { "MaxModelShadows", 1 }, { "ModelShadowAlpha", 230 }, { "ModelShadowOffset", 0.05f },
+    { "Antialiasing", 0 },
 };
 
 // Find a variable, creating it with its default if the engine has none
@@ -208,7 +209,8 @@ static int r_Init(RenderStructInit* pInit)
         return 1;
 
     plat_OpenWindow(g.hWnd, g.nWidth, g.nHeight, &g.bWindowed);
-    if (!rd_CreateDevice(g.hWnd, g.nWidth, g.nHeight, g.bWindowed, cvi(CV_VSync) ? 1 : 0))
+    if (!rd_CreateDevice(g.hWnd, g.nWidth, g.nHeight, g.bWindowed, cvi(CV_VSync) ? 1 : 0,
+                         cvi(CV_Antialiasing)))
     {
         r_Term();
         return 1;
@@ -225,6 +227,8 @@ static int r_Init(RenderStructInit* pInit)
 
     mr_Print("%s: %ux%ux%u %s, %s", g_RDDll, g.nWidth, g.nHeight, g.nBitDepth,
              g.bWindowed ? "windowed" : "full screen", rd_Describe());
+    if (g_RDCaps.nSamples > 1 || cvi(CV_Antialiasing) > 1)
+        mr_Print("%s: antialiasing %dx (asked for %dx)", g_RDDll, g_RDCaps.nSamples, cvi(CV_Antialiasing));
     return 0;
 }
 
@@ -323,9 +327,9 @@ static void r_RenderCommand(int argc, char** argv)
     if (!_stricmp(argv[0], "info") || !_stricmp(argv[0], "gl_strings"))
     {
         rd_PrintInfo(mr_Print);
-        mr_Print("max texture %d, %d texture units, S3TC %s, anisotropy %s (%.0f)",
+        mr_Print("max texture %d, %d texture units, S3TC %s, anisotropy %s (%.0f), %dx antialiasing",
                  g_RDCaps.nMaxTextureSize, g_RDCaps.nTextureUnits, g_RDCaps.bS3TC ? "yes" : "no",
-                 g_RDCaps.bAniso ? "yes" : "no", g_RDCaps.fMaxAniso);
+                 g_RDCaps.bAniso ? "yes" : "no", g_RDCaps.fMaxAniso, g_RDCaps.nSamples);
     }
 }
 

@@ -5,7 +5,10 @@
 // EXT_texture_filter_anisotropic, ARB/NV_depth_clamp), which is what every
 // OpenGL a Wine prefix can reach provides; rdev.h is shaped after it, so
 // most calls here are one GL call. The context is WGL's, on the window
-// mr_window.cpp sized.
+// mr_window.cpp sized. Antialiasing draws into a multisampled framebuffer
+// object (the window's own pixel format is fixed for its life, and the
+// engine keeps one window across renderer restarts), resolved into the
+// window's back buffer before a swap or a read.
 
 #include "../mr.h"
 #include <GL/gl.h>
@@ -52,6 +55,15 @@ RDCaps g_RDCaps;
 #define GL_OPERAND1_RGB_ARB             0x8591
 #define GL_OPERAND0_ALPHA_ARB           0x8598
 #define GL_OPERAND1_ALPHA_ARB           0x8599
+#define GL_FRAMEBUFFER                  0x8D40
+#define GL_READ_FRAMEBUFFER             0x8CA8
+#define GL_DRAW_FRAMEBUFFER             0x8CA9
+#define GL_RENDERBUFFER                 0x8D41
+#define GL_COLOR_ATTACHMENT0            0x8CE0
+#define GL_DEPTH_STENCIL_ATTACHMENT     0x821A
+#define GL_DEPTH24_STENCIL8             0x88F0
+#define GL_FRAMEBUFFER_COMPLETE         0x8CD5
+#define GL_MAX_SAMPLES                  0x8D57
 
 typedef void (APIENTRY* PFN_glActiveTexture)(GLenum);
 typedef void (APIENTRY* PFN_glMultiTexCoord2f)(GLenum, GLfloat, GLfloat);
@@ -60,6 +72,27 @@ typedef void (APIENTRY* PFN_glCompressedTexImage2D)(GLenum, GLint, GLenum, GLsiz
 static PFN_glActiveTexture        s_glActiveTexture;
 static PFN_glMultiTexCoord2f      s_glMultiTexCoord2f;
 static PFN_glCompressedTexImage2D s_glCompressedTexImage2D;
+
+// Framebuffer objects (GL 3.0 / ARB_framebuffer_object), for antialiasing.
+typedef void (APIENTRY* PFN_glGenObjects)(GLsizei, GLuint*);
+typedef void (APIENTRY* PFN_glDeleteObjects)(GLsizei, const GLuint*);
+typedef void (APIENTRY* PFN_glBindObject)(GLenum, GLuint);
+typedef void (APIENTRY* PFN_glRenderbufferStorageMultisample)(GLenum, GLsizei, GLenum, GLsizei, GLsizei);
+typedef void (APIENTRY* PFN_glFramebufferRenderbuffer)(GLenum, GLenum, GLenum, GLuint);
+typedef GLenum (APIENTRY* PFN_glCheckFramebufferStatus)(GLenum);
+typedef void (APIENTRY* PFN_glBlitFramebuffer)(GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLint,
+                                              GLbitfield, GLenum);
+static struct {
+    PFN_glGenObjects                    GenFramebuffers, GenRenderbuffers;
+    PFN_glDeleteObjects                 DeleteFramebuffers, DeleteRenderbuffers;
+    PFN_glBindObject                    BindFramebuffer, BindRenderbuffer;
+    PFN_glRenderbufferStorageMultisample RenderbufferStorageMultisample;
+    PFN_glFramebufferRenderbuffer       FramebufferRenderbuffer;
+    PFN_glCheckFramebufferStatus        CheckFramebufferStatus;
+    PFN_glBlitFramebuffer               BlitFramebuffer;
+} s_fbo;
+static GLuint s_nFBO, s_nColorRB, s_nDepthRB;   // the multisampled target, 0 without antialiasing
+static int    s_nWidth;
 
 static HWND  s_hWnd;
 static HDC   s_hDC;
@@ -122,10 +155,76 @@ static bool gl_CreateContext(void)
     return true;
 }
 
-bool rd_CreateDevice(void* hWnd, uint32_t nWidth, uint32_t nHeight, bool bWindowed, int nSwapInterval)
+static void gl_DestroyTarget(void)
+{
+    if (s_nFBO)
+    {
+        s_fbo.BindFramebuffer(GL_FRAMEBUFFER, 0);
+        s_fbo.DeleteFramebuffers(1, &s_nFBO);
+        s_fbo.DeleteRenderbuffers(1, &s_nColorRB);
+        s_fbo.DeleteRenderbuffers(1, &s_nDepthRB);
+        s_nFBO = s_nColorRB = s_nDepthRB = 0;
+    }
+}
+
+// The multisampled colour and depth/stencil target everything draws into.
+static int gl_CreateTarget(int nSamples)
+{
+#define GL_FBO_PROC(name) (s_fbo.name = (decltype(s_fbo.name))wglGetProcAddress("gl" #name))
+    if (!GL_FBO_PROC(GenFramebuffers) || !GL_FBO_PROC(GenRenderbuffers) || !GL_FBO_PROC(DeleteFramebuffers) ||
+        !GL_FBO_PROC(DeleteRenderbuffers) || !GL_FBO_PROC(BindFramebuffer) || !GL_FBO_PROC(BindRenderbuffer) ||
+        !GL_FBO_PROC(RenderbufferStorageMultisample) || !GL_FBO_PROC(FramebufferRenderbuffer) ||
+        !GL_FBO_PROC(CheckFramebufferStatus) || !GL_FBO_PROC(BlitFramebuffer))
+        return 1;
+#undef GL_FBO_PROC
+    GLint nMax = 1;
+    glGetIntegerv(GL_MAX_SAMPLES, &nMax);
+    if (nSamples > nMax)
+        nSamples = nMax;
+    if (nSamples < 2)
+        return 1;
+    s_fbo.GenRenderbuffers(1, &s_nColorRB);
+    s_fbo.BindRenderbuffer(GL_RENDERBUFFER, s_nColorRB);
+    s_fbo.RenderbufferStorageMultisample(GL_RENDERBUFFER, nSamples, GL_RGBA8, s_nWidth, s_nHeight);
+    s_fbo.GenRenderbuffers(1, &s_nDepthRB);
+    s_fbo.BindRenderbuffer(GL_RENDERBUFFER, s_nDepthRB);
+    s_fbo.RenderbufferStorageMultisample(GL_RENDERBUFFER, nSamples, GL_DEPTH24_STENCIL8, s_nWidth, s_nHeight);
+    s_fbo.BindRenderbuffer(GL_RENDERBUFFER, 0);
+    s_fbo.GenFramebuffers(1, &s_nFBO);
+    s_fbo.BindFramebuffer(GL_FRAMEBUFFER, s_nFBO);
+    s_fbo.FramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, s_nColorRB);
+    s_fbo.FramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, s_nDepthRB);
+    if (s_fbo.CheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    {
+        mr_Print("opengl.ren: no %dx multisampled target; antialiasing off", nSamples);
+        gl_DestroyTarget();
+        return 1;
+    }
+    return nSamples;
+}
+
+// The multisampled target into the window's back buffer. The scissor test
+// applies to the blit, so it is off for it.
+static void gl_Resolve(void)
+{
+    if (!s_nFBO)
+        return;
+    GLboolean bScissor = glIsEnabled(GL_SCISSOR_TEST);
+    glDisable(GL_SCISSOR_TEST);
+    s_fbo.BindFramebuffer(GL_READ_FRAMEBUFFER, s_nFBO);
+    s_fbo.BindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+    s_fbo.BlitFramebuffer(0, 0, s_nWidth, s_nHeight, 0, 0, s_nWidth, s_nHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+    s_fbo.BindFramebuffer(GL_FRAMEBUFFER, s_nFBO);
+    if (bScissor)
+        glEnable(GL_SCISSOR_TEST);
+}
+
+bool rd_CreateDevice(void* hWnd, uint32_t nWidth, uint32_t nHeight, bool bWindowed, int nSwapInterval,
+                     int nSamples)
 {
     (void)bWindowed;
     s_hWnd = (HWND)hWnd;
+    s_nWidth = (int)nWidth;
     s_nHeight = (int)nHeight;
     if (!gl_CreateContext())
     {
@@ -158,6 +257,8 @@ bool rd_CreateDevice(void* hWnd, uint32_t nWidth, uint32_t nHeight, bool bWindow
     if (pSwapInterval)
         pSwapInterval(nSwapInterval);
 
+    g_RDCaps.nSamples = nSamples > 1 ? gl_CreateTarget(nSamples) : 1;
+
     // The state every draw starts from (r_SetStartingRenderStates).
     glViewport(0, 0, nWidth, nHeight);
     glDisable(GL_LIGHTING);
@@ -183,6 +284,7 @@ void rd_DestroyDevice(void)
 {
     if (s_hRC)
     {
+        gl_DestroyTarget();
         glFlush();
         glFinish();
     }
@@ -191,8 +293,10 @@ void rd_DestroyDevice(void)
 
 void rd_Present(void)
 {
-    if (s_hDC)
-        SwapBuffers(s_hDC);
+    if (!s_hDC)
+        return;
+    gl_Resolve();
+    SwapBuffers(s_hDC);
 }
 
 const char* rd_Describe(void)
@@ -436,9 +540,18 @@ void rd_ReadPixels(int x, int y, int w, int h, RDPixels ePixels, void* pDest, bo
 {
     GLenum nFormat, nType;
     gl_Pixels(ePixels, &nFormat, &nType);
+    if (s_nFBO)
+    {
+        // From the window's buffers: the back one resolved first.
+        if (!bFront)
+            gl_Resolve();
+        s_fbo.BindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+    }
     glReadBuffer(bFront ? GL_FRONT : GL_BACK);
     glReadPixels(x, s_nHeight - y - h, w, h, nFormat, nType, pDest);
     glReadBuffer(GL_BACK);
+    if (s_nFBO)
+        s_fbo.BindFramebuffer(GL_READ_FRAMEBUFFER, s_nFBO);
     uint32_t nPitch = w * (ePixels == RD_PIX_565 ? 2 : 4);
     uint8_t* pRow = (uint8_t*)malloc(nPitch);
     if (!pRow)

@@ -10,6 +10,8 @@
 #                         needs), in place of RAD's Bink 1.0h
 #   out/ext/opengl.ren    our OpenGL renderer (src/modern/render/), installed
 #                         beside d3d.ren; "RenderDll" "opengl.ren" picks it
+#   out/ext/d3d9.ren      our Direct3D 9 renderer, the same core over its
+#                         Direct3D 9 backend; "RenderDll" "d3d9.ren" picks it
 #
 # Everything is compiled with Zig (the build image has the version
 # ext/openmiles/build.zig.zon asks for): OpenMiles is Zig, and `zig cc` is
@@ -140,4 +142,19 @@ else
         -lopengl32 -lgdi32 -luser32
     rm -f "$OUT/opengl.lib" "$OUT/opengl.pdb"
     stamp opengl build/ext.sh $GSRC
+fi
+
+# --- our Direct3D 9 renderer -> out/ext/d3d9.ren ------------------------------
+# The same core over its Direct3D 9 backend (d3d9/): DXVK under Proton.
+DSRC=$(ls "$R"/*.cpp "$R"/*.h "$R"/d3d9/*.cpp "$R"/d3d9/*.def "$R"/d3d9/*.rc | sort)
+if fresh d3d9 build/ext.sh $DSRC; then
+    echo "== d3d9.ren: up to date ($OUT/d3d9.ren)"
+else
+    echo "== d3d9.ren: $R/ + $R/d3d9/ -> $OUT/d3d9.ren"
+    zig c++ -target $TARGET -O2 -s -shared -std=c++17 -fno-exceptions -fno-rtti -nostdlib++ \
+        -Wall -Wno-unused-function -o "$OUT/d3d9.ren" \
+        $(ls "$R"/*.cpp "$R"/d3d9/*.cpp | sort) "$R/d3d9/d3d9.rc" "$R/d3d9/d3d9.def" \
+        -ld3d9 -lgdi32 -luser32
+    rm -f "$OUT/d3d9.lib" "$OUT/d3d9.pdb"
+    stamp d3d9 build/ext.sh $DSRC
 fi

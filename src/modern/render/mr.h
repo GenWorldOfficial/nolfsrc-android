@@ -1,8 +1,8 @@
 // mr.h -- the renderer core's own declarations, shared by its files.
 //
 // The core draws through rdev.h, a fixed-function device in the shape of
-// OpenGL 1.x (what the Mac release's renderer it follows uses), which a
-// backend implements (gl/). See README.md.
+// OpenGL 1.x (what the Mac release's renderer it follows uses); gl/ and
+// d3d9/ implement it. See README.md.
 
 #ifndef MR_H
 #define MR_H
@@ -67,7 +67,7 @@ enum {
     CV_DrawParticles, CV_DrawPolyGrids, CV_DrawLineSystems, CV_DrawCanvases, CV_DynamicLight,
     CV_LightSaturate, CV_FastLight, CV_ModelApplySun, CV_ModelSunVariance,
     CV_EnvMapWorld, CV_EnvMapEnable, CV_EnvMapAll, CV_EnvScale, CV_EnvPanSpeed, CV_EnvMapPolyGrids,
-    CV_MaxModelShadows, CV_ModelShadowAlpha, CV_ModelShadowOffset,
+    CV_MaxModelShadows, CV_ModelShadowAlpha, CV_ModelShadowOffset, CV_Antialiasing,
     CV_Count
 };
 extern MRVar g_Vars[CV_Count];

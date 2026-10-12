@@ -4,9 +4,9 @@
 // fixed-function pipeline in the shape of OpenGL 1.x: a state machine with
 // enables, blending, alpha test, depth, linear fog, up to four texture
 // units with modulate/replace/combine environments, three matrix stacks,
-// and immediate-mode primitives. gl/ implements it with OpenGL (opengl.ren).
-// Anything a backend may not do is a capability in RDCaps, which the core
-// checks.
+// and immediate-mode primitives. gl/ implements it with OpenGL (opengl.ren),
+// d3d9/ with Direct3D 9 (d3d9.ren). Anything one backend does that the
+// other cannot is a capability in RDCaps, which the core checks.
 //
 // The conventions are OpenGL's: column vectors with matrices stored
 // column-major, clip space z from -w to w, and texture coordinates with
@@ -34,13 +34,17 @@ struct RDCaps {
     bool     bAniso;
     float    fMaxAniso;
     bool     bDepthClamp;           // RD_DEPTH_CLAMP works
+    int      nSamples;              // the multisampling the device got (1: none)
 };
 extern RDCaps g_RDCaps;
 
 // The device on the window plat_OpenWindow sized, in the state every draw
 // starts from: depth test on (LEQUAL), everything else off, the viewport
-// the whole screen, the screen cleared to black. Fills g_RDCaps.
-bool rd_CreateDevice(void* hWnd, uint32_t nWidth, uint32_t nHeight, bool bWindowed, int nSwapInterval);
+// the whole screen, the screen cleared to black. Fills g_RDCaps. With
+// nSamples above 1 it draws multisampled (antialiased) when it can,
+// resolving to the screen when it presents or reads pixels.
+bool rd_CreateDevice(void* hWnd, uint32_t nWidth, uint32_t nHeight, bool bWindowed, int nSwapInterval,
+                     int nSamples);
 void rd_DestroyDevice(void);        // waits for drawing to finish first
 void rd_Present(void);
 // What the device is ("AMD Radeon ... (4.6 Mesa 24.0)"), for the console,
