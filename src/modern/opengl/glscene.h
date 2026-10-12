@@ -66,16 +66,70 @@ LMAnim* glr_FindLMAnim(MainWorld* pWorld, const char* pName);
 void glr_LMVectors(const Surface* pSurf, LTVector* pP, LTVector* pQ);
 WorldPoly* glr_GetLMPoly(MainWorld* pWorld, const LMPolyRef& ref);
 
+// ---- the frame ------------------------------------------------------------------------
+
+struct GLRCamera {
+    LTVector m_Pos;
+    float    m_R[3][3];                 // camera -> world: columns right, up, forward
+    float    m_fTanX, m_fTanY;          // tan of the half field of view
+    float    m_fNear, m_fFar;
+    float    m_fScale;                  // view scale (the sky's SkyScale)
+    int      m_nViewX, m_nViewY, m_nViewW, m_nViewH;   // GL viewport
+    LTPlane  m_Planes[6];               // world-space frustum, normals in
+};
+
+struct GLRFrame {
+    SceneDesc*  m_pScene;
+    GLRContext* m_pContext;
+    GLRCamera   m_Cam;
+    GLRCamera   m_SkyCam;               // while sky objects draw
+    uint16_t    m_WorldFrameCode;
+    uint32_t    m_ObjectFrameCode;
+    uint32_t    m_nSkyPolys;            // visible sky polygons: the sky pass runs if any
+    float       m_fLMGrid;
+    bool        m_bLightmaps;
+    bool        m_bFog;
+};
+extern GLRFrame g_Frame;
+
+void glr_LoadCamera(const GLRCamera* pCam);
+void glr_MultMatrix(const LTMatrix& M);
+void glr_RotationMatrix(const LTRotation& q, float m[3][3]);
+bool glr_SphereVisible(const LTVector& c, float r);
+bool glr_ShouldDraw(LTObject* pObj);
+void glr_ObjectFog(LTObject* pObj, bool bBegin);
+void glr_SetBaseTexture(GLRTexture* pTex);
+void glr_ForgetBindings(void);
+GLRTexture* glr_SurfaceTexture(Surface* pSurf);
+void glr_ProcessWorldModel(LTObject* pObj);
+void glr_DrawSolidWorldModel(LTObject* pObj);
+void glr_DrawTranslucentWorldModel(LTObject* pObj);
+
 // ---- multitexture (GL 1.3 / ARB_multitexture) -----------------------------------
 
 #define GL_TEXTURE0_ARB 0x84C0
 #define GL_TEXTURE1_ARB 0x84C1
+#define GL_COMBINE_ARB        0x8570
+#define GL_COMBINE_RGB_ARB    0x8571
+#define GL_COMBINE_ALPHA_ARB  0x8572
+#define GL_RGB_SCALE_ARB      0x8573
+#define GL_ADD_SIGNED_ARB     0x8574
+#define GL_PRIMARY_COLOR_ARB  0x8577
+#define GL_PREVIOUS_ARB       0x8578
+#define GL_SOURCE0_RGB_ARB    0x8580
+#define GL_SOURCE1_RGB_ARB    0x8581
+#define GL_SOURCE0_ALPHA_ARB  0x8588
+#define GL_OPERAND0_RGB_ARB   0x8590
+#define GL_OPERAND1_RGB_ARB   0x8591
+#define GL_OPERAND0_ALPHA_ARB 0x8598
 typedef void (APIENTRY* PFN_glActiveTexture)(GLenum);
 typedef void (APIENTRY* PFN_glMultiTexCoord2f)(GLenum, GLfloat, GLfloat);
 struct GLRMulti {
     PFN_glActiveTexture   glActiveTexture;
     PFN_glMultiTexCoord2f glMultiTexCoord2f;
-    bool                  m_bOK;
+    bool                  m_bOK;            // two units: lightmaps
+    bool                  m_bCombine;       // ARB_texture_env_combine
+    int                   m_nUnits;
 };
 extern GLRMulti g_Multi;
 void glr_InitMultitexture(void);

@@ -218,4 +218,101 @@ struct WorldPoly {
 static_assert(__builtin_offsetof(WorldPoly, m_pSurface) == 0x28, "WorldPoly");
 static_assert(__builtin_offsetof(WorldPoly, m_Verts) == 0x54, "WorldPoly");
 
+// ---- objects ---------------------------------------------------------------------
+
+struct LTMatrix { float m[4][4]; };     // row-major, column vectors: world = M * local
+
+struct Attachment {
+    LTVector   m_OffsetPos;             // 0x00
+    LTRotation m_OffsetRot;             // 0x0c
+    uint16_t   m_nParentID, m_nChildID; // 0x1c
+    int32_t    m_iNode;                 // 0x20
+    Attachment* m_pNext;                // 0x24
+};
+
+// The engine's object, as far as the renderer reads it (objtypes.h,
+// docs/objects.md part I.3). Type-specific fields start at 0x1a8.
+struct LTObject {
+    void*       m_pVtbl;                // 0x000
+    uint8_t     m_pad04[0x58 - 0x04];
+    uint32_t    m_FrameCode;            // 0x058 "processed this frame" (the object frame code)
+    uint8_t     m_pad5c[0x88 - 0x5c];
+    uint32_t    m_Flags;                // 0x088 FLAG_*
+    uint32_t    m_Flags2;               // 0x08c FLAG2_*
+    uint32_t    m_UserFlags;            // 0x090
+    uint8_t     m_ColorR, m_ColorG, m_ColorB, m_ColorA; // 0x094
+    Attachment* m_pAttachments;         // 0x098
+    LTRotation  m_Rotation;             // 0x09c
+    LTVector    m_Scale;                // 0x0ac
+    uint16_t    m_ObjectID;             // 0x0b8
+    uint16_t    m_padba;
+    int8_t      m_ObjectType;           // 0x0bc
+    uint8_t     m_padbd[0x188 - 0xbd];
+    void*       m_188;                  // 0x188 ends an object list walk (docs/objects.md 2.4)
+    LTVector    m_Pos;                  // 0x18c
+    LTVector    m_Dims;                 // 0x198
+    float       m_Radius;               // 0x1a4
+};
+static_assert(__builtin_offsetof(LTObject, m_ObjectType) == 0xbc, "LTObject");
+static_assert(__builtin_offsetof(LTObject, m_Pos) == 0x18c, "LTObject");
+static_assert(sizeof(LTObject) == 0x1a8, "LTObject");
+
+// World models and containers (OT_WORLDMODEL, OT_CONTAINER).
+struct WorldModelInstance : LTObject {
+    WorldBsp*   m_pWorldBsp;            // 0x1a8 the BSP drawn, in its authored coordinates
+    WorldBsp*   m_pTransformedBsp;      // 0x1ac
+    WorldBsp*   m_pRenderBsp;           // 0x1b0
+    uint8_t     m_pad1b4[0x1f0 - 0x1b4];
+    LTMatrix    m_Transform;            // 0x1f0 model -> world
+    LTMatrix    m_BackTransform;        // 0x230 world -> model
+};
+static_assert(sizeof(WorldModelInstance) == 0x270, "WorldModelInstance");  // so m_Transform is at 0x1f0
+
+enum {
+    OT_NORMAL, OT_MODEL, OT_WORLDMODEL, OT_SPRITE, OT_LIGHT, OT_CAMERA,
+    OT_PARTICLESYSTEM, OT_POLYGRID, OT_LINESYSTEM, OT_CONTAINER, OT_CANVAS, NUM_OBJECTTYPES
+};
+
+#define FLAG_VISIBLE         0x1
+#define FLAG_SPRITE_NOZ      0x10
+#define FLAG_REALLYCLOSE     0x40
+#define FLAG_FOGDISABLE      0x80
+#define FLAG_NOLIGHT         0x200
+#define FLAG_PORTALVISIBLE   0x400
+
+#define FLAG2_PORTALINVISIBLE 0x1
+#define FLAG2_CHROMAKEY       0x2
+#define FLAG2_ADDITIVE        0x4
+#define FLAG2_MULTIPLY        0x8
+#define FLAG2_SKYOBJECT       0x40
+
+#define SURF_ADDITIVE         0x80000   // a translucent world model's first surface: drawn additively
+
+// ---- the engine's visibility query (docs/objects.md 2.4) ---------------------------
+
+struct WorldTreeNode;
+struct VisQueryRequest {
+    uint32_t m_Flags;                                       // 0x00
+    LTVector m_Viewpoint;                                   // 0x04
+    float    m_ViewRadius;                                  // 0x10
+    void   (*m_ObjectCB)(LTObject* pObj, void* pUser);      // 0x14
+    void   (*m_AddObjects)(LTLink* pList, LTObject*** ppArray, int* pnCount); // 0x18
+    void*    m_pUser;                                       // 0x1c
+    void   (*m_LeafCB)(Leaf* pLeaf, void* pUser);           // 0x20
+    LTBOOL (*m_PortalTest)(void* pUserPortal);              // 0x24
+    LTBOOL (*m_NodeFilter)(WorldTreeNode* pNode);           // 0x28
+};
+// The world tree at MainWorld+0x6c; its vtable slot 5 (+0x14) runs a query
+// (d3d.ren 0x1007b580, a thiscall virtual).
+typedef void (__thiscall* VisQueryFn)(void* pTree, VisQueryRequest* pRequest);
+inline void mw_DoVisQuery(MainWorld* pWorld, VisQueryRequest* pRequest)
+{
+    void* pTree = pWorld->m_WorldTree;
+    VisQueryFn fn = (*(VisQueryFn**)pTree)[5];
+    fn(pTree, pRequest);
+}
+// A world tree node's bounding sphere, which the node filter culls with.
+inline const LTVector& wtn_Center(WorldTreeNode* p) { return *(LTVector*)((uint8_t*)p + 0x30); }
+inline float wtn_Radius(WorldTreeNode* p) { return *(float*)((uint8_t*)p + 0x40); }
+
 #endif

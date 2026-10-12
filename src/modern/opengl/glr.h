@@ -88,6 +88,10 @@ enum {
     CV_FilterOptimized, CV_MaxTextureSize, CV_S3TCEnable,
     CV_GroupOffset0, CV_GroupOffset9 = CV_GroupOffset0 + 9,
     CV_VSync, CV_LightMap,
+    CV_DrawWorld, CV_DrawSky, CV_DrawWorldModels, CV_DrawAll, CV_SkyScale, CV_LightAddPoly,
+    CV_FogEnable, CV_FogR, CV_FogG, CV_FogB, CV_FogNearZ, CV_FogFarZ,
+    CV_SkyFogEnable, CV_SkyFogNearZ, CV_SkyFogFarZ, CV_FixTJunc, CV_DrawSorted,
+    CV_Saturate, CV_DetailTextures, CV_DetailTextureAdd, CV_DetailTextureScale,
     CV_Count
 };
 extern GLRVar g_Vars[CV_Count];
@@ -143,6 +147,8 @@ struct GLRTexture {
     // World texture coordinates are in texels of the full-size image, scaled
     // by the DTX's coordinate shift (r_SetupTextureMip): u * m_fUMul.
     float    m_fUMul, m_fVMul;
+    // How this texture's detail texture lies on it (RTexture+0x34..+0x3c).
+    float    m_fDetailScale, m_fDetailCos, m_fDetailSin;
 };
 void glr_BindTexture(SharedTexture* pTexture, LTBOOL bChanged);
 void glr_UnbindTexture(SharedTexture* pTexture);

@@ -12,6 +12,8 @@
 // Mac renderer never does; d3d.ren does, under S3TCEnable) and decoded here
 // otherwise.
 
+#include <math.h>
+
 #include "glr.h"
 
 // ---- S3TC decoding, for a GL without the extension --------------------------------
@@ -242,6 +244,15 @@ static bool glr_Upload(GLRTexture* pTex, TextureData* pData)
     float fScale = (float)(1 << (hdr.m_Extra[4] & 15));
     pTex->m_fUMul = pData->m_Mips[0].m_Width ? fScale / pData->m_Mips[0].m_Width : 0.0f;
     pTex->m_fVMul = pData->m_Mips[0].m_Height ? fScale / pData->m_Mips[0].m_Height : 0.0f;
+    // The DTX's detail scale (a float at TextureData+0x26, added to 1) and
+    // angle in degrees (an int16 at +0x2a), r_SetupTextureSurface 0x180ab4.
+    float fDetail;
+    int16_t nAngle;
+    memcpy(&fDetail, &hdr.m_Extra[6], 4);
+    memcpy(&nAngle, &hdr.m_Extra[10], 2);
+    pTex->m_fDetailScale = (fDetail == fDetail && fDetail > -1.0f && fDetail < 100.0f) ? 1.0f + fDetail : 1.0f;
+    pTex->m_fDetailCos = cosf(nAngle * 3.14159265f / 180.0f);
+    pTex->m_fDetailSin = sinf(nAngle * 3.14159265f / 180.0f);
     pTex->m_bAlpha = true;
     pTex->m_nBytes = nBytes;
     return true;

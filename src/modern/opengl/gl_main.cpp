@@ -59,6 +59,13 @@ GLRVar g_Vars[CV_Count] = {
     { "GroupOffset4", 0 }, { "GroupOffset5", 0 }, { "GroupOffset6", 0 }, { "GroupOffset7", 0 },
     { "GroupOffset8", 0 }, { "GroupOffset9", 0 },
     { "VSync", 0 }, { "LightMap", 1 },
+    { "DrawWorld", 1 }, { "DrawSky", 1 }, { "DrawWorldModels", 1 }, { "DrawAll", 0 },
+    { "SkyScale", 1 }, { "LightAddPoly", 1 },
+    { "FogEnable", 0 }, { "FogR", 255 }, { "FogG", 255 }, { "FogB", 255 },
+    { "FogNearZ", 0 }, { "FogFarZ", 2000 },
+    { "SkyFogEnable", 1 }, { "SkyFogNearZ", 0 }, { "SkyFogFarZ", 2000 },
+    { "FixTJunc", 0 }, { "DrawSorted", 1 },
+    { "Saturate", 0 }, { "DetailTextures", 1 }, { "DetailTextureAdd", 1 }, { "DetailTextureScale", 0.2f },
 };
 
 // Find a variable, creating it with its default if the engine has none

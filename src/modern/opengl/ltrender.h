@@ -164,7 +164,7 @@ struct RenderStruct {
     float          (*GetParameterValueFloat)(HCONSOLEVAR hVar);                // 0x1c
     const char*    (*GetParameterValueString)(HCONSOLEVAR hVar);               // 0x20
     void           (*RendererPing)(void);                                      // 0x24
-    void           (*IncObjectFrameCode)(void);                                // 0x28
+    uint32_t       (*IncObjectFrameCode)(void);                                // 0x28 returns the new code
     uint32_t       (*GetObjectFrameCode)(void);                                // 0x2c
     uint16_t       (*IncCurTextureFrameCode)(void);                            // 0x30
     void*          (*Alloc)(uint32_t nBytes);                                  // 0x34

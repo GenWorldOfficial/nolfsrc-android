@@ -24,7 +24,7 @@ or the launcher, which lists it as "LithTech OpenGL Renderer". A playtest:
 Console variables it reads besides the engine's own (the names and defaults
 `d3d.ren` and the Mac renderer share): `Bilinear`, `Trilinear`,
 `Anisotropic`, `MipmapOffset`, `GroupOffset0`..`9`, `FilterOptimized`,
-`MaxTextureSize`, `S3TCEnable`, `LightMap`, `RenderDebug` (3 and up also writes
+`MaxTextureSize`, `S3TCEnable`, `LightMap`, `Saturate`, `DetailTextures`, `DetailTextureAdd`, `DetailTextureScale`, `DrawWorld`, `DrawSky`, `DrawWorldModels`, `DrawAll`, `DrawSorted`, `SkyScale`, `FixTJunc`, `LightAddPoly`, the `Fog*` and `SkyFog*` variables, `RenderDebug` (3 and up also writes
 `opengl.log` beside the game, 4 logs every 2D call), and `VSync` (ours).
 `RenderCommand info` prints the GL in use.
 
@@ -33,7 +33,7 @@ Console variables it reads besides the engine's own (the names and defaults
 | stage | what | state |
 |---|---|---|
 | 1 | device and 2D: the WGL context on the engine's window (windowed, or full screen through `ChangeDisplaySettings`), the mode list, clear and flip, the engine's surfaces and every blit (keyed, scaled, warped, Optimized-2D colours and the seven blend modes), the screen lock and `FillScreenRect`, `BlitFromScreen`, screenshots (F8), DTX texture upload (32-bit, S3TC compressed or decoded) | done: menus' 2D, the console and the HUD's 2D draw |
-| 2 | the world: BSP polygons with their textures and lightmaps, visibility, world models, the sky, fog | in progress (`docs/world.md`): the main world's polygons draw with their textures, vertex colours and lightmaps (static and animated, shadow-map animations included, in 512x512 atlases); still to do are visibility (every polygon facing the camera is drawn), world models, the sky, fog, detail textures and environment maps |
+| 2 | the world: BSP polygons with their textures and lightmaps, visibility, world models, the sky, fog | done but for portal views and panning-sky textures (`docs/world.md`): the engine's own visibility query (the PVS walk, with the renderer's leaf, object and frustum callbacks), the main world and world models (solid, chromakey, and translucent ones back to front through their BSP) with textures, vertex colours, lightmaps (static and animated, shadow-map animations included, in 512x512 atlases) and detail textures, at the retail PC's brightness (`Saturate`: lightmaps and vertex colours doubled); the sky objects' world models from the squashed sky camera; fog; the global light scale and the camera's light add |
 | 3 | objects: models (with the engine's animation code compiled in, as `d3d.ren` does), sprites, particles, poly grids, line systems, canvases, dynamic lights, shadows | to do (`docs/objects.md`); the main menu's background, logo and Cate are objects |
 | 4 | movies | the engine's screen-mode Bink and Smacker players ask the renderer for DirectDraw objects (`GetHook`), which an OpenGL renderer does not have, so movies are skipped; needs a texture path for them |
 | 5 | Linux | the renderer is one part: `lithtech.exe` still needs Win32 for its window, input, sound and networking (the Mac engine shows where those seams are) |
@@ -51,6 +51,7 @@ Console variables it reads besides the engine's own (the names and defaults
 | `glscene.h` | the 3D half's shared declarations: the per-world context, lightmap atlases, multitexture |
 | `gl_scene.cpp` | the world context, the camera and `RenderScene` |
 | `gl_lightmap.cpp` | lightmaps: decoding, composing light animations, atlases |
+| `globjects.h`, `gl_objects.cpp` | the visible set: objects by kind and the order they are drawn in |
 | `opengl.def`, `opengl.rc` | the three exports; the launcher's name for the renderer (string 5) |
 | `docs/` | the research the renderer is written from: `device.md` (the device and 2D half of the contract), `world.md` (the world's data and how it is drawn), `objects.md` (objects, models and the engine services a render DLL reaches), `mac-cvars.txt` (the Mac renderer's console variables) |
 
