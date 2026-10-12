@@ -613,7 +613,14 @@ LTRESULT ci_GetModelNodeName(HOBJECT hObject, HMODELNODE hNode, char* pName, uin
 {
 	Model* pModel;
 
+#ifdef NOLFSRC_MODERN
+	// fixed: ci_GetModelNodeName refuses node 0 and does not terminate
+	// (RETAIL_BUGS.md). Node 0 is a valid node; only the bound below can
+	// refuse a node handle.
+	if (!maxLen || !hObject || hObject->m_ObjectType != OT_MODEL)
+#else
 	if (!hNode || !maxLen || !hObject || hObject->m_ObjectType != OT_MODEL)
+#endif
 	{
 #ifdef NOLFSRC_MODERN
 		RETURN_ERROR(1, "GetModelNodeName", LT_INVALIDPARAMS);
@@ -634,6 +641,9 @@ LTRESULT ci_GetModelNodeName(HOBJECT hObject, HMODELNODE hNode, char* pName, uin
 	}
 
 	strncpy(pName, pModel->m_Nodes.m_pArray[hNode]->m_pName, maxLen - 1);
+#ifdef NOLFSRC_MODERN
+	pName[maxLen - 1] = '\0';
+#endif
 	return LT_OK;
 }
 

@@ -3031,8 +3031,14 @@ LTRESULT ci_GetModelNodeName(HLOCALOBJ hObject, HMODELNODE hNode, char* pName, u
 {
 	Model* pModel;
 
+#ifdef NOLFSRC_MODERN
+	// fixed: node 0 is valid, and the copy is terminated (RETAIL_BUGS.md).
+	if (!maxLen || !hObject
+	    || ((CClientObject*)hObject)->m_ObjectType != OT_MODEL)
+#else
 	if (!hNode || !maxLen || !hObject
 	    || ((CClientObject*)hObject)->m_ObjectType != OT_MODEL)
+#endif
 #ifdef NOLFSRC_MODERN
 		RETURN_ERROR(1, "GetModelNodeName", LT_INVALIDPARAMS);
 #else
@@ -3055,6 +3061,9 @@ LTRESULT ci_GetModelNodeName(HLOCALOBJ hObject, HMODELNODE hNode, char* pName, u
 #endif
 
 	strncpy(pName, pModel->m_Nodes.m_pArray[hNode]->m_pName, maxLen - 1);
+#ifdef NOLFSRC_MODERN
+	pName[maxLen - 1] = '\0';
+#endif
 	return LT_OK;
 }
 #endif

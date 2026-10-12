@@ -41,6 +41,7 @@ in.
 * [`at_Advance` divides by the last keyframe's time](#at_advance-divides-by-the-last-keyframes-time)
 * [Model shadows are switched off for good by the first cinematic](#model-shadows-are-switched-off-for-good-by-the-first-cinematic)
 * [`StopSecondary` and `StopMotif` test the wrong object when given a name](#stopsecondary-and-stopmotif-test-the-wrong-object-when-given-a-name)
+* [`ci_GetModelNodeName` refuses node 0 and does not terminate](#ci_getmodelnodename-refuses-node-0-and-does-not-terminate)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -481,6 +482,11 @@ asked for. Given a null surface, it zeroes both without checking either.
 
 ### `ci_GetModelNodeName` refuses node 0 and does not terminate
 `0x004363f0` (lithtech.exe) · `src/engine/lithtech/clientinterface.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`):
+> only the node-count bound refuses a node handle, and the copy is terminated
+> (`src/engine/server/commonmodel.cpp`). The release build keeps the retail
+> checks.
 
 The node handle is tested against null before it is tested against the node
 count, so node 0, a valid node, is refused as an invalid parameter. The copy
