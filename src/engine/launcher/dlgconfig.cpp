@@ -55,6 +55,10 @@ int DoDetailDialog(HWND hWnd)
 
 int DoAdvancedDialog(HWND hWnd)
 {
+#ifdef NOLFSRC_MODERN
+	// The modern build opens the dialog without this warning; its Help
+	// button still explains each option.
+#else
 	if (!g_pRegMgr->Get("AdvWarning", 0))
 	{
 		if (ErrorMsg(hWnd, 50, "Advanced Options", MB_OKCANCEL) != IDOK)
@@ -62,6 +66,7 @@ int DoAdvancedDialog(HWND hWnd)
 			return(0);
 		}
 	}
+#endif
 
 	int nResult = DialogBoxParam(g_hInst, "ADVANCED", hWnd, (DLGPROC)AdvancedDlgProc, 0);
 
@@ -372,6 +377,10 @@ BOOL CALLBACK DisplayDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 BOOL DoDisplayDialog(HWND hWnd)
 {
+#ifdef NOLFSRC_MODERN
+	// The modern build opens the dialog without this warning: listing the
+	// display modes takes no noticeable time on a machine of today.
+#else
 	if (!g_bDisplayWarned)
 	{
 		if (ErrorMsg(hWnd, 18, g_csCaption, MB_OKCANCEL) != IDOK)
@@ -381,6 +390,7 @@ BOOL DoDisplayDialog(HWND hWnd)
 
 		g_bDisplayWarned = 1;
 	}
+#endif
 
 	if (!g_pDisplayModes)
 	{
