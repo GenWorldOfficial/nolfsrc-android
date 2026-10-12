@@ -106,8 +106,10 @@ struct DtxHeader {
     uint16_t m_BaseHeight;          // +0x12
     uint16_t m_nMipmaps;            // +0x14
     uint16_t m_nSections;           // +0x16
-    uint32_t m_IFlags;              // +0x18  0x40 = the engine keeps the data (texmod)
-    uint32_t m_UserFlags;           // +0x1c  1 = fullbright
+    uint32_t m_IFlags;              // +0x18  DTX flags: 1 fullbright, 2 prefer 16-bit,
+                                    //        0x40 the engine keeps the data (texmod),
+                                    //        0x80 / 0x100 prefer 4444 / 5551 (Mac r_SetupTextureSurface)
+    uint32_t m_UserFlags;           // +0x1c
     uint8_t  m_Extra[12];           // +0x20  [0] group, [1] mips to use, [2] BPP type, [3] mip offset
     char     m_CommandString[128];  // +0x2c
 };

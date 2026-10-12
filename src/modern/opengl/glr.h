@@ -87,7 +87,7 @@ enum {
     CV_RenderDebug, CV_Bilinear, CV_Trilinear, CV_Anisotropic, CV_MipmapOffset,
     CV_FilterOptimized, CV_MaxTextureSize, CV_S3TCEnable,
     CV_GroupOffset0, CV_GroupOffset9 = CV_GroupOffset0 + 9,
-    CV_VSync,
+    CV_VSync, CV_LightMap,
     CV_Count
 };
 extern GLRVar g_Vars[CV_Count];
@@ -137,9 +137,12 @@ LTBOOL glr_FillScreenRect(LTRect* pRect, uint32_t nPixel);
 struct GLRTexture {
     GLuint   m_Id;
     uint32_t m_nWidth, m_nHeight;   // of the first level uploaded
-    uint32_t m_UserFlags;           // DTX flags (fullbright, ...)
+    uint32_t m_DtxFlags;            // DTX flags (DTX_FULLBRITE, ...)
     uint32_t m_nBytes;
     bool     m_bAlpha;              // the data carries an alpha channel worth testing
+    // World texture coordinates are in texels of the full-size image, scaled
+    // by the DTX's coordinate shift (r_SetupTextureMip): u * m_fUMul.
+    float    m_fUMul, m_fVMul;
 };
 void glr_BindTexture(SharedTexture* pTexture, LTBOOL bChanged);
 void glr_UnbindTexture(SharedTexture* pTexture);

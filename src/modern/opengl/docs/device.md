@@ -600,9 +600,10 @@ struct DtxHeader {                 // 0xa4 bytes, at TextureData+0x08 (the file 
   uint16 m_BaseHeight;             // +0x12
   uint16 m_nMipmaps;               // +0x14  1..15 accepted by the loader, but only 8 mip records exist (clamp!)
   uint16 m_nSections;              // +0x16
-  uint32 m_IFlags;                 // +0x18  engine flags: 0x40 = TDFLAG_TEXMOD (engine keeps the data), 8 = sections fixed
-  uint32 m_UserFlags;              // +0x1c  DTX flags: 1 FULLBRITE, 2 PREFER16BIT, 0x80 PREFER4444,
-                                   //        0x100 PREFER5551 / bump (d3d w6_10039730_qip.cpp:2844; Mac r_SetupTextureSurface)
+  uint32 m_IFlags;                 // +0x18  DTX flags: 1 FULLBRITE, 2 PREFER16BIT, 0x40 = TDFLAG_TEXMOD (engine
+                                   //        keeps the data), 8 = sections fixed, 0x80 PREFER4444, 0x100 PREFER5551
+                                   //        (Mac r_SetupTextureSurface reads all of these at TD+0x18, 0x180628/0x180c6c)
+  uint32 m_UserFlags;              // +0x1c
   uint8  m_Extra[12];              // +0x20  [0] texture group (0..9 -> GroupOffsetN cvar)
                                    //        [1] mipmaps to use (0 = 4)
                                    //        [2] BPPIdent: 0 or 3 = 32-bit ARGB; 4/5/6 = DXT1/3/5

@@ -238,7 +238,10 @@ static bool glr_Upload(GLRTexture* pTex, TextureData* pData)
         return false;
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, nLevels - 1);
     glr_ApplyTextureFilter(nLevels);
-    pTex->m_UserFlags = hdr.m_UserFlags;
+    pTex->m_DtxFlags = hdr.m_IFlags;
+    float fScale = (float)(1 << (hdr.m_Extra[4] & 15));
+    pTex->m_fUMul = pData->m_Mips[0].m_Width ? fScale / pData->m_Mips[0].m_Width : 0.0f;
+    pTex->m_fVMul = pData->m_Mips[0].m_Height ? fScale / pData->m_Mips[0].m_Height : 0.0f;
     pTex->m_bAlpha = true;
     pTex->m_nBytes = nBytes;
     return true;

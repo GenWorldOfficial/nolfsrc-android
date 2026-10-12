@@ -58,7 +58,7 @@ GLRVar g_Vars[CV_Count] = {
     { "GroupOffset0", 0 }, { "GroupOffset1", 0 }, { "GroupOffset2", 0 }, { "GroupOffset3", 0 },
     { "GroupOffset4", 0 }, { "GroupOffset5", 0 }, { "GroupOffset6", 0 }, { "GroupOffset7", 0 },
     { "GroupOffset8", 0 }, { "GroupOffset9", 0 },
-    { "VSync", 0 },
+    { "VSync", 0 }, { "LightMap", 1 },
 };
 
 // Find a variable, creating it with its default if the engine has none
