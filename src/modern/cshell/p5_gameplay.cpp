@@ -229,15 +229,14 @@ int P5_ToggleZoomCommand(int nZoomView)
 //	0. The display options set MaxModelShadows and DrawShadows together, so
 //	DrawShadows is what it should come back to.
 //
-//	Written, but not switched on: with model shadows left on, this
-//	project's reconstructed d3d.ren crashes in its shadow pass (a null
-//	geometry pointer reaching 0x1000a700); the retail d3d.ren does not.
-//	The retail bug has been hiding that. Set this to 1 once d3d.ren is
-//	fixed; until then the cinematic code behaves as retail.
+//	(Switched off until our d3d.ren's shadow pass stopped crashing: it
+//	declared Direct3D's DrawPrimitive without __stdcall, so the call's
+//	arguments were popped twice -- see w54_10048180_osoiqipsf.cpp. The
+//	retail bug had been hiding that. 0 here gives the retail behaviour.)
 //
 // ----------------------------------------------------------------------- //
 
-#define P5_RESTORE_MODEL_SHADOWS	0
+#define P5_RESTORE_MODEL_SHADOWS	1
 
 extern int g_nCinSaveModelShadows;		// GameClientShell.cpp
 

@@ -39,6 +39,7 @@ in.
 * [`CSoundMgr::GetReverbProperties`: damping is guarded by the wrong flag](#csoundmgrgetreverbproperties-damping-is-guarded-by-the-wrong-flag)
 * [`CObjBase::InitFields` leaves `m_StandingLink` uninitialised](#cobjbaseinitfields-leaves-m_standinglink-uninitialised)
 * [`at_Advance` divides by the last keyframe's time](#at_advance-divides-by-the-last-keyframes-time)
+* [Model shadows are switched off for good by the first cinematic](#model-shadows-are-switched-off-for-good-by-the-first-cinematic)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -262,12 +263,12 @@ state), so the wrong test is the only thing between the loop and the hang.
 ### Model shadows are switched off for good by the first cinematic
 `CGameClientShell::TurnOnAlternativeCamera`, `TurnOffAlternativeCamera` (CShell.dll) · `src/game/ClientShellDLL/GameClientShell.cpp`
 
-> **Fix written, not yet switched on** (`NOLFSRC_MODERN`, M-P5-14):
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`, M-P5-14):
 > `TurnOffAlternativeCamera` and `FirstUpdate` set `MaxModelShadows` from
 > the player's `DrawShadows` setting (`src/modern/cshell/p5_gameplay.cpp`,
-> `P5_RESTORE_MODEL_SHADOWS`). With shadows left on, our reconstructed
-> `d3d.ren` crashes in its shadow pass, which the retail `d3d.ren` does not;
-> this bug is what has kept that crash from showing.
+> `P5_RESTORE_MODEL_SHADOWS`). This bug had been hiding a crash in our
+> reconstructed `d3d.ren`'s shadow pass (Direct3D's `DrawPrimitive`
+> declared without `__stdcall`), now fixed too.
 
 Cinematics turn model shadows off: `TurnOnAlternativeCamera` saves
 `MaxModelShadows` in `g_nCinSaveModelShadows`, sets it to 0, and

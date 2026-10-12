@@ -1259,13 +1259,17 @@ struct Shadow49bb0
 //  0x64 is the only one called: `mov (%edx),%edx ; call *0x64(%edx)` at
 //  0x1004b4c4 with six outgoing dwords, which is
 //  IDirect3DDevice3::DrawPrimitive(this, type, fvf, verts, count, flags).
+//  A COM method, so __stdcall: it pops its own six arguments, and the
+//  shipped call (0x1004b4c6) is followed by no stack adjustment. Declared
+//  without it, the caller popped them again: its saved registers came back
+//  from the wrong slots, which crashed the shadow pass.
 // ---------------------------------------------------------------------- //
 struct D3DDevice49bb0;
 
 struct D3DDeviceVtbl49bb0
 {
 	uint8	m_pad_00[0x64];                             // +0x00 .. +0x63
-	int32	(*DrawPrimitive)(D3DDevice49bb0* pThis, uint32 nType,
+	int32	(__stdcall *DrawPrimitive)(D3DDevice49bb0* pThis, uint32 nType,
 	                         uint32 nFVF, void* pVerts, uint32 nCount,
 	                         uint32 nFlags);            // +0x64
 };

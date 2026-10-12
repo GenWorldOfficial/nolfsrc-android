@@ -369,13 +369,17 @@ struct Frustum4e3e4
 //  0x64 of the vtable is the only one called: `mov (%edx),%edx ;
 //  call *0x64(%edx)` at 0x1004f9fa with six outgoing dwords, which is
 //  IDirect3DDevice3::DrawPrimitive(this, type, fvf, verts, count, flags).
+//  A COM method, so __stdcall: it pops its own six arguments, and the
+//  shipped call (0x1004f9fc) is followed by no stack adjustment. Declared
+//  without it, the caller popped them again: its saved registers came back
+//  from the wrong slots, which crashed the shadow pass.
 // ---------------------------------------------------------------------- //
 struct D3DDevice4e3e4;
 
 struct D3DDeviceVtbl4e3e4
 {
 	uint8	m_pad_00[0x64];                             // +0x00 .. +0x63
-	int32	(*DrawPrimitive)(D3DDevice4e3e4* pThis, uint32 nType,
+	int32	(__stdcall *DrawPrimitive)(D3DDevice4e3e4* pThis, uint32 nType,
 	                         uint32 nFVF, void* pVerts, uint32 nCount,
 	                         uint32 nFlags);            // +0x64
 };
