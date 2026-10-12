@@ -8,6 +8,8 @@
 #   out/ext/binkw32.dll   our Bink player (src/modern/binkw32/) on FFmpeg's
 #                         Bink decoders (ext/ffmpeg, static, only what Bink
 #                         needs), in place of RAD's Bink 1.0h
+#   out/ext/opengl.ren    our OpenGL renderer (src/modern/opengl/), installed
+#                         beside d3d.ren; "RenderDll" "opengl.ren" picks it
 #
 # Everything is compiled with Zig (the build image has the version
 # ext/openmiles/build.zig.zon asks for): OpenMiles is Zig, and `zig cc` is
@@ -119,4 +121,22 @@ else
         -lwinmm -lbcrypt
     rm -f "$OUT/binkw32.lib" "$OUT/binkw32.pdb"
     stamp binkw32 ext/ffmpeg build/ext.sh "$B/binkw32.c" "$B/binkw32.def"
+fi
+
+# --- our OpenGL renderer -> out/ext/opengl.ren --------------------------------
+G=src/modern/opengl
+GSRC=$(ls "$G"/*.cpp "$G"/*.h "$G"/*.def "$G"/*.rc | sort)
+if fresh opengl build/ext.sh $GSRC; then
+    echo "== opengl.ren: up to date ($OUT/opengl.ren)"
+else
+    echo "== opengl.ren: $G/ -> $OUT/opengl.ren"
+    # C++ without exceptions, RTTI or the C++ library: the renderer is the
+    # engine's C interface, and the DLL then needs nothing but Windows' own
+    # libraries (opengl32 included, which Wine maps to the host's OpenGL).
+    zig c++ -target $TARGET -O2 -s -shared -std=c++17 -fno-exceptions -fno-rtti -nostdlib++ \
+        -Wall -Wno-unused-function -o "$OUT/opengl.ren" \
+        $(ls "$G"/*.cpp | sort) "$G/opengl.rc" "$G/opengl.def" \
+        -lopengl32 -lgdi32 -luser32
+    rm -f "$OUT/opengl.lib" "$OUT/opengl.pdb"
+    stamp opengl build/ext.sh $GSRC
 fi

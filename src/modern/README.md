@@ -11,6 +11,7 @@ what has been done.
 | `object/` | the same for `Object.lto` | `build/build.sh object` |
 | `cres/` | new strings for `CRes.dll`: every `.rc` here is compiled into it beside `ClientRes.rc`; put the IDs in a `.h` beside it | `build/build.sh cres` |
 | `data/` | game-data recipes, applied to the data from the retail game (`data/README.md`) | `build/variant.sh`, `tools/moddata.py` |
+| `opengl/` | `opengl.ren`, an OpenGL renderer the engine can load instead of `d3d.ren` (`opengl/README.md`); C++ compiled with `zig c++`, not VC6 | `build/ext.sh` |
 | `binkw32/` | the modern build's `binkw32.dll`: the Bink entry points `lithtech.exe` uses, playing the movies with FFmpeg (`ext/ffmpeg`); C, compiled with `zig cc`, not VC6 | `build/ext.sh` |
 
 In a modern build `src/modern/` is on the game DLLs' include path, so retail

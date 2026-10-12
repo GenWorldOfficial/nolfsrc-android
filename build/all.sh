@@ -30,7 +30,8 @@
 #                         does (NOLF_MIDDLEWARE=open, set by build/variant.sh):
 #                         OpenMiles' mss32.dll and our FFmpeg-based
 #                         binkw32.dll, built from the ext/ submodules by
-#                         build/ext.sh, and no Miles provider files.
+#                         build/ext.sh, and no Miles provider files (plus
+#                         our opengl.ren, which ext.sh also builds).
 #   2b. launcher art      the splash bitmap, palette, music, icon and cursors
 #                         that launcher.rc compiles into NOLF.exe, read out of
 #                         the retail NOLF.exe's resource section
@@ -108,7 +109,7 @@ cp build/game-scripts/run.sh build/game-scripts/run-launcher.sh "$OUT/"
 chmod +x "$OUT/run.sh" "$OUT/run-launcher.sh"
 
 if [ "${NOLF_MIDDLEWARE:-retail}" = open ]; then
-    step "2. open runtime: OpenMiles + our Bink player on FFmpeg, built from ext/ (build/ext.sh)"
+    step "2. open runtime: OpenMiles, our Bink player on FFmpeg and our OpenGL renderer (build/ext.sh)"
     bash build/ext.sh
     python3 tools/retailextract.py openruntime "${NOLF_EXT_OUT:-out/ext}" "$OUT"
 else

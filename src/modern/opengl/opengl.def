@@ -1,0 +1,6 @@
+; opengl.ren's exports: what lithtech.exe and the launcher look up by name
+LIBRARY opengl.ren
+EXPORTS
+    RenderDLLSetup
+    GetSupportedModes
+    FreeModeList
