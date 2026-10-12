@@ -259,8 +259,8 @@ Each upstream project is a submodule under `ext/`, pinned to a release
 is written into `ext/`: the builds happen in `out/ext/`. Where upstream needs
 a fix for this game, the fix is a patch in `ext/patches/<project>/`, applied
 in order to a copy of the source in `out/ext/` (the submodule stays exactly
-upstream's); each patch's header says what it fixes. Today there are two,
-both making OpenMiles behave as Miles 6.0i does:
+upstream's); each patch's header says what it fixes. Today there are three,
+each making OpenMiles behave as Miles 6.0i does:
 
 * `0001`: `AIL_init_sample` cleared a sample handle's user data, which the
   engine relies on to recycle its voices -- the game ran out of voices after
@@ -270,6 +270,11 @@ both making OpenMiles behave as Miles 6.0i does:
   (a test tone played through each at every volume and recorded; they now
   agree within a decibel). The engine lowers the volume of distant
   speakers, so their dialogue had been 10-30 dB too quiet to hear.
+* `0003`: `AIL_open_stream` did not understand the `\\<handle>` file names
+  the engine streams a sound inside a `.rez` archive with (an open file
+  handle, seeked to the sound), so every such sound was silent -- the
+  opening credits' song in T01S01 among them, danced to in silence. It now
+  reads the sound from the handle.
 
 Send such fixes upstream too.
 
