@@ -29,6 +29,7 @@ in.
 * [`ar_FindFile` closes a find handle it never opened](#ar_findfile-closes-a-find-handle-it-never-opened)
 * [`ci_GetRenderModes` never closes its find handle](#ci_getrendermodes-never-closes-its-find-handle)
 * [`streamsim_Open` leaks the file when the stream cannot be allocated](#streamsim_open-leaks-the-file-when-the-stream-cannot-be-allocated)
+* [`InitLevel`'s trace misspells a parameter](#initlevels-trace-misspells-a-parameter)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -602,6 +603,10 @@ The format is `"read from stream %p size %u"` and only `this` is passed, so
 
 ### `InitLevel`'s trace misspells a parameter
 `0x004ab834` (lithtech.exe, the string)
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`):
+> `src/engine/lithtech/clientmusic.cpp` spells it `sDefine3`. The release
+> build keeps the retail string.
 
 `... sDefine1=%s sDefine2=%s sDeine3=%s`: `sDeine3` for `sDefine3`, in every
 trace the music system's level setup writes at debug level 3.

@@ -630,8 +630,14 @@ LTRESULT CLTDirectMusicMgr::InitLevel(const char* sWorkingDirectory, const char*
 	static char sReadError[] = "ERROR! Unable to read control file. (CLTDirectMusicMgr::InitLevel)\n";
 	static char sSeparator[] = "\\";
 
+#ifdef NOLFSRC_MODERN
+	// fixed: "sDefine3", not "sDeine3" (RETAIL_BUGS.md)
+	dm_Printf(3, "CLTDirectMusicMgr::InitLevel sWorkingDirectory=%s sControlFileName=%s sDefine1=%s sDefine2=%s sDefine3=%s\n",
+	          sWorkingDirectory, sControlFileName, sDefine1, sDefine2, sDefine3);
+#else
 	dm_Printf(3, "CLTDirectMusicMgr::InitLevel sWorkingDirectory=%s sControlFileName=%s sDefine1=%s sDefine2=%s sDeine3=%s\n",
 	          sWorkingDirectory, sControlFileName, sDefine1, sDefine2, sDefine3);
+#endif
 
 	CDMControlFileMgr controlFile;
 
