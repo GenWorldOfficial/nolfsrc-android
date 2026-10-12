@@ -258,9 +258,32 @@ static IDirect3DTexture9* d9_Realise(D9Texture* t)
 {
     if (!t->m_pStage[0])
         return t->m_pTex;
+    // Direct3D sizes every level below the first itself, each half the one
+    // above (at least 1), and LockRect hands back a buffer that size. GL takes
+    // whatever sizes it is given (a chain that does not halve just leaves the
+    // texture incomplete), so a staged level of any other size ends the chain
+    // here: copied into Direct3D's smaller level it would write past the end
+    // of its buffer (heap corruption, a crash later at a level change).
     int nLevels = 0;
     while (nLevels < D9_MAXLEVELS && nLevels <= t->m_nMaxLevel && t->m_pStage[nLevels])
+    {
+        int nW = t->m_StageW[0] >> nLevels, nH = t->m_StageH[0] >> nLevels;
+        if (nW < 1) nW = 1;
+        if (nH < 1) nH = 1;
+        if (nLevels > 0 && (t->m_StageW[nLevels] != nW || t->m_StageH[nLevels] != nH))
+        {
+            mr_Debug(1, "texture %dx%d: level %d is %dx%d, not %dx%d; levels from it dropped",
+                     t->m_StageW[0], t->m_StageH[0], nLevels, t->m_StageW[nLevels],
+                     t->m_StageH[nLevels], nW, nH);
+            break;
+        }
+        if (nW == 1 && nH == 1)
+        {
+            nLevels++;
+            break;                      // the last level a chain can have
+        }
         nLevels++;
+    }
     if (t->m_pTex)
     {
         t->m_pTex->Release();
@@ -275,14 +298,23 @@ static IDirect3DTexture9* d9_Realise(D9Texture* t)
     }
     for (int i = 0; i < nLevels; i++)
     {
+        // Copy no more than the level Direct3D made holds, whatever was staged.
+        D3DSURFACE_DESC desc;
+        if (FAILED(t->m_pTex->GetLevelDesc(i, &desc)))
+            continue;
+        uint32_t nRowBytes, nDevRowBytes;
+        int nRows, nDevRows;
+        d9_LevelBytes(t->m_Fmt, t->m_StageW[i], t->m_StageH[i], &nRowBytes, &nRows);
+        d9_LevelBytes(t->m_Fmt, (int)desc.Width, (int)desc.Height, &nDevRowBytes, &nDevRows);
+        uint32_t nCopy = nRowBytes < nDevRowBytes ? nRowBytes : nDevRowBytes;
+        int nCopyRows = nRows < nDevRows ? nRows : nDevRows;
         D3DLOCKED_RECT lr;
         if (FAILED(t->m_pTex->LockRect(i, &lr, NULL, 0)))
             continue;
-        uint32_t nRowBytes;
-        int nRows;
-        d9_LevelBytes(t->m_Fmt, t->m_StageW[i], t->m_StageH[i], &nRowBytes, &nRows);
-        for (int y = 0; y < nRows; y++)
-            memcpy((uint8_t*)lr.pBits + y * lr.Pitch, t->m_pStage[i] + y * nRowBytes, nRowBytes);
+        if ((uint32_t)lr.Pitch < nCopy)
+            nCopy = (uint32_t)lr.Pitch;
+        for (int y = 0; y < nCopyRows; y++)
+            memcpy((uint8_t*)lr.pBits + y * lr.Pitch, t->m_pStage[i] + y * nRowBytes, nCopy);
         t->m_pTex->UnlockRect(i);
     }
     t->m_nLevels = nLevels;
@@ -557,6 +589,14 @@ void rd_TexSubImage(int nLevel, int x, int y, int w, int h, RDPixels ePixels, co
     uint32_t nSrcPitch = w * d9_PixelBytes(ePixels);
     if (t->m_pStage[nLevel])
     {
+        // GL refuses a rectangle outside the level; never write past it.
+        if (x < 0 || y < 0 || w <= 0 || h <= 0 ||
+            x + w > t->m_StageW[nLevel] || y + h > t->m_StageH[nLevel])
+        {
+            mr_Debug(1, "texture %dx%d level %d: sub-image %d,%d %dx%d outside it; refused",
+                     t->m_StageW[nLevel], t->m_StageH[nLevel], nLevel, x, y, w, h);
+            return;
+        }
         uint32_t nDstPitch = t->m_StageW[nLevel] * bpp;
         for (int r = 0; r < h; r++)
             d9_ConvertRow(t->m_Fmt, ePixels, (const uint8_t*)pData + r * nSrcPitch,
