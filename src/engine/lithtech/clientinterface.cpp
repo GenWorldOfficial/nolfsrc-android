@@ -1450,7 +1450,13 @@ void ci_GetSurfaceDims(HSURFACE hSurf, uint32* pWidth, uint32* pHeight)
 	}
 	else
 	{
+#ifdef NOLFSRC_MODERN
+		// fixed: only the pointers given are written (RETAIL_BUGS.md)
+		if (pWidth) *pWidth = 0;
+		if (pHeight) *pHeight = 0;
+#else
 		*pWidth = *pHeight = 0;
+#endif
 	}
 }
 

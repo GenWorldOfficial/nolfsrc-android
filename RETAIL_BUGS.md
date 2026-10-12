@@ -33,6 +33,7 @@ in.
 * [`CLTDirectMusicMgr::InitLevel` leaks the path it built when the control file will not open](#cltdirectmusicmgrinitlevel-leaks-the-path-it-built-when-the-control-file-will-not-open)
 * [`CMemStream::Read`'s debug line reads a missing argument](#cmemstreamreads-debug-line-reads-a-missing-argument)
 * [`ci_SetLightRadius` does not check its object handle](#ci_setlightradius-does-not-check-its-object-handle)
+* [`ci_GetSurfaceDims` writes through unchecked pointers](#ci_getsurfacedims-writes-through-unchecked-pointers)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -442,6 +443,10 @@ address `0xbc`.
 
 ### `ci_GetSurfaceDims` writes through unchecked pointers
 `0x0040cfd0` (lithtech.exe) · `src/engine/lithtech/clientinterface.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`):
+> `src/engine/lithtech/clientinterface.cpp` zeroes only the outputs it was
+> given. The release build keeps the retail writes.
 
 Given a surface, it checks both output pointers and fills in whichever were
 asked for. Given a null surface, it zeroes both without checking either.
