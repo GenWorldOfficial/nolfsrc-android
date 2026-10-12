@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <!--
-  lithtech.exe.manifest -- the modern build's DirectMusic, from the game
+  lithtech.exe.manifest: the modern build's DirectMusic, from the game
   directory (src/modern/directmusic/README.md). Every COM class Microsoft's
   DirectMusic DLLs register, as their own DllRegisterServer writes them,
   mapped to the copies the build installs beside lithtech.exe as

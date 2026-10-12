@@ -28,8 +28,9 @@
 # at (wide ones too) and starts at the largest 4:3 one that fits the
 # desktop, and which is played at the resolution picked there.
 #
-# Sound needs Wine's audio working, and music Microsoft's DirectMusic in the
-# prefix (see linux-run.sh).
+# Sound needs Wine's audio working. The release build's music also needs
+# Microsoft's DirectMusic in the prefix; the modern build carries its own
+# (see linux-run.sh).
 set -e
 cd "$(dirname "$0")"
 HERE="$(pwd)"
