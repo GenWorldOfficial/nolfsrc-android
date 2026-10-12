@@ -8,18 +8,37 @@
 # build (step 6) and build/variant.sh for each variant, once its data and
 # symbols are in place.
 #
-# Links are stored as the files they point to (-h); the per-machine state
-# run.sh / run-launcher.sh create is left out. The archive is written beside
-# and renamed into place, so a failed run never leaves a truncated one, and a
-# plain .tar an older build made is removed with it.
+# Links are stored as the files they point to (-h). The archive is a fresh
+# install, whatever has been played in the directory: no saves (an empty
+# Save/), no logs, autoexec.cfg as the shipped defaults.cfg, nolfcmds.txt as
+# the build writes it (build/nolfcmds.sh; the launcher rewrites the
+# directory's copy), and none of the per-machine state run.sh /
+# run-launcher.sh create. The archive is written beside and renamed into
+# place, so a failed run never leaves a truncated one, and a plain .tar an
+# older build made is removed with it.
 set -e
 OUT="${1:?usage: build/package.sh <game directory>}"
 OUT="${OUT%/}"
 NAME="$(basename "$OUT")"
-PKG="$(dirname "$OUT")/$NAME.tar.gz"
+PARENT="$(dirname "$OUT")"
+PKG="$PARENT/$NAME.tar.gz"
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-tar -C "$(dirname "$OUT")" -h -cf - \
-    --exclude=run-cmds.txt --exclude=cd --exclude='*.part' "$NAME" |
+# The fresh files, staged beside the directory and renamed into it.
+STAGE=".pkg-$NAME"
+rm -rf "$PARENT/$STAGE"
+mkdir -p "$PARENT/$STAGE"
+trap 'rm -rf "$PARENT/$STAGE"' EXIT
+cp "$OUT/defaults.cfg" "$PARENT/$STAGE/autoexec.cfg"
+MIDDLEWARE=retail
+grep -q '^EXT .*	binkw32\.dll$' "$OUT/MANIFEST.txt" 2>/dev/null && MIDDLEWARE=open
+bash "$HERE/nolfcmds.sh" $MIDDLEWARE > "$PARENT/$STAGE/nolfcmds.txt"
+
+tar -C "$PARENT" -h -cf - \
+    --exclude="$NAME/Save/*" --exclude="$NAME/autoexec.cfg" --exclude="$NAME/nolfcmds.txt" \
+    --exclude='*.log' --exclude=run-cmds.txt --exclude=cd --exclude='*.part' \
+    --transform="s|^$STAGE/|$NAME/|" \
+    "$NAME" "$STAGE/autoexec.cfg" "$STAGE/nolfcmds.txt" |
     gzip -6 > "$PKG.part"
 mv "$PKG.part" "$PKG"
 rm -f "$(dirname "$OUT")/$NAME.tar"
