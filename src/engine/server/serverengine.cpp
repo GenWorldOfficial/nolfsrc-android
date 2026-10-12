@@ -993,6 +993,29 @@ void CServerMgr::OnModelLoaded(LThreadMessage* pMsg)
 // comes out six bytes long.
 LTRESULT se_ModelHashCleanup(void* pArg1, CDepLink* pLink, int nArg3)
 {
+#ifdef NOLFSRC_MODERN
+	// fixed: se_ModelHashCleanup leaks its record (RETAIL_BUGS.md). The
+	// record is freed whether or not there is still a manager. The hash is
+	// still reached through the global, not the record's copy: once the
+	// manager has gone the global is null, and the copy would dangle.
+	if (nArg3 == 0)
+	{
+		CModelCleanupRec* pRec = (CModelCleanupRec*)pLink->m_pData;
+		CServerMgr*       pMgr = g_pServerMgr;
+
+		if (pMgr)
+		{
+			char* pFilename = pRec->m_pModel->GetFilename();
+			void* hElement  = dhash_FindElement(pMgr->m_hModelHash, pFilename,
+			                                    strlen(pFilename));
+
+			if (hElement)
+				dhash_Remove(pMgr->m_hModelHash, hElement);
+		}
+
+		delete pRec;
+	}
+#else
 	if (nArg3 == 0)
 	{
 		CModelCleanupRec* pRec = (CModelCleanupRec*)pLink->m_pData;
@@ -1015,6 +1038,7 @@ LTRESULT se_ModelHashCleanup(void* pArg1, CDepLink* pLink, int nArg3)
 				dhash_Remove(pMgr->m_hModelHash, hElement);
 		}
 	}
+#endif
 
 	return LT_OK;
 }

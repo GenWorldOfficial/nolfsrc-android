@@ -42,6 +42,7 @@ in.
 * [Model shadows are switched off for good by the first cinematic](#model-shadows-are-switched-off-for-good-by-the-first-cinematic)
 * [`StopSecondary` and `StopMotif` test the wrong object when given a name](#stopsecondary-and-stopmotif-test-the-wrong-object-when-given-a-name)
 * [`ci_GetModelNodeName` refuses node 0 and does not terminate](#ci_getmodelnodename-refuses-node-0-and-does-not-terminate)
+* [`se_ModelHashCleanup` uses a global instead of its argument, and leaks](#se_modelhashcleanup-uses-a-global-instead-of-its-argument-and-leaks)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -595,6 +596,12 @@ returns null without closing the file.
 
 ### `se_ModelHashCleanup` uses a global instead of its argument, and leaks
 `0x1002af75` (server.dll) · `src/engine/server/serverengine.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`):
+> the record is freed whether or not a manager is left
+> (`src/engine/server/serverengine.cpp`). The hash is still reached through
+> the global, which is null once the manager has gone, where the record's
+> copy would dangle. The release build keeps the leak.
 
 The callback exists to free a dependency record, using the manager it is
 handed. It reads the global manager pointer (`0x10058bf0`) instead, and when
