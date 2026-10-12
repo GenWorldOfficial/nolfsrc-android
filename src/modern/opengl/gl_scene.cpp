@@ -1163,8 +1163,12 @@ LTBOOL glr_RenderScene(SceneDesc* pScene)
     glDisable(GL_BLEND);
     glDisable(GL_CULL_FACE);
     glDisable(GL_LIGHTING);
-    glEnable(GL_ALPHA_TEST);
-    glAlphaFunc(GL_GREATER, 0.1666f);   // r_Init's
+    // Texels are punched out only in the chromakey sets (d3d.ren's
+    // sub_10023eb0/sub_10023f40 around them): solid textures' alpha means
+    // nothing, and many 5551 ones (window shutters, the sky) carry 0. The
+    // Mac renderer leaves r_Init's alpha test on everywhere.
+    glDisable(GL_ALPHA_TEST);
+    glAlphaFunc(GL_GREATER, 0.1666f);
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     glShadeModel(GL_SMOOTH);
 
