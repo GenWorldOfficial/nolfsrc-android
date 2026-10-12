@@ -141,6 +141,9 @@ void CObjBase::InitFields()
 	m_StandingOnMe.TieOff();
 
 	m_StandingLink.m_pData = this;
+#ifdef NOLFSRC_MODERN
+	m_StandingLink.TieOff();	// fixed: not left holding the bank's old pointers (RETAIL_BUGS.md)
+#endif
 
 	m_pSData = LTNULL;
 	m_BlockingPriority = 0;

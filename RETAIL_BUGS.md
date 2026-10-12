@@ -37,6 +37,7 @@ in.
 * [`sm_WriteObjectFiles` dereferences the first file identifier unchecked](#sm_writeobjectfiles-dereferences-the-first-file-identifier-unchecked)
 * [Error messages that name the wrong function](#error-messages-that-name-the-wrong-function)
 * [`CSoundMgr::GetReverbProperties`: damping is guarded by the wrong flag](#csoundmgrgetreverbproperties-damping-is-guarded-by-the-wrong-flag)
+* [`CObjBase::InitFields` leaves `m_StandingLink` uninitialised](#cobjbaseinitfields-leaves-m_standinglink-uninitialised)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -389,6 +390,10 @@ no visible harm there; another frame layout crashes.
 
 ### `CObjBase::InitFields` leaves `m_StandingLink` uninitialised
 `0x10024802` (server.dll) · `src/engine/server/objtypes.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`):
+> `src/engine/server/objtypes.cpp` ties the link off like the other four. The
+> release build keeps the retail setup.
 
 Of the five links the function sets up, `m_StandingLink` (`+0x114`) is the
 only one given its `m_pData` and not tied off, so an object that has never
