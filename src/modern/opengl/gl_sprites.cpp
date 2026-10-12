@@ -50,10 +50,12 @@ void glr_LightGridSample(const LTVector& pos, float* pOut)
     }
     const uint8_t* c = pData + ((idx[2] * nSlice + idx[1] * nRow + idx[0]) << 2);
     int dx = 4, dy = nRow * 4, dz = nSlice * 4;
+    // A cell is B, G, R and a pad byte: red is at +2 (d3d.ren 0x1001ab1a).
     for (int ch = 0; ch < 3; ch++)
     {
-        float c000 = c[ch], c100 = c[dx + ch], c010 = c[dy + ch], c110 = c[dy + dx + ch];
-        float c001 = c[dz + ch], c101 = c[dz + dx + ch], c011 = c[dz + dy + ch], c111 = c[dz + dy + dx + ch];
+        int b = 2 - ch;
+        float c000 = c[b], c100 = c[dx + b], c010 = c[dy + b], c110 = c[dy + dx + b];
+        float c001 = c[dz + b], c101 = c[dz + dx + b], c011 = c[dz + dy + b], c111 = c[dz + dy + dx + b];
         float x00 = c000 + (c100 - c000) * t[0], x10 = c010 + (c110 - c010) * t[0];
         float x01 = c001 + (c101 - c001) * t[0], x11 = c011 + (c111 - c011) * t[0];
         float y0 = x00 + (x10 - x00) * t[1], y1 = x01 + (x11 - x01) * t[1];
