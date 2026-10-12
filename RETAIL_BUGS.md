@@ -38,6 +38,7 @@ in.
 * [Error messages that name the wrong function](#error-messages-that-name-the-wrong-function)
 * [`CSoundMgr::GetReverbProperties`: damping is guarded by the wrong flag](#csoundmgrgetreverbproperties-damping-is-guarded-by-the-wrong-flag)
 * [`CObjBase::InitFields` leaves `m_StandingLink` uninitialised](#cobjbaseinitfields-leaves-m_standinglink-uninitialised)
+* [Level particle systems stop emitting at high frame rates](#level-particle-systems-stop-emitting-at-high-frame-rates)
 * [`at_Advance` divides by the last keyframe's time](#at_advance-divides-by-the-last-keyframes-time)
 * [Model shadows are switched off for good by the first cinematic](#model-shadows-are-switched-off-for-good-by-the-first-cinematic)
 * [`StopSecondary` and `StopMotif` test the wrong object when given a name](#stopsecondary-and-stopmotif-test-the-wrong-object-when-given-a-name)
@@ -72,6 +73,21 @@ shipped, so their entries name the function and the source file instead.
 ---
 
 ## Wrong results
+
+### Level particle systems stop emitting at high frame rates
+`CParticleSystemFX::Update` (CShell.dll) · `src/game/ClientShellDLL/ParticleSystemFX.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`): an update that owes
+> less than one particle returns without restarting the clock, so the time
+> adds up until one is owed.
+
+Each update adds `floor(fParticlesPerSecond * dt)` particles, `dt` being
+the time since the last update (capped at 1/15 s), and then restarts the
+clock. When a frame is shorter than one particle's worth of time the
+count rounds down to 0 every frame, and the emitter never emits: at 100
+frames a second, every system slower than 100 particles a second goes
+dark. M06S03's ambient underwater particles were never there with a fast
+renderer.
 
 ### The property-type guard normalises to a value that is also out of range
 `0x100016be` (server.dll) · `src/engine/server/counter.cpp`
