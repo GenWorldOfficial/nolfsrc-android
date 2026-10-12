@@ -493,7 +493,11 @@ LTRESULT CMemStream::Read(void* pData, unsigned long size)
 	unsigned long nRead;
 
 	if (g_StreamDebugLevel >= 4)
+#ifdef NOLFSRC_MODERN
+		dsi_ServerError("read from stream %p size %u", this, size);	// fixed (RETAIL_BUGS.md)
+#else
 		dsi_ServerError("read from stream %p size %u", this);
+#endif
 
 	if (size == 0)
 		return LT_OK;

@@ -31,6 +31,7 @@ in.
 * [`streamsim_Open` leaks the file when the stream cannot be allocated](#streamsim_open-leaks-the-file-when-the-stream-cannot-be-allocated)
 * [`InitLevel`'s trace misspells a parameter](#initlevels-trace-misspells-a-parameter)
 * [`CLTDirectMusicMgr::InitLevel` leaks the path it built when the control file will not open](#cltdirectmusicmgrinitlevel-leaks-the-path-it-built-when-the-control-file-will-not-open)
+* [`CMemStream::Read`'s debug line reads a missing argument](#cmemstreamreads-debug-line-reads-a-missing-argument)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -601,6 +602,10 @@ quote it.
 
 ### `CMemStream::Read`'s debug line reads a missing argument
 `0x10007854` (server.dll) · `src/engine/server/fsstream.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`):
+> `src/engine/server/fsstream.cpp` passes the size. The release build
+> keeps the retail call.
 
 The format is `"read from stream %p size %u"` and only `this` is passed, so
 `%u` prints whatever is next on the stack. It fires only at stream debug level
