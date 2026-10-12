@@ -157,8 +157,18 @@ LTRESULT CBaseStream::WriteStream(ILTStream& dsSource, unsigned long dwMin,
 	unsigned long nLeft;
 	unsigned long nChunk;
 
+#ifdef NOLFSRC_MODERN
+	// fixed: CBaseStream::WriteStream ignores the source offset
+	// (RETAIL_BUGS.md). A start the caller gives is sought to; the default
+	// still copies from wherever the source is, as every caller expects.
 	if (dwMin == WRITESTREAM_DEFAULT)
 		dwMin = 0;
+	else if (dsSource.SeekTo(dwMin) != LT_OK)
+		return LT_ERROR;
+#else
+	if (dwMin == WRITESTREAM_DEFAULT)
+		dwMin = 0;
+#endif
 
 	if (dwMax == WRITESTREAM_DEFAULT)
 	{

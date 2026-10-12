@@ -48,6 +48,7 @@ in.
 * [The tree-path builder ignores the buffer length it is given](#the-tree-path-builder-ignores-the-buffer-length-it-is-given)
 * [The object-DLL temp name: one copy unterminated, two unbounded](#the-object-dll-temp-name-one-copy-unterminated-two-unbounded)
 * [`CBaseStream::ReadString` never reports a short read](#cbasestreamreadstring-never-reports-a-short-read)
+* [`CBaseStream::WriteStream`: the source offset is ignored](#cbasestreamwritestream-the-source-offset-is-ignored)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -129,6 +130,12 @@ and `GetLength()` under-reports the string from then on.
 
 ### `CBaseStream::WriteStream`: the source offset is ignored
 `0x10011402` (server.dll) · `src/engine/server/basestream.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`):
+> a start the caller gives is sought to before the copy; the default still
+> copies from the source's current position, as every caller expects
+> (`src/engine/server/basestream.cpp`). The release build keeps the retail
+> code.
 
 The function copies a range out of another stream, starting at `dwMin`.
 `dwMin` is used to work out how many bytes to copy and for nothing else: the
