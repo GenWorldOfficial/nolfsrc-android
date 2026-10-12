@@ -83,6 +83,23 @@ static int glr_CompareTranslucent(const void* a, const void* b)
     return x->m_fKey > y->m_fKey ? -1 : x->m_fKey < y->m_fKey ? 1 : 0;
 }
 
+static void glr_DrawTranslucentRange(uint32_t nFrom, uint32_t nTo)
+{
+    if (nFrom >= nTo)
+        return;
+    glPushAttrib(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDepthMask(GL_FALSE);
+    // Blended, not alpha-tested: an additive object's alpha means nothing,
+    // and the menus' bars are textures of faint alpha that d3d.ren draws.
+    glDisable(GL_ALPHA_TEST);
+    for (uint32_t i = nFrom; i < nTo; i++)
+        if (g_pTrans[i].m_fnDraw && (g_pTrans[i].m_pObj->m_Flags & FLAG_VISIBLE))
+            g_pTrans[i].m_fnDraw(g_pTrans[i].m_pObj);
+    glPopAttrib();
+}
+
 // ---- the set -------------------------------------------------------------------------
 
 void glr_BeginObjects(void)
@@ -102,18 +119,21 @@ void glr_QueueObject(LTObject* pObj)
         glr_ProcessWorldModel(pObj);
         break;
     case OT_MODEL:
+    {
+        bool bClose = (pObj->m_Flags & FLAG_REALLYCLOSE) != 0;
         if (pObj->m_ColorA != 255)
-            glr_AddTranslucent(pObj, NULL);
+            glr_AddTranslucent(pObj, glr_DrawTranslucentModel);
         else if (pObj->m_Flags2 & FLAG2_CHROMAKEY)
-            glr_ObjList(VS_MODELS_CHROMAKEY)->Add(pObj);
+            glr_ObjList(bClose ? VS_CLOSE_MODELS_CHROMAKEY : VS_MODELS_CHROMAKEY)->Add(pObj);
         else
-            glr_ObjList(VS_MODELS)->Add(pObj);
+            glr_ObjList(bClose ? VS_CLOSE_MODELS : VS_MODELS)->Add(pObj);
         break;
+    }
     case OT_SPRITE:
         if (pObj->m_Flags & FLAG_SPRITE_NOZ)
             glr_ObjList(VS_SPRITES_NOZ)->Add(pObj);
         else
-            glr_AddTranslucent(pObj, NULL);
+            glr_AddTranslucent(pObj, glr_DrawSprite);
         break;
     case OT_LIGHT:
         glr_ObjList(VS_LIGHTS)->Add(pObj);
@@ -148,32 +168,71 @@ void glr_FlushObjects(void)
 {
     // Solid.
     glr_DrawSet(VS_WORLDMODELS, glr_DrawSolidWorldModel);
+    glPushAttrib(GL_COLOR_BUFFER_BIT);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);     // r_DrawSolidModels
+    glr_DrawSet(VS_MODELS, glr_DrawModel);
+    glPopAttrib();
 
     // Chromakey: texels whose alpha the key cleared are dropped.
     glPushAttrib(GL_COLOR_BUFFER_BIT);
     glEnable(GL_ALPHA_TEST);
     glAlphaFunc(GL_GREATER, 0.5f);
+    glr_DrawSet(VS_MODELS_CHROMAKEY, glr_DrawModel);
     glr_DrawSet(VS_WORLDMODELS_CHROMAKEY, glr_DrawSolidWorldModel);
     glPopAttrib();
 
     // Translucent, far to near, blended over what is there without writing
-    // depth (r_SetTranslucentObjectStates).
+    // depth (r_SetTranslucentObjectStates). The sort puts really-close
+    // objects last.
+    uint32_t nFar = g_nTrans;
     if (g_nTrans)
     {
         if (cvi(CV_DrawSorted))
             qsort(g_pTrans, g_nTrans, sizeof(GLRTranslucent), glr_CompareTranslucent);
+        for (nFar = 0; nFar < g_nTrans; nFar++)
+            if (g_pTrans[nFar].m_pObj->m_Flags & FLAG_REALLYCLOSE)
+                break;
+        glr_DrawTranslucentRange(0, nFar);
+    }
+
+    // Really-close objects (the player's weapon, the menus' 3D parts), in
+    // camera space with a near plane of their own: over a depth buffer of
+    // their own, solid ones first.
+    if (nFar < g_nTrans || glr_ObjList(VS_CLOSE_MODELS)->m_nObjects ||
+        glr_ObjList(VS_CLOSE_MODELS_CHROMAKEY)->m_nObjects)
+    {
+        const GLRCamera& cam = g_Frame.m_Cam;
+        glPushAttrib(GL_SCISSOR_BIT | GL_DEPTH_BUFFER_BIT);
+        glEnable(GL_SCISSOR_TEST);
+        glScissor(cam.m_nViewX, cam.m_nViewY, cam.m_nViewW, cam.m_nViewH);
+        glDepthMask(GL_TRUE);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        glPopAttrib();
+        glPushAttrib(GL_COLOR_BUFFER_BIT);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glr_DrawSet(VS_CLOSE_MODELS, glr_DrawModel);
+        glEnable(GL_ALPHA_TEST);
+        glAlphaFunc(GL_GREATER, 0.5f);
+        glr_DrawSet(VS_CLOSE_MODELS_CHROMAKEY, glr_DrawModel);
+        glPopAttrib();
+        glr_DrawTranslucentRange(nFar, g_nTrans);
+    }
+
+    // Sprites that ignore the depth buffer, over everything.
+    if (glr_ObjList(VS_SPRITES_NOZ)->m_nObjects)
+    {
         glPushAttrib(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glDepthMask(GL_FALSE);
-        for (uint32_t i = 0; i < g_nTrans; i++)
-            if (g_pTrans[i].m_fnDraw && (g_pTrans[i].m_pObj->m_Flags & FLAG_VISIBLE))
-                g_pTrans[i].m_fnDraw(g_pTrans[i].m_pObj);
+        glr_DrawSet(VS_SPRITES_NOZ, glr_DrawNoZSprite);
         glPopAttrib();
     }
 }
 
+// The sky's sprites and poly grids (r_DrawSkyObjects), with the sky camera
+// loaded and depth off.
 void glr_DrawSkyObject(LTObject* pObj)
 {
-    (void)pObj;
+    if (pObj->m_ObjectType == OT_SPRITE)
+        glr_DrawSkySprite(pObj);
 }

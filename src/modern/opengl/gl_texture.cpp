@@ -184,8 +184,25 @@ static bool glr_Upload(GLRTexture* pTex, TextureData* pData)
            ((GLint)pData->m_Mips[nFirst].m_Width > nMax || (GLint)pData->m_Mips[nFirst].m_Height > nMax))
         nFirst++;
 
+    // Which textures keep their alpha (d3d.ren 0x10038a90, Mac
+    // r_SetupTextureSurface 0x180628): those the DTX flags give an alpha
+    // format -- 4444 (0x80), 5551 (0x100), and fullbright ones, whose alpha
+    // marks the fullbright texels -- and with "32BitTextures" all but those
+    // that prefer 16 bits (0x2). Every other texture is 565 there, opaque
+    // whatever its file's alpha says. Here the alpha is kept at full
+    // precision, as Direct3D under Wine also ends up doing: a 1-bit alpha
+    // would cut a soft gradient (the menus' bars) down to nothing.
+    uint32_t f = hdr.m_IFlags;
+    GLint nInternal;
+    if ((cvi(CV_32BitTextures) && !(f & 2)) || (f & (0x100 | 0x80 | DTX_FULLBRITE)))
+        nInternal = GL_RGBA8;
+    else
+        nInternal = GL_RGB8;
     bool bCompressed = nType != BPP_32;
-    bool bUploadCompressed = bCompressed && g.bS3TC && cvi(CV_S3TCEnable);
+    // A compressed texture goes up compressed when its format carries no
+    // alpha it should not have: DXT1 as RGB, or anything keeping its alpha.
+    bool bUploadCompressed = bCompressed && g.bS3TC && cvi(CV_S3TCEnable) &&
+                             (nInternal != GL_RGB8 || nType == BPP_S3TC_DXT1);
 
     glBindTexture(GL_TEXTURE_2D, pTex->m_Id);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -204,8 +221,11 @@ static bool glr_Upload(GLRTexture* pTex, TextureData* pData)
             static const GLenum fmt[3] = { GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,
                                            GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,
                                            GL_COMPRESSED_RGBA_S3TC_DXT5_EXT };
+            GLenum nFormat = fmt[nType - BPP_S3TC_DXT1];
+            if (nInternal == GL_RGB8)
+                nFormat = 0x83F0;       // GL_COMPRESSED_RGB_S3TC_DXT1_EXT
             uint32_t n = glr_S3TCSize(mip.m_Width, mip.m_Height, nType);
-            g.glCompressedTexImage2D(GL_TEXTURE_2D, nLevels, fmt[nType - BPP_S3TC_DXT1],
+            g.glCompressedTexImage2D(GL_TEXTURE_2D, nLevels, nFormat,
                                      mip.m_Width, mip.m_Height, 0, n, mip.m_pData);
             nBytes += n;
         }
@@ -216,14 +236,14 @@ static bool glr_Upload(GLRTexture* pTex, TextureData* pData)
                 break;
             pDecode = p;
             glr_DecodeS3TC(mip.m_pData, mip.m_Width, mip.m_Height, nType, pDecode);
-            glTexImage2D(GL_TEXTURE_2D, nLevels, GL_RGBA8, mip.m_Width, mip.m_Height, 0,
+            glTexImage2D(GL_TEXTURE_2D, nLevels, nInternal, mip.m_Width, mip.m_Height, 0,
                          GL_BGRA, GL_UNSIGNED_BYTE, pDecode);
             nBytes += mip.m_Width * mip.m_Height * 4;
         }
         else
         {
             glPixelStorei(GL_UNPACK_ROW_LENGTH, mip.m_Pitch ? mip.m_Pitch / 4 : 0);
-            glTexImage2D(GL_TEXTURE_2D, nLevels, GL_RGBA8, mip.m_Width, mip.m_Height, 0,
+            glTexImage2D(GL_TEXTURE_2D, nLevels, nInternal, mip.m_Width, mip.m_Height, 0,
                          GL_BGRA, GL_UNSIGNED_BYTE, mip.m_pData);
             glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
             nBytes += mip.m_Width * mip.m_Height * 4;
@@ -241,6 +261,8 @@ static bool glr_Upload(GLRTexture* pTex, TextureData* pData)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, nLevels - 1);
     glr_ApplyTextureFilter(nLevels);
     pTex->m_DtxFlags = hdr.m_IFlags;
+    pTex->m_nBaseWidth = pData->m_Mips[0].m_Width;
+    pTex->m_nBaseHeight = pData->m_Mips[0].m_Height;
     float fScale = (float)(1 << (hdr.m_Extra[4] & 15));
     pTex->m_fUMul = pData->m_Mips[0].m_Width ? fScale / pData->m_Mips[0].m_Width : 0.0f;
     pTex->m_fVMul = pData->m_Mips[0].m_Height ? fScale / pData->m_Mips[0].m_Height : 0.0f;
@@ -253,7 +275,7 @@ static bool glr_Upload(GLRTexture* pTex, TextureData* pData)
     pTex->m_fDetailScale = (fDetail == fDetail && fDetail > -1.0f && fDetail < 100.0f) ? 1.0f + fDetail : 1.0f;
     pTex->m_fDetailCos = cosf(nAngle * 3.14159265f / 180.0f);
     pTex->m_fDetailSin = sinf(nAngle * 3.14159265f / 180.0f);
-    pTex->m_bAlpha = true;
+    pTex->m_bAlpha = nInternal != GL_RGB8;
     pTex->m_nBytes = nBytes;
     return true;
 }

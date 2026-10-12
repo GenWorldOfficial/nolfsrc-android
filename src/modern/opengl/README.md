@@ -24,7 +24,7 @@ or the launcher, which lists it as "LithTech OpenGL Renderer". A playtest:
 Console variables it reads besides the engine's own (the names and defaults
 `d3d.ren` and the Mac renderer share): `Bilinear`, `Trilinear`,
 `Anisotropic`, `MipmapOffset`, `GroupOffset0`..`9`, `FilterOptimized`,
-`MaxTextureSize`, `S3TCEnable`, `LightMap`, `Saturate`, `DetailTextures`, `DetailTextureAdd`, `DetailTextureScale`, `DrawWorld`, `DrawSky`, `DrawWorldModels`, `DrawAll`, `DrawSorted`, `SkyScale`, `FixTJunc`, `LightAddPoly`, the `Fog*` and `SkyFog*` variables, `RenderDebug` (3 and up also writes
+`MaxTextureSize`, `S3TCEnable`, `LightMap`, `Saturate`, `DetailTextures`, `DetailTextureAdd`, `DetailTextureScale`, `DrawWorld`, `DrawSky`, `DrawWorldModels`, `DrawAll`, `DrawSorted`, `SkyScale`, `FixTJunc`, `LightAddPoly`, the `Fog*` and `SkyFog*` variables, `DrawModels`, `DrawGuns`, `TextureModels`, `ModelSaturation`, `MaxModelLights`, `ModelLODOffset`, `32BitTextures`, `RenderDebug` (3 and up also writes
 `opengl.log` beside the game, 4 logs every 2D call), and `VSync` (ours).
 `RenderCommand info` prints the GL in use.
 
@@ -34,7 +34,7 @@ Console variables it reads besides the engine's own (the names and defaults
 |---|---|---|
 | 1 | device and 2D: the WGL context on the engine's window (windowed, or full screen through `ChangeDisplaySettings`), the mode list, clear and flip, the engine's surfaces and every blit (keyed, scaled, warped, Optimized-2D colours and the seven blend modes), the screen lock and `FillScreenRect`, `BlitFromScreen`, screenshots (F8), DTX texture upload (32-bit, S3TC compressed or decoded) | done: menus' 2D, the console and the HUD's 2D draw |
 | 2 | the world: BSP polygons with their textures and lightmaps, visibility, world models, the sky, fog | done but for portal views and panning-sky textures (`docs/world.md`): the engine's own visibility query (the PVS walk, with the renderer's leaf, object and frustum callbacks), the main world and world models (solid, chromakey, and translucent ones back to front through their BSP) with textures, vertex colours, lightmaps (static and animated, shadow-map animations included, in 512x512 atlases) and detail textures, at the retail PC's brightness (`Saturate`: lightmaps and vertex colours doubled); the sky objects' world models from the squashed sky camera; fog; the global light scale and the camera's light add |
-| 3 | objects: models (with the engine's animation code compiled in, as `d3d.ren` does), sprites, particles, poly grids, line systems, canvases, dynamic lights, shadows | to do (`docs/objects.md`); the main menu's background, logo and Cate are objects |
+| 3 | objects: models (with the engine's animation code compiled in, as `d3d.ren` does), sprites, particles, poly grids, line systems, canvases, dynamic lights, shadows | in progress (`docs/objects.md`): sprites (billboards, rotatable, glow, sprite bias, lit from the world's light grid) and models (the engine's trackers through our copy of its transform maker, CPU skinning, model-space lighting from the light grid, the visible dynamic lights and the game's model hook; LOD; translucent, additive and chromakey ones) draw, and really-close objects (the player's weapon, the menus' 3D parts) in camera space over a depth buffer of their own. The main menu matches `d3d.ren`. To do: particle systems, poly grids, line systems, canvases, dynamic lights on the world, the sun's light on models, chrome and detail passes, model shadows. Open: in T01S01 the karate-chop view model's hands show, which neither `d3d.ren` draws |
 | 4 | movies | the engine's screen-mode Bink and Smacker players ask the renderer for DirectDraw objects (`GetHook`), which an OpenGL renderer does not have, so movies are skipped; needs a texture path for them |
 | 5 | Linux | the renderer is one part: `lithtech.exe` still needs Win32 for its window, input, sound and networking (the Mac engine shows where those seams are) |
 
@@ -52,6 +52,8 @@ Console variables it reads besides the engine's own (the names and defaults
 | `gl_scene.cpp` | the world context, the camera and `RenderScene` |
 | `gl_lightmap.cpp` | lightmaps: decoding, composing light animations, atlases |
 | `globjects.h`, `gl_objects.cpp` | the visible set: objects by kind and the order they are drawn in |
+| `gl_sprites.cpp` | sprites, and the world's light grid |
+| `gl_models.cpp` | models: the transform maker, skinning, lighting |
 | `opengl.def`, `opengl.rc` | the three exports; the launcher's name for the renderer (string 5) |
 | `docs/` | the research the renderer is written from: `device.md` (the device and 2D half of the contract), `world.md` (the world's data and how it is drawn), `objects.md` (objects, models and the engine services a render DLL reaches), `mac-cvars.txt` (the Mac renderer's console variables) |
 

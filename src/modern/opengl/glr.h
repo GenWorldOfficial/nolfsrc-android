@@ -92,6 +92,8 @@ enum {
     CV_FogEnable, CV_FogR, CV_FogG, CV_FogB, CV_FogNearZ, CV_FogFarZ,
     CV_SkyFogEnable, CV_SkyFogNearZ, CV_SkyFogFarZ, CV_FixTJunc, CV_DrawSorted,
     CV_Saturate, CV_DetailTextures, CV_DetailTextureAdd, CV_DetailTextureScale,
+    CV_DrawModels, CV_DrawGuns, CV_TextureModels, CV_ModelSaturation, CV_MaxModelLights,
+    CV_ModelLODOffset, CV_DrawSprites, CV_32BitTextures,
     CV_Count
 };
 extern GLRVar g_Vars[CV_Count];
@@ -141,6 +143,7 @@ LTBOOL glr_FillScreenRect(LTRect* pRect, uint32_t nPixel);
 struct GLRTexture {
     GLuint   m_Id;
     uint32_t m_nWidth, m_nHeight;   // of the first level uploaded
+    uint32_t m_nBaseWidth, m_nBaseHeight;   // of the full-size image (TextureData mip 0)
     uint32_t m_DtxFlags;            // DTX flags (DTX_FULLBRITE, ...)
     uint32_t m_nBytes;
     bool     m_bAlpha;              // the data carries an alpha channel worth testing

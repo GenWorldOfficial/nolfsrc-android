@@ -66,6 +66,9 @@ GLRVar g_Vars[CV_Count] = {
     { "SkyFogEnable", 1 }, { "SkyFogNearZ", 0 }, { "SkyFogFarZ", 2000 },
     { "FixTJunc", 0 }, { "DrawSorted", 1 },
     { "Saturate", 0 }, { "DetailTextures", 1 }, { "DetailTextureAdd", 1 }, { "DetailTextureScale", 0.2f },
+    { "DrawModels", 1 }, { "DrawGuns", 1 }, { "TextureModels", 1 }, { "ModelSaturation", 2 },
+    { "MaxModelLights", 4 }, { "ModelLODOffset", 0 }, { "DrawSprites", 1 },
+    { "32BitTextures", 0 },
 };
 
 // Find a variable, creating it with its default if the engine has none
