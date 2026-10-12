@@ -112,6 +112,7 @@ extern GLRFrame g_Frame;
 
 void glr_LoadCamera(const GLRCamera* pCam);
 void glr_MultMatrix(const LTMatrix& M);
+void glr_InverseAffine(LTMatrix* pOut, const LTMatrix& M);
 void glr_RotationMatrix(const LTRotation& q, float m[3][3]);
 bool glr_SphereVisible(const LTVector& c, float r);
 bool glr_ShouldDraw(LTObject* pObj);
@@ -122,6 +123,8 @@ GLRTexture* glr_SurfaceTexture(Surface* pSurf);
 void glr_ProcessWorldModel(LTObject* pObj);
 void glr_DrawSolidWorldModel(LTObject* pObj);
 void glr_DrawTranslucentWorldModel(LTObject* pObj);
+bool glr_SeesSky(const LTVector& vFrom, const LTVector& vRay);
+float glr_WorldSize(void);
 
 // ---- multitexture (GL 1.3 / ARB_multitexture) -----------------------------------
 

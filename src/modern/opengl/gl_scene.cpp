@@ -818,6 +818,124 @@ static void glr_VisitAll(MainWorld* pWorld)
     }
 }
 
+// ---- the world's segment test --------------------------------------------------------
+//
+// The engine's i_IntersectSegment over the main world's BSP, as d3d.ren
+// carries its own copy for the sun test (0x1006a1b0): the segment is split
+// at each node's plane, the near part searched first; where it crosses
+// to a node's front, the node's poly is hit if it is solid and the
+// crossing is inside its edges.
+
+#define GLR_ISECT_EPS 0.01f
+
+static WorldPoly* glr_IntersectNode(Node* pNode, LTVector vFrom, LTVector vTo, int nDepth)
+{
+    while (pNode && !(pNode->m_Flags & 3) && nDepth < 512)
+    {
+        WorldPoly* pPoly = pNode->m_pPoly;
+        if (!pPoly || !pPoly->m_pSurface || !pPoly->m_pSurface->m_pPlane)
+            return NULL;
+        const LTPlane& P = *pPoly->m_pSurface->m_pPlane;
+        float d1 = P.m_Normal.x * vFrom.x + P.m_Normal.y * vFrom.y + P.m_Normal.z * vFrom.z - P.m_Dist;
+        float d2 = P.m_Normal.x * vTo.x + P.m_Normal.y * vTo.y + P.m_Normal.z * vTo.z - P.m_Dist;
+        if (d1 > GLR_ISECT_EPS && d2 > GLR_ISECT_EPS)
+        {
+            pNode = pNode->m_Sides[1];
+            continue;
+        }
+        int iSide;
+        if (d1 < -GLR_ISECT_EPS)
+        {
+            if (d2 < -GLR_ISECT_EPS)
+            {
+                pNode = pNode->m_Sides[0];
+                continue;
+            }
+            iSide = 0;
+        }
+        else if (d1 > GLR_ISECT_EPS)
+            iSide = 1;
+        else
+            iSide = d2 < 0.0f ? 1 : 0;
+
+        float fDenom = d2 - d1;
+        if (fDenom != 0.0f && (d1 < -GLR_ISECT_EPS || d1 > GLR_ISECT_EPS))
+        {
+            float t = -d1 / fDenom;
+            LTVector vMid = { vFrom.x + (vTo.x - vFrom.x) * t, vFrom.y + (vTo.y - vFrom.y) * t,
+                              vFrom.z + (vTo.z - vFrom.z) * t };
+            WorldPoly* pHit = glr_IntersectNode(pNode->m_Sides[iSide], vFrom, vMid, nDepth + 1);
+            if (pHit)
+                return pHit;
+            if (iSide == 1)
+            {
+                bool bHit = (pPoly->m_pSurface->m_Flags & SURF_SOLID) != 0;
+                float cx = pPoly->m_Center.x - vMid.x, cy = pPoly->m_Center.y - vMid.y,
+                      cz = pPoly->m_Center.z - vMid.z;
+                if (bHit && pPoly->m_Radius * pPoly->m_Radius < cx * cx + cy * cy + cz * cz)
+                    bHit = false;
+                const WorldPolyVertex* pVerts = pPoly->m_Verts;
+                const LTVector* pPrev = pPoly->m_nVerts ? pVerts[pPoly->m_nVerts - 1].m_pPos : NULL;
+                for (uint32_t e = 0; bHit && e < pPoly->m_nVerts; e++)
+                {
+                    const LTVector* pV = pVerts[e].m_pPos;
+                    LTVector ed = { pPrev->x - pV->x, pPrev->y - pV->y, pPrev->z - pV->z };
+                    // N.Cross(edge), which in LithTech is edge x N.
+                    LTVector n = { ed.y * P.m_Normal.z - ed.z * P.m_Normal.y,
+                                   ed.z * P.m_Normal.x - ed.x * P.m_Normal.z,
+                                   ed.x * P.m_Normal.y - ed.y * P.m_Normal.x };
+                    float len = sqrtf(n.x * n.x + n.y * n.y + n.z * n.z);
+                    if (len > 0.0f)
+                    {
+                        n.x /= len; n.y /= len; n.z /= len;
+                    }
+                    float fEdge = n.x * pV->x + n.y * pV->y + n.z * pV->z;
+                    float fMid = n.x * vMid.x + n.y * vMid.y + n.z * vMid.z;
+                    if (fMid - fEdge < -GLR_ISECT_EPS)
+                        bHit = false;
+                    pPrev = pV;
+                }
+                if (bHit)
+                    return pPoly;
+            }
+            else if (t > 0.99f)
+                return NULL;
+            vFrom = vMid;
+        }
+        pNode = pNode->m_Sides[iSide == 0];
+    }
+    return NULL;
+}
+
+// d3d.ren's 0x1001be00: does the segment from vFrom along vRay first hit
+// a sky poly?
+bool glr_SeesSky(const LTVector& vFrom, const LTVector& vRay)
+{
+    MainWorld* pWorld = g_Frame.m_pContext ? g_Frame.m_pContext->m_pWorld : NULL;
+    WorldBsp* pMain = pWorld ? glr_FindBsp(pWorld, WORLDINFO_MAINWORLD) : NULL;
+    if (!pMain || !pMain->m_RootNode)
+        return false;
+    LTVector vTo = { vFrom.x + vRay.x, vFrom.y + vRay.y, vFrom.z + vRay.z };
+    WorldPoly* pHit = glr_IntersectNode((Node*)pMain->m_RootNode, vFrom, vTo, 0);
+    return pHit && (pHit->m_pSurface->m_Flags & SURF_SKY);
+}
+
+// The world's size as the sun test reads it (MainWorld+0xb8, in its world
+// tree); the extents' diagonal if that is not set.
+float glr_WorldSize(void)
+{
+    MainWorld* pWorld = g_Frame.m_pContext ? g_Frame.m_pContext->m_pWorld : NULL;
+    if (!pWorld)
+        return 0.0f;
+    float f;
+    memcpy(&f, (const uint8_t*)pWorld + 0xb8, 4);
+    if (f > 1.0f && f < 1.0e7f)
+        return f;
+    float dx = pWorld->m_ExtentsMax.x - pWorld->m_ExtentsMin.x, dy = pWorld->m_ExtentsMax.y - pWorld->m_ExtentsMin.y,
+          dz = pWorld->m_ExtentsMax.z - pWorld->m_ExtentsMin.z;
+    return sqrtf(dx * dx + dy * dy + dz * dz);
+}
+
 // ---- world models -----------------------------------------------------------------
 
 static void glr_ObjectTint(LTObject* pObj, float* pTint)

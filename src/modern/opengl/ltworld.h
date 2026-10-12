@@ -289,6 +289,7 @@ enum {
 #define FLAG2_CHROMAKEY       0x2
 #define FLAG2_ADDITIVE        0x4
 #define FLAG2_MULTIPLY        0x8
+#define FLAG2_DYNAMICDIRLIGHT 0x20
 #define FLAG2_SKYOBJECT       0x40
 
 #define SURF_ADDITIVE         0x80000   // a translucent world model's first surface: drawn additively
@@ -316,6 +317,37 @@ inline void mw_DoVisQuery(MainWorld* pWorld, VisQueryRequest* pRequest)
     VisQueryFn fn = (*(VisQueryFn**)pTree)[5];
     fn(pTree, pRequest);
 }
+// Its slot 2 (+0x08) finds what is filed in the nodes a box touches
+// (FindObjectsInBox; d3d.ren's 0x10015830 query block): list 0 the objects,
+// list 1 the world's static lights.
+struct FindObjInfo {                    // 0x34
+    uint32_t  m_00;
+    uint32_t  m_iObjArray;              // 0x04
+    LTVector  m_Min, m_Max;             // 0x08
+    LTVector  m_20;
+    void    (*m_CB)(void* pObj, void* pUser);   // 0x2c
+    void*     m_pUser;                  // 0x30
+};
+static_assert(sizeof(FindObjInfo) == 0x34, "FindObjInfo");
+typedef void (__thiscall* FindObjectsFn)(void* pTree, FindObjInfo* pInfo);
+inline void mw_FindObjectsInBox(MainWorld* pWorld, FindObjInfo* pInfo)
+{
+    void* pTree = pWorld->m_WorldTree;
+    FindObjectsFn fn = (*(FindObjectsFn**)pTree)[2];
+    fn(pTree, pInfo);
+}
+
+// A static light as the world tree files it (d3d.ren's Light19a70).
+struct StaticLight {
+    uint8_t   m_pad[0x68];
+    LTVector  m_Pos;                    // 0x68
+    float     m_fRadius;                // 0x74
+    LTVector  m_Color;                  // 0x78 0..255
+    LTVector  m_Dir;                    // 0x84 a spot light's
+    float     m_fCone;                  // 0x90 cos of its half angle; outside (-1, 1) not a spot
+    LTVector  m_OuterColor;             // 0x94 towards the cone's edge
+};
+
 // A world tree node's bounding sphere, which the node filter culls with.
 inline const LTVector& wtn_Center(WorldTreeNode* p) { return *(LTVector*)((uint8_t*)p + 0x30); }
 inline float wtn_Radius(WorldTreeNode* p) { return *(float*)((uint8_t*)p + 0x40); }

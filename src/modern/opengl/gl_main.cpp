@@ -71,6 +71,7 @@ GLRVar g_Vars[CV_Count] = {
     { "32BitTextures", 0 },
     { "DrawParticles", 1 }, { "DrawPolyGrids", 1 }, { "DrawLineSystems", 1 }, { "DrawCanvases", 1 },
     { "DynamicLight", 1 }, { "LightSaturate", 1 }, { "FastLight", 0 },
+    { "ModelApplySun", 1 }, { "ModelSunVariance", 0.05f },
 };
 
 // Find a variable, creating it with its default if the engine has none

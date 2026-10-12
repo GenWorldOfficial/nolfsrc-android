@@ -8,8 +8,7 @@
 // space (the world's light grid, the visible dynamic lights, the model
 // hook) and draws each piece with its skin.
 //
-// Not done yet: the sun's direct light (it needs the ray test into the
-// world, GetDirLightAmount), static lights from the world tree, chrome and
+// Not done yet: chrome and
 // specular passes, detail textures, LOD geomorphing, the distance-fade
 // sprite and shadows.
 
@@ -142,7 +141,7 @@ static void mat_FromQuat(LTMatrix* pOut, const LTRotation& q, const LTVector& t)
 }
 
 // The inverse of a rotation-scale-translation (affine) matrix.
-static void mat_InverseAffine(LTMatrix* pOut, const LTMatrix& M)
+void glr_InverseAffine(LTMatrix* pOut, const LTMatrix& M)
 {
     float a = M.m[0][0], b = M.m[0][1], c = M.m[0][2];
     float d = M.m[1][0], e = M.m[1][1], f = M.m[1][2];
@@ -348,6 +347,9 @@ typedef void (*ModelHookFn)(ModelHookData* pData, void* pUser);
 
 struct ModelLighting {
     LTVector m_Ambient;                 // 0..255
+    LTVector m_DirLight;                // towards the sun, model space
+    float    m_fDirAmt;                 // how much of the model sees it, 0..1
+    LTVector m_DirColor;                // 0..255
     LTVector m_Scale;                   // colour scale (0..1, x2 under Saturate)
     LTVector m_Add;                     // 0..255
     ModelLight m_Lights[16];
@@ -356,6 +358,94 @@ struct ModelLighting {
     bool     m_bTexture;
     uint32_t m_Flags;                   // the object flags after the hook
 };
+
+// The world's static lights near a model (d3d.ren's 0x10019a70, a
+// FindObjectsInBox callback): within reach of the model's sphere, and for
+// a spot light inside its cone, coloured from the centre's colour to the
+// edge's.
+struct StaticLightCtx {
+    ModelLighting*  m_pL;
+    const LTMatrix* m_pW2M;
+    LTVector        m_Pos;
+    float           m_fVis;
+    int             m_nMax;
+};
+
+static void glr_StaticLightCB(void* pObj, void* pUser)
+{
+    const StaticLight* S = (const StaticLight*)pObj;
+    StaticLightCtx* c = (StaticLightCtx*)pUser;
+    ModelLighting* pL = c->m_pL;
+    if (pL->m_nLights >= c->m_nMax || S->m_fRadius <= 0.0f)
+        return;
+    float dx = c->m_Pos.x - S->m_Pos.x, dy = c->m_Pos.y - S->m_Pos.y, dz = c->m_Pos.z - S->m_Pos.z;
+    float fDist = sqrtf(dx * dx + dy * dy + dz * dz);
+    if (fDist - c->m_fVis >= S->m_fRadius)
+        return;
+    LTVector col = S->m_Color;
+    if (S->m_fCone > -1.0f && S->m_fCone < 1.0f && fDist != 0.0f)
+    {
+        float fDot = (S->m_Dir.x * dx + S->m_Dir.y * dy + S->m_Dir.z * dz) / fDist;
+        if (fDot < S->m_fCone)
+            return;
+        float t = (1.0f - (0.5f * fDot + 0.5f)) / (1.0f - (0.5f * S->m_fCone + 0.5f));
+        col.x = col.x * (1.0f - t) + S->m_OuterColor.x * t;
+        col.y = col.y * (1.0f - t) + S->m_OuterColor.y * t;
+        col.z = col.z * (1.0f - t) + S->m_OuterColor.z * t;
+    }
+    ModelLight& L = pL->m_Lights[pL->m_nLights++];
+    L.m_Pos = mat_Apply(*c->m_pW2M, S->m_Pos);
+    float len = sqrtf(L.m_Pos.x * L.m_Pos.x + L.m_Pos.y * L.m_Pos.y + L.m_Pos.z * L.m_Pos.z);
+    float inv = len > 0.0f ? 1.0f / len : 0.0f;
+    L.m_Dir.x = L.m_Pos.x * inv; L.m_Dir.y = L.m_Pos.y * inv; L.m_Dir.z = L.m_Pos.z * inv;
+    L.m_R2 = S->m_fRadius * S->m_fRadius;
+    L.m_InvR2 = 1.0f / L.m_R2;
+    L.m_Color = col;
+}
+
+// d3d.ren's 0x1001bae4 (GetDirLightAmount): a ray twice the world's size
+// towards the sun. With a variance, the model's two edges across the sun are
+// tested, and where they disagree the boundary is bisected down to it.
+static float glr_SunAmount(LTObject* pInst, const LTVector& vPos, const LTMatrix& world, float fVar)
+{
+    const LTVector& vDir = g.pStruct->m_GlobalLightDir;
+    float k = glr_WorldSize() * -2.0f;
+    LTVector vRay = { vDir.x * k, vDir.y * k, vDir.z * k };
+    if (fVar == 0.0f)
+        return glr_SeesSky(vPos, vRay) ? 1.0f : 0.0f;
+    LTVector vRight = { world.m[0][0], world.m[1][0], world.m[2][0] };
+    float r = pInst->m_Radius;
+    // vDir.Cross(vRight), which in LithTech is vRight x vDir.
+    LTVector vPerp = { (vRight.y * vDir.z - vRight.z * vDir.y) * r,
+                       (vRight.z * vDir.x - vRight.x * vDir.z) * r,
+                       (vRight.x * vDir.y - vRight.y * vDir.x) * r };
+    LTVector vHi = { vPos.x + vPerp.x, vPos.y + vPerp.y, vPos.z + vPerp.z };
+    LTVector vLo = { vPos.x - vPerp.x, vPos.y - vPerp.y, vPos.z - vPerp.z };
+    bool bHi = glr_SeesSky(vHi, vRay), bLo = glr_SeesSky(vLo, vRay);
+    if (bHi == bLo)
+        return bHi ? 1.0f : 0.0f;
+    float fStep = 1.0f, fHi = 1.0f, fLo = -1.0f, fResult = 1.0f;
+    while (fStep > fVar && bLo != bHi)
+    {
+        float fMid = (fLo + fHi) * 0.5f;
+        LTVector vTest = { vPos.x + vPerp.x * fMid, vPos.y + vPerp.y * fMid, vPos.z + vPerp.z * fMid };
+        bool bHit = glr_SeesSky(vTest, vRay);
+        fStep *= 0.5f;
+        if (!bHit)
+            fResult -= fStep;
+        if (bHit == bHi)
+        {
+            fHi = fMid;
+            bHi = bHit;
+        }
+        else
+        {
+            fLo = fMid;
+            bLo = bHit;
+        }
+    }
+    return fResult;
+}
 
 static void glr_SetupModelLight(LTObject* pInst, const ModelView& model, const LTMatrix& world,
                                 ModelLighting* pL)
@@ -386,6 +476,8 @@ static void glr_SetupModelLight(LTObject* pInst, const ModelView& model, const L
     pL->m_Scale.y *= k;
     pL->m_Scale.z *= k;
     pL->m_nLights = 0;
+    pL->m_fDirAmt = 0.0f;
+    pL->m_DirLight.x = pL->m_DirLight.y = pL->m_DirLight.z = 0.0f;
     pL->m_bNoLight = (pL->m_Flags & FLAG_NOLIGHT) != 0;
     if (pL->m_bNoLight)
     {
@@ -393,6 +485,34 @@ static void glr_SetupModelLight(LTObject* pInst, const ModelView& model, const L
         return;
     }
     LTVector vPos = { world.m[0][3], world.m[1][3], world.m[2][3] };
+    LTMatrix W2M;
+    glr_InverseAffine(&W2M, world);
+
+    // The sun (RenderStruct m_GlobalLightDir, m_GlobalLightColor): how much
+    // of the model sees the sky towards it, kept on the instance (+0x238
+    // where it was worked out, +0x244 the amount, -1 until then) and worked
+    // out again only for a FLAG2_DYNAMICDIRLIGHT model that has moved.
+    const LTVector& vSunDir = g.pStruct->m_GlobalLightDir;
+    pL->m_DirColor = g.pStruct->m_GlobalLightColor;
+    if (g_Frame.m_pContext && cvi(CV_ModelApplySun) &&
+        (pL->m_DirColor.x != 0.0f || pL->m_DirColor.y != 0.0f || pL->m_DirColor.z != 0.0f))
+    {
+        LTVector* pCachePos = (LTVector*)((uint8_t*)pInst + 0x238);
+        float* pCacheAmt = (float*)((uint8_t*)pInst + 0x244);
+        float fVar = cvf(CV_ModelSunVariance), fEps = 0.001f + fVar;
+        if (*pCacheAmt < 0.0f ||
+            ((pInst->m_Flags2 & FLAG2_DYNAMICDIRLIGHT) &&
+             (fabsf(vPos.x - pCachePos->x) > fEps || fabsf(vPos.y - pCachePos->y) > fEps ||
+              fabsf(vPos.z - pCachePos->z) > fEps)))
+        {
+            *pCachePos = vPos;
+            *pCacheAmt = glr_SunAmount(pInst, vPos, world, fVar);
+        }
+        pL->m_fDirAmt = *pCacheAmt;
+        pL->m_DirLight.x = -(W2M.m[0][0] * vSunDir.x + W2M.m[0][1] * vSunDir.y + W2M.m[0][2] * vSunDir.z);
+        pL->m_DirLight.y = -(W2M.m[1][0] * vSunDir.x + W2M.m[1][1] * vSunDir.y + W2M.m[1][2] * vSunDir.z);
+        pL->m_DirLight.z = -(W2M.m[2][0] * vSunDir.x + W2M.m[2][1] * vSunDir.y + W2M.m[2][2] * vSunDir.z);
+    }
     float amb[3];
     glr_LightGridSample(vPos, amb);
     pL->m_Ambient.x = amb[0];
@@ -400,8 +520,6 @@ static void glr_SetupModelLight(LTObject* pInst, const ModelView& model, const L
     pL->m_Ambient.z = amb[2];
 
     // The frame's visible dynamic lights within reach, into model space.
-    LTMatrix W2M;
-    mat_InverseAffine(&W2M, world);
     GLRObjList* pLights = glr_ObjList(VS_LIGHTS);
     int nMax = cvi(CV_MaxModelLights);
     if (nMax > 16) nMax = 16;
@@ -426,6 +544,21 @@ static void glr_SetupModelLight(LTObject* pInst, const ModelView& model, const L
         L.m_Color.y = pLight->m_ColorG;
         L.m_Color.z = pLight->m_ColorB;
     }
+
+    // Then the world's static lights, from the world tree.
+    MainWorld* pWorld = g_Frame.m_pContext ? g_Frame.m_pContext->m_pWorld : NULL;
+    if (pL->m_nLights < nMax && pWorld)
+    {
+        StaticLightCtx ctx = { pL, &W2M, vPos, fVis, nMax };
+        FindObjInfo info;
+        memset(&info, 0, sizeof(info));
+        info.m_iObjArray = 1;
+        info.m_Min.x = vPos.x - fVis; info.m_Min.y = vPos.y - fVis; info.m_Min.z = vPos.z - fVis;
+        info.m_Max.x = vPos.x + fVis; info.m_Max.y = vPos.y + fVis; info.m_Max.z = vPos.z + fVis;
+        info.m_CB = glr_StaticLightCB;
+        info.m_pUser = &ctx;
+        mw_FindObjectsInBox(pWorld, &info);
+    }
 }
 
 // SetupSkeletalVerts' vertex colour: bind-pose position and normal against
@@ -433,6 +566,14 @@ static void glr_SetupModelLight(LTObject* pInst, const ModelView& model, const L
 static inline void glr_LightVertex(const ModelLighting& L, const ModelVert& v, uint8_t nAlpha, uint8_t* pOut)
 {
     LTVector c = L.m_Ambient;
+    float d = (v.m_Normal.x * L.m_DirLight.x + v.m_Normal.y * L.m_DirLight.y +
+               v.m_Normal.z * L.m_DirLight.z) * L.m_fDirAmt;
+    if (d > 0.0f)
+    {
+        c.x += d * (L.m_DirColor.x - c.x);
+        c.y += d * (L.m_DirColor.y - c.y);
+        c.z += d * (L.m_DirColor.z - c.z);
+    }
     for (int i = 0; i < L.m_nLights; i++)
     {
         const ModelLight& l = L.m_Lights[i];
