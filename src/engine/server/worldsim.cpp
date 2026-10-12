@@ -890,6 +890,23 @@ void ws_AddClippedContact(LTPlane* pPlane, void* pObject, float fDist)
 
 	fNew = fDist - fDot;
 
+#ifdef NOLFSRC_MODERN
+	// fixed: ws_AddClippedContact divides by a dot product that can be zero
+	// (RETAIL_BUGS.md). The divisor, fDist - fNew, is fDot: a move parallel
+	// to the plane never reaches it, so the move is left as it is.
+	if (fDot != 0.0f)
+	{
+		fRatio = -(fNew / (fDist - fNew));
+
+		vScaled = vDelta * fRatio;
+
+		g_vMoveEnd = vScaled;
+
+		g_vMoveEnd.x += g_vMoveStart.x;
+		g_vMoveEnd.y += g_vMoveStart.y;
+		g_vMoveEnd.z += g_vMoveStart.z;
+	}
+#else
 	fRatio = -(fNew / (fDist - fNew));
 
 	vScaled = vDelta * fRatio;
@@ -899,6 +916,7 @@ void ws_AddClippedContact(LTPlane* pPlane, void* pObject, float fDist)
 	g_vMoveEnd.x += g_vMoveStart.x;
 	g_vMoveEnd.y += g_vMoveStart.y;
 	g_vMoveEnd.z += g_vMoveStart.z;
+#endif
 
 	if (g_nContacts >= WS_MAX_CONTACTS)
 		return;

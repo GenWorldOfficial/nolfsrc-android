@@ -43,6 +43,7 @@ in.
 * [`StopSecondary` and `StopMotif` test the wrong object when given a name](#stopsecondary-and-stopmotif-test-the-wrong-object-when-given-a-name)
 * [`ci_GetModelNodeName` refuses node 0 and does not terminate](#ci_getmodelnodename-refuses-node-0-and-does-not-terminate)
 * [`se_ModelHashCleanup` uses a global instead of its argument, and leaks](#se_modelhashcleanup-uses-a-global-instead-of-its-argument-and-leaks)
+* [`ws_AddClippedContact` divides by a dot product that can be zero](#ws_addclippedcontact-divides-by-a-dot-product-that-can-be-zero)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -422,6 +423,10 @@ write through null, not a dropped fragment.
 
 ### `ws_AddClippedContact` divides by a dot product that can be zero
 `0x10004512` (server.dll) · `src/engine/server/worldsim.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`):
+> a move parallel to the contact plane is left as it is
+> (`src/engine/server/worldsim.cpp`). The release build keeps the division.
 
 The divisor reduces to the dot product of the move with the contact plane's
 normal. A move exactly parallel to a contact plane divides by zero, and the
