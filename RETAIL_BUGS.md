@@ -58,6 +58,7 @@ in.
 * [The box-intersect test reports the wrong plane on three of six faces](#the-box-intersect-test-reports-the-wrong-plane-on-three-of-six-faces)
 * [`LTMatrix::TransformPlane` never transforms the point it dots](#ltmatrixtransformplane-never-transforms-the-point-it-dots)
 * [`w_IsPolyBlocking` has no bounds checks](#w_ispolyblocking-has-no-bounds-checks)
+* [`wm_ResetGeometry`: wrong block centres, unguarded divisions, and a missing null check](#wm_resetgeometry-wrong-block-centres-unguarded-divisions-and-a-missing-null-check)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -168,6 +169,14 @@ are not reciprocals, so every decoded vector comes back short by one part in
 
 ### `wm_ResetGeometry`: wrong block centres, unguarded divisions, and a missing null check
 `0x1000a411` (server.dll) · `src/engine/server/worldmodels.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`):
+> a block with no vertices keeps a zero centre instead of dividing by zero,
+> and the polygon half skips a null polygon or one with no vertices
+> (`src/engine/server/worldmodels.cpp`). The block centre still weights a
+> shared vertex once per polygon: that only moves the centre, and the radius
+> pass reaches every vertex, so the sphere is still a bound. The release
+> build keeps the retail code.
 
 Three faults in one function:
 

@@ -549,9 +549,23 @@ void wm_ResetGeometry(CWorldModelData* pData)
 			}
 		}
 
+#ifdef NOLFSRC_MODERN
+		// fixed: wm_ResetGeometry's unguarded divisions and missing null
+		// check (RETAIL_BUGS.md). A block with no vertices keeps the zero
+		// centre. (The centre still weights a shared vertex once per polygon;
+		// the radius below reaches every vertex, so the sphere is a bound
+		// either way.)
+		if (nTotal)
+		{
+			pBlock->m_vCentre.x /= (float)nTotal;
+			pBlock->m_vCentre.y /= (float)nTotal;
+			pBlock->m_vCentre.z /= (float)nTotal;
+		}
+#else
 		pBlock->m_vCentre.x /= (float)nTotal;
 		pBlock->m_vCentre.y /= (float)nTotal;
 		pBlock->m_vCentre.z /= (float)nTotal;
+#endif
 
 		pBlock->m_fRadius = 0.0f;
 
@@ -579,8 +593,20 @@ void wm_ResetGeometry(CWorldModelData* pData)
 	for (i = 0; i < ((CWMGeom*)pData)->m_nPolies; i++)
 	{
 		WorldPolyOwner* pPoly = ((CWMGeom*)pData)->m_ppPolies[i];
+#ifdef NOLFSRC_MODERN
+		LTVector*       pCentre;
+		float           fCount;
+
+		// The block half skips a null polygon; so does this one now, and a
+		// polygon with no vertices.
+		if (!pPoly || !pPoly->m_nVertices)
+			continue;
+
+		pCentre = &pPoly->m_vCentre;
+#else
 		LTVector*       pCentre = &pPoly->m_vCentre;
 		float           fCount;
+#endif
 
 		pCentre->Init();
 
