@@ -26,6 +26,7 @@ in.
 * [Player setup copies the skin and head settings into a 32-byte buffer](#player-setup-copies-the-skin-and-head-settings-into-a-32-byte-buffer)
 * [Player names and chat are used as printf format strings](#player-names-and-chat-are-used-as-printf-format-strings)
 * [The server browser indexes an option table with a value from the network](#the-server-browser-indexes-an-option-table-with-a-value-from-the-network)
+* [`ar_FindFile` closes a find handle it never opened](#ar_findfile-closes-a-find-handle-it-never-opened)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -50,6 +51,10 @@ refused.
 
 ### `ar_FindFile` closes a find handle it never opened
 `0x1000706a` (server.dll) · `src/engine/server/filemgr.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`):
+> `src/engine/server/filemgr.cpp` closes the handle only when `_findfirst`
+> opened one. The release build keeps the retail close.
 
 `_findclose` is called with the handle even when `_findfirst` returned -1:
 the close sits after the `if`, not inside it.

@@ -701,6 +701,10 @@ int ar_FindFile(COpenTree* pTree, char* pFilename, CFileFindState* pState)
 			nRet = _findnext(hFind, &fd);
 		}
 
+#ifdef NOLFSRC_MODERN
+		// fixed: no close for a find that never opened (RETAIL_BUGS.md)
+		if (hFind != -1)
+#endif
 		_findclose(hFind);
 		return 0;
 	}
