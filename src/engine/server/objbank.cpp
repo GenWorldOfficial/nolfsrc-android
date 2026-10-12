@@ -1666,7 +1666,13 @@ uint8 w_IsectObjectShape(LTVector* pFrom, LTVector* pTo, LTObject* pObj,
 				pPoint->z = fCross[1];
 
 				pPlane->m_Normal.Init(1.0f, 0.0f, 0.0f);
+#ifdef NOLFSRC_MODERN
+				// fixed: the box-intersect test reports the wrong plane on three
+				// of six faces (RETAIL_BUGS.md). The positive face is at the maximum.
+				pPlane->m_Dist = pObj->m_BBoxMax.x;
+#else
 				pPlane->m_Dist = pObj->m_BBoxMin.x;
+#endif
 
 				return 1;
 			}
@@ -1719,7 +1725,11 @@ uint8 w_IsectObjectShape(LTVector* pFrom, LTVector* pTo, LTObject* pObj,
 				pPoint->z = fCross[1];
 
 				pPlane->m_Normal.Init(0.0f, 1.0f, 0.0f);
+#ifdef NOLFSRC_MODERN
+				pPlane->m_Dist = pObj->m_BBoxMax.y;
+#else
 				pPlane->m_Dist = pObj->m_BBoxMin.y;
+#endif
 
 				return 1;
 			}
@@ -1772,7 +1782,11 @@ uint8 w_IsectObjectShape(LTVector* pFrom, LTVector* pTo, LTObject* pObj,
 				pPoint->y = fCross[1];
 
 				pPlane->m_Normal.Init(0.0f, 0.0f, 1.0f);
+#ifdef NOLFSRC_MODERN
+				pPlane->m_Dist = pObj->m_BBoxMax.z;
+#else
 				pPlane->m_Dist = pObj->m_BBoxMin.z;
+#endif
 
 				return 1;
 			}

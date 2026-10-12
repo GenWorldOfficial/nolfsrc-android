@@ -55,6 +55,7 @@ in.
 * [The fragment-record allocator passes a null to the list splice](#the-fragment-record-allocator-passes-a-null-to-the-list-splice)
 * [Checks reported at the wrong debug level](#checks-reported-at-the-wrong-debug-level)
 * [The value-returning readers quote the shutdown message](#the-value-returning-readers-quote-the-shutdown-message)
+* [The box-intersect test reports the wrong plane on three of six faces](#the-box-intersect-test-reports-the-wrong-plane-on-three-of-six-faces)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -195,6 +196,11 @@ picks the two slots correctly.
 
 ### The box-intersect test reports the wrong plane on three of six faces
 `0x1000f1f7` (server.dll) · `src/engine/server/objbank.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`):
+> the three positive faces take their distance from the box's maximum
+> (`src/engine/server/objbank.cpp`). The release build keeps the retail
+> planes.
 
 `w_IsectObjectShape` builds all six faces of the object's bounding box. The
 three negative faces are right: the normal points along -axis and the distance
