@@ -19,6 +19,8 @@
 IMAGE     ?= nolfsrc-build
 CONTAINER ?= nolfsrc-build
 TEST_LEVELS ?= T01S01 M03S01
+# Parallel compile jobs inside the build (build/build.mk); empty: one per CPU
+JOBS ?=
 
 # The NOLF Source Code v1.003 release, for scoring the lithshared libraries
 # against its prebuilt .libs (progress/README.md). Optional.
@@ -26,7 +28,7 @@ NOLF_SOURCE ?=
 SRC_MOUNT := $(if $(NOLF_SOURCE),-v $(realpath $(NOLF_SOURCE)):/nolfsource:ro -e NOLF_SOURCE=/nolfsource)
 
 DOCKER_RUN = docker run --rm --init --name $(CONTAINER) \
-	-u $(shell id -u):$(shell id -g) -e HOME=/tmp/home \
+	-u $(shell id -u):$(shell id -g) -e HOME=/tmp/home $(if $(JOBS),-e NOLFSRC_JOBS=$(JOBS)) \
 	-v $(CURDIR):/repo -w /repo $(SRC_MOUNT) $(IMAGE)
 
 TOOLCHAIN_FILES = toolchains/msvc-6.00-9782/VC98/Bin/CL.EXE \
@@ -55,7 +57,7 @@ help:
 	@echo "make clean      remove out/ and every build output in the source tree"
 	@echo "make distclean  clean, and remove the docker image too"
 	@echo
-	@echo "Variables: TEST_LEVELS=\"$(TEST_LEVELS)\""
+	@echo "Variables: TEST_LEVELS=\"$(TEST_LEVELS)\", JOBS=<n> (parallel compiles; default one per CPU)"
 	@echo "           NOLF_SOURCE=<dir> (the NOLF Source Code v1.003 release, for"
 	@echo "           make progress), COMPLETE=1, COVERED=1, ACCEPT_LOSSES=1 (progress/README.md)"
 
@@ -121,9 +123,10 @@ clean:
 	  src/engine/launcher/res src/game/ClientRes/goty
 	rm -f src/engine/*/link/aliases.obj src/engine/*/link/vtables.obj \
 	  src/engine/*/link/ddraw7.lib src/engine/*/link/mss32dec.lib \
-	  src/engine/d3d/link/d3dviews.obj
+	  src/engine/d3d/link/d3dviews.obj src/engine/*/link/*.cmd
 	rm -f src/game/ObjectDLL/AnimationLex.cpp src/game/ObjectDLL/AnimationParse.cpp \
-	  src/game/ObjectDLL/animationparse.cpp src/game/ObjectDLL/AnimationLexSymbols.h
+	  src/game/ObjectDLL/animationparse.cpp src/game/ObjectDLL/AnimationLexSymbols.h \
+	  src/game/ClientRes/goty/cres_goty.rc
 
 distclean: clean
 	-docker rmi $(IMAGE)

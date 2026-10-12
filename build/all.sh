@@ -36,25 +36,24 @@
 #                         the retail NOLF.exe's resource section
 #                         into src/engine/launcher/res/ (data, not code; the
 #                         retail image is parsed, never copied or run).
-#   3. clean              every build output from a previous run is removed,
-#                         so nothing stale can be linked or installed.
-#   4. libraries          the lithshared static libraries (build/libs.sh all),
-#                         our GameSpy replacements included.
-#   5. game DLLs          CRes.dll, CShell.dll, Object.lto from src/game/ (the
-#                         official source release), Final Release
-#                         (build/build.sh all final).
-#   6. engine             ltmsg.dll, sres.dll, NOLF.exe, server.dll,
-#                         lithtech.exe, d3d.ren from src/engine/
-#                         (build/engine.sh: each target's objects, then its
-#                         whole link).
-#   7. assemble           the built binaries into out/nolf-legacy-release/, laid out like a
+#   3. compile            every binary, by build/build.mk, all at once (one
+#                         job per CPU; NOLFSRC_JOBS=<n> to change it) and only
+#                         what changed since the last build (`make clean`
+#                         starts from nothing):
+#                         the lithshared static libraries, our GameSpy
+#                         replacements included; the game DLLs CRes.dll,
+#                         CShell.dll, Object.lto from src/game/ (the official
+#                         source release), Final Release; the engine,
+#                         ltmsg.dll, sres.dll, NOLF.exe, server.dll,
+#                         lithtech.exe, d3d.ren from src/engine/.
+#   4. assemble           the built binaries into out/nolf-legacy-release/, laid out like a
 #                         retail install: the engine beside the data, the game
 #                         DLLs in the custom/ rez directory the engine
 #                         searches last-first (nolfcmds.txt: `-rez custom`).
-#   8. audit              every PE file in out/nolf-legacy-release/ listed with its origin;
+#   5. audit              every PE file in out/nolf-legacy-release/ listed with its origin;
 #                         the build fails if any is unaccounted for or if a
 #                         .rez archive still holds one.
-#   9. package            out/nolf-legacy-release.tar: the game directory as one file,
+#   6. package            out/nolf-legacy-release.tar: the game directory as one file,
 #                         to copy to the machine that plays it (unpack, then
 #                         ./run.sh -- see its header; Wine needed there).
 #
@@ -123,42 +122,17 @@ python3 tools/retailextract.py launcherres "$RETAIL" src/engine/launcher/res
 step "2c. Game of the Year text: the retail CRES.dll in $RETAIL -> src/game/ClientRes/goty/"
 python3 tools/retailextract.py goty "$RETAIL" src/game/ClientRes/goty
 
-step "3. clean: previous build outputs"
-rm -rf src/engine/*/Release src/lithshared/*/Release src/lithshared/*/Debug \
-       src/lithshared/out \
-       src/game/*/Release src/game/*/Final_Release
-
-step "4. libraries: build/libs.sh all"
-bash build/libs.sh all
-for l in StdLith CryptMgr Lith RezMgr RegMgr RegMgr_Debug MFCStub ButeMgrNoMFC ltguimgr_LT2 \
-         LithFontMgr_LT2 GameSpyMgr GameSpyClientMgr; do
-    need "src/lithshared/out/$l.lib" "$l.lib"
+step "3. compile: libraries, game DLLs, engine (build/compile.sh: build/build.mk, ${NOLFSRC_JOBS:-$(nproc)} jobs)"
+GAME_CONFIG=final bash build/compile.sh all
+for f in src/engine/ltmsg/Release/ltmsg.dll src/engine/sres/Release/sres.dll \
+         src/engine/launcher/Release/NOLF.exe src/engine/server/Release/server.dll \
+         src/engine/lithtech/Release/lithtech.exe src/engine/d3d/Release/d3d.ren \
+         src/game/ClientRes/Release/CRes.dll src/game/ClientShellDLL/Final_Release/CShell.dll \
+         src/game/ObjectDLL/Final_Release/Object.lto; do
+    need "$f" "$(basename "$f")"
 done
 
-step "5. game DLLs: build/build.sh all final"
-bash build/build.sh all final
-need src/game/ClientRes/Release/CRes.dll CRes.dll
-need src/game/ClientShellDLL/Final_Release/CShell.dll CShell.dll
-need src/game/ObjectDLL/Final_Release/Object.lto Object.lto
-
-step "6. engine: build/engine.sh"
-bash build/engine.sh ltmsg
-need src/engine/ltmsg/Release/ltmsg.dll ltmsg.dll
-bash build/engine.sh sres
-need src/engine/sres/Release/sres.dll sres.dll
-bash build/engine.sh launcher link
-need src/engine/launcher/Release/NOLF.exe NOLF.exe
-bash build/engine.sh server
-bash build/engine.sh server-link
-need src/engine/server/Release/server.dll server.dll src/engine/server/Release/server-link.txt
-bash build/engine.sh lithtech
-bash build/engine.sh lithtech-link
-need src/engine/lithtech/Release/lithtech.exe lithtech.exe src/engine/lithtech/Release/lithtech-link.txt
-bash build/engine.sh d3d
-bash build/engine.sh d3d-link
-need src/engine/d3d/Release/d3d.ren d3d.ren src/engine/d3d/Release/d3d-link.txt
-
-step "7. assemble: the built binaries -> $OUT"
+step "4. assemble: the built binaries -> $OUT"
 install_built() {  # install_built <built file> <dest relative to $OUT>
     cp "$1" "$OUT/$2"
     printf 'built %s\t%s\n' "$1" "$2" >> "$OUT/MANIFEST.txt"
@@ -176,12 +150,12 @@ install_built src/game/ClientShellDLL/Final_Release/CShell.dll custom/cshell.dll
 install_built src/game/ObjectDLL/Final_Release/Object.lto    custom/object.lto
 install_built src/engine/sres/Release/sres.dll           custom/sres.dll
 
-step "8. audit: every PE file in $OUT"
+step "5. audit: every PE file in $OUT"
 python3 tools/retailextract.py audit "$OUT"
 
 # (NOLF_PACKAGE=0 skips it: build/variant.sh makes no tar)
 if [ "${NOLF_PACKAGE:-1}" = 1 ]; then
-    step "9. package: $OUT -> ${OUT%/*}/nolf-legacy-release.tar"
+    step "6. package: $OUT -> ${OUT%/*}/nolf-legacy-release.tar"
     # One file to copy to the machine that plays it: unpack anywhere, ./run.sh.
     # Links are stored as the files they point to (-h); the per-machine state
     # run.sh / run-launcher.sh create is left out.

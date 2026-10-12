@@ -36,7 +36,7 @@ parts of it by hand.
    `build/retail.sh`.
 4. Runs `build/all.sh` in a throwaway container (`--rm --init`, named
    `nolfsrc-build`), as your user, with the checkout (and so `rez/`) mounted
-   at `/repo`. The Wine prefix lives in `out/wineprefix`.
+   at `/repo`.
 
 `build/all.sh` then:
 
@@ -46,18 +46,43 @@ parts of it by hand.
 | 2. third-party runtime | Miles Sound System (`mss32.dll` and its `.flt` / `.m3d` / `.asi` / `.as6` providers) and Bink (`binkw32.dll`) from the retail game: licensed middleware with no source, which the engine imports | `out/nolf-legacy-release/` |
 | 2b. launcher art | the splash bitmap, palette, music, icon and cursors `launcher.rc` compiles into `NOLF.exe`, read out of the retail `NOLF.exe`'s resources | `src/engine/launcher/res/` |
 | 2c. Game of the Year text | the strings of the Game of the Year content (the "Rest and Relaxation" mission) and the GOTY credits, which Monolith's v1.003 source of `CRes.dll` lacks, read out of the retail GOTY `CRES.dll` (in `NOLFGOTY.REZ`); compiled into our `CRes.dll` beside `ClientRes.rc`, so its resources are the retail ones | `src/game/ClientRes/goty/` |
-| 3. clean | every object and image from a previous run is removed | |
-| 4. libraries | `build/libs.sh all`; `RegMgr` twice, as Monolith built it for each game DLL: the Release build for `NOLF.exe` and `Object.lto`, the Debug build (`RegMgr_Debug.lib`) for `CShell.dll`, which the Game of the Year `CShell.dll` linked | `src/lithshared/out/*.lib` |
-| 5. game DLLs | `build/build.sh all final`: `CRes.dll`, `CShell.dll`, `Object.lto` | `src/game/*/Release`, `Final_Release` |
-| 6. engine | `build/engine.sh`: `ltmsg.dll`, `sres.dll`, `NOLF.exe`, `server.dll`, `lithtech.exe`, `d3d.ren` | `src/engine/*/Release` |
-| 7. assemble | the built binaries into the game directory; the game DLLs and `sres.dll` go in `custom/`, the rez directory the engine searches last | `out/nolf-legacy-release/` |
-| 8. audit | every PE file in `out/nolf-legacy-release/` listed with its origin (`out/nolf-legacy-release/MANIFEST.txt`); the build fails if one is unaccounted for, or if a `.rez` archive still holds one | |
-| 9. package | `out/nolf-legacy-release/` as one tar | `out/nolf-legacy-release.tar` |
+| 3. compile | `build/compile.sh`: every compile and link, by `build/build.mk` (below) -- the lithshared libraries (`RegMgr` twice, as Monolith built it for each game DLL: the Release build for `NOLF.exe` and `Object.lto`, the Debug build, `RegMgr_Debug.lib`, for `CShell.dll`, which the Game of the Year `CShell.dll` linked); the game DLLs `CRes.dll`, `CShell.dll`, `Object.lto`; the engine, `ltmsg.dll`, `sres.dll`, `NOLF.exe`, `server.dll`, `lithtech.exe`, `d3d.ren` | `src/lithshared/out/*.lib`, `src/game/*/Release`, `Final_Release`, `src/engine/*/Release` |
+| 4. assemble | the built binaries into the game directory; the game DLLs and `sres.dll` go in `custom/`, the rez directory the engine searches last | `out/nolf-legacy-release/` |
+| 5. audit | every PE file in `out/nolf-legacy-release/` listed with its origin (`out/nolf-legacy-release/MANIFEST.txt`); the build fails if one is unaccounted for, or if a `.rez` archive still holds one | |
+| 6. package | `out/nolf-legacy-release/` as one tar | `out/nolf-legacy-release.tar` |
 
 Every binary in `out/nolf-legacy-release/` is built from this repository except the 35
 Miles and Bink files of step 2; the audit prints them all. The steps are
-idempotent: running `make` again rebuilds every binary and leaves the data
-in place.
+idempotent: running `make` again rebuilds only what changed and leaves the
+data in place.
+
+### build/build.mk
+
+Step 3 is one Makefile, `build/build.mk`, for every binary: the libraries,
+the game DLLs and the engine are one dependency graph, so `make -j`
+compiles objects of all of them at once, one job per CPU (`make JOBS=<n>`
+for another number), and a rebuild redoes only what changed. An object is
+rebuilt when its source, a header it includes, or its command line changes;
+a binary when one of its inputs does. VC6 cannot list the headers a file
+includes (`/showIncludes` came with VS2005), so `tools/mkdeps.py` finds them
+the way the compiler does, and every command line is kept beside its output
+(`<output>.cmd`) to be compared with the next. A one-file change rebuilds in
+seconds; a full build takes about half the time it did as a sequence of
+batch compiles (more on a fast disk: Wine's file access is most of a
+compile). `make clean` starts from nothing.
+
+Each compile is the command the original build scripts ran, flag for flag,
+one source at a time instead of one batch per directory -- and the
+binaries come out the same, byte for byte (only the time stamps the tools
+write differ; `tools/buildcmp.py` compares two sets of build outputs that
+way). The objects themselves are not reproducible from one build to the
+next, with any build: VC6 leaves memory it never initialised in some fields
+and orders some symbols and relocations differently, none of which reaches
+a linked image.
+
+The compiles run under Wine in two prefixes the Makefile keeps in the tree
+it builds (`.wine/`), one for the game DLLs (the drives `S:` and `T:`,
+below) and one for everything else.
 
 ## Other targets
 
@@ -92,6 +117,9 @@ the scoring and the test.
 Inside `make shell` every script runs on its own:
 
 ```sh
+build/compile.sh                      # every binary (build/build.mk all)
+build/compile.sh lithtech d3d         # some (libs, game, engine, a binary, <binary>-objs,
+                                      #   or any output file)
 build/libs.sh stdlith                 # one library (or: all)
 build/build.sh cshell final           # one game DLL (cres | cshell | object | all)
 build/engine.sh server                # one engine target's objects ...
@@ -104,12 +132,13 @@ build/engine.sh server-one smgr.cpp PlaySound   # recompile one file, match it
 tools/playtest.sh out/nolf-legacy-release 'Worlds\M01S01' 60   # idle for 60 s on a level
 ```
 
-`build/env.sh`, which every script sources, defines `run_cl`, `run_link`,
-`run_lib`, `run_rc` and `run_icl` (the compilers under Wine) for one-off
-commands. The engine targets in order, and the compiler each uses, are in
-`build/engine.sh`'s header. `src/engine/server/` is compiled into both
-`server.dll` and `lithtech.exe`, so after changing it rebuild both (`server`,
-`server-link`, `lithtech`, `lithtech-link`).
+All of them build through `build/build.mk`, which has every compiler and
+flag (they differ per binary, and for some files within one, because they
+reproduce what the original build used). `build/env.sh`, which every script
+sources, defines `run_cl`, `run_link`, `run_lib`, `run_rc` and `run_icl` (the
+compilers under Wine) for one-off commands. `src/engine/server/` is
+compiled into both `server.dll` and `lithtech.exe`; a full build rebuilds
+both after a change to it, a `*-one` loop only the object it names.
 
 The `verify` and `*-one` targets are the reconstruction loop:
 `guides/02-the-loop.md` explains it, and `guides/` the rest of the method.
@@ -130,11 +159,13 @@ All three are `build/variant.sh <variant>`. Each copies the source (without
 any build output) into `out/build-<variant>/` and builds it there with the
 same `build/all.sh`, so `src/*/Release` (what `make progress` scores),
 `out/nolf-legacy-release/` and the release command lines are left exactly as they were.
+The copy keeps its build outputs between runs, so a variant also rebuilds
+only what changed.
 `build/env.sh` passes the extra flags to the compilers only inside those
 copies, and refuses them anywhere else, so neither define can reach the
 release build or the scoring by accident. The first run of each variant
-extracts the game data again (about 1.1 GB); later runs take about three
-minutes. Play them as the release game, from the directory the table gives:
+extracts the game data again (about 1.1 GB); later runs take as long as
+what changed takes to rebuild. Play them as the release game, from the directory the table gives:
 `out/nolf-modern-release/run.sh`, or
 `tools/playtest.sh out/nolf-modern-release 'Worlds\T01S01'`.
 
@@ -153,8 +184,9 @@ branch:
 #endif
 ```
 
-The release build never sees such a block: `build/libs.sh`, `build/build.sh`
-and `build/engine.sh` compile a copy of `src/` in `out/release-tree/` with
+The release build never sees such a block: `build/compile.sh` (and
+`build/libs.sh`, `build/build.sh`, `build/engine.sh`) compile a copy of
+`src/` in `out/release-tree/` with
 every `#ifdef`/`#ifndef NOLFSRC_MODERN` (and `NOLFSRC_DEBUG`) block resolved
 and its directives removed (`tools/releasesrc.py`), then copy their outputs
 back into `src/`. Merely skipping the blocks is not enough: VC6 lets a file's
@@ -168,15 +200,16 @@ passes; check that after any such change (`build/engine.sh <target>-one
 `#ifdef`/`#ifndef`: anything else stops the release build with an error.
 
 The game DLLs are also built from the same paths wherever the checkout is:
-`build/build.sh` makes the checkout's `src/` Wine's drive `S:` and its
-`toolchains/` drive `T:`, so their compiles run in `S:\game\...` with
+`build/build.mk` makes the tree's `src/` Wine's drive `S:` and its
+`toolchains/` drive `T:` (in a Wine prefix of their own), so their compiles
+run in `S:\game\...` with
 `T:\...` on the include path. VC6's output for `CShell.dll` and
 `Object.lto` depends on those paths (the same source built in two
 directories of different path lengths gave different binaries), so without
 this a worktree, the main checkout and `out/release-tree/` would each build
 their own. The engine and the libraries keep `Z:` (`/`): their output never
 depended on the path, and Intel C/C++ builds a different `d3d.ren` from a
-working directory on a drive of its own (`build/env.sh`). The modern build is never scored -- it differs from
+working directory on a drive of its own (`build/build.mk`). The modern build is never scored -- it differs from
 the retail game on purpose. When a fix lands, mark its entry in
 `RETAIL_BUGS.md` as fixed, naming the file.
 

@@ -14,6 +14,7 @@ src/engine/*/link/vtables.obj
 src/engine/*/link/ddraw7.lib
 src/engine/*/link/mss32dec.lib
 src/engine/d3d/link/d3dviews.obj
+src/engine/*/link/*.cmd
 # generated from the disc at build time (build/all.sh steps 2b, 2c)
 src/engine/launcher/res/
 src/game/ClientRes/goty/

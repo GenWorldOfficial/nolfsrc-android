@@ -162,6 +162,14 @@ nolfsrc_release_tree() {
     exit $rc
 }
 
+# Compile and link through build/build.mk, in this tree (run it after
+# nolfsrc_release_tree): every listed target, NOLFSRC_JOBS at a time (default:
+# one per CPU), each job's output kept together.
+nolfsrc_make() {
+    make -C "$REPO" -f build/build.mk --no-print-directory -Otarget \
+        -j"${NOLFSRC_JOBS:-$(nproc)}" "$@"
+}
+
 run_link() { "$WINE" "$MSVC/VC98/Bin/LINK.EXE" $NOLFSRC_LDFLAGS "$@"; }
 run_lib()  { "$WINE" "$MSVC/VC98/Bin/LIB.EXE"  "$@"; }
 run_rc()   { "$WINE" "$MSVC/Common/MSDev98/Bin/RC.EXE" $NOLFSRC_RCFLAGS "$@"; }

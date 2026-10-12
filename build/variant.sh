@@ -44,9 +44,11 @@
 # It never touches the release build. The source is copied (without any
 # build output) into out/build-<variant>/ and built there by the same
 # build/all.sh, so src/*/Release -- what `make progress` scores -- and
-# out/nolf-legacy-release/ are left exactly as they were. The game data are extracted into
-# out/<name>/ on its first run (about 1.1 GB, a few minutes) and kept
-# after that; no tar is made.
+# out/nolf-legacy-release/ are left exactly as they were. The copy keeps its
+# own build outputs from one run to the next, and only changed sources are
+# rewritten into it, so a rebuild redoes only what changed. The game data
+# are extracted into out/<name>/ on its first run (about 1.1 GB, a few
+# minutes) and kept after that; no tar is made.
 set -e
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO"
@@ -78,16 +80,11 @@ if ! command -v wine >/dev/null 2>&1; then
 fi
 
 TREE="$REPO/out/build-$VARIANT"
-echo "== $VARIANT tree: src/ build/ tools/ -> out/build-$VARIANT/ (no build outputs)"
-rm -rf "$TREE/src" "$TREE/build" "$TREE/tools"
+echo "== $VARIANT tree: src/ build/ tools/ -> out/build-$VARIANT/ (sources only; its outputs kept)"
 mkdir -p "$TREE"
-tar -C "$REPO" -cf - \
-    --exclude='src/engine/*/Release' --exclude='src/lithshared/*/Release' \
-    --exclude='src/lithshared/*/Debug' \
-    --exclude='src/lithshared/out' --exclude='src/game/*/Release' \
-    --exclude='src/game/*/Final_Release' --exclude='src/game/*/Debug' \
-    --exclude='__pycache__' \
-    src build tools | tar -C "$TREE" -xf -
+python3 tools/releasesrc.py mirror "$REPO/src" "$TREE/src"
+rm -rf "$TREE/build" "$TREE/tools"
+tar -C "$REPO" -cf - --exclude='__pycache__' build tools | tar -C "$TREE" -xf -
 # the compilers, and the retail game where build/retail.sh looks for it
 [ -L "$TREE/toolchains" ] || ln -s ../../toolchains "$TREE/toolchains"
 [ -L "$TREE/rez" ] || ln -s ../../rez "$TREE/rez"
