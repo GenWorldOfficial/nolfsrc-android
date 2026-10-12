@@ -4,8 +4,8 @@
 //
 // PURPOSE : The modern build's multiplayer changes on the client (package
 //           P6, MODERN.md): the master server setting for the browser,
-//           untrusted network text, the rejoin after a level-change timeout
-//           and the join log.
+//           untrusted network text, the rejoin after a level-change timeout,
+//           the join log and the join password.
 //
 // ----------------------------------------------------------------------- //
 
@@ -13,6 +13,7 @@
 #define __P6_MULTIPLAYER_H__
 
 #include "ltbasedefs.h"
+#include "cres/p6.h"
 
 // M-P6-02: point the server browser at the master named by the console
 // variable MasterServer (host or host:port; default master.openspy.net;
@@ -39,5 +40,10 @@ void	P6_UpdateRejoin();
 // M-P6-06: console lines for each join attempt and its outcome.
 void	P6_LogJoinAttempt(const char* sAddress, int nAttempt, int nAttempts);
 void	P6_LogJoinResult(const char* sAddress, LTBOOL bJoined);
+
+// M-P6-10: the password for the server being joined (what the player typed
+// in the join folders; empty for none), sent in the handshake.
+void		P6_SetJoinPassword(const char* sPassword);
+const char*	P6_GetJoinPassword();
 
 #endif // __P6_MULTIPLAYER_H__

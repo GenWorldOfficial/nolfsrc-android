@@ -5440,6 +5440,14 @@ void CInterfaceMgr::Disconnected(uint32 nDisconnectFlag)
 						hString = g_pLTClient->FormatString(IDS_DISCON_BADCSHELL);
 					}
 					break;
+#ifdef NOLFSRC_MODERN
+					// M-P6-10
+					case GAME_DISCON_BADPASSWORD :
+					{
+						hString = g_pLTClient->FormatString(IDS_P6_DISCON_BADPASSWORD);
+					}
+					break;
+#endif
 					default :
 					{
 						hString = g_pLTClient->FormatString(IDS_DISCON_SERVERBOOT);

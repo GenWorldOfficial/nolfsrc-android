@@ -61,6 +61,8 @@ in.
 * [`LTMatrix::TransformPlane` never transforms the point it dots](#ltmatrixtransformplane-never-transforms-the-point-it-dots)
 * [`w_IsPolyBlocking` has no bounds checks](#w_ispolyblocking-has-no-bounds-checks)
 * [`wm_ResetGeometry`: wrong block centres, unguarded divisions, and a missing null check](#wm_resetgeometry-wrong-block-centres-unguarded-divisions-and-a-missing-null-check)
+* [`ServerMessage::WriteData` clips the count, then grows the buffer anyway](#servermessagewritedata-clips-the-count-then-grows-the-buffer-anyway)
+* [A server's join password is sent to anyone who asks](#a-servers-join-password-is-sent-to-anyone-who-asks)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -282,14 +284,21 @@ pieces, nodes, child models or animations read.
 ### `ServerMessage::WriteData` clips the count, then grows the buffer anyway
 `0x1002616a` (server.dll) · `src/engine/server/servermsg.cpp`
 
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`):
+> `src/engine/server/servermsg.cpp` keeps the clip (it is the packet-size
+> cap) and reports the lost tail to `OutputDebugString`, the first eight
+> times, so a message that outgrows a packet shows. The release build keeps
+> the silent clip.
+
 The byte count is clipped against `m_MaxDataLen` first, and the loop after it
 grows the allocation until the write fits. A write longer than `m_MaxDataLen`
 silently loses its tail, while the buffer is enlarged to a size that would
 have held it.
 
-Not fixed: the clip is the packet-size cap doing its job, and the fault is
-only that the loss is silent. `WriteData` returns nothing, so reporting it
-means changing the writer's interface and every caller.
+The clip is the packet-size cap doing its job; the fault is that the loss is
+silent. `WriteData` returns nothing, so telling the caller would mean
+changing the writer's interface and every caller: the fix reports it
+instead.
 
 ### `CBaseStream::ReadString` never reports a short read
 `0x10011314` (server.dll) · `src/engine/server/basestream.cpp`
@@ -385,6 +394,15 @@ until the HUD is rebuilt.
 `0x100f4bb0` (Object.lto) · `src/game/ObjectDLL/MyGameSpyMgr.cpp`;
 `0x1001cc90` (CShell.dll) · `src/game/ClientShellDLL/FolderJoin.cpp`
 
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`, MODERN.md M-P6-10):
+> a locked server answers queries with `\PasswordRequired\1` instead of the
+> password (`MyGameSpyMgr.cpp`) and checks the password itself: the client
+> appends it, masked, to its handshake reply (`GameClientShell.cpp`), and
+> the server boots a client whose reply lacks it or carries the wrong one
+> (`GameServerShell.cpp`). The join folders ask for it (the LAN one gains a
+> Password field; it never asked), and `+connect` takes it from
+> `NetJoinPassword`. The release build keeps the retail behaviour.
+
 `CMyGameSpyMgr::OnRulesQuery` answers every GameSpy `\rules\` or
 `\status\` query with `\Password\<the password>` when the server has
 one, and the server never checks it: `CFolderJoin::JoinCurGame` compares
@@ -392,8 +410,9 @@ what the player typed with that value and refuses the join itself. Anyone
 who can query the server (or the master server listing it) can read the
 password, and a client that skips the check joins anyway.
 
-Not fixed: a real check needs a handshake change, and the modern build
-keeps the 1.003 handshake (`MODERN.md`, M-P6-04).
+A real check needs the server to see the password, which the 1.003
+handshake does not carry. The fix adds it after the three values every
+client sends, which a retail server never reads.
 
 ---
 

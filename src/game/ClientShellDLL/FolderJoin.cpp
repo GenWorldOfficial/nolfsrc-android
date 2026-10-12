@@ -963,6 +963,22 @@ void CFolderJoin::JoinCurGame(LTBOOL bPasswordSet)
 
 	// Check for password protection...
 
+#ifdef NOLFSRC_MODERN
+	// M-P6-10: a modern server says only that it wants a password, and
+	// checks it in the handshake; a retail one gives it away, and is
+	// checked here as before (and sent too, for neither minds)
+	P6_SetJoinPassword("");
+	char* sRequired = pGame->GetStringValue("PasswordRequired");
+	if (sRequired && atoi(sRequired) != 0)
+	{
+		if (!bPasswordSet)
+		{
+			AskForPassword();
+			return;
+		}
+		P6_SetJoinPassword(m_szPassword);
+	}
+#endif
 	char* sPassword = pGame->GetStringValue("Password");
 	if (sPassword && sPassword[0] != '\0')
 	{
@@ -975,6 +991,9 @@ void CFolderJoin::JoinCurGame(LTBOOL bPasswordSet)
 				g_pLTClient->FreeString(hString);
 				return;
 			}
+#ifdef NOLFSRC_MODERN
+			P6_SetJoinPassword(m_szPassword);
+#endif
 		}
 		else
 		{
@@ -1886,7 +1905,13 @@ void CFolderJoin::UpdateOptions(LTBOOL bForce)
 	// Check for password protection...
 
 	char* sPassword = pGame->GetStringValue("Password");
+#ifdef NOLFSRC_MODERN
+	// M-P6-10: a modern server's lock
+	char* sRequired = pGame->GetStringValue("PasswordRequired");
+	if ((sPassword && sPassword[0] != '\0') || (sRequired && atoi(sRequired) != 0))
+#else
 	if (sPassword && sPassword[0] != '\0')
+#endif
 	{
 		AddOptionCtrl(IDS_USE_PASSWORD,IDS_YES);
 	}

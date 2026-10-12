@@ -1,0 +1,10 @@
+// p6.rc -- strings of package P6 (MODERN.md), added to CRes.dll by the
+// modern build only. IDs in p6.h.
+
+#include "p6.h"
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_P6_HELP_JOIN_PASSWORD       "The password of the server you join, if it is locked."
+    IDS_P6_DISCON_BADPASSWORD       "This server is locked, and the password was missing or wrong."
+END

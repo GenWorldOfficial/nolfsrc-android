@@ -817,6 +817,33 @@ void CGameServerShell::ProcessHandshake(HCLIENT hClient, HMESSAGEREAD hMessage)
 
 				return;
 			}
+#ifdef NOLFSRC_MODERN
+
+			// M-P6-10: a locked server checks the password itself (it no
+			// longer publishes it for the client to check)
+			if (m_GameInfo.m_bUsePassword && m_GameInfo.m_sPassword[0])
+			{
+				char sGiven[MAX_PASSWORD];
+				sGiven[0] = '\0';
+				if (g_pLTServer->ReadFromMessageDWord(hMessage) == P6_HANDSHAKE_PASSWORD_TAG)
+				{
+					int nLen = (int)g_pLTServer->ReadFromMessageByte(hMessage);
+					if (nLen > MAX_PASSWORD - 1) nLen = MAX_PASSWORD - 1;
+					for (int i = 0; i < nLen; i++)
+						sGiven[i] = (char)g_pLTServer->ReadFromMessageByte(hMessage);
+					P6_MaskPassword(sGiven, nLen, nXORMask);
+					sGiven[nLen] = '\0';
+				}
+				if (stricmp(sGiven, m_GameInfo.m_sPassword) != 0)
+				{
+					g_pLTServer->CPrint("Handshake failed for '%s'!", pPlayer->GetNetName());
+					g_pLTServer->CPrint("  '%s' was booted due to a missing or wrong password",
+						pPlayer->GetNetName());
+					g_pLTServer->KickClient(hClient, GAME_DISCON_BADPASSWORD);
+					return;
+				}
+			}
+#endif
 
 			// Tell the client they passed the test...
 			HMESSAGEWRITE hResponse = g_pLTServer->StartMessage(hClient, MID_HANDSHAKE);

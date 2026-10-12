@@ -9,6 +9,9 @@
 
 #include "GameClientShell.h"
 extern CGameClientShell* g_pGameClientShell;
+#ifdef NOLFSRC_MODERN
+#include "cshell/p6_multiplayer.h"
+#endif
 
 extern VarTrack g_vtPlayerName;
 
@@ -22,8 +25,14 @@ namespace
 	{
 		CMD_EDIT_PORT = FOLDER_CMD_CUSTOM+1,
 		CMD_SEARCH,
+#ifdef NOLFSRC_MODERN
+		CMD_P6_EDIT_PASS,
+#endif
 	};
 	char	szOldPort[8];
+#ifdef NOLFSRC_MODERN
+	char	szP6OldPassword[MAX_PASSWORD];
+#endif
 	int nFind = -1;
 
 	LTBOOL bIsInitting = LTFALSE;
@@ -77,6 +86,24 @@ LTBOOL CFolderJoinLAN::Build()
 
 	pos = g_pLayoutMgr->GetFolderCustomPoint(FOLDER_ID_JOIN_LAN,"PortPos");
 	AddFixedControl(m_pPortGroup,pos);
+#ifdef NOLFSRC_MODERN
+
+	// M-P6-10: the password, on the line under the port
+	m_szP6Password[0] = '\0';
+	m_pP6PassLabel = CreateTextItem(IDS_PASSWORD, CMD_P6_EDIT_PASS, IDS_P6_HELP_JOIN_PASSWORD,LTFALSE,GetMediumFont());
+	m_pP6PassEdit = CreateEditCtrl(" ", CMD_P6_EDIT_PASS, IDS_P6_HELP_JOIN_PASSWORD, m_szP6Password, sizeof(m_szP6Password), 25, LTTRUE, GetMediumFont());
+	m_pP6PassEdit->EnableCursor();
+	m_pP6PassEdit->SetAlignment(LTF_JUSTIFY_LEFT);
+	m_pP6PassGroup = CreateGroup(640,m_pP6PassLabel->GetHeight(),IDS_P6_HELP_JOIN_PASSWORD);
+	offset = LTIntPt(0,0);
+	m_pP6PassGroup->AddControl(m_pP6PassLabel,offset,LTTRUE);
+	offset.x = kColumnWidth-25;
+	m_pP6PassGroup->AddControl(m_pP6PassEdit,offset,LTFALSE);
+	pos.y += m_pPortLabel->GetHeight() + 4;
+	AddFixedControl(m_pP6PassGroup,pos);
+	// and the server list a line lower, to clear it
+	m_PageRect.top += m_pPortLabel->GetHeight() + 4;
+#endif
 
 	SAFE_STRCPY(m_szPort,"27888");
 
@@ -121,6 +148,28 @@ uint32 CFolderJoinLAN::OnCommand(uint32 dwCommand, uint32 dwParam1, uint32 dwPar
 			}
 		} break;
 
+#ifdef NOLFSRC_MODERN
+	case CMD_P6_EDIT_PASS:
+		{
+			if (GetCapture())
+			{
+				SetCapture(LTNULL);
+				m_pP6PassEdit->UpdateData();
+				m_pP6PassEdit->SetColor(m_hNonSelectedColor,m_hNonSelectedColor,m_hNonSelectedColor);
+				m_pP6PassEdit->Select(LTFALSE);
+				m_pP6PassLabel->Select(LTTRUE);
+				ForceMouseUpdate();
+			}
+			else
+			{
+				strcpy(szP6OldPassword,m_szP6Password);
+				SetCapture(m_pP6PassEdit);
+				m_pP6PassEdit->SetColor(m_hSelectedColor,m_hSelectedColor,m_hSelectedColor);
+				m_pP6PassEdit->Select(LTTRUE);
+				m_pP6PassLabel->Select(LTFALSE);
+			}
+		} break;
+#endif
 	case FOLDER_CMD_JOIN:
 		{
 			if (dwParam1 >= m_lstSessions.GetSize()) return 0;
@@ -373,6 +422,10 @@ void CFolderJoinLAN::JoinCurGame()
 		return;
 	}
 
+#ifdef NOLFSRC_MODERN
+	// M-P6-10: for a locked server
+	P6_SetJoinPassword(m_szP6Password);
+#endif
 	if (!DoJoinGame(m_lstSessions[nIndex]))
 	{
 		g_pInterfaceMgr->LoadFailed();
@@ -518,6 +571,18 @@ void CFolderJoinLAN::Escape()
         m_pPortLabel->Select(LTTRUE);
 		ForceMouseUpdate();
 	}
+#ifdef NOLFSRC_MODERN
+	else if (GetCapture() == m_pP6PassEdit)
+	{
+		SetCapture(LTNULL);
+		strcpy(m_szP6Password,szP6OldPassword);
+		m_pP6PassEdit->UpdateData(LTFALSE);
+		m_pP6PassEdit->SetColor(m_hNonSelectedColor,m_hNonSelectedColor,m_hNonSelectedColor);
+		m_pP6PassEdit->Select(LTFALSE);
+		m_pP6PassLabel->Select(LTTRUE);
+		ForceMouseUpdate();
+	}
+#endif
 	else
 		CBaseFolder::Escape();
 

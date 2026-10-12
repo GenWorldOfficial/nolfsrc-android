@@ -4,6 +4,10 @@
 #include "servermsg.h"
 #include "de_error.h"
 #include "packet.h"
+#ifdef NOLFSRC_MODERN
+// Declared rather than taken from <windows.h>, as nolfsrc_debug.h does.
+extern "C" __declspec(dllimport) void __stdcall OutputDebugStringA(const char* lpOutputString);
+#endif
 
 LTRESULT CLTServer::WriteToMessageByte(HMESSAGEWRITE_I hMessage, uint8 val)
 {
@@ -981,7 +985,26 @@ void ServerMessage::WriteData(void* pData, uint32 nBytes)
 	uint16 nCount = (uint16)nBytes;
 
 	if (nPos + nCount >= nLimit)
+#ifdef NOLFSRC_MODERN
+	{
 		nCount = (uint16)(m_MaxDataLen - m_Unknown38);
+		// fixed: ServerMessage::WriteData clips the count, then grows the
+		// buffer anyway (RETAIL_BUGS.md). The clip is the packet-size cap
+		// and stays; the lost tail is reported (to OutputDebugString, the
+		// first few times), so a message that outgrows a packet shows.
+		static int s_nReported = 0;
+		if (s_nReported < 8)
+		{
+			char sMsg[128];
+			s_nReported++;
+			sprintf(sMsg, "ServerMessage::WriteData: %u bytes at %u of a %u-byte message; %u written\n",
+				nBytes, (uint32)nPos, (uint32)nLimit, (uint32)nCount);
+			OutputDebugStringA(sMsg);
+		}
+	}
+#else
+		nCount = (uint16)(m_MaxDataLen - m_Unknown38);
+#endif
 
 	// GetSize(), not the bare m_DataSize: lithtech.exe's /O2 copy reads the
 	// dword and masks it (0x0045c3ce / 0x0045c4ad `mov 0x58 ; and $0xffff`)

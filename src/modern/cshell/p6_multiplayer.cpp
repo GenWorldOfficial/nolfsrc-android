@@ -140,3 +140,20 @@ void P6_LogJoinResult(const char* sAddress, LTBOOL bJoined)
 	else
 		g_pLTClient->CPrint("Could not join %s", sAddress ? sAddress : "?");
 }
+
+
+// ----------------------------------------------------------------------- //
+//  M-P6-10: the join password
+// ----------------------------------------------------------------------- //
+
+static char s_szJoinPassword[MAX_PASSWORD];
+
+void P6_SetJoinPassword(const char* sPassword)
+{
+	SAFE_STRCPY(s_szJoinPassword, sPassword ? sPassword : "");
+}
+
+const char* P6_GetJoinPassword()
+{
+	return(s_szJoinPassword);
+}

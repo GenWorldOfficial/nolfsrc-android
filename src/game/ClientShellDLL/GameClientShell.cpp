@@ -1294,6 +1294,14 @@ uint32 CGameClientShell::OnEngineInitialized(RMode *pMode, LTGUID *pAppGuid)
 	{
 		if (bMultiConnect && sConnect)
 		{
+#ifdef NOLFSRC_MODERN
+			// M-P6-10: +connect takes a locked server's password from
+			// +NetJoinPassword (no join folder asks for it)
+			{
+				HCONSOLEVAR hJoinPassword = g_pLTClient->GetConsoleVar("NetJoinPassword");
+				P6_SetJoinPassword(hJoinPassword ? g_pLTClient->GetVarValueString(hJoinPassword) : LTNULL);
+			}
+#endif
 			if (!DoJoinGame(sConnect))
 			{
 				m_InterfaceMgr.LoadFailed();
@@ -4161,6 +4169,19 @@ void CGameClientShell::ProcessHandshake(HMESSAGEREAD hMessage)
 			g_pLTClient->WriteToMessageDWord(hResponse, nPassword);
 			g_pLTClient->WriteToMessageDWord(hResponse, nWeaponCRC);
 			g_pLTClient->WriteToMessageDWord(hResponse, nClientCRC);
+#ifdef NOLFSRC_MODERN
+			// M-P6-10: the join password, for a server that checks it
+			{
+				char sPassword[MAX_PASSWORD];
+				SAFE_STRCPY(sPassword, P6_GetJoinPassword());
+				int nLen = (int)strlen(sPassword);
+				P6_MaskPassword(sPassword, nLen, nXORMask);
+				g_pLTClient->WriteToMessageDWord(hResponse, P6_HANDSHAKE_PASSWORD_TAG);
+				g_pLTClient->WriteToMessageByte(hResponse, (uint8)nLen);
+				for (int i = 0; i < nLen; i++)
+					g_pLTClient->WriteToMessageByte(hResponse, (uint8)sPassword[i]);
+			}
+#endif
 			g_pLTClient->EndMessage(hResponse);
 		}
 		break;
