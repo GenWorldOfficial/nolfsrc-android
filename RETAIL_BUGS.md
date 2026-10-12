@@ -38,6 +38,7 @@ in.
 * [Error messages that name the wrong function](#error-messages-that-name-the-wrong-function)
 * [`CSoundMgr::GetReverbProperties`: damping is guarded by the wrong flag](#csoundmgrgetreverbproperties-damping-is-guarded-by-the-wrong-flag)
 * [`CObjBase::InitFields` leaves `m_StandingLink` uninitialised](#cobjbaseinitfields-leaves-m_standinglink-uninitialised)
+* [`at_Advance` divides by the last keyframe's time](#at_advance-divides-by-the-last-keyframes-time)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -428,6 +429,10 @@ past the end of the stack frame (`0x10001d36`-`0x10001e6d`).
 
 ### `at_Advance` divides by the last keyframe's time
 `0x100012b6` (server.dll) · `src/engine/server/modelanim.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`):
+> `src/engine/server/modelanim.cpp` wraps a zero-length animation to time 0.
+> The release build keeps the retail division.
 
 A looping animation past its end wraps with `m_Cur.m_Time %= nLength`, where
 `nLength` is the last keyframe's time. The only guard is `nKeyFrames > 1`, so
