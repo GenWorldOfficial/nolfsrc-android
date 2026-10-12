@@ -125,11 +125,14 @@ and run `nolf-legacy-release/linux-run.sh`. Every variant is packaged the same w
 `NOLF.exe` launcher instead. Both scripts document their options in their
 headers. Sound needs Wine's audio to work on that machine.
 
-Music needs more: it is DirectMusic, which Wine implements only in part. Its
-own DirectMusic cannot load the music's styles and has no General MIDI
-instrument set (`gm.dls`), so the game plays in silence apart from the sound
-effects. Install Microsoft's DirectMusic and the instrument set into the Wine
-prefix the game runs in (`linux-run.sh` uses `~/.wine-nolf`):
+Music needs more in the release build: it is DirectMusic, which Wine
+implements only in part. Its own DirectMusic cannot load the music's styles,
+so the game plays in silence apart from the sound effects. The modern build
+carries Microsoft's DirectMusic in its game directory and needs nothing
+installed, in Wine or in Proton (a Steam Deck included;
+`src/modern/directmusic/README.md`). For the release build, install
+Microsoft's DirectMusic into the Wine prefix the game runs in
+(`linux-run.sh` uses `~/.wine-nolf`):
 
 ```sh
 WINEPREFIX=~/.wine-nolf winetricks dmband dmcompos dmime dmloader dmscript \
@@ -140,6 +143,13 @@ Not winetricks' `directmusic` verb: it also replaces Wine's DirectSound with
 Microsoft's, which the sound effects play through, and they then repeat. If
 it is already installed, give DirectSound back to Wine:
 `WINEPREFIX=~/.wine-nolf wine reg delete 'HKCU\Software\Wine\DllOverrides' /v dsound /f`.
+
+On a Steam Deck (or any Steam with Proton), the modern build needs no
+winetricks or Protontricks: unpack `nolf-modern-release.tar.gz`, add its
+`NOLF.exe` as a non-Steam game (Desktop Mode, Steam > Games > Add a
+Non-Steam Game), and in the shortcut's Properties > Compatibility force a
+Proton version. The music plays from the game directory's own DirectMusic.
+(Checked under Wine 9.0; the Proton steps are untested here.)
 
 ## Contributing
 

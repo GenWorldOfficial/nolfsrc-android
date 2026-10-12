@@ -237,6 +237,14 @@ Miles or Bink file a previous build left there. The audit lists them as
 `binkw32.dll` are beside it. Because the movies now play reliably under
 Wine, the modern build's `nolfcmds.txt` leaves out `+DisableMovies 1`.
 
+The same step installs Microsoft's DirectMusic, so the music plays under Wine
+and Proton without winetricks: the nine DLLs in
+`toolchains/directmusic-5.3.1.904/` (checked against its `SHA256SUMS`) go in
+as `ms_<name>.dll`, with `src/modern/directmusic/lithtech.exe.manifest`,
+which points the engine's DirectMusic classes at them (`src/modern/directmusic/README.md`, MODERN.md
+M-P4-12). The audit lists them as `THIRD-PARTY`. Without
+`toolchains/directmusic-5.3.1.904/` the build warns and installs neither.
+
 Everything in `ext/` is compiled with [Zig](https://ziglang.org/) 0.16.0,
 which the build image installs (pinned and checksummed in
 `docker/Dockerfile`, the version `ext/openmiles/build.zig.zon` asks for):

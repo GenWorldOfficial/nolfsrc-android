@@ -48,6 +48,9 @@ compares ours against. Only those seven `.lib` files are read.
 
 The compilers in `toolchains/` (Microsoft Visual C++ 6.0, Intel C/C++ 4.0;
 see `toolchains/README.md`), under their own licences.
+`toolchains/directmusic-5.3.1.904/` also holds Microsoft's DirectMusic DLLs
+from the DirectX 9.0c redistributable, which the modern build installs in
+its game directory (below).
 
 The docker image is built from Ubuntu 24.04 packages (Wine, Python, Xvfb,
 ImageMagick, ...), each under its own licence, and Zig (MIT), downloaded
@@ -65,3 +68,9 @@ well with a directory whose other binaries are built from Monolith's source
 under its end-user licence; work that out before distributing a modern
 build. The LGPL asks that whoever receives `binkw32.dll` can rebuild it
 against a modified FFmpeg, which `build/ext.sh` and the source here allow.
+
+It also has Microsoft's DirectMusic DLLs (`ms_dmime.dll` and the rest, from
+`toolchains/directmusic-5.3.1.904/`), under the licence of Microsoft's DirectX
+End-User Runtime they come from. Check its terms before passing on a game
+directory that carries them. `lithtech.exe.manifest`, which points the game
+at them, was written for this project.

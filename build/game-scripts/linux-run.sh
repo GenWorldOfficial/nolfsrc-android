@@ -30,10 +30,12 @@
 # DLL here besides Bink's binkw32.dll) through DirectSound, so it needs
 # Wine's audio working on this machine (winecfg > Audio); +DisableSound 1
 # runs without it. The music is DirectMusic, which Wine only partly
-# implements: its own cannot load the music's styles and has no General
-# MIDI instruments (gm.dls), so there is no music until Microsoft's
-# DirectMusic is installed in the prefix (not winetricks' `directmusic`,
-# which also replaces Wine's DirectSound, and the sound effects repeat):
+# implements: its own cannot load the music's styles. The modern build has
+# Microsoft's DirectMusic in this directory (ms_*.dll and
+# lithtech.exe.manifest) and needs nothing more. For the release build there
+# is no music until Microsoft's DirectMusic is installed in the prefix (not
+# winetricks' `directmusic`, which also replaces Wine's DirectSound, and the
+# sound effects repeat):
 #   WINEPREFIX=~/.wine-nolf winetricks dmband dmcompos dmime dmloader \
 #       dmscript dmstyle dmsynth dmusic dmusic32 dswave gmdls
 # The intro movies are off (+DisableMovies 1 in nolfcmds.txt) because they
