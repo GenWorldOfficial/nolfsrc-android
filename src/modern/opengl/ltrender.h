@@ -223,7 +223,7 @@ struct RenderStruct {
     // ---- engine data ------------------------------------------------------
     uint32_t       m_Unknown100;                                               // 0x100
     SharedTexture* m_pEnvMap;                                                  // 0x104
-    uint8_t        m_GlobalPanInfo[0x28];                                      // 0x108
+    uint8_t        m_GlobalPanInfo[0x28];                                      // 0x108 PanInfo[2], below
     LTVector       m_GlobalLightDir;                                           // 0x130
     LTVector       m_GlobalLightColor;                                         // 0x13c
     uint32_t       m_Unknown148, m_Unknown14c;                                 // 0x148

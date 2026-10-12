@@ -371,6 +371,30 @@ static void glr_SetLightmapUnit(GLRLMAtlas* pAtlas)
     g_pBoundAtlas = pAtlas;
 }
 
+// The sky-pan texture (the clouds' shadows on SURF_PANNINGSKY polys):
+// RenderStruct's PanInfo[GLOBALPAN_SKYSHADOW], planar on world XZ, its
+// offsets animated by the engine (docs/world.md 3.4).
+struct PanInfo { SharedTexture* m_pTexture; float m_xOffset, m_zOffset, m_xScale, m_zScale; };
+static GLRTexture* g_pPanTex;
+static float g_fPanU, g_fPanV, g_fPanOffX, g_fPanOffZ;
+#define GLR_PANBOUND ((GLRLMAtlas*)&g_pPanTex)  // g_pBoundAtlas when the pan texture is on the unit
+
+static void glr_SetupPan(bool bWorld)
+{
+    g_pPanTex = NULL;
+    const PanInfo* pPan = (const PanInfo*)g.pStruct->m_GlobalPanInfo;
+    if (!bWorld || !pPan->m_pTexture || pPan->m_xScale == 0.0f || pPan->m_zScale == 0.0f)
+        return;
+    glr_TextureId(pPan->m_pTexture);
+    g_pPanTex = (GLRTexture*)pPan->m_pTexture->m_pRenderData;
+    if (!g_pPanTex)
+        return;
+    g_fPanU = g_pPanTex->m_fUMul / pPan->m_xScale;
+    g_fPanV = g_pPanTex->m_fVMul / pPan->m_zScale;
+    g_fPanOffX = pPan->m_xOffset;
+    g_fPanOffZ = pPan->m_zOffset;
+}
+
 static void glr_SetDetailUnit(GLRTexture* pDetail)
 {
     if (pDetail == g_pBoundDetail || g_nDetailUnit < 0)
@@ -589,7 +613,19 @@ static void glr_DrawPoly(WorldPoly* pPoly, GLRTexture* pTex, bool bLightmaps,
     float fU = pTex ? pTex->m_fUMul : 0.0f, fV = pTex ? pTex->m_fVMul : 0.0f;
     bool bFullbright = pTex && (pTex->m_DtxFlags & DTX_FULLBRITE);
     GLRPolyLM* pLM = bLightmaps && !bFullbright ? (GLRPolyLM*)pPoly->m_pLMPage : NULL;
-    if (bLightmaps)
+    // A panning-sky receiver takes the pan texture where a lightmap would go
+    // (r_DrawSPMTPanningSkyPoly): surface texture times the pan texture.
+    GLRTexture* pPan = bLightmaps && !pLM && !bFullbright && g_pPanTex && g_nLMUnit >= 0 &&
+                       (pPoly->m_pSurface->m_Flags & SURF_PANNINGSKY) ? g_pPanTex : NULL;
+    if (pPan)
+    {
+        if (g_pBoundAtlas != GLR_PANBOUND)
+        {
+            glr_SetUnitTexture(g_nLMUnit, pPan->m_Id);
+            g_pBoundAtlas = GLR_PANBOUND;
+        }
+    }
+    else if (bLightmaps)
         glr_SetLightmapUnit(pLM ? pLM->m_pAtlas : NULL);
     // The detail unit takes the texture's detail texture or, in its place,
     // its environment map (d3d.ren's two second-pass paths: the base added
@@ -627,7 +663,9 @@ static void glr_DrawPoly(WorldPoly* pPoly, GLRTexture* pTex, bool bLightmaps,
         fDC = pTex->m_fDetailSin * pDetail->m_fUMul * fScale;
         fDD = pTex->m_fDetailCos * pDetail->m_fVMul * fScale;
     }
-    bool bDouble = cvi(CV_Saturate) != 0;
+    // The lightmap unit doubles under Saturate, so the pan texture's
+    // receivers take their vertex colours undoubled.
+    bool bDouble = cvi(CV_Saturate) != 0 && !pPan;
     uint8_t r = 255, gg = 255, b = 255;
     if (bFullbright || pLM)
     {
@@ -679,6 +717,9 @@ static void glr_DrawPoly(WorldPoly* pPoly, GLRTexture* pTex, bool bLightmaps,
             float lv = (dx * Q.x + dy * Q.y + dz * Q.z) / fGrid + fOffV;
             g_Multi.glMultiTexCoord2f(GL_TEXTURE0_ARB + g_nLMUnit, lu * fInvSize, lv * fInvSize);
         }
+        else if (pPan)
+            g_Multi.glMultiTexCoord2f(GL_TEXTURE0_ARB + g_nLMUnit, (pos.x + g_fPanOffX) * g_fPanU,
+                                      (pos.z + g_fPanOffZ) * g_fPanV);
         glVertex3f(pos.x, pos.y, pos.z);
     }
     glEnd();
@@ -693,6 +734,7 @@ static void glr_FlushPolys(const float* pTint, uint8_t nAlpha, const LTMatrix* p
     qsort(g_pDrawList, g_nDrawList, sizeof(GLRDrawPoly), glr_CompareDrawPoly);
     bool bLightmaps = g_Frame.m_bLightmaps;
     glr_SetupWorldLights(pBack);
+    glr_SetupPan(!pBack);
     const LTVector& c = g_Frame.m_Cam.m_Pos;
     if (pBack)
     {
