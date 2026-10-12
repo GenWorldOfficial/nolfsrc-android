@@ -1,15 +1,15 @@
 #!/bin/sh
-# run-launcher.sh -- start the game through its launcher, NOLF.exe (ours,
+# linux-run-launcher.sh -- start the game through its launcher, NOLF.exe (ours,
 # built from src/engine/launcher), the way the retail install does.
 #
-#   ./run-launcher.sh
+#   ./linux-run-launcher.sh
 #
 # Click "Launch" (the first time, pick a performance setting first). The
-# launcher writes nolfcmds.txt and starts lithtech.exe itself. ./run.sh skips
+# launcher writes nolfcmds.txt and starts lithtech.exe itself. ./linux-run.sh skips
 # the launcher and has more options; use it if this one gives you trouble.
 #
 # The launcher expects what the retail installer left behind, and this script
-# sets that up inside its Wine prefix (same environment variables as run.sh,
+# sets that up inside its Wine prefix (same environment variables as linux-run.sh,
 # plus WINESERVER, default wineserver; default prefix $HOME/.wine-nolf):
 #   * a CD-ROM drive holding \DATA\NOLF.REZ -- its disc check. Drive N: is
 #     mapped to the cd/ directory beside this script, which holds
@@ -29,7 +29,7 @@
 # desktop, and which is played at the resolution picked there.
 #
 # Sound needs Wine's audio working, and music Microsoft's DirectMusic in the
-# prefix (see run.sh).
+# prefix (see linux-run.sh).
 set -e
 cd "$(dirname "$0")"
 HERE="$(pwd)"
@@ -37,7 +37,7 @@ WINEPREFIX="${WINEPREFIX:-$HOME/.wine-nolf}"
 WINEDEBUG="${WINEDEBUG:-fixme-all}"
 export WINEPREFIX WINEDEBUG
 WINE="${WINE:-wine}"
-command -v "$WINE" >/dev/null 2>&1 || { echo "run-launcher.sh: '$WINE' not found -- install Wine" >&2; exit 1; }
+command -v "$WINE" >/dev/null 2>&1 || { echo "linux-run-launcher.sh: '$WINE' not found -- install Wine" >&2; exit 1; }
 
 # The modern build: its own Bink player (MANIFEST.txt lists it as EXT).
 MODERN=0

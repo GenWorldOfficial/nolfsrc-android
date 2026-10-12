@@ -209,7 +209,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	g_csContentCmdLine = g_pRegMgr->Get("Content Command Line", sBuf, dwSize, NULL);
 #ifdef NOLFSRC_MODERN
 	// M-P1-16: the 1.003 update and the GOTY content, which the retail
-	// installers named in the registry (and run-launcher.sh does under
+	// installers named in the registry (and linux-run-launcher.sh does under
 	// Wine), from the game directory when nothing names them: a copied or
 	// unpacked install (a Steam Deck, a friend's machine) has no registry.
 	if (g_csUpdateCmdLine.IsEmpty() && GetFileAttributes("nolfu003.rez") != (DWORD)-1)

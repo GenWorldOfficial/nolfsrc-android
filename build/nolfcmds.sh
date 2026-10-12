@@ -4,7 +4,7 @@
 #   build/nolfcmds.sh <retail|open>
 #
 # The retail NOLF.exe launcher writes nolfcmds.txt and runs
-# "lithtech.exe -cmdfile nolfcmds.txt"; run.sh does the same with this one.
+# "lithtech.exe -cmdfile nolfcmds.txt"; linux-run.sh does the same with this one.
 # Rez order is the GOTY install's (later entries override earlier ones), and
 # custom/ -- our game DLLs -- goes last. +DisableMovies skips the Bink intro
 # logos, which retail binkw32.dll misrenders or stalls on under some Wine

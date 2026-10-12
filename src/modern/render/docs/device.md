@@ -1153,7 +1153,7 @@ The ones that matter for the device/2D half are in **bold**:
 **Variables the game or the modern build sets:**
 * `Bilinear`, `Trilinear`, `Anisotropic`: Advanced Display (MODERN.md M-P1-09).
 * `optimizesurfaces 1`: forced at startup by the modern client (src/modern/cshell/p1_config.cpp:94).
-* `windowed`: `++windowed 1` from run-launcher.sh.
+* `windowed`: `++windowed 1` from linux-run-launcher.sh.
 * `MaxModelShadows`: the game, from DrawShadows.
 
 ---------------------------------------------------------------------------------------------------

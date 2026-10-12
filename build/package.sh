@@ -3,7 +3,7 @@
 #
 #   build/package.sh out/nolf-<legacy|modern>-<release|debug>
 #
-# writes out/<name>.tar.gz, which unpacks to <name>/ (then <name>/run.sh --
+# writes out/<name>.tar.gz, which unpacks to <name>/ (then <name>/linux-run.sh --
 # see its header; Wine needed there). build/all.sh runs it for the release
 # build (step 6) and build/variant.sh for each variant, once its data and
 # symbols are in place.
@@ -12,8 +12,8 @@
 # install, whatever has been played in the directory: no saves (an empty
 # Save/), no logs, autoexec.cfg as the shipped defaults.cfg, nolfcmds.txt as
 # the build writes it (build/nolfcmds.sh; the launcher rewrites the
-# directory's copy), and none of the per-machine state run.sh /
-# run-launcher.sh create. The archive is written beside and renamed into
+# directory's copy), and none of the per-machine state linux-run.sh /
+# linux-run-launcher.sh create. The archive is written beside and renamed into
 # place, so a failed run never leaves a truncated one, and a plain .tar an
 # older build made is removed with it.
 set -e

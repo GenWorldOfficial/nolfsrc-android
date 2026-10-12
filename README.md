@@ -113,15 +113,15 @@ detail.
 (32-bit support needed):
 
 ```sh
-out/nolf-legacy-release/run.sh                      # windowed, 640x480
-out/nolf-legacy-release/run.sh --res 1024x768
-out/nolf-legacy-release/run.sh --world 'Worlds\T01S01'
+out/nolf-legacy-release/linux-run.sh                # windowed, 640x480
+out/nolf-legacy-release/linux-run.sh --res 1024x768
+out/nolf-legacy-release/linux-run.sh --world 'Worlds\T01S01'
 ```
 
 To play elsewhere, copy `out/nolf-legacy-release.tar.gz` (one file), unpack it
-and run `nolf-legacy-release/run.sh`. Every variant is packaged the same way:
+and run `nolf-legacy-release/linux-run.sh`. Every variant is packaged the same way:
 `out/nolf-legacy-debug.tar.gz`, `out/nolf-modern-release.tar.gz` and
-`out/nolf-modern-debug.tar.gz`. `nolf-legacy-release/run-launcher.sh` starts the game through the
+`out/nolf-modern-debug.tar.gz`. `nolf-legacy-release/linux-run-launcher.sh` starts the game through the
 `NOLF.exe` launcher instead. Both scripts document their options in their
 headers. Sound needs Wine's audio to work on that machine.
 
@@ -129,7 +129,7 @@ Music needs more: it is DirectMusic, which Wine implements only in part. Its
 own DirectMusic cannot load the music's styles and has no General MIDI
 instrument set (`gm.dls`), so the game plays in silence apart from the sound
 effects. Install Microsoft's DirectMusic and the instrument set into the Wine
-prefix the game runs in (`run.sh` uses `~/.wine-nolf`):
+prefix the game runs in (`linux-run.sh` uses `~/.wine-nolf`):
 
 ```sh
 WINEPREFIX=~/.wine-nolf winetricks dmband dmcompos dmime dmloader dmscript \

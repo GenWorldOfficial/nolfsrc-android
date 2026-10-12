@@ -56,7 +56,7 @@
 #                         .rez archive still holds one.
 #   6. package            out/nolf-legacy-release.tar.gz: the game directory as one
 #                         file, to copy to the machine that plays it (unpack,
-#                         then ./run.sh -- see its header; Wine needed there).
+#                         then ./linux-run.sh -- see its header; Wine needed there).
 #
 # Every other input is a committed source file (including the committed link
 # inputs src/engine/*/link/*, src/engine/d3d/d3ddata.cpp and
@@ -93,13 +93,14 @@ python3 tools/retailextract.py resources "$RETAIL" "$OUT"
 # exit); a rebuild keeps the player's.
 [ -f "$OUT/autoexec.cfg" ] || cp "$OUT/defaults.cfg" "$OUT/autoexec.cfg"
 mkdir -p "$OUT/Save" "$OUT/custom"
-# nolfcmds.txt: the command file run.sh starts the engine with (and the
+# nolfcmds.txt: the command file linux-run.sh starts the engine with (and the
 # launcher rewrites), build/nolfcmds.sh.
 bash build/nolfcmds.sh "${NOLF_MIDDLEWARE:-retail}" > "$OUT/nolfcmds.txt"
-# run.sh / run-launcher.sh: start the game with the host's Wine, directly or
+# linux-run.sh / linux-run-launcher.sh: start the game with the host's Wine, directly or
 # through our NOLF.exe (build/game-scripts/; usage in their headers).
-cp build/game-scripts/run.sh build/game-scripts/run-launcher.sh "$OUT/"
-chmod +x "$OUT/run.sh" "$OUT/run-launcher.sh"
+rm -f "$OUT/run.sh" "$OUT/run-launcher.sh"   # their names before the linux- prefix
+cp build/game-scripts/linux-run.sh build/game-scripts/linux-run-launcher.sh "$OUT/"
+chmod +x "$OUT/linux-run.sh" "$OUT/linux-run-launcher.sh"
 
 if [ "${NOLF_MIDDLEWARE:-retail}" = open ]; then
     step "2. open runtime: OpenMiles, our Bink player on FFmpeg and our renderers (build/ext.sh)"
@@ -161,4 +162,4 @@ if [ "${NOLF_PACKAGE:-1}" = 1 ]; then
     bash "$REPO/build/package.sh" "$OUT"
 fi
 
-step "done: $OUT ($(( $(date +%s) - T0 ))s) -- play it with $OUT/run.sh, or test it with make test"
+step "done: $OUT ($(( $(date +%s) - T0 ))s) -- play it with $OUT/linux-run.sh, or test it with make test"
