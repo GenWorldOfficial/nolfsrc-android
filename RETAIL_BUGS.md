@@ -91,6 +91,28 @@ frames a second, every system slower than 100 particles a second goes
 dark. M06S03's ambient underwater particles were never there with a fast
 renderer.
 
+### Snow ignores the size of its weather volume
+`CWeatherFX::CreateSnow` (CShell.dll) · `src/game/ClientShellDLL/WeatherFX.cpp`
+
+`CreateSnow` reads the flake rate for the volume's snow level
+(`SnowNumLightFlakes` 100, `SnowNumNormalFlakes` 300 or `SnowNumHeavyFlakes`
+700 a second, `CLIENTBUTES.TXT` `[Weather]`), scales it by the volume's size
+against a 1000-unit cube into `fFlakesPerSec`, and then never uses it: the
+particle system is created with the rate read from the attributes a second
+time. Every snow volume snows at the same rate, however big it is. Rain
+(`CreateRain`) uses its scaled rate, so a rain volume's density does follow
+its size.
+
+Not fixed: the snowy levels were made and tuned with it, and their volumes
+are far from the 1000-unit cube the scaling assumes. Measured in the game,
+M12S04's eight outdoor volumes are 45 to 548 times that cube, so with the
+scaling every one would hit the particle system's cap of 5000 flakes a
+second: about 250,000 flakes alive at once where the retail game has 2,000
+to 3,000, a blizzard where Monolith placed light snow. The small volumes in
+M13S01, M13S02 and M14S02, 0.003 to 0.06 times the cube, would fall to a
+flake a second or less. Snow as the retail game draws it is what the levels
+were designed to look like.
+
 ### The property-type guard normalises to a value that is also out of range
 `0x100016be` (server.dll) · `src/engine/server/counter.cpp`
 
