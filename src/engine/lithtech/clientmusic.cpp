@@ -702,6 +702,9 @@ LTRESULT CLTDirectMusicMgr::InitLevel(const char* sWorkingDirectory, const char*
 		if (!controlFile.Init(sFullName))
 		{
 			dm_Error(sReadError);
+#ifdef NOLFSRC_MODERN
+			delete [] sFullName;	// fixed: not leaked (RETAIL_BUGS.md)
+#endif
 			return LT_ERROR;
 		}
 

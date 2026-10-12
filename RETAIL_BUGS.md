@@ -30,6 +30,7 @@ in.
 * [`ci_GetRenderModes` never closes its find handle](#ci_getrendermodes-never-closes-its-find-handle)
 * [`streamsim_Open` leaks the file when the stream cannot be allocated](#streamsim_open-leaks-the-file-when-the-stream-cannot-be-allocated)
 * [`InitLevel`'s trace misspells a parameter](#initlevels-trace-misspells-a-parameter)
+* [`CLTDirectMusicMgr::InitLevel` leaks the path it built when the control file will not open](#cltdirectmusicmgrinitlevel-leaks-the-path-it-built-when-the-control-file-will-not-open)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -528,6 +529,10 @@ and has no `_findclose` on any path.
 
 ### `CLTDirectMusicMgr::InitLevel` leaks the path it built when the control file will not open
 `0x0043fcd0` (lithtech.exe) · `src/engine/lithtech/clientmusic.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`):
+> `src/engine/lithtech/clientmusic.cpp` frees the path on the failure path
+> too. The release build keeps the leak.
 
 For a control-file name with no directory, the function allocates a full path
 (`0x0043fde5`) and frees it only when the reader's `Init` succeeds
