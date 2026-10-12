@@ -408,6 +408,29 @@ void sub_100016be(CClassModuleView* pModule)
 	}
 }
 
+#ifdef NOLFSRC_MODERN
+// fixed: the property-type guard normalises to a value that is also out of
+// range (RETAIL_BUGS.md). The modern build checks first, and an object DLL
+// declaring any type outside PT_STRING..PT_ROTATION is refused as invalid.
+static bool cnt_PropTypesValid(CClassModuleView* pModule)
+{
+	int i;
+	int j;
+
+	for (i = 0; i < pModule->m_nClasses; i++)
+	{
+		for (j = 0; j < pModule->m_pClasses[i]->m_nProps; j++)
+		{
+			short nType = pModule->m_pClasses[i]->m_Props[j].m_PropType;
+
+			if (nType < PT_STRING || nType > PT_ROTATION)
+				return false;
+		}
+	}
+
+	return true;
+}
+#endif
 
 // 0x10001583 — load a DLL and wrap it in a reference-counted record. Zero
 // means it would not load; -1 means it did, the same "nothing to report"
@@ -518,6 +541,16 @@ int sub_10001635(char* pFilename, class CUnknown928Obj* pObj,
 		return 2;
 	}
 
+#ifdef NOLFSRC_MODERN
+	if (!cnt_PropTypesValid(pModule))
+	{
+		free(pModule);
+
+		cb_ReleaseModule(pRef);
+
+		return 1;
+	}
+#endif
 	sub_100016be(pModule);
 	w_NullLoadHook((int)pModule);
 

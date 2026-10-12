@@ -44,6 +44,7 @@ in.
 * [`ci_GetModelNodeName` refuses node 0 and does not terminate](#ci_getmodelnodename-refuses-node-0-and-does-not-terminate)
 * [`se_ModelHashCleanup` uses a global instead of its argument, and leaks](#se_modelhashcleanup-uses-a-global-instead-of-its-argument-and-leaks)
 * [`ws_AddClippedContact` divides by a dot product that can be zero](#ws_addclippedcontact-divides-by-a-dot-product-that-can-be-zero)
+* [The property-type guard normalises to a value that is also out of range](#the-property-type-guard-normalises-to-a-value-that-is-also-out-of-range)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -59,6 +60,11 @@ shipped, so their entries name the function and the source file instead.
 
 ### The property-type guard normalises to a value that is also out of range
 `0x100016be` (server.dll) · `src/engine/server/counter.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`):
+> an object DLL that declares a property type outside
+> `PT_STRING`..`PT_ROTATION` is refused as an invalid object DLL
+> (`src/engine/server/counter.cpp`). The release build keeps the rewrite to 8.
 
 Walking a freshly loaded object DLL's class table, every `PropDef::m_PropType`
 outside `PT_STRING`..`PT_ROTATION` is rewritten to 8, which is one past
