@@ -34,6 +34,7 @@ in.
 * [`CMemStream::Read`'s debug line reads a missing argument](#cmemstreamreads-debug-line-reads-a-missing-argument)
 * [`ci_SetLightRadius` does not check its object handle](#ci_setlightradius-does-not-check-its-object-handle)
 * [`ci_GetSurfaceDims` writes through unchecked pointers](#ci_getsurfacedims-writes-through-unchecked-pointers)
+* [`sm_WriteObjectFiles` dereferences the first file identifier unchecked](#sm_writeobjectfiles-dereferences-the-first-file-identifier-unchecked)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -424,6 +425,10 @@ blend-percentage division just before it, `0x10001320`, does check.)
 
 ### `sm_WriteObjectFiles` dereferences the first file identifier unchecked
 `0x10029087` (server.dll) · `src/engine/server/servercommon.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`):
+> `src/engine/server/servercommon.cpp` sends `0xffff` for a missing first
+> identifier, as for the other two. The release build keeps the retail read.
 
 Of the three file identifiers it sends, the first is read through
 `m_pSData->m_pFiles[0]->m_FileID` (`0x10029092`) with no null test; the other

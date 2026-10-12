@@ -404,6 +404,10 @@ void sm_WriteObjectFiles(LTObject* pObj, ServerMessage* pMsg)
 {
 	uint16 i;
 
+#ifdef NOLFSRC_MODERN
+	// fixed: a missing first file sends 0xffff, as the other two do (RETAIL_BUGS.md)
+	for (i = 0; i < 3; i++)
+#else
 #ifdef LT_SERVER_BUILD
 	pMsg->WriteWord(((CObjFiles*)pObj->m_pSData)->m_pFiles[0]->m_FileID);
 #else
@@ -411,6 +415,7 @@ void sm_WriteObjectFiles(LTObject* pObj, ServerMessage* pMsg)
 #endif
 
 	for (i = 1; i < 3; i++)
+#endif
 	{
 		CFileIdentifier* pFile = ((CObjFiles*)pObj->m_pSData)->m_pFiles[i];
 		uint16 nFileID;
