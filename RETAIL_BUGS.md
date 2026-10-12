@@ -46,6 +46,7 @@ in.
 * [`ws_AddClippedContact` divides by a dot product that can be zero](#ws_addclippedcontact-divides-by-a-dot-product-that-can-be-zero)
 * [The property-type guard normalises to a value that is also out of range](#the-property-type-guard-normalises-to-a-value-that-is-also-out-of-range)
 * [The tree-path builder ignores the buffer length it is given](#the-tree-path-builder-ignores-the-buffer-length-it-is-given)
+* [The object-DLL temp name: one copy unterminated, two unbounded](#the-object-dll-temp-name-one-copy-unterminated-two-unbounded)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -521,6 +522,13 @@ bytes).
 
 ### The object-DLL temp name: one copy unterminated, two unbounded
 `0x1000e05b` (server.dll) · `src/engine/server/counter.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`):
+> the `strncpy` copy is terminated, the temp-directory path is written with
+> a bounded `_snprintf`, and the tree path goes through the bounded builder;
+> a name that does not fit fails as a copy error would
+> (`src/engine/server/counter.cpp`). The release build keeps the retail
+> copies.
 
 Extracting an object DLL to a temporary file, the `GetTempFileName` fallback
 copies with `strncpy(pOutPath, sUnique, nOutLen - 1)` and nothing writes the

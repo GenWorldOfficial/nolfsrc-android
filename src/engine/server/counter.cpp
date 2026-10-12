@@ -1000,14 +1000,35 @@ int sub_1000e05b(CServerMgr* pMgr, char* pTempPath, char* pFilename,
 	if (fs_FindFileInTrees(pFileMgr, pFilename, &pTreeRec, LTNULL) &&
 	    sub_10006fa5(((CFileTreeRecView*)pTreeRec)->m_pTree) == (void*)1)
 	{
+#ifdef NOLFSRC_MODERN
+		// fixed: the object-DLL temp name, one copy unterminated, two
+		// unbounded (RETAIL_BUGS.md). A path that does not fit the caller's
+		// buffer fails like a copy that did not work.
+		if (!sub_100070b6(((CFileTreeRecView*)pTreeRec)->m_pTree, pFilename,
+		                  pOutPath, nOutLen))
+			return 1;
+#else
 		sub_100070b6(((CFileTreeRecView*)pTreeRec)->m_pTree, pFilename,
 		             pOutPath, nOutLen);
+#endif
 
 		return 0;
 	}
 	else
 	{
+#ifdef NOLFSRC_MODERN
+		int nLen = _snprintf(pOutPath, nOutLen, "%s%s", pTempPath, pFilename);
+
+		if (nLen < 0 || (uint32)nLen >= nOutLen)
+		{
+			if (nOutLen)
+				pOutPath[nOutLen - 1] = '\0';
+
+			return 1;
+		}
+#else
 		sprintf(pOutPath, "%s%s", pTempPath, pFilename);
+#endif
 
 		nResult = fs_CopyFile(pFileMgr, pFilename, pOutPath);
 
@@ -1026,6 +1047,9 @@ int sub_1000e05b(CServerMgr* pMgr, char* pTempPath, char* pFilename,
 			else
 			{
 				strncpy(pOutPath, sUnique, nOutLen - 1);
+#ifdef NOLFSRC_MODERN
+				pOutPath[nOutLen - 1] = '\0';
+#endif
 
 				return 0;
 			}
