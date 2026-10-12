@@ -2014,7 +2014,12 @@ LTRESULT ci_ScaleSurfaceToSurface(HSURFACE hDest, HSURFACE hSrc, LTRect* pDestRe
                                   LTRect* pSrcRect)
 {
 	if (!g_pRender)
+#ifdef NOLFSRC_MODERN
+	// fixed: checks reported at the wrong debug level (RETAIL_BUGS.md).
+		RETURN_ERROR(1, "ScaleSurfaceToSurface", LT_NOTINITIALIZED);
+#else
 		RETURN_ERROR(4, "ScaleSurfaceToSurface", LT_NOTINITIALIZED);
+#endif
 
 	return sub_40dcc0(hDest, hSrc, pDestRect, pSrcRect, 1, 0, 0);
 }
@@ -2157,7 +2162,11 @@ LTRESULT sub_40dcc0(HSURFACE hDest, HSURFACE hSrc, LTRect* pDestRect,
 			return ci_WarpSurfaceToSurfaceSolidColor(hDest, hSrc, warpPts, 4, hTransColor, hFillColor);
 	}
 
+#ifdef NOLFSRC_MODERN
+	RETURN_ERROR(1, "InternalScaleSurfaceToSurface", LT_INVALIDPARAMS);
+#else
 	RETURN_ERROR(4, "InternalScaleSurfaceToSurface", LT_INVALIDPARAMS);
+#endif
 }
 
 LTRESULT ci_ScaleSurfaceToSurfaceSolidColor(HSURFACE hDest, HSURFACE hSrc,
@@ -2775,10 +2784,19 @@ LTRESULT ci_SetOptimized2DColor(HLTCOLOR hColor)
 LTRESULT ci_RenderCamera(HLOCALOBJ hCamera)
 {
 	if (!g_RenderStruct.m_bInited)
+#ifdef NOLFSRC_MODERN
+	// fixed: checks reported at the wrong debug level (RETAIL_BUGS.md).
+		RETURN_ERROR(1, "RenderCamera", LT_NOTINITIALIZED);
+#else
 		RETURN_ERROR(15, "RenderCamera", LT_NOTINITIALIZED);
+#endif
 
 	if (!g_RenderStruct.IsIn3D())
+#ifdef NOLFSRC_MODERN
+		RETURN_ERROR(1, "RenderCamera", LT_NOTIN3D);
+#else
 		RETURN_ERROR(15, "RenderCamera", LT_NOTIN3D);
+#endif
 
 	if (hCamera && ((CClientObject*)hCamera)->m_ObjectType == OT_CAMERA)
 	{
@@ -2786,7 +2804,11 @@ LTRESULT ci_RenderCamera(HLOCALOBJ hCamera)
 		return LT_OK;
 	}
 
+#ifdef NOLFSRC_MODERN
+	RETURN_ERROR(1, "RenderCamera", LT_INVALIDPARAMS);
+#else
 	RETURN_ERROR(15, "RenderCamera", LT_INVALIDPARAMS);
+#endif
 }
 
 LTRESULT ci_End3D()
@@ -3002,7 +3024,12 @@ LTRESULT ci_GetPolyGridInfo(HLOCALOBJ hObj, char** pBytes, uint32* pWidth, uint3
 		return LT_OK;
 	}
 
+#ifdef NOLFSRC_MODERN
+	// fixed: checks reported at the wrong debug level (RETAIL_BUGS.md).
+	RETURN_ERROR(1, "GetPolyGridInfo", LT_INVALIDPARAMS);
+#else
 	RETURN_ERROR(0, "GetPolyGridInfo", LT_INVALIDPARAMS);
+#endif
 }
 
 // Two colours, two conversions, two destination globals - which is the

@@ -53,6 +53,7 @@ in.
 * [`Model::LoadChildModels` reports success when it cannot size one table](#modelloadchildmodels-reports-success-when-it-cannot-size-one-table)
 * [`ServerMessage::ReadData` and `WriteData` bound-check a truncated size](#servermessagereaddata-and-writedata-bound-check-a-truncated-size)
 * [The fragment-record allocator passes a null to the list splice](#the-fragment-record-allocator-passes-a-null-to-the-list-splice)
+* [Checks reported at the wrong debug level](#checks-reported-at-the-wrong-debug-level)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -701,6 +702,12 @@ changed:
 | `CLTServer::UnloadModel`, `UnloadTexture` | server.dll | `ThreadLoadTexture`, in both |
 
 ### Checks reported at the wrong debug level
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`): all three report
+> at 1, like their siblings (`src/engine/lithtech/clientinterface.cpp`,
+> `ScaleSurfaceToSurface`'s internal half included). The release build
+> keeps the retail levels.
+
 A check's message prints only when `g_DebugLevel` is at least the level it
 names, and in the client interface that is almost always 1:
 
