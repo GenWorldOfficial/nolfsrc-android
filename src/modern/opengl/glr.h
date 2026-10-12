@@ -55,6 +55,7 @@ struct GLRGlobals {
     GLint    nMaxTextureSize;
     bool     bS3TC;                 // GL_EXT_texture_compression_s3tc
     bool     bAniso;
+    bool     bDepthClamp;           // ARB_depth_clamp / NV_depth_clamp
     float    fMaxAniso;
     PFN_glCompressedTexImage2D glCompressedTexImage2D;
 

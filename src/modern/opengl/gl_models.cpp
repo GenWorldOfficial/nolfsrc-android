@@ -909,16 +909,22 @@ void glr_DrawTranslucentModel(LTObject* pInst)
 }
 
 // Really-close objects (the player's weapon, the menus' 3D parts) are in
-// camera space, drawn in their place in the order with a near plane of
-// their own (d3d.ren: 0.01) and, for a model that asks (FovXOffset /
-// FovYOffset), their own scale -- corrected for a widened screen like the
-// scene's (MODERN.md M-P0-01) so they look as at 4:3. They come after everything
-// else, over a cleared depth buffer (glr_FlushObjects).
+// camera space, clipped at 0.01 rather than the scene's near plane and,
+// for a model that asks (FovXOffset / FovYOffset), at their own scale --
+// corrected for a widened screen like the scene's (MODERN.md M-P0-01) so
+// they look as at 4:3. They come after everything else, in the scene's
+// depth buffer (glr_FlushObjects).
 void glr_BeginReallyClose(LTObject* pObj)
 {
     const GLRCamera& cam = g_Frame.m_Cam;
     GLRCamera close = cam;
-    close.m_fNear = 0.01f;
+    // d3d.ren clips these at 0.01 but projects them with the scene's depth
+    // mapping into the one depth buffer: the scene's near plane, with depth
+    // clamping so what is nearer still draws (in front of everything).
+    if (g.bDepthClamp)
+        glEnable(0x864F);               // GL_DEPTH_CLAMP
+    else
+        close.m_fNear = 0.01f;
     ModelView model = { pObj->m_ObjectType == OT_MODEL ? rd<void*>(pObj, 0x1dc) : NULL };
     if (model.m_p && model.bFovOffset())
     {
@@ -940,5 +946,7 @@ void glr_BeginReallyClose(LTObject* pObj)
 
 void glr_EndReallyClose(void)
 {
+    if (g.bDepthClamp)
+        glDisable(0x864F);
     glr_LoadCamera(&g_Frame.m_Cam);
 }

@@ -201,6 +201,7 @@ static bool glr_CreateGLContext(void)
     g.glCompressedTexImage2D = (PFN_glCompressedTexImage2D)plat_GetProcAddress("glCompressedTexImage2DARB");
     g.bS3TC = strstr(pExt, "GL_EXT_texture_compression_s3tc") && g.glCompressedTexImage2D;
     g.bAniso = strstr(pExt, "GL_EXT_texture_filter_anisotropic") != NULL;
+    g.bDepthClamp = strstr(pExt, "GL_ARB_depth_clamp") || strstr(pExt, "GL_NV_depth_clamp");
     g.fMaxAniso = 1.0f;
     if (g.bAniso)
         glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &g.fMaxAniso);

@@ -203,18 +203,11 @@ void glr_FlushObjects(void)
     }
 
     // Really-close objects (the player's weapon, the menus' 3D parts), in
-    // camera space with a near plane of their own: over a depth buffer of
-    // their own, solid ones first.
+    // camera space, in the scene's own depth buffer as d3d.ren draws them
+    // (it never clears depth for them): solid ones first.
     if (nFar < g_nTrans || glr_ObjList(VS_CLOSE_MODELS)->m_nObjects ||
         glr_ObjList(VS_CLOSE_MODELS_CHROMAKEY)->m_nObjects)
     {
-        const GLRCamera& cam = g_Frame.m_Cam;
-        glPushAttrib(GL_SCISSOR_BIT | GL_DEPTH_BUFFER_BIT);
-        glEnable(GL_SCISSOR_TEST);
-        glScissor(cam.m_nViewX, cam.m_nViewY, cam.m_nViewW, cam.m_nViewH);
-        glDepthMask(GL_TRUE);
-        glClear(GL_DEPTH_BUFFER_BIT);
-        glPopAttrib();
         glPushAttrib(GL_COLOR_BUFFER_BIT);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glr_DrawSet(VS_CLOSE_MODELS, glr_DrawModel);
