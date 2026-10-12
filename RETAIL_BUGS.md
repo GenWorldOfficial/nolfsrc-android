@@ -28,6 +28,7 @@ in.
 * [The server browser indexes an option table with a value from the network](#the-server-browser-indexes-an-option-table-with-a-value-from-the-network)
 * [`ar_FindFile` closes a find handle it never opened](#ar_findfile-closes-a-find-handle-it-never-opened)
 * [`ci_GetRenderModes` never closes its find handle](#ci_getrendermodes-never-closes-its-find-handle)
+* [`streamsim_Open` leaks the file when the stream cannot be allocated](#streamsim_open-leaks-the-file-when-the-stream-cannot-be-allocated)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -533,6 +534,10 @@ For a control-file name with no directory, the function allocates a full path
 
 ### `streamsim_Open` leaks the file when the stream cannot be allocated
 `0x10035a8d` (server.dll) · `src/engine/server/streamsim.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`):
+> `src/engine/server/streamsim.cpp` closes the file when the stream cannot
+> be allocated. The release build keeps the leak.
 
 `fopen` succeeds, the stream object fails to allocate, and the function
 returns null without closing the file.
