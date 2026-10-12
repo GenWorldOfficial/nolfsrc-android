@@ -1,12 +1,19 @@
-# src/modern/opengl/ -- opengl.ren, an OpenGL renderer for the modern build
+# src/modern/render/ -- the modern build's renderers
 
-A render DLL the engine can load in place of `d3d.ren` (MODERN.md, M-P0-04):
-the first step towards a game that runs on Linux without Direct3D. It is
-new code, written from the Mac release's OpenGL renderer, which is the same
-renderer for the same engine version and whose functions all kept their
-names (`tools/pef.py` reads it), and from what the engine expects of
-`d3d.ren` on the PC. Fixed-function OpenGL 1.x plus a few extensions, which
-is what the Mac renderer uses and what Wine maps to any host's OpenGL.
+A renderer core, and the backends under it that make it a render DLL the
+engine can load in place of `d3d.ren` (MODERN.md, M-P0-04):
+
+| DLL | backend | device |
+|---|---|---|
+| `opengl.ren` | `gl/` | fixed-function OpenGL 1.x plus a few extensions, which is what the Mac renderer uses and what Wine maps to any host's OpenGL |
+
+The core is new code, written from the Mac release's OpenGL renderer, which
+is the same renderer for the same engine version and whose functions all
+kept their names (`tools/pef.py` reads it), and from what the engine
+expects of `d3d.ren` on the PC, which is what it aims to look like. It
+draws through `rdev.h`, a small fixed-function device in the shape of
+OpenGL 1.x (state, texture units with combiners, matrix stacks, immediate
+primitives); a backend implements that and names its DLL.
 
 It is built by `build/ext.sh` with `zig c++` (no VC6: nothing here has to
 match anything), into `out/ext/opengl.ren`, and installed beside `d3d.ren`
@@ -26,7 +33,7 @@ Console variables it reads besides the engine's own (the names and defaults
 `Anisotropic`, `MipmapOffset`, `GroupOffset0`..`9`, `FilterOptimized`,
 `MaxTextureSize`, `S3TCEnable`, `LightMap`, `Saturate`, `DetailTextures`, `DetailTextureAdd`, `DetailTextureScale`, `DrawWorld`, `DrawSky`, `DrawWorldModels`, `DrawAll`, `DrawSorted`, `SkyScale`, `FixTJunc`, `LightAddPoly`, the `Fog*` and `SkyFog*` variables, `DrawModels`, `DrawGuns`, `TextureModels`, `ModelSaturation`, `MaxModelLights`, `ModelLODOffset`, `32BitTextures`, `RenderDebug` (3 and up also writes
 `opengl.log` beside the game, 4 logs every 2D call), and `VSync` (ours).
-`RenderCommand info` prints the GL in use.
+`RenderCommand info` prints the device in use.
 
 ## Status
 
@@ -35,30 +42,32 @@ Console variables it reads besides the engine's own (the names and defaults
 | 1 | device and 2D: the WGL context on the engine's window (windowed, or full screen through `ChangeDisplaySettings`), the mode list, clear and flip, the engine's surfaces and every blit (keyed, scaled, warped, Optimized-2D colours and the seven blend modes), the screen lock and `FillScreenRect`, `BlitFromScreen`, screenshots (F8), DTX texture upload (32-bit, S3TC compressed or decoded) | done: menus' 2D, the console and the HUD's 2D draw |
 | 2 | the world: BSP polygons with their textures and lightmaps, visibility, world models, the sky, fog | done but for portal views (`docs/world.md`): the engine's own visibility query (the PVS walk, with the renderer's leaf, object and frustum callbacks), the main world and world models (solid, chromakey, and translucent ones back to front through their BSP) with textures, vertex colours, lightmaps (static and animated, shadow-map animations included, in 512x512 atlases) and detail textures, at the retail PC's brightness (`Saturate`: lightmaps and vertex colours doubled); the sky objects' world models from the squashed sky camera; fog; the global light scale and the camera's light add |
 | 3 | objects: models (with the engine's animation code compiled in, as `d3d.ren` does), sprites, particles, poly grids, line systems, canvases, dynamic lights, shadows | done (`docs/objects.md`): sprites (billboards, rotatable, glow, sprite bias, lit from the world's light grid and dynamic lights), models (the engine's trackers through our copy of its transform maker, CPU skinning, model-space lighting from the light grid, the sun where the model sees the sky towards it (a ray through the world's BSP, `d3d.ren`'s own segment test), the visible dynamic lights, the world's static lights and spot lights from the world tree, and the game's model hook, in the NormalRef node's frame where the model has one; chrome (`EnvMapEnable`); LOD; translucent, additive and chromakey ones), particle systems, poly grids, line systems and canvases (the game's `ILTCustomDraw` callbacks) draw, and really-close objects (the player's weapon, the menus' 3D parts) in camera space, in the scene's depth buffer as `d3d.ren` draws them (depth clamping stands in for its 0.01 near plane). Dynamic lights light the world: added into the lit polys' lightmaps texel by texel (`r_LightData`), and into gouraud polys' vertex colours, on the main world and world models. The main menu and M03S01's cabin match `d3d.ren`, the sky through the windows included. Environment maps on the world (`EnvMapWorld`, a texture's linked `EnvMap` added signed, as `d3d.ren`) and on poly grids (`EnvMapPolyGrids`, the water). The sky-pan texture (the clouds' shadows) on panning-sky polys. Model shadows: `d3d.ren`'s projected blob, cast down from a point above the model onto the world polys under it (`MaxModelShadows`, `ModelShadowAlpha`, `ModelShadowOffset`); a world model that has moved takes its shadow in its own place. Not needed: `d3d.ren`'s mirror and portal pass (no surface in any of the game's 60 worlds is a portal or a mirror) and its specular pass (no model sets `SpecularEnable`). A sweep of all 60 single-player worlds against `d3d.ren` shows no other difference |
-| 4 | movies | done: the engine's screen-mode Bink and Smacker players ask the renderer for DirectDraw (`GetHook("LPDIRECTDRAW")`, `"BACKBUFFER"`); `gl_movie.cpp` answers with small stand-ins in DirectDraw's vtable layout, a system-memory surface to decode into and a back buffer whose `Blt` draws the frame with GL. The intro movies match `d3d.ren` |
-| 5 | Linux | the renderer is one part, and its own system calls (display modes, the window, the GL context, the swap) are behind `glplatform.h`, `gl_wgl.cpp` on Windows: a native build supplies that file and the rest is plain OpenGL. `lithtech.exe` still needs Win32 for its window, input, sound and networking (the Mac engine shows where those seams are) |
+| 4 | movies | done: the engine's screen-mode Bink and Smacker players ask the renderer for DirectDraw (`GetHook("LPDIRECTDRAW")`, `"BACKBUFFER"`); `mr_movie.cpp` answers with small stand-ins in DirectDraw's vtable layout, a system-memory surface to decode into and a back buffer whose `Blt` draws the frame. The intro movies match `d3d.ren` |
+| 5 | Linux | the renderer is one part, and its own system calls are behind `mrplatform.h` (display modes, the window; `mr_window.cpp` on Windows) and the GL backend (the context and the swap, WGL in `gl/gl_device.cpp`): a native build supplies those and the rest is plain OpenGL. `lithtech.exe` still needs Win32 for its window, input, sound and networking (the Mac engine shows where those seams are) |
 
 ## Files
 
 | file | what |
 |---|---|
 | `ltrender.h` | the engine <-> renderer contract: `RenderStruct` (the 15 engine callbacks and the 37 renderer slots, with the Mac renderer's names), `RenderStructInit`, `RMode`, `PFormat`, `RenderBlitRequest`, `SharedTexture`, `TextureData`; every size checked at compile time |
-| `glr.h` | the renderer's own globals and declarations |
-| `gl_main.cpp` | exports, Init/Term, modes, clear/flip, console variables, the small slots |
-| `glplatform.h`, `gl_wgl.cpp` | what the renderer needs from the system (display modes, sizing the engine's window, the GL context, the swap, extension entry points), and its Windows implementation (user32 and WGL) |
-| `gl_2d.cpp` | surfaces, blits, Optimized 2D, the screen lock |
-| `gl_texture.cpp` | textures |
+| `mr.h` | the core's own globals and declarations |
+| `rdev.h` | the device under the core, which a backend implements |
+| `mr_main.cpp` | exports, Init/Term, modes, clear/flip, console variables, the small slots |
+| `mrplatform.h`, `mr_window.cpp` | what the core needs from the system (display modes, sizing the engine's window), and its Windows implementation (user32) |
+| `mr_2d.cpp` | surfaces, blits, Optimized 2D, the screen lock |
+| `mr_texture.cpp` | textures |
 | `ltworld.h` | the engine's scene and world data as the renderer reads them: `SceneDesc`, `MainWorld`, `WorldBsp`, `Leaf`, `Node`, `WorldPoly`, `Surface` |
-| `glscene.h` | the 3D half's shared declarations: the per-world context, lightmap atlases, multitexture |
-| `gl_scene.cpp` | the world context, the camera and `RenderScene` |
-| `gl_lightmap.cpp` | lightmaps: decoding, composing light animations, atlases |
-| `globjects.h`, `gl_objects.cpp` | the visible set: objects by kind and the order they are drawn in |
-| `gl_sprites.cpp` | sprites, and the world's light grid |
-| `gl_models.cpp` | models: the transform maker, skinning, lighting |
-| `gl_effects.cpp` | particle systems, poly grids, line systems, canvases |
-| `gl_shadows.cpp` | model shadows |
-| `gl_movie.cpp` | DirectDraw stand-ins for the movie players |
-| `opengl.def`, `opengl.rc` | the three exports; the launcher's name for the renderer (string 5) |
+| `mrscene.h` | the 3D half's shared declarations: the per-world context, lightmap atlases, the camera |
+| `mr_scene.cpp` | the world context, the camera and `RenderScene` |
+| `mr_lightmap.cpp` | lightmaps: decoding, composing light animations, atlases |
+| `mrobjects.h`, `mr_objects.cpp` | the visible set: objects by kind and the order they are drawn in |
+| `mr_sprites.cpp` | sprites, and the world's light grid |
+| `mr_models.cpp` | models: the transform maker, skinning, lighting |
+| `mr_effects.cpp` | particle systems, poly grids, line systems, canvases |
+| `mr_shadows.cpp` | model shadows |
+| `mr_movie.cpp` | DirectDraw stand-ins for the movie players |
+| `gl/gl_device.cpp` | `rdev.h` on OpenGL, and the WGL context |
+| `gl/opengl.def`, `gl/opengl.rc` | `opengl.ren`'s three exports; the launcher's name for it (string 5) |
 | `docs/` | the research the renderer is written from: `device.md` (the device and 2D half of the contract), `world.md` (the world's data and how it is drawn), `objects.md` (objects, models and the engine services a render DLL reaches), `mac-cvars.txt` (the Mac renderer's console variables) |
 
 ## The Mac renderer, for reference

@@ -1,19 +1,20 @@
-// gl_main.cpp -- opengl.ren's exports, device and frame: Init/Term (a GL
-// context on the engine's window), the mode list, clearing and flipping,
-// console variables and the small slots.
+// mr_main.cpp -- the renderer's exports, device and frame: Init/Term (the
+// backend's device on the engine's window), the mode list, clearing and
+// flipping, console variables and the small slots.
 //
 // The shape follows the Mac release's opengl_init.cpp (r_Init, r_Term,
 // r_Clear, r_SwapBuffers, glRenderDLLSetup, glGetSupportedModes), with AGL
-// and DrawSprocket replaced by glplatform.h (gl_wgl.cpp on Windows), and
-// the behaviour the PC engine expects from d3d.ren where the two differ.
+// and DrawSprocket replaced by mrplatform.h (mr_window.cpp on Windows) and
+// rdev.h, and the behaviour the PC engine expects from d3d.ren where the
+// two differ.
 
-#include "glr.h"
+#include "mr.h"
 
-GLRGlobals g;
+MRGlobals g;
 
 // ---- console ---------------------------------------------------------------
 
-void glr_Print(const char* pFormat, ...)
+void mr_Print(const char* pFormat, ...)
 {
     char buf[512];
     va_list ap;
@@ -24,9 +25,9 @@ void glr_Print(const char* pFormat, ...)
         g.pStruct->ConsolePrint("%s", buf);
 }
 
-// RenderDebug 1+ goes to the console; RenderDebug 3+ also to opengl.log
-// beside the game, which survives a crash.
-void glr_Debug(int nLevel, const char* pFormat, ...)
+// RenderDebug 1+ goes to the console; RenderDebug 3+ also to the backend's
+// log (opengl.log) beside the game, which survives a crash.
+void mr_Debug(int nLevel, const char* pFormat, ...)
 {
     if (cvi(CV_RenderDebug) < nLevel)
         return;
@@ -35,12 +36,12 @@ void glr_Debug(int nLevel, const char* pFormat, ...)
     va_start(ap, pFormat);
     vsnprintf(buf, sizeof(buf), pFormat, ap);
     va_end(ap);
-    glr_Print("opengl.ren: %s", buf);
+    mr_Print("%s: %s", g_RDDll, buf);
     if (cvi(CV_RenderDebug) >= 3)
     {
         static FILE* f;
         if (!f)
-            f = fopen("opengl.log", "w");
+            f = fopen(g_RDLog, "w");
         if (f)
         {
             fprintf(f, "%s\n", buf);
@@ -51,7 +52,7 @@ void glr_Debug(int nLevel, const char* pFormat, ...)
 
 // The names and defaults d3d.ren and the Mac renderer register, where they
 // share one; VSync is ours.
-GLRVar g_Vars[CV_Count] = {
+MRVar g_Vars[CV_Count] = {
     { "RenderDebug", 0 }, { "Bilinear", 1 }, { "Trilinear", 0 }, { "Anisotropic", 0 },
     { "MipmapOffset", 0 }, { "FilterOptimized", 0 }, { "MaxTextureSize", 16384 },
     { "S3TCEnable", 1 },
@@ -79,7 +80,7 @@ GLRVar g_Vars[CV_Count] = {
 
 // Find a variable, creating it with its default if the engine has none
 // (r_MaybeCreateCVar).
-static HCONSOLEVAR glr_FindVar(GLRVar* pVar)
+static HCONSOLEVAR mr_FindVar(MRVar* pVar)
 {
     HCONSOLEVAR h = g.pStruct->GetParameter(pVar->m_pName);
     if (!h)
@@ -92,17 +93,17 @@ static HCONSOLEVAR glr_FindVar(GLRVar* pVar)
     return h;
 }
 
-void glr_RegisterVars(void)
+void mr_RegisterVars(void)
 {
     for (int i = 0; i < CV_Count; i++)
         g_Vars[i].m_fValue = g_Vars[i].m_fDefault;
     if (!g.pStruct || !g.pStruct->GetParameter)
         return;
     for (int i = 0; i < CV_Count; i++)
-        glr_FindVar(&g_Vars[i]);
+        mr_FindVar(&g_Vars[i]);
 }
 
-void glr_ReadConsoleVariables(void)
+void mr_ReadConsoleVariables(void)
 {
     if (!g.pStruct || !g.pStruct->GetParameter)
         return;
@@ -113,7 +114,7 @@ void glr_ReadConsoleVariables(void)
     }
 }
 
-const char* glr_GetVarString(const char* pName)
+const char* mr_GetVarString(const char* pName)
 {
     HCONSOLEVAR h = g.pStruct->GetParameter(pName);
     return h ? g.pStruct->GetParameterValueString(h) : NULL;
@@ -121,26 +122,23 @@ const char* glr_GetVarString(const char* pName)
 
 // ---- the mode list -----------------------------------------------------------
 
-#define GLR_CARD "OpenGL"            // RMode::m_InternalName: no spaces
-#define GLR_DESC "OpenGL"            // RMode::m_Description
-
-static void glr_FillMode(RMode* pMode, uint32_t w, uint32_t h, uint32_t bpp)
+static void mr_FillMode(RMode* pMode, uint32_t w, uint32_t h, uint32_t bpp)
 {
     memset(pMode, 0, sizeof(*pMode));
     pMode->m_bHardware = 1;
-    strcpy(pMode->m_RenderDLL, "opengl.ren");
-    strcpy(pMode->m_InternalName, GLR_CARD);
-    strcpy(pMode->m_Description, GLR_DESC);
+    strcpy(pMode->m_RenderDLL, g_RDDll);
+    strcpy(pMode->m_InternalName, g_RDCard);
+    strcpy(pMode->m_Description, g_RDCard);
     pMode->m_Width = w;
     pMode->m_Height = h;
     pMode->m_BitDepth = bpp;
 }
 
-struct GLRModeList { RMode* m_pHead; RMode* m_pTail; };
+struct MRModeList { RMode* m_pHead; RMode* m_pTail; };
 
-static void glr_AddMode(uint32_t w, uint32_t h, uint32_t bpp, void* pUser)
+static void mr_AddMode(uint32_t w, uint32_t h, uint32_t bpp, void* pUser)
 {
-    GLRModeList* pList = (GLRModeList*)pUser;
+    MRModeList* pList = (MRModeList*)pUser;
     if ((bpp != 16 && bpp != 32) || w < 640 || h < 480)
         return;
     for (RMode* p = pList->m_pHead; p; p = p->m_pNext)
@@ -149,7 +147,7 @@ static void glr_AddMode(uint32_t w, uint32_t h, uint32_t bpp, void* pUser)
     RMode* pMode = (RMode*)malloc(sizeof(RMode));
     if (!pMode)
         return;
-    glr_FillMode(pMode, w, h, bpp);
+    mr_FillMode(pMode, w, h, bpp);
     if (pList->m_pTail)
         pList->m_pTail->m_pNext = pMode;
     else
@@ -159,17 +157,17 @@ static void glr_AddMode(uint32_t w, uint32_t h, uint32_t bpp, void* pUser)
 
 // Every display mode the system offers at 16 and 32 bits, 640x480 and up
 // -- what d3d.ren's DirectDraw enumeration yields. Called with no device
-// up: nothing here touches GL.
+// up: nothing here touches the device.
 extern "C" RMode* GetSupportedModes(void)
 {
-    GLRModeList list = { NULL, NULL };
-    plat_EnumModes(glr_AddMode, &list);
+    MRModeList list = { NULL, NULL };
+    plat_EnumModes(mr_AddMode, &list);
     if (!list.m_pHead)
     {
         // No list at all: offer the one mode every setup has.
         list.m_pHead = (RMode*)malloc(sizeof(RMode));
         if (list.m_pHead)
-            glr_FillMode(list.m_pHead, 640, 480, 32);
+            mr_FillMode(list.m_pHead, 640, 480, 32);
     }
     return list.m_pHead;
 }
@@ -184,57 +182,6 @@ extern "C" void FreeModeList(RMode* pHead)
     }
 }
 
-// ---- the context ------------------------------------------------------------------
-//
-// The window and the context are glplatform.h's; what the renderer needs
-// to know of the context is read here.
-
-static bool glr_CreateGLContext(void)
-{
-    if (!plat_CreateContext())
-        return false;
-    g.bContext = true;
-    const char* pExt = (const char*)glGetString(GL_EXTENSIONS);
-    if (!pExt)
-        pExt = "";
-    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &g.nMaxTextureSize);
-    g.glCompressedTexImage2D = (PFN_glCompressedTexImage2D)plat_GetProcAddress("glCompressedTexImage2DARB");
-    g.bS3TC = strstr(pExt, "GL_EXT_texture_compression_s3tc") && g.glCompressedTexImage2D;
-    g.bAniso = strstr(pExt, "GL_EXT_texture_filter_anisotropic") != NULL;
-    g.bDepthClamp = strstr(pExt, "GL_ARB_depth_clamp") || strstr(pExt, "GL_NV_depth_clamp");
-    g.fMaxAniso = 1.0f;
-    if (g.bAniso)
-        glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &g.fMaxAniso);
-    plat_SetSwapInterval(cvi(CV_VSync) ? 1 : 0);
-    return true;
-}
-
-static void glr_DestroyGLContext(void)
-{
-    plat_DestroyContext();
-    g.bContext = false;
-}
-
-// The state every draw starts from (r_SetStartingRenderStates).
-static void glr_SetStartingStates(void)
-{
-    glViewport(0, 0, g.nWidth, g.nHeight);
-    glDisable(GL_LIGHTING);
-    glDisable(GL_CULL_FACE);
-    glDisable(GL_FOG);
-    glDisable(GL_DITHER);
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LEQUAL);
-    glShadeModel(GL_SMOOTH);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glPixelStorei(GL_PACK_ALIGNMENT, 1);
-    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClearDepth(1.0);
-    glClearStencil(0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-}
-
 // ---- the slots ---------------------------------------------------------------
 
 static void r_Term(void);
@@ -243,14 +190,14 @@ static int r_Init(RenderStructInit* pInit)
 {
     pInit->m_nVersion = RENDERSTRUCT_VERSION;
 
-    glr_RegisterVars();
-    glr_ReadConsoleVariables();
+    mr_RegisterVars();
+    mr_ReadConsoleVariables();
 
     g.hWnd = pInit->m_hWnd;
     g.nWidth = pInit->m_Mode.m_Width;
     g.nHeight = pInit->m_Mode.m_Height;
     g.nBitDepth = pInit->m_Mode.m_BitDepth == 16 ? 16 : 32;
-    const char* pWindowed = glr_GetVarString("windowed");
+    const char* pWindowed = mr_GetVarString("windowed");
     g.bWindowed = pWindowed && atoi(pWindowed) == 1;
     g.bIn3D = g.bInOptimized2D = false;
     g.eBlend = LTSURFACEBLEND_ALPHA;
@@ -261,24 +208,23 @@ static int r_Init(RenderStructInit* pInit)
         return 1;
 
     plat_OpenWindow(g.hWnd, g.nWidth, g.nHeight, &g.bWindowed);
-    if (!glr_CreateGLContext())
+    if (!rd_CreateDevice(g.hWnd, g.nWidth, g.nHeight, g.bWindowed, cvi(CV_VSync) ? 1 : 0))
     {
         r_Term();
         return 1;
     }
-    glr_SetStartingStates();
+    g.bContext = true;
 
     // The names GetSupportedModes reports, so the display menu can find the
     // current mode in its list again.
-    strcpy(pInit->m_Mode.m_InternalName, GLR_CARD);
-    strcpy(pInit->m_Mode.m_Description, GLR_DESC);
+    strcpy(pInit->m_Mode.m_InternalName, g_RDCard);
+    strcpy(pInit->m_Mode.m_Description, g_RDCard);
     pInit->m_Mode.m_BitDepth = g.nBitDepth;
     g.pStruct->m_Width = g.nWidth;
     g.pStruct->m_Height = g.nHeight;
 
-    glr_Print("opengl.ren: %ux%ux%u %s, %s (%s)", g.nWidth, g.nHeight, g.nBitDepth,
-              g.bWindowed ? "windowed" : "full screen",
-              (const char*)glGetString(GL_RENDERER), (const char*)glGetString(GL_VERSION));
+    mr_Print("%s: %ux%ux%u %s, %s", g_RDDll, g.nWidth, g.nHeight, g.nBitDepth,
+             g.bWindowed ? "windowed" : "full screen", rd_Describe());
     return 0;
 }
 
@@ -290,11 +236,8 @@ static void r_Term(void)
         g.pScreenLock = NULL;
     }
     if (g.bContext)
-    {
-        glFlush();
-        glFinish();
-    }
-    glr_DestroyGLContext();
+        rd_DestroyDevice();
+    g.bContext = false;
     plat_CloseWindow();
     g.bIn3D = g.bInOptimized2D = false;
 }
@@ -304,27 +247,26 @@ static void r_Clear(LTRect* pRect, uint32_t nFlags)
 {
     if (!g.bContext)
         return;
-    GLbitfield bits = 0;
+    uint32_t bits = 0;
     if (nFlags & CLEARSCREEN_SCREEN)
-        bits |= GL_COLOR_BUFFER_BIT;
+        bits |= RD_CLEAR_COLOR;
     if (nFlags & CLEARSCREEN_RENDER)
-        bits |= GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT;
+        bits |= RD_CLEAR_DEPTH;
     if (!bits)
         return;
     bool bFull = !pRect || (pRect->left <= 0 && pRect->top <= 0 &&
                             pRect->right >= (int)g.nWidth && pRect->bottom >= (int)g.nHeight);
     if (!bFull)
     {
-        glEnable(GL_SCISSOR_TEST);
-        glScissor(pRect->left, g.nHeight - pRect->bottom,
-                  pRect->right - pRect->left, pRect->bottom - pRect->top);
+        rd_Enable(RD_SCISSOR_TEST);
+        rd_Scissor(pRect->left, pRect->top, pRect->right - pRect->left, pRect->bottom - pRect->top);
     }
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    glDepthMask(GL_TRUE);
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(bits);
+    rd_ColorMask(true);
+    rd_DepthMask(true);
+    rd_ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    rd_Clear(bits);
     if (!bFull)
-        glDisable(GL_SCISSOR_TEST);
+        rd_Disable(RD_SCISSOR_TEST);
 }
 
 static LTBOOL r_Start3D(void)
@@ -336,7 +278,7 @@ static LTBOOL r_Start3D(void)
 static LTBOOL r_End3D(void)
 {
     if (g.bInOptimized2D)
-        glr_EndOptimized2D();
+        mr_EndOptimized2D();
     g.bIn3D = false;
     return 1;
 }
@@ -350,7 +292,7 @@ static LTBOOL r_SetOptimized2DBlend(LTSurfaceBlend eBlend)
     if ((uint32_t)eBlend > LTSURFACEBLEND_MASKADD)
         return 0;
     if (g.bInOptimized2D)
-        glr_ApplyBlend(eBlend);
+        mr_ApplyBlend(eBlend);
     return 1;
 }
 
@@ -380,30 +322,29 @@ static void r_RenderCommand(int argc, char** argv)
         return;
     if (!_stricmp(argv[0], "info") || !_stricmp(argv[0], "gl_strings"))
     {
-        glr_Print("GL_VENDOR: %s", (const char*)glGetString(GL_VENDOR));
-        glr_Print("GL_RENDERER: %s", (const char*)glGetString(GL_RENDERER));
-        glr_Print("GL_VERSION: %s", (const char*)glGetString(GL_VERSION));
-        glr_Print("max texture %d, S3TC %s, anisotropy %s (%.0f)", g.nMaxTextureSize,
-                  g.bS3TC ? "yes" : "no", g.bAniso ? "yes" : "no", g.fMaxAniso);
+        rd_PrintInfo(mr_Print);
+        mr_Print("max texture %d, %d texture units, S3TC %s, anisotropy %s (%.0f)",
+                 g_RDCaps.nMaxTextureSize, g_RDCaps.nTextureUnits, g_RDCaps.bS3TC ? "yes" : "no",
+                 g_RDCaps.bAniso ? "yes" : "no", g_RDCaps.fMaxAniso);
     }
 }
 
 // Named objects for the engine. The screen-mode movie players want
-// DirectDraw ("LPDIRECTDRAW", "BACKBUFFER"): they get gl_movie.cpp's
+// DirectDraw ("LPDIRECTDRAW", "BACKBUFFER"): they get mr_movie.cpp's
 // stand-ins. The modern engine asks for "FillScreenRect" (MODERN.md
 // M-P0-03).
 static void* r_GetHook(const char* pName)
 {
     if (pName && !_stricmp(pName, "FillScreenRect"))
-        return (void*)&glr_FillScreenRect;
-    return glr_MovieHook(pName);
+        return (void*)&mr_FillScreenRect;
+    return mr_MovieHook(pName);
 }
 
 static void r_SwapBuffers(uint32_t nFlags)
 {
     (void)nFlags;
     if (g.bContext)
-        plat_SwapBuffers();
+        rd_Present();
 }
 
 static uint32_t r_GetInfoFlags(void) { return 0; }
@@ -433,21 +374,33 @@ static void r_GetScreenFormat(PFormat* pFormat)
     }
 }
 
-// F8: the front buffer as a 24-bit .bmp. Bottom-up rows are what both
-// glReadPixels and BMP use.
+// F8: the front buffer as a 24-bit .bmp, whose rows are bottom-up.
 static void r_MakeScreenShot(const char* pFilename)
 {
     if (!g.bContext || !pFilename)
         return;
     uint32_t nPitch = (g.nWidth * 3 + 3) & ~3u;
-    uint8_t* pBits = (uint8_t*)malloc(nPitch * g.nHeight);
-    if (!pBits)
+    uint8_t* pBits = (uint8_t*)calloc(nPitch, g.nHeight);
+    uint32_t* pRead = (uint32_t*)malloc(g.nWidth * g.nHeight * 4);
+    if (!pBits || !pRead)
+    {
+        free(pBits);
+        free(pRead);
         return;
-    glPixelStorei(GL_PACK_ALIGNMENT, 4);
-    glReadBuffer(GL_FRONT);
-    glReadPixels(0, 0, g.nWidth, g.nHeight, 0x80E0 /* GL_BGR */, GL_UNSIGNED_BYTE, pBits);
-    glReadBuffer(GL_BACK);
-    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    }
+    rd_ReadPixels(0, 0, g.nWidth, g.nHeight, RD_PIX_BGRA, pRead, true);
+    for (uint32_t y = 0; y < g.nHeight; y++)
+    {
+        const uint32_t* pSrc = pRead + (g.nHeight - 1 - y) * g.nWidth;
+        uint8_t* pDst = pBits + y * nPitch;
+        for (uint32_t x = 0; x < g.nWidth; x++, pDst += 3)
+        {
+            pDst[0] = (uint8_t)pSrc[x];
+            pDst[1] = (uint8_t)(pSrc[x] >> 8);
+            pDst[2] = (uint8_t)(pSrc[x] >> 16);
+        }
+    }
+    free(pRead);
 
     FILE* f = fopen(pFilename, "wb");
     if (f)
@@ -470,14 +423,14 @@ static void r_MakeScreenShot(const char* pFilename)
         fwrite(&ih, sizeof(ih), 1, f);
         fwrite(pBits, nPitch, g.nHeight, f);
         fclose(f);
-        glr_Print("Wrote screenshot %s", pFilename);
+        mr_Print("Wrote screenshot %s", pFilename);
     }
     free(pBits);
 }
 
 static void r_ReadConsoleVariables(void)
 {
-    glr_ReadConsoleVariables();
+    mr_ReadConsoleVariables();
 }
 
 // ---- the export --------------------------------------------------------------
@@ -488,39 +441,39 @@ extern "C" void RenderDLLSetup(RenderStruct* pStruct)
 
     pStruct->Init                 = r_Init;
     pStruct->Term                 = r_Term;
-    pStruct->BindTexture          = glr_BindTexture;
-    pStruct->UnbindTexture        = glr_UnbindTexture;
-    pStruct->CreateContext        = glr_CreateContext;
-    pStruct->DeleteContext        = glr_DeleteContext;
+    pStruct->BindTexture          = mr_BindTexture;
+    pStruct->UnbindTexture        = mr_UnbindTexture;
+    pStruct->CreateContext        = mr_CreateContext;
+    pStruct->DeleteContext        = mr_DeleteContext;
     pStruct->Clear                = r_Clear;
     pStruct->Start3D              = r_Start3D;
     pStruct->End3D                = r_End3D;
     pStruct->IsIn3D               = r_IsIn3D;
-    pStruct->StartOptimized2D     = glr_StartOptimized2D;
-    pStruct->EndOptimized2D       = glr_EndOptimized2D;
+    pStruct->StartOptimized2D     = mr_StartOptimized2D;
+    pStruct->EndOptimized2D       = mr_EndOptimized2D;
     pStruct->IsInOptimized2D      = r_IsInOptimized2D;
     pStruct->SetOptimized2DBlend  = r_SetOptimized2DBlend;
     pStruct->GetOptimized2DBlend  = r_GetOptimized2DBlend;
     pStruct->SetOptimized2DColor  = r_SetOptimized2DColor;
     pStruct->GetOptimized2DColor  = r_GetOptimized2DColor;
-    pStruct->RenderScene          = glr_RenderScene;
+    pStruct->RenderScene          = mr_RenderScene;
     pStruct->RenderCommand        = r_RenderCommand;
     pStruct->GetHook              = r_GetHook;
     pStruct->SwapBuffers          = r_SwapBuffers;
     pStruct->GetInfoFlags         = r_GetInfoFlags;
     pStruct->GetScreenFormat      = r_GetScreenFormat;
-    pStruct->CreateSurface        = glr_CreateSurface;
-    pStruct->DeleteSurface        = glr_DeleteSurface;
-    pStruct->GetSurfaceInfo       = glr_GetSurfaceInfo;
-    pStruct->LockSurface          = glr_LockSurface;
-    pStruct->UnlockSurface        = glr_UnlockSurface;
-    pStruct->OptimizeSurface      = glr_OptimizeSurface;
-    pStruct->UnoptimizeSurface    = glr_UnoptimizeSurface;
-    pStruct->LockScreen           = glr_LockScreen;
-    pStruct->UnlockScreen         = glr_UnlockScreen;
-    pStruct->BlitToScreen         = glr_BlitToScreen;
-    pStruct->WarpToScreen         = glr_WarpToScreen;
+    pStruct->CreateSurface        = mr_CreateSurface;
+    pStruct->DeleteSurface        = mr_DeleteSurface;
+    pStruct->GetSurfaceInfo       = mr_GetSurfaceInfo;
+    pStruct->LockSurface          = mr_LockSurface;
+    pStruct->UnlockSurface        = mr_UnlockSurface;
+    pStruct->OptimizeSurface      = mr_OptimizeSurface;
+    pStruct->UnoptimizeSurface    = mr_UnoptimizeSurface;
+    pStruct->LockScreen           = mr_LockScreen;
+    pStruct->UnlockScreen         = mr_UnlockScreen;
+    pStruct->BlitToScreen         = mr_BlitToScreen;
+    pStruct->WarpToScreen         = mr_WarpToScreen;
     pStruct->MakeScreenShot       = r_MakeScreenShot;
     pStruct->ReadConsoleVariables = r_ReadConsoleVariables;
-    pStruct->BlitFromScreen       = glr_BlitFromScreen;
+    pStruct->BlitFromScreen       = mr_BlitFromScreen;
 }

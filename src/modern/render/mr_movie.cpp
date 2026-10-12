@@ -1,4 +1,4 @@
-// gl_movie.cpp -- the screen-mode movies.
+// mr_movie.cpp -- the screen-mode movies.
 //
 // The engine's Bink and Smacker players (binkvideo.cpp, smackvideo.cpp)
 // draw a movie through DirectDraw: GetHook("LPDIRECTDRAW") for an object
@@ -7,12 +7,12 @@
 // two are small stand-ins with DirectDraw's vtable layout (IDirectDraw7,
 // IDirectDrawSurface7): the movie surface is system memory the player
 // decodes into, and a Blt or BltFast of it onto the back buffer uploads it
-// and draws it into the GL back buffer, which the engine's FlipScreen then
+// and draws it into the back buffer, which the engine's FlipScreen then
 // shows. The few calls the players make are implemented; the rest answer
 // E_NOTIMPL, each with its own argument count (COM methods are __stdcall
 // and pop their own arguments).
 
-#include "glscene.h"
+#include "mrscene.h"
 
 #define DD_OK           0
 #define DD_NOTIMPL      ((HRESULT)0x80004001)
@@ -21,21 +21,21 @@
 
 // ---- the descriptors (ddraw.h's DDSURFACEDESC2, DDPIXELFORMAT, DDBLTFX) ---------------
 
-struct GLRPixelFormat {                 // 0x20
+struct MRPixelFormat {                 // 0x20
     uint32_t dwSize, dwFlags, dwFourCC, dwRGBBitCount;
     uint32_t dwRBitMask, dwGBitMask, dwBBitMask, dwRGBAlphaBitMask;
 };
-struct GLRSurfaceDesc {                 // 0x7c
+struct MRSurfaceDesc {                 // 0x7c
     uint32_t dwSize, dwFlags, dwHeight, dwWidth;
     int32_t  lPitch;
     uint32_t dwBackBufferCount, dwMipMapCount, dwAlphaBitDepth, dwReserved;
     void*    lpSurface;
     uint32_t ddck[8];
-    GLRPixelFormat ddpfPixelFormat;     // 0x48
+    MRPixelFormat ddpfPixelFormat;     // 0x48
     uint32_t ddsCaps[4];                // 0x68
     uint32_t dwTextureStage;            // 0x78
 };
-static_assert(sizeof(GLRSurfaceDesc) == 0x7c, "DDSURFACEDESC2");
+static_assert(sizeof(MRSurfaceDesc) == 0x7c, "DDSURFACEDESC2");
 #define DDSD_CAPS        0x00000001
 #define DDSD_HEIGHT      0x00000002
 #define DDSD_WIDTH       0x00000004
@@ -45,7 +45,7 @@ static_assert(sizeof(GLRSurfaceDesc) == 0x7c, "DDSURFACEDESC2");
 #define DDPF_RGB         0x00000040
 
 // X8R8G8B8: the 32-bit format the players decode into (BINKSURFACE32).
-static void glr_MoviePixelFormat(GLRPixelFormat* p)
+static void mr_MoviePixelFormat(MRPixelFormat* p)
 {
     memset(p, 0, sizeof(*p));
     p->dwSize = sizeof(*p);
@@ -58,14 +58,14 @@ static void glr_MoviePixelFormat(GLRPixelFormat* p)
 
 // ---- the objects -------------------------------------------------------------------
 
-struct GLRDDSurface {
+struct MRDDSurface {
     void**    m_pVtbl;
     long      m_nRefs;
     bool      m_bBackBuffer;
     uint32_t  m_nWidth, m_nHeight;
     uint32_t* m_pPixels;                // X8R8G8B8, pitch = width * 4
 };
-struct GLRDirectDraw {
+struct MRDirectDraw {
     void** m_pVtbl;
 };
 
@@ -78,7 +78,7 @@ STUB(3, (void*, void*, void*, void*))
 STUB(4, (void*, void*, void*, void*, void*))
 STUB(5, (void*, void*, void*, void*, void*, void*))
 #undef STUB
-static ULONG __stdcall dd_AddRef(void* p) { return ++((GLRDDSurface*)p)->m_nRefs; }
+static ULONG __stdcall dd_AddRef(void* p) { return ++((MRDDSurface*)p)->m_nRefs; }
 static HRESULT __stdcall dd_QueryInterface(void*, void*, void** ppOut)
 {
     if (ppOut)
@@ -88,13 +88,13 @@ static HRESULT __stdcall dd_QueryInterface(void*, void*, void** ppOut)
 
 // ---- surfaces ------------------------------------------------------------------------
 
-static GLRDDSurface g_BackBuffer;
-static GLuint   g_MovieTex;
+static MRDDSurface g_BackBuffer;
+static uint32_t g_MovieTex;
 static uint32_t g_nMovieTexW, g_nMovieTexH, g_nMovieTexGen;
 
 static ULONG __stdcall surf_Release(void* p)
 {
-    GLRDDSurface* s = (GLRDDSurface*)p;
+    MRDDSurface* s = (MRDDSurface*)p;
     if (s->m_bBackBuffer)
         return 1;
     long n = --s->m_nRefs;
@@ -107,7 +107,7 @@ static ULONG __stdcall surf_Release(void* p)
     return (ULONG)n;
 }
 
-static void glr_FillRect(GLRDDSurface* s, const RECT* pRect, uint32_t nColor)
+static void mr_FillRect(MRDDSurface* s, const RECT* pRect, uint32_t nColor)
 {
     if (s->m_bBackBuffer)
     {
@@ -116,12 +116,12 @@ static void glr_FillRect(GLRDDSurface* s, const RECT* pRect, uint32_t nColor)
         RECT r = { 0, 0, (LONG)g.nWidth, (LONG)g.nHeight };
         if (pRect)
             r = *pRect;
-        glPushAttrib(GL_SCISSOR_BIT | GL_COLOR_BUFFER_BIT);
-        glEnable(GL_SCISSOR_TEST);
-        glScissor(r.left, g.nHeight - r.bottom, r.right - r.left, r.bottom - r.top);
-        glClearColor(((nColor >> 16) & 0xff) / 255.0f, ((nColor >> 8) & 0xff) / 255.0f, (nColor & 0xff) / 255.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-        glPopAttrib();
+        rd_PushAttrib(RD_ATTR_SCISSOR | RD_ATTR_COLOR);
+        rd_Enable(RD_SCISSOR_TEST);
+        rd_Scissor(r.left, r.top, r.right - r.left, r.bottom - r.top);
+        rd_ClearColor(((nColor >> 16) & 0xff) / 255.0f, ((nColor >> 8) & 0xff) / 255.0f, (nColor & 0xff) / 255.0f, 1.0f);
+        rd_Clear(RD_CLEAR_COLOR);
+        rd_PopAttrib();
         return;
     }
     RECT r = { 0, 0, (LONG)s->m_nWidth, (LONG)s->m_nHeight };
@@ -133,7 +133,7 @@ static void glr_FillRect(GLRDDSurface* s, const RECT* pRect, uint32_t nColor)
 }
 
 // The movie frame onto the screen: upload, then a textured quad.
-static void glr_DrawMovie(GLRDDSurface* pSrc, const RECT& dst, const RECT& src)
+static void mr_DrawMovie(MRDDSurface* pSrc, const RECT& dst, const RECT& src)
 {
     if (!g.bContext || !pSrc || pSrc->m_bBackBuffer || !pSrc->m_pPixels)
         return;
@@ -141,52 +141,49 @@ static void glr_DrawMovie(GLRDDSurface* pSrc, const RECT& dst, const RECT& src)
     uint32_t tw = 1, th = 1;
     while (tw < w) tw <<= 1;
     while (th < h) th <<= 1;
-    glr_Begin2D();
+    mr_Begin2D();
     if (!g_MovieTex || g_nMovieTexGen != g.nContextGen || g_nMovieTexW != tw || g_nMovieTexH != th)
     {
         if (g_MovieTex && g_nMovieTexGen == g.nContextGen)
-            glDeleteTextures(1, &g_MovieTex);
-        glGenTextures(1, &g_MovieTex);
-        glBindTexture(GL_TEXTURE_2D, g_MovieTex);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, tw, th, 0, GL_BGRA, GL_UNSIGNED_BYTE, NULL);
+            rd_DeleteTexture(g_MovieTex);
+        g_MovieTex = rd_GenTexture();
+        rd_BindTexture(g_MovieTex);
+        rd_TexFilter(RD_LINEAR, RD_LINEAR);
+        rd_TexWrap(false, false);
+        rd_TexMaxLevel(0);
+        rd_TexImage(0, RD_FMT_RGB8, tw, th, RD_PIX_BGRA, NULL);
         g_nMovieTexW = tw;
         g_nMovieTexH = th;
         g_nMovieTexGen = g.nContextGen;
     }
-    glBindTexture(GL_TEXTURE_2D, g_MovieTex);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_BGRA, GL_UNSIGNED_BYTE, pSrc->m_pPixels);
-    glEnable(GL_TEXTURE_2D);
-    glDisable(GL_BLEND);
-    glDisable(GL_ALPHA_TEST);
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+    rd_BindTexture(g_MovieTex);
+    rd_TexSubImage(0, 0, 0, w, h, RD_PIX_BGRA, pSrc->m_pPixels);
+    rd_Enable(RD_TEXTURE_2D);
+    rd_Disable(RD_BLEND);
+    rd_Disable(RD_ALPHA_TEST);
+    rd_TexEnv(RD_ENV_REPLACE);
     float u0 = (float)src.left / tw, u1 = (float)src.right / tw;
     float v0 = (float)src.top / th, v1 = (float)src.bottom / th;
-    glBegin(GL_QUADS);
-    glTexCoord2f(u0, v0); glVertex2f((float)dst.left, (float)dst.top);
-    glTexCoord2f(u1, v0); glVertex2f((float)dst.right, (float)dst.top);
-    glTexCoord2f(u1, v1); glVertex2f((float)dst.right, (float)dst.bottom);
-    glTexCoord2f(u0, v1); glVertex2f((float)dst.left, (float)dst.bottom);
-    glEnd();
-    glr_End2D();
-    glr_ForgetBindings();
+    rd_Begin(RD_QUADS);
+    rd_TexCoord2f(u0, v0); rd_Vertex2f((float)dst.left, (float)dst.top);
+    rd_TexCoord2f(u1, v0); rd_Vertex2f((float)dst.right, (float)dst.top);
+    rd_TexCoord2f(u1, v1); rd_Vertex2f((float)dst.right, (float)dst.bottom);
+    rd_TexCoord2f(u0, v1); rd_Vertex2f((float)dst.left, (float)dst.bottom);
+    rd_End();
+    mr_End2D();
+    mr_ForgetBindings();
 }
 
 static HRESULT __stdcall surf_Blt(void* p, RECT* pDst, void* pSrcSurf, RECT* pSrc, DWORD nFlags, void* pFX)
 {
-    GLRDDSurface* s = (GLRDDSurface*)p;
+    MRDDSurface* s = (MRDDSurface*)p;
     if (nFlags & DDBLT_COLORFILL)
     {
         uint32_t nColor = pFX ? *(uint32_t*)((uint8_t*)pFX + 0x50) : 0;
-        glr_FillRect(s, pDst, nColor);
+        mr_FillRect(s, pDst, nColor);
         return DD_OK;
     }
-    GLRDDSurface* pFrom = (GLRDDSurface*)pSrcSurf;
+    MRDDSurface* pFrom = (MRDDSurface*)pSrcSurf;
     if (!s->m_bBackBuffer || !pFrom)
         return DD_NOTIMPL;
     RECT src = { 0, 0, (LONG)pFrom->m_nWidth, (LONG)pFrom->m_nHeight };
@@ -195,25 +192,25 @@ static HRESULT __stdcall surf_Blt(void* p, RECT* pDst, void* pSrcSurf, RECT* pSr
         src = *pSrc;
     if (pDst)
         dst = *pDst;
-    glr_DrawMovie(pFrom, dst, src);
+    mr_DrawMovie(pFrom, dst, src);
     return DD_OK;
 }
 
 static HRESULT __stdcall surf_BltFast(void* p, DWORD x, DWORD y, void* pSrcSurf, RECT* pSrc, DWORD)
 {
-    GLRDDSurface* s = (GLRDDSurface*)p;
-    GLRDDSurface* pFrom = (GLRDDSurface*)pSrcSurf;
+    MRDDSurface* s = (MRDDSurface*)p;
+    MRDDSurface* pFrom = (MRDDSurface*)pSrcSurf;
     if (!s->m_bBackBuffer || !pFrom)
         return DD_NOTIMPL;
     RECT src = { 0, 0, (LONG)pFrom->m_nWidth, (LONG)pFrom->m_nHeight };
     if (pSrc)
         src = *pSrc;
     RECT dst = { (LONG)x, (LONG)y, (LONG)x + (src.right - src.left), (LONG)y + (src.bottom - src.top) };
-    glr_DrawMovie(pFrom, dst, src);
+    mr_DrawMovie(pFrom, dst, src);
     return DD_OK;
 }
 
-static void glr_FillDesc(GLRDDSurface* s, GLRSurfaceDesc* d)
+static void mr_FillDesc(MRDDSurface* s, MRSurfaceDesc* d)
 {
     uint32_t nSize = d->dwSize ? d->dwSize : sizeof(*d);
     memset(d, 0, nSize < sizeof(*d) ? nSize : sizeof(*d));
@@ -222,14 +219,14 @@ static void glr_FillDesc(GLRDDSurface* s, GLRSurfaceDesc* d)
     d->dwWidth = s->m_bBackBuffer ? g.nWidth : s->m_nWidth;
     d->dwHeight = s->m_bBackBuffer ? g.nHeight : s->m_nHeight;
     d->lPitch = (int32_t)(d->dwWidth * 4);
-    glr_MoviePixelFormat(&d->ddpfPixelFormat);
+    mr_MoviePixelFormat(&d->ddpfPixelFormat);
 }
 
 static HRESULT __stdcall surf_GetSurfaceDesc(void* p, void* pDesc)
 {
     if (!pDesc)
         return DD_INVALID;
-    glr_FillDesc((GLRDDSurface*)p, (GLRSurfaceDesc*)pDesc);
+    mr_FillDesc((MRDDSurface*)p, (MRSurfaceDesc*)pDesc);
     return DD_OK;
 }
 
@@ -237,17 +234,17 @@ static HRESULT __stdcall surf_GetPixelFormat(void*, void* pFormat)
 {
     if (!pFormat)
         return DD_INVALID;
-    glr_MoviePixelFormat((GLRPixelFormat*)pFormat);
+    mr_MoviePixelFormat((MRPixelFormat*)pFormat);
     return DD_OK;
 }
 
 static HRESULT __stdcall surf_Lock(void* p, RECT*, void* pDesc, DWORD, void*)
 {
-    GLRDDSurface* s = (GLRDDSurface*)p;
+    MRDDSurface* s = (MRDDSurface*)p;
     if (s->m_bBackBuffer || !s->m_pPixels || !pDesc)
         return DD_NOTIMPL;
-    GLRSurfaceDesc* d = (GLRSurfaceDesc*)pDesc;
-    glr_FillDesc(s, d);
+    MRSurfaceDesc* d = (MRSurfaceDesc*)pDesc;
+    mr_FillDesc(s, d);
     d->dwFlags |= DDSD_LPSURFACE;
     d->lpSurface = s->m_pPixels;
     return DD_OK;
@@ -316,12 +313,12 @@ static HRESULT __stdcall dd_CreateSurface(void*, void* pDesc, void** ppSurface, 
 {
     if (!pDesc || !ppSurface)
         return DD_INVALID;
-    const GLRSurfaceDesc* d = (const GLRSurfaceDesc*)pDesc;
+    const MRSurfaceDesc* d = (const MRSurfaceDesc*)pDesc;
     *ppSurface = NULL;
     if (!(d->dwFlags & DDSD_WIDTH) || !(d->dwFlags & DDSD_HEIGHT) || !d->dwWidth || !d->dwHeight ||
         d->dwWidth > 4096 || d->dwHeight > 4096)
         return DD_INVALID;
-    GLRDDSurface* s = (GLRDDSurface*)calloc(1, sizeof(GLRDDSurface));
+    MRDDSurface* s = (MRDDSurface*)calloc(1, sizeof(MRDDSurface));
     if (!s)
         return (HRESULT)0x8007000e;     // E_OUTOFMEMORY
     s->m_pVtbl = g_SurfaceVtbl;
@@ -342,7 +339,7 @@ static HRESULT __stdcall dd_GetDisplayMode(void*, void* pDesc)
 {
     if (!pDesc)
         return DD_INVALID;
-    glr_FillDesc(&g_BackBuffer, (GLRSurfaceDesc*)pDesc);
+    mr_FillDesc(&g_BackBuffer, (MRSurfaceDesc*)pDesc);
     return DD_OK;
 }
 
@@ -379,9 +376,9 @@ static void* g_DDVtbl[30] = {
     (void*)dd_Stub2,            // EvaluateMode
 };
 
-static GLRDirectDraw g_DirectDraw = { g_DDVtbl };
+static MRDirectDraw g_DirectDraw = { g_DDVtbl };
 
-void* glr_MovieHook(const char* pName)
+void* mr_MovieHook(const char* pName)
 {
     if (!g.bContext || !pName)
         return NULL;

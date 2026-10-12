@@ -1,4 +1,4 @@
-// gl_models.cpp -- models (OT_MODEL): animation, skinning, lighting.
+// mr_models.cpp -- models (OT_MODEL): animation, skinning, lighting.
 //
 // docs/objects.md part II. The engine has already advanced every
 // animation tracker this frame; the renderer turns the trackers into one
@@ -14,7 +14,7 @@
 
 #include <math.h>
 
-#include "globjects.h"
+#include "mrobjects.h"
 
 // ---- the engine's model data (docs/objects.md II.1) -----------------------------
 
@@ -129,7 +129,7 @@ static void mat_Mul(LTMatrix* pOut, const LTMatrix& a, const LTMatrix& b)
 static void mat_FromQuat(LTMatrix* pOut, const LTRotation& q, const LTVector& t)
 {
     float R[3][3];
-    glr_RotationMatrix(q, R);
+    mr_RotationMatrix(q, R);
     for (int i = 0; i < 3; i++)
     {
         pOut->m[i][0] = R[i][0];
@@ -144,7 +144,7 @@ static void mat_FromQuat(LTMatrix* pOut, const LTRotation& q, const LTVector& t)
 }
 
 // The inverse of a rotation-scale-translation (affine) matrix.
-void glr_InverseAffine(LTMatrix* pOut, const LTMatrix& M)
+void mr_InverseAffine(LTMatrix* pOut, const LTMatrix& M)
 {
     float a = M.m[0][0], b = M.m[0][1], c = M.m[0][2];
     float d = M.m[1][0], e = M.m[1][1], f = M.m[1][2];
@@ -207,7 +207,7 @@ static LTRotation quat_Mul(const LTRotation& a, const LTRotation& b)
 
 // ---- the transform maker (CTransformMakerK) -------------------------------------------
 
-struct GLRTransformMaker {
+struct MRTransformMaker {
     TMHeader*        m_pTM;
     ModelView        m_Model;
     LTMatrix*        m_pOut;
@@ -223,7 +223,7 @@ struct GLRTransformMaker {
     void ProcessNode(uint32_t iNode, const LTMatrix* pParent, int nDepth);
 };
 
-bool GLRTransformMaker::Prepare()
+bool MRTransformMaker::Prepare()
 {
     TMHeader* tm = m_pTM;
     if (tm->m_nTimeRefs == 0 || tm->m_nTimeRefs > 8)
@@ -255,7 +255,7 @@ bool GLRTransformMaker::Prepare()
 
 // The keyframes either side, interpolated (GetNodeTransform), or relative
 // to the animation's first keyframe (GetNodeTransformRel, additive tracks).
-void GLRTransformMaker::GetNodeTransform(uint32_t t, uint32_t iNode, LTRotation* pRot, LTVector* pPos, bool bRel)
+void MRTransformMaker::GetNodeTransform(uint32_t t, uint32_t iNode, LTRotation* pRot, LTVector* pPos, bool bRel)
 {
     const AnimTimeRef& r = m_pTM->m_TimeRefs[t];
     CModelXform* pBase = m_pPrev[t]->m_pAnimNodes[iNode]->m_pXforms;
@@ -284,7 +284,7 @@ void GLRTransformMaker::GetNodeTransform(uint32_t t, uint32_t iNode, LTRotation*
     }
 }
 
-void GLRTransformMaker::ProcessNode(uint32_t iNode, const LTMatrix* pParent, int nDepth)
+void MRTransformMaker::ProcessNode(uint32_t iNode, const LTMatrix* pParent, int nDepth)
 {
     if (nDepth > 64 || iNode >= m_Model.nNodes())
         return;
@@ -374,7 +374,7 @@ struct StaticLightCtx {
     int             m_nMax;
 };
 
-static void glr_StaticLightCB(void* pObj, void* pUser)
+static void mr_StaticLightCB(void* pObj, void* pUser)
 {
     const StaticLight* S = (const StaticLight*)pObj;
     StaticLightCtx* c = (StaticLightCtx*)pUser;
@@ -409,13 +409,13 @@ static void glr_StaticLightCB(void* pObj, void* pUser)
 // d3d.ren's 0x1001bae4 (GetDirLightAmount): a ray twice the world's size
 // towards the sun. With a variance, the model's two edges across the sun are
 // tested, and where they disagree the boundary is bisected down to it.
-static float glr_SunAmount(LTObject* pInst, const LTVector& vPos, const LTMatrix& world, float fVar)
+static float mr_SunAmount(LTObject* pInst, const LTVector& vPos, const LTMatrix& world, float fVar)
 {
     const LTVector& vDir = g.pStruct->m_GlobalLightDir;
-    float k = glr_WorldSize() * -2.0f;
+    float k = mr_WorldSize() * -2.0f;
     LTVector vRay = { vDir.x * k, vDir.y * k, vDir.z * k };
     if (fVar == 0.0f)
-        return glr_SeesSky(vPos, vRay) ? 1.0f : 0.0f;
+        return mr_SeesSky(vPos, vRay) ? 1.0f : 0.0f;
     LTVector vRight = { world.m[0][0], world.m[1][0], world.m[2][0] };
     float r = pInst->m_Radius;
     // vDir.Cross(vRight), which in LithTech is vRight x vDir.
@@ -424,7 +424,7 @@ static float glr_SunAmount(LTObject* pInst, const LTVector& vPos, const LTMatrix
                        (vRight.x * vDir.y - vRight.y * vDir.x) * r };
     LTVector vHi = { vPos.x + vPerp.x, vPos.y + vPerp.y, vPos.z + vPerp.z };
     LTVector vLo = { vPos.x - vPerp.x, vPos.y - vPerp.y, vPos.z - vPerp.z };
-    bool bHi = glr_SeesSky(vHi, vRay), bLo = glr_SeesSky(vLo, vRay);
+    bool bHi = mr_SeesSky(vHi, vRay), bLo = mr_SeesSky(vLo, vRay);
     if (bHi == bLo)
         return bHi ? 1.0f : 0.0f;
     float fStep = 1.0f, fHi = 1.0f, fLo = -1.0f, fResult = 1.0f;
@@ -432,7 +432,7 @@ static float glr_SunAmount(LTObject* pInst, const LTVector& vPos, const LTMatrix
     {
         float fMid = (fLo + fHi) * 0.5f;
         LTVector vTest = { vPos.x + vPerp.x * fMid, vPos.y + vPerp.y * fMid, vPos.z + vPerp.z * fMid };
-        bool bHit = glr_SeesSky(vTest, vRay);
+        bool bHit = mr_SeesSky(vTest, vRay);
         fStep *= 0.5f;
         if (!bHit)
             fResult -= fStep;
@@ -452,7 +452,7 @@ static float glr_SunAmount(LTObject* pInst, const LTVector& vPos, const LTMatrix
 
 // world places the model; normWorld (world, or the NormalRef node's frame)
 // is what the lights and the sun are brought into the vertices' space with.
-static void glr_SetupModelLight(LTObject* pInst, const ModelView& model, const LTMatrix& world,
+static void mr_SetupModelLight(LTObject* pInst, const ModelView& model, const LTMatrix& world,
                                 const LTMatrix& normWorld, ModelLighting* pL)
 {
     SceneDesc* pScene = g_Frame.m_pScene;
@@ -491,7 +491,7 @@ static void glr_SetupModelLight(LTObject* pInst, const ModelView& model, const L
     }
     LTVector vPos = { world.m[0][3], world.m[1][3], world.m[2][3] };
     LTMatrix W2M;
-    glr_InverseAffine(&W2M, normWorld);
+    mr_InverseAffine(&W2M, normWorld);
 
     // The sun (RenderStruct m_GlobalLightDir, m_GlobalLightColor): how much
     // of the model sees the sky towards it, kept on the instance (+0x238
@@ -511,7 +511,7 @@ static void glr_SetupModelLight(LTObject* pInst, const ModelView& model, const L
               fabsf(vPos.z - pCachePos->z) > fEps)))
         {
             *pCachePos = vPos;
-            *pCacheAmt = glr_SunAmount(pInst, vPos, world, fVar);
+            *pCacheAmt = mr_SunAmount(pInst, vPos, world, fVar);
         }
         pL->m_fDirAmt = *pCacheAmt;
         pL->m_DirLight.x = -(W2M.m[0][0] * vSunDir.x + W2M.m[0][1] * vSunDir.y + W2M.m[0][2] * vSunDir.z);
@@ -519,13 +519,13 @@ static void glr_SetupModelLight(LTObject* pInst, const ModelView& model, const L
         pL->m_DirLight.z = -(W2M.m[2][0] * vSunDir.x + W2M.m[2][1] * vSunDir.y + W2M.m[2][2] * vSunDir.z);
     }
     float amb[3];
-    glr_LightGridSample(vPos, amb);
+    mr_LightGridSample(vPos, amb);
     pL->m_Ambient.x = amb[0];
     pL->m_Ambient.y = amb[1];
     pL->m_Ambient.z = amb[2];
 
     // The frame's visible dynamic lights within reach, into model space.
-    GLRObjList* pLights = glr_ObjList(VS_LIGHTS);
+    MRObjList* pLights = mr_ObjList(VS_LIGHTS);
     int nMax = cvi(CV_MaxModelLights);
     if (nMax > 16) nMax = 16;
     float fVis = model.VisRadius();
@@ -560,7 +560,7 @@ static void glr_SetupModelLight(LTObject* pInst, const ModelView& model, const L
         info.m_iObjArray = 1;
         info.m_Min.x = vPos.x - fVis; info.m_Min.y = vPos.y - fVis; info.m_Min.z = vPos.z - fVis;
         info.m_Max.x = vPos.x + fVis; info.m_Max.y = vPos.y + fVis; info.m_Max.z = vPos.z + fVis;
-        info.m_CB = glr_StaticLightCB;
+        info.m_CB = mr_StaticLightCB;
         info.m_pUser = &ctx;
         mw_FindObjectsInBox(pWorld, &info);
     }
@@ -568,7 +568,7 @@ static void glr_SetupModelLight(LTObject* pInst, const ModelView& model, const L
 
 // SetupSkeletalVerts' vertex colour: bind-pose position and normal against
 // the model-space lights.
-static inline void glr_LightVertex(const ModelLighting& L, const ModelVert& v, uint8_t nAlpha, uint8_t* pOut)
+static inline void mr_LightVertex(const ModelLighting& L, const ModelVert& v, uint8_t nAlpha, uint8_t* pOut)
 {
     LTVector c = L.m_Ambient;
     float d = (v.m_Normal.x * L.m_DirLight.x + v.m_Normal.y * L.m_DirLight.y +
@@ -603,7 +603,7 @@ static inline void glr_LightVertex(const ModelLighting& L, const ModelVert& v, u
 
 // ---- drawing --------------------------------------------------------------------
 
-static PieceLOD* glr_GetLOD(ModelPiece* p, uint32_t i)
+static PieceLOD* mr_GetLOD(ModelPiece* p, uint32_t i)
 {
     if (i == 0)
         return p;
@@ -611,7 +611,7 @@ static PieceLOD* glr_GetLOD(ModelPiece* p, uint32_t i)
 }
 
 // SelectLOD: the last level whose distance the model is beyond.
-static uint32_t glr_SelectLOD(const ModelView& model, float d)
+static uint32_t mr_SelectLOD(const ModelView& model, float d)
 {
     uint32_t n = model.nExtraLODs();
     const float* pDists = model.LODDists();
@@ -634,7 +634,7 @@ static float* g_pSkinned;               // xyz per vertex of one piece
 static uint8_t* g_pColors;              // rgba per vertex
 static uint32_t g_nSkinAlloc;
 
-static bool glr_ReserveVerts(uint32_t n)
+static bool mr_ReserveVerts(uint32_t n)
 {
     if (n <= g_nSkinAlloc)
         return true;
@@ -653,7 +653,7 @@ static bool glr_ReserveVerts(uint32_t n)
 static LTMatrix* g_pNodeXforms;
 static uint32_t g_nNodeAlloc;
 
-static void glr_DrawModelWith(LTObject* pInst, bool bReallyClose)
+static void mr_DrawModelWith(LTObject* pInst, bool bReallyClose)
 {
     ModelView model = { rd<void*>(pInst, 0x1dc) };
     if (!model.m_p || !cvi(CV_DrawModels))
@@ -680,7 +680,7 @@ static void glr_DrawModelWith(LTObject* pInst, bool bReallyClose)
         world.m[r][1] *= pInst->m_Scale.y;
         world.m[r][2] *= pInst->m_Scale.z;
     }
-    const GLRCamera& cam = g_Frame.m_Cam;
+    const MRCamera& cam = g_Frame.m_Cam;
     // A really-close model (the view model) lives in camera space: its node
     // matrices are made there (d3d.ren's base is the camera-space object
     // matrix, so the game's node-control callback sees them so) and it is
@@ -707,7 +707,7 @@ static void glr_DrawModelWith(LTObject* pInst, bool bReallyClose)
     float fScale = fabsf(pInst->m_Scale.x);
     if (fabsf(pInst->m_Scale.y) > fScale) fScale = fabsf(pInst->m_Scale.y);
     if (fabsf(pInst->m_Scale.z) > fScale) fScale = fabsf(pInst->m_Scale.z);
-    if (!bReallyClose && !glr_SphereVisible(vPos, model.Radius() * fScale))
+    if (!bReallyClose && !mr_SphereVisible(vPos, model.Radius() * fScale))
         return;
 
     // Node matrices in world space: the engine fills the time refs, our
@@ -727,7 +727,7 @@ static void glr_DrawModelWith(LTObject* pInst, bool bReallyClose)
     memset(&tm, 0, sizeof(tm));
     ((*(SetupTMFn**)pInst)[0x38 / 4])(pInst, &tm);
     tm.m_hObject = pInst;
-    GLRTransformMaker maker;
+    MRTransformMaker maker;
     memset(&maker, 0, sizeof(maker));
     maker.m_pTM = &tm;
     maker.m_pOut = g_pNodeXforms;
@@ -746,9 +746,9 @@ static void glr_DrawModelWith(LTObject* pInst, bool bReallyClose)
         mat_Mul(&normWorld, nodeWorld, model.NormalRefMat());
     }
     ModelLighting L;
-    glr_SetupModelLight(pInst, model, lightWorld, normWorld, &L);
+    mr_SetupModelLight(pInst, model, lightWorld, normWorld, &L);
     float dx = vPos.x - cam.m_Pos.x, dy = vPos.y - cam.m_Pos.y, dz = vPos.z - cam.m_Pos.z;
-    uint32_t lod = glr_SelectLOD(model, sqrtf(dx * dx + dy * dy + dz * dz));
+    uint32_t lod = mr_SelectLOD(model, sqrtf(dx * dx + dy * dy + dz * dz));
     uint8_t nAlpha = pInst->m_ColorA;
     uint32_t nHidden = rd<uint32_t>(pInst, 0x204);
 
@@ -756,13 +756,13 @@ static void glr_DrawModelWith(LTObject* pInst, bool bReallyClose)
     // map in a first pass, its coordinates from the bind-pose normals turned
     // by the view (and the NormalRef node), panned with the camera; the skin
     // then blends over it by its alpha. EnvMapAll draws the chrome alone.
-    GLRTexture* pEnv = NULL;
+    MRTexture* pEnv = NULL;
     bool bEnvAll = cvi(CV_EnvMapAll) != 0;
     float envRow[2][3], envScale = 0.0f, envPanU = 0.0f, envPanV = 0.0f;
     if ((bEnvAll || (L.m_Flags & FLAG_ENVIRONMENTMAP)) && cvi(CV_EnvMapEnable) && g.pStruct->m_pEnvMap)
     {
-        glr_TextureId(g.pStruct->m_pEnvMap);
-        pEnv = (GLRTexture*)g.pStruct->m_pEnvMap->m_pRenderData;
+        mr_TextureId(g.pStruct->m_pEnvMap);
+        pEnv = (MRTexture*)g.pStruct->m_pEnvMap->m_pRenderData;
     }
     if (pEnv)
     {
@@ -781,26 +781,26 @@ static void glr_DrawModelWith(LTObject* pInst, bool bReallyClose)
         envScale = fEnvScale != 0.0f ? 0.5f / fEnvScale : 0.5f;
         envPanU = g_Frame.m_Cam.m_Pos.x * cvf(CV_EnvPanSpeed) + 0.5f;
         envPanV = g_Frame.m_Cam.m_Pos.z * cvf(CV_EnvPanSpeed) + 0.5f;
-        glPushAttrib(GL_COLOR_BUFFER_BIT);
+        rd_PushAttrib(RD_ATTR_COLOR);
     }
 
-    glr_ObjectFog(pInst, true);
+    mr_ObjectFog(pInst, true);
     if (nAlpha < 255)
-        glEnable(GL_BLEND);
+        rd_Enable(RD_BLEND);
     if (bReallyClose)
     {
-        glMatrixMode(GL_MODELVIEW);
-        glPushMatrix();
-        glLoadIdentity();
+        rd_MatrixMode(RD_MODELVIEW);
+        rd_PushMatrix();
+        rd_LoadIdentity();
     }
-    glr_ForgetBindings();
+    mr_ForgetBindings();
     for (uint32_t i = 0; i < model.nPieces(); i++)
     {
         if (i < 32 && (nHidden & (1u << i)))
             continue;
         ModelPiece* pPiece = model.Pieces()[i];
-        PieceLOD* pLOD = pPiece ? glr_GetLOD(pPiece, lod) : NULL;
-        if (!pLOD || !pLOD->m_nTris || !glr_ReserveVerts(pLOD->m_nVerts))
+        PieceLOD* pLOD = pPiece ? mr_GetLOD(pPiece, lod) : NULL;
+        if (!pLOD || !pLOD->m_nTris || !mr_ReserveVerts(pLOD->m_nVerts))
             continue;
 
         // Skin: P = sum of node matrix x (weighted position, weight).
@@ -823,24 +823,24 @@ static void glr_DrawModelWith(LTObject* pInst, bool bReallyClose)
             g_pSkinned[v * 3 + 0] = px * inv;
             g_pSkinned[v * 3 + 1] = py * inv;
             g_pSkinned[v * 3 + 2] = pz * inv;
-            glr_LightVertex(L, mv, nAlpha, &g_pColors[v * 4]);
+            mr_LightVertex(L, mv, nAlpha, &g_pColors[v * 4]);
         }
 
         // The piece's skin: ModelInstance::m_pSkins[piece.m_iTexture].
-        GLRTexture* pTex = NULL;
+        MRTexture* pTex = NULL;
         if (pPiece->m_iTexture < 2 && L.m_bTexture && cvi(CV_TextureModels))
         {
             SharedTexture* pSkin = rd<SharedTexture*>(pInst, 0x1b8 + 4 * pPiece->m_iTexture);
             if (pSkin)
             {
-                glr_TextureId(pSkin);
-                pTex = (GLRTexture*)pSkin->m_pRenderData;
+                mr_TextureId(pSkin);
+                pTex = (MRTexture*)pSkin->m_pRenderData;
             }
         }
         if (pEnv)
         {
-            glr_SetBaseTexture(pEnv);
-            glBegin(GL_TRIANGLES);
+            mr_SetBaseTexture(pEnv);
+            rd_Begin(RD_TRIANGLES);
             for (uint32_t t = 0; t < pLOD->m_nTris; t++)
             {
                 const ModelTri& tri = pLOD->m_Tris[t];
@@ -850,19 +850,19 @@ static void glr_DrawModelWith(LTObject* pInst, bool bReallyClose)
                     if (idx >= pLOD->m_nVerts)
                         idx = 0;
                     const LTVector& N = pLOD->m_Verts[idx].m_Normal;
-                    glColor4ubv(&g_pColors[idx * 4]);
-                    glTexCoord2f((envRow[0][0] * N.x + envRow[0][1] * N.y + envRow[0][2] * N.z) * envScale + envPanU,
+                    rd_Color4ubv(&g_pColors[idx * 4]);
+                    rd_TexCoord2f((envRow[0][0] * N.x + envRow[0][1] * N.y + envRow[0][2] * N.z) * envScale + envPanU,
                                  (envRow[1][0] * N.x + envRow[1][1] * N.y + envRow[1][2] * N.z) * envScale + envPanV);
-                    glVertex3fv(&g_pSkinned[idx * 3]);
+                    rd_Vertex3fv(&g_pSkinned[idx * 3]);
                 }
             }
-            glEnd();
+            rd_End();
             if (bEnvAll)
                 continue;
-            glEnable(GL_BLEND);
+            rd_Enable(RD_BLEND);
         }
-        glr_SetBaseTexture(pTex);
-        glBegin(GL_TRIANGLES);
+        mr_SetBaseTexture(pTex);
+        rd_Begin(RD_TRIANGLES);
         for (uint32_t t = 0; t < pLOD->m_nTris; t++)
         {
             const ModelTri& tri = pLOD->m_Tris[t];
@@ -871,41 +871,41 @@ static void glr_DrawModelWith(LTObject* pInst, bool bReallyClose)
                 uint32_t idx = tri.m_Indices[k];
                 if (idx >= pLOD->m_nVerts)
                     idx = 0;
-                glColor4ubv(&g_pColors[idx * 4]);
-                glTexCoord2f(tri.m_UV[k][0], tri.m_UV[k][1]);
-                glVertex3fv(&g_pSkinned[idx * 3]);
+                rd_Color4ubv(&g_pColors[idx * 4]);
+                rd_TexCoord2f(tri.m_UV[k][0], tri.m_UV[k][1]);
+                rd_Vertex3fv(&g_pSkinned[idx * 3]);
             }
         }
-        glEnd();
+        rd_End();
     }
     if (bReallyClose)
-        glPopMatrix();
+        rd_PopMatrix();
     if (pEnv)
-        glPopAttrib();
+        rd_PopAttrib();
     // The shadow, after the model (DoModelDrawing, on the hook's flags).
     if (!bReallyClose && (L.m_Flags & FLAG_SHADOW))
-        glr_DrawModelShadow(pInst, model.m_p);
-    glr_ObjectFog(pInst, false);
+        mr_DrawModelShadow(pInst, model.m_p);
+    mr_ObjectFog(pInst, false);
 }
 
-void glr_DrawModel(LTObject* pInst)
+void mr_DrawModel(LTObject* pInst)
 {
     bool bClose = (pInst->m_Flags & FLAG_REALLYCLOSE) != 0;
     if (bClose)
-        glr_BeginReallyClose(pInst);
-    glr_DrawModelWith(pInst, bClose);
+        mr_BeginReallyClose(pInst);
+    mr_DrawModelWith(pInst, bClose);
     if (bClose)
-        glr_EndReallyClose();
+        mr_EndReallyClose();
 }
 
 // A translucent model: its own blend, no depth writes (r_DrawTransparentModel).
-void glr_DrawTranslucentModel(LTObject* pInst)
+void mr_DrawTranslucentModel(LTObject* pInst)
 {
-    glPushAttrib(GL_COLOR_BUFFER_BIT | GL_FOG_BIT);
-    glEnable(GL_BLEND);
-    glr_ObjectBlend(pInst);
-    glr_DrawModel(pInst);
-    glPopAttrib();
+    rd_PushAttrib(RD_ATTR_COLOR | RD_ATTR_FOG);
+    rd_Enable(RD_BLEND);
+    mr_ObjectBlend(pInst);
+    mr_DrawModel(pInst);
+    rd_PopAttrib();
 }
 
 // Really-close objects (the player's weapon, the menus' 3D parts) are in
@@ -913,16 +913,16 @@ void glr_DrawTranslucentModel(LTObject* pInst)
 // for a model that asks (FovXOffset / FovYOffset), at their own scale --
 // corrected for a widened screen like the scene's (MODERN.md M-P0-01) so
 // they look as at 4:3. They come after everything else, in the scene's
-// depth buffer (glr_FlushObjects).
-void glr_BeginReallyClose(LTObject* pObj)
+// depth buffer (mr_FlushObjects).
+void mr_BeginReallyClose(LTObject* pObj)
 {
-    const GLRCamera& cam = g_Frame.m_Cam;
-    GLRCamera close = cam;
+    const MRCamera& cam = g_Frame.m_Cam;
+    MRCamera close = cam;
     // d3d.ren clips these at 0.01 but projects them with the scene's depth
     // mapping into the one depth buffer: the scene's near plane, with depth
     // clamping so what is nearer still draws (in front of everything).
-    if (g.bDepthClamp)
-        glEnable(0x864F);               // GL_DEPTH_CLAMP
+    if (g_RDCaps.bDepthClamp)
+        rd_Enable(RD_DEPTH_CLAMP);
     else
         close.m_fNear = 0.01f;
     ModelView model = { pObj->m_ObjectType == OT_MODEL ? rd<void*>(pObj, 0x1dc) : NULL };
@@ -941,12 +941,12 @@ void glr_BeginReallyClose(LTObject* pObj)
         close.m_fTanX = aspect / (4.0f / 3.0f) / tanf(fx * 0.5f);
         close.m_fTanY = 1.0f / tanf(fy * 0.5f);
     }
-    glr_LoadCamera(&close);
+    mr_LoadCamera(&close);
 }
 
-void glr_EndReallyClose(void)
+void mr_EndReallyClose(void)
 {
-    if (g.bDepthClamp)
-        glDisable(0x864F);
-    glr_LoadCamera(&g_Frame.m_Cam);
+    if (g_RDCaps.bDepthClamp)
+        rd_Disable(RD_DEPTH_CLAMP);
+    mr_LoadCamera(&g_Frame.m_Cam);
 }

@@ -226,7 +226,7 @@ builds
 |---|---|---|
 | `mss32.dll` | [OpenMiles](https://github.com/maci0/openmiles) (`ext/openmiles`), a clean-room Miles reimplementation, with the Miles 6.0 export table (`-Dmss-version=6.0`) | Miles 6.0i and its 25 provider files (`.m3d`, `.flt`, `.asi`, `.as6`): OpenMiles mixes, positions and decodes MP3 itself |
 | `binkw32.dll` | our Bink player, `src/modern/binkw32/`, linked with a static [FFmpeg](https://ffmpeg.org/) (`ext/ffmpeg`) cut down to its Bink demuxer and decoders | Bink 1.0h |
-| `opengl.ren` | our OpenGL renderer, `src/modern/opengl/` (MODERN.md, M-P0-04) | nothing: installed beside `d3d.ren`, picked with `"RenderDll" "opengl.ren"` |
+| `opengl.ren` | our OpenGL renderer, `src/modern/render/` with its `gl/` backend (MODERN.md, M-P0-04) | nothing: installed beside `d3d.ren`, picked with `"RenderDll" "opengl.ren"` |
 
 into `out/ext/` (shared by every modern variant, rebuilt only when a
 submodule's commit, the build script or the renderer's source changes; the first build takes about

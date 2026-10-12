@@ -1,4 +1,4 @@
-// gl_sprites.cpp -- sprites (OT_SPRITE), and the world's light grid that
+// mr_sprites.cpp -- sprites (OT_SPRITE), and the world's light grid that
 // lights sprites and models.
 //
 // r_DrawSprite and r_DrawRotateableSprite (docs/objects.md part III.1): the
@@ -11,7 +11,7 @@
 
 #include <math.h>
 
-#include "globjects.h"
+#include "mrobjects.h"
 
 #define FLAG_SPRITEBIAS        0x4
 #define FLAG_ROTATEABLESPRITE  0x8
@@ -19,7 +19,7 @@
 
 // The light grid, MainWorld+0xfc (r_GetSpriteColor 0x15df70): one 4-byte
 // cell (r, g, b, unused) per grid point, sampled trilinearly.
-void glr_LightGridSample(const LTVector& pos, float* pOut)
+void mr_LightGridSample(const LTVector& pos, float* pOut)
 {
     pOut[0] = pOut[1] = pOut[2] = 0.0f;
     MainWorld* pWorld = g_Frame.m_pContext ? g_Frame.m_pContext->m_pWorld : NULL;
@@ -67,11 +67,11 @@ void glr_LightGridSample(const LTVector& pos, float* pOut)
 
 // r_CalcLightAdd (d3d.ren 0x1001e210): the visible lights near the object;
 // a light colour below 128 takes light away.
-void glr_CalcLightAdd(const LTVector& pos, float* pOut)
+void mr_CalcLightAdd(const LTVector& pos, float* pOut)
 {
     if (!cvi(CV_DynamicLight))
         return;
-    GLRObjList* pLights = glr_ObjList(VS_LIGHTS);
+    MRObjList* pLights = mr_ObjList(VS_LIGHTS);
     for (uint32_t i = 0; i < pLights->m_nObjects; i++)
     {
         LTObject* L = pLights->m_pObjects[i];
@@ -92,13 +92,13 @@ void glr_CalcLightAdd(const LTVector& pos, float* pOut)
 
 // r_GetSpriteColor: the object's colour plus the light at it (added, not
 // multiplied), its alpha.
-static void glr_SpriteColor(LTObject* pObj, uint8_t* pRGBA)
+static void mr_SpriteColor(LTObject* pObj, uint8_t* pRGBA)
 {
     float add[3] = { 0, 0, 0 };
     if (!(pObj->m_Flags & FLAG_NOLIGHT))
     {
-        glr_LightGridSample(pObj->m_Pos, add);
-        glr_CalcLightAdd(pObj->m_Pos, add);
+        mr_LightGridSample(pObj->m_Pos, add);
+        mr_CalcLightAdd(pObj->m_Pos, add);
     }
     float c[3] = { pObj->m_ColorR + add[0], pObj->m_ColorG + add[1], pObj->m_ColorB + add[2] };
     for (int i = 0; i < 3; i++)
@@ -108,24 +108,23 @@ static void glr_SpriteColor(LTObject* pObj, uint8_t* pRGBA)
 
 // The sprite's blend (docs/objects.md III.0.5): additive and multiply sprites
 // fog towards black.
-void glr_ObjectBlend(LTObject* pObj)
+void mr_ObjectBlend(LTObject* pObj)
 {
-    static const float black[4] = { 0, 0, 0, 0 };
     if (pObj->m_Flags2 & FLAG2_ADDITIVE)
     {
-        glBlendFunc(GL_ONE, GL_ONE);
-        glFogfv(GL_FOG_COLOR, black);
+        rd_BlendFunc(RD_ONE, RD_ONE);
+        rd_FogColor(0, 0, 0);
     }
     else if (pObj->m_Flags2 & FLAG2_MULTIPLY)
     {
-        glBlendFunc(GL_ZERO, GL_SRC_COLOR);
-        glFogfv(GL_FOG_COLOR, black);
+        rd_BlendFunc(RD_ZERO, RD_SRC_COLOR);
+        rd_FogColor(0, 0, 0);
     }
     else
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        rd_BlendFunc(RD_SRC_ALPHA, RD_ONE_MINUS_SRC_ALPHA);
 }
 
-static SharedTexture* glr_SpriteFrame(LTObject* pObj)
+static SharedTexture* mr_SpriteFrame(LTObject* pObj)
 {
     // SpriteTracker at +0x1a8: sprite, current animation, current frame
     // (a SharedTexture** into the animation's frames).
@@ -138,28 +137,28 @@ static SharedTexture* glr_SpriteFrame(LTObject* pObj)
 
 // Draw one sprite with the camera currently loaded (the main camera, or the
 // sky's): pCam gives its position and axes.
-static void glr_DrawSpriteWith(LTObject* pObj, const GLRCamera* pCam)
+static void mr_DrawSpriteWith(LTObject* pObj, const MRCamera* pCam)
 {
-    SharedTexture* pFrame = glr_SpriteFrame(pObj);
+    SharedTexture* pFrame = mr_SpriteFrame(pObj);
     if (!pFrame)
         return;
-    glr_TextureId(pFrame);
-    GLRTexture* pTex = (GLRTexture*)pFrame->m_pRenderData;
+    mr_TextureId(pFrame);
+    MRTexture* pTex = (MRTexture*)pFrame->m_pRenderData;
     if (!pTex)
         return;
 
-    glPushAttrib(GL_COLOR_BUFFER_BIT | GL_FOG_BIT | GL_ENABLE_BIT | GL_TEXTURE_BIT);
-    glEnable(GL_BLEND);
-    glr_ObjectBlend(pObj);
-    glr_ObjectFog(pObj, true);
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, pTex->m_Id);
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    glr_ForgetBindings();
+    rd_PushAttrib(RD_ATTR_COLOR | RD_ATTR_FOG | RD_ATTR_ENABLE | RD_ATTR_TEXTURE);
+    rd_Enable(RD_BLEND);
+    mr_ObjectBlend(pObj);
+    mr_ObjectFog(pObj, true);
+    rd_Enable(RD_TEXTURE_2D);
+    rd_BindTexture(pTex->m_Id);
+    rd_TexEnv(RD_ENV_MODULATE);
+    mr_ForgetBindings();
 
     uint8_t rgba[4];
-    glr_SpriteColor(pObj, rgba);
-    glColor4ub(rgba[0], rgba[1], rgba[2], rgba[3]);
+    mr_SpriteColor(pObj, rgba);
+    rd_Color4ub(rgba[0], rgba[1], rgba[2], rgba[3]);
 
     // Two texels in from every edge (r_DrawSprite 0x15d9c0).
     float W = (float)pTex->m_nBaseWidth, H = (float)pTex->m_nBaseHeight;
@@ -170,7 +169,7 @@ static void glr_DrawSpriteWith(LTObject* pObj, const GLRCamera* pCam)
     {
         // In the object's orientation and scale: corners (+-W, +-H, 0).
         float R[3][3];
-        glr_RotationMatrix(pObj->m_Rotation, R);
+        mr_RotationMatrix(pObj->m_Rotation, R);
         LTMatrix M;
         for (int r = 0; r < 3; r++)
         {
@@ -183,17 +182,17 @@ static void glr_DrawSpriteWith(LTObject* pObj, const GLRCamera* pCam)
         M.m[2][3] = pObj->m_Pos.z;
         M.m[3][0] = M.m[3][1] = M.m[3][2] = 0.0f;
         M.m[3][3] = 1.0f;
-        glPushMatrix();
+        rd_PushMatrix();
         if (pObj->m_Flags & FLAG_REALLYCLOSE)
-            glLoadIdentity();
-        glr_MultMatrix(M);
-        glBegin(GL_QUADS);
-        glTexCoord2f(u0, v0); glVertex3f(-W, H, 0);
-        glTexCoord2f(u1, v0); glVertex3f(W, H, 0);
-        glTexCoord2f(u1, v1); glVertex3f(W, -H, 0);
-        glTexCoord2f(u0, v1); glVertex3f(-W, -H, 0);
-        glEnd();
-        glPopMatrix();
+            rd_LoadIdentity();
+        mr_MultMatrix(M);
+        rd_Begin(RD_QUADS);
+        rd_TexCoord2f(u0, v0); rd_Vertex3f(-W, H, 0);
+        rd_TexCoord2f(u1, v0); rd_Vertex3f(W, H, 0);
+        rd_TexCoord2f(u1, v1); rd_Vertex3f(W, -H, 0);
+        rd_TexCoord2f(u0, v1); rd_Vertex3f(-W, -H, 0);
+        rd_End();
+        rd_PopMatrix();
     }
     else
     {
@@ -233,42 +232,42 @@ static void glr_DrawSpriteWith(LTObject* pObj, const GLRCamera* pCam)
                     z = 7.0f < c.z ? 7.0f : c.z;
                 k = z / c.z;
             }
-            glPushMatrix();
-            glLoadIdentity();
-            glBegin(GL_QUADS);
-            glTexCoord2f(u0, v0); glVertex3f((c.x - hw) * k, (c.y + hh) * k, c.z * k);
-            glTexCoord2f(u1, v0); glVertex3f((c.x + hw) * k, (c.y + hh) * k, c.z * k);
-            glTexCoord2f(u1, v1); glVertex3f((c.x + hw) * k, (c.y - hh) * k, c.z * k);
-            glTexCoord2f(u0, v1); glVertex3f((c.x - hw) * k, (c.y - hh) * k, c.z * k);
-            glEnd();
-            glPopMatrix();
+            rd_PushMatrix();
+            rd_LoadIdentity();
+            rd_Begin(RD_QUADS);
+            rd_TexCoord2f(u0, v0); rd_Vertex3f((c.x - hw) * k, (c.y + hh) * k, c.z * k);
+            rd_TexCoord2f(u1, v0); rd_Vertex3f((c.x + hw) * k, (c.y + hh) * k, c.z * k);
+            rd_TexCoord2f(u1, v1); rd_Vertex3f((c.x + hw) * k, (c.y - hh) * k, c.z * k);
+            rd_TexCoord2f(u0, v1); rd_Vertex3f((c.x - hw) * k, (c.y - hh) * k, c.z * k);
+            rd_End();
+            rd_PopMatrix();
         }
     }
-    glr_ObjectFog(pObj, false);
-    glPopAttrib();
+    mr_ObjectFog(pObj, false);
+    rd_PopAttrib();
 }
 
-void glr_DrawSprite(LTObject* pObj)
+void mr_DrawSprite(LTObject* pObj)
 {
     bool bClose = (pObj->m_Flags & FLAG_REALLYCLOSE) != 0;
     if (bClose)
-        glr_BeginReallyClose(pObj);
-    glr_DrawSpriteWith(pObj, &g_Frame.m_Cam);
+        mr_BeginReallyClose(pObj);
+    mr_DrawSpriteWith(pObj, &g_Frame.m_Cam);
     if (bClose)
-        glr_EndReallyClose();
+        mr_EndReallyClose();
 }
 
 // r_DrawNoZSprites: over everything, depth ignored.
-void glr_DrawNoZSprite(LTObject* pObj)
+void mr_DrawNoZSprite(LTObject* pObj)
 {
-    glPushAttrib(GL_DEPTH_BUFFER_BIT);
-    glDisable(GL_DEPTH_TEST);
-    glDepthMask(GL_FALSE);
-    glr_DrawSprite(pObj);
-    glPopAttrib();
+    rd_PushAttrib(RD_ATTR_DEPTH);
+    rd_Disable(RD_DEPTH_TEST);
+    rd_DepthMask(false);
+    mr_DrawSprite(pObj);
+    rd_PopAttrib();
 }
 
-void glr_DrawSkySprite(LTObject* pObj)
+void mr_DrawSkySprite(LTObject* pObj)
 {
-    glr_DrawSpriteWith(pObj, &g_Frame.m_SkyCam);
+    mr_DrawSpriteWith(pObj, &g_Frame.m_SkyCam);
 }

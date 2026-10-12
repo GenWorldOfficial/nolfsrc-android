@@ -1,14 +1,12 @@
-// gl_wgl.cpp -- glplatform.h on Windows: display modes and the window
+// mr_window.cpp -- mrplatform.h on Windows: display modes and the window
 // through user32 (what d3d.ren's DirectDraw enumeration and cooperative
-// level did), the context through WGL.
+// level did).
 
 #include <string.h>
 
-#include "glr.h"
+#include "mr.h"
 
 static HWND  s_hWnd;
-static HDC   s_hDC;
-static HGLRC s_hRC;
 static bool  s_bChangedDisplay;         // ChangeDisplaySettings to undo
 static LONG  s_nOldStyle, s_nOldExStyle;
 static RECT  s_rcOldWindow;
@@ -46,7 +44,7 @@ void plat_OpenWindow(void* hWnd, uint32_t nWidth, uint32_t nHeight, bool* pbWind
             SetWindowPos(s_hWnd, HWND_TOPMOST, 0, 0, nWidth, nHeight, SWP_FRAMECHANGED | SWP_SHOWWINDOW);
             return;
         }
-        glr_Print("opengl.ren: could not switch the display to %ux%u; running in a window", nWidth, nHeight);
+        mr_Print("%s: could not switch the display to %ux%u; running in a window", g_RDDll, nWidth, nHeight);
         *pbWindowed = true;
     }
 
@@ -75,76 +73,4 @@ void plat_CloseWindow(void)
     SetWindowPos(s_hWnd, HWND_NOTOPMOST, s_rcOldWindow.left, s_rcOldWindow.top,
                  s_rcOldWindow.right - s_rcOldWindow.left, s_rcOldWindow.bottom - s_rcOldWindow.top,
                  SWP_FRAMECHANGED);
-}
-
-bool plat_CreateContext(void)
-{
-    s_hDC = GetDC(s_hWnd);
-    if (!s_hDC)
-        return false;
-
-    // A window keeps its pixel format for life, and the engine reloads the
-    // renderer on every focus change: reuse the one an earlier Init set.
-    int nFormat = GetPixelFormat(s_hDC);
-    if (!nFormat)
-    {
-        PIXELFORMATDESCRIPTOR pfd;
-        memset(&pfd, 0, sizeof(pfd));
-        pfd.nSize = sizeof(pfd);
-        pfd.nVersion = 1;
-        pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-        pfd.iPixelType = PFD_TYPE_RGBA;
-        pfd.cColorBits = 32;
-        pfd.cAlphaBits = 8;
-        pfd.cDepthBits = 24;
-        pfd.cStencilBits = 8;
-        pfd.iLayerType = PFD_MAIN_PLANE;
-        nFormat = ChoosePixelFormat(s_hDC, &pfd);
-        if (!nFormat || !SetPixelFormat(s_hDC, nFormat, &pfd))
-        {
-            glr_Print("opengl.ren: no usable OpenGL pixel format");
-            return false;
-        }
-    }
-    s_hRC = wglCreateContext(s_hDC);
-    if (!s_hRC || !wglMakeCurrent(s_hDC, s_hRC))
-    {
-        glr_Print("opengl.ren: could not create an OpenGL context");
-        return false;
-    }
-    return true;
-}
-
-void plat_DestroyContext(void)
-{
-    if (s_hRC)
-    {
-        wglMakeCurrent(NULL, NULL);
-        wglDeleteContext(s_hRC);
-        s_hRC = NULL;
-    }
-    if (s_hDC)
-    {
-        ReleaseDC(s_hWnd, s_hDC);
-        s_hDC = NULL;
-    }
-}
-
-void plat_SwapBuffers(void)
-{
-    if (s_hDC)
-        SwapBuffers(s_hDC);
-}
-
-void plat_SetSwapInterval(int nInterval)
-{
-    typedef BOOL (APIENTRY* PFN_wglSwapInterval)(int);
-    PFN_wglSwapInterval pSwapInterval = (PFN_wglSwapInterval)wglGetProcAddress("wglSwapIntervalEXT");
-    if (pSwapInterval)
-        pSwapInterval(nInterval);
-}
-
-void* plat_GetProcAddress(const char* pName)
-{
-    return (void*)wglGetProcAddress(pName);
 }

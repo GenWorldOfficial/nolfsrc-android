@@ -1,10 +1,10 @@
-// gl_scene.cpp -- the 3D half: the world context, RenderScene, the world.
+// mr_scene.cpp -- the 3D half: the world context, RenderScene, the world.
 //
 // RenderScene follows the Mac renderer's r_RenderScene / r_FullDrawScene
 // (docs/world.md part A, docs/objects.md part I.2):
 //
-//   * the camera (r_InitFrustrum2's projection, done by GL here: the Mac
-//     projects every vertex itself);
+//   * the camera (r_InitFrustrum2's projection, done by the device here: the
+//     Mac projects every vertex itself);
 //   * the visible set: in the normal draw mode the engine's own visibility
 //     query walks the PVS and calls back for every visible leaf (whose
 //     polygons are queued) and object; the object-list draw mode
@@ -15,59 +15,41 @@
 //     models, chromakey, then the translucent ones far to near;
 //   * the global light scale and the camera's light add as screen passes.
 //
-// The object types other than world models are drawn by gl_objects.cpp.
+// The object types other than world models are drawn by mr_objects.cpp.
 
 #include <math.h>
 
-#include "glscene.h"
-#include "globjects.h"
-
-GLRMulti g_Multi;
-static uint32_t g_nMultiGen;
-
-void glr_InitMultitexture(void)
-{
-    if (g_nMultiGen == g.nContextGen)
-        return;
-    g_nMultiGen = g.nContextGen;
-    g_Multi.glActiveTexture = (PFN_glActiveTexture)plat_GetProcAddress("glActiveTextureARB");
-    g_Multi.glMultiTexCoord2f = (PFN_glMultiTexCoord2f)plat_GetProcAddress("glMultiTexCoord2fARB");
-    GLint nUnits = 1;
-    glGetIntegerv(0x84E2 /* GL_MAX_TEXTURE_UNITS_ARB */, &nUnits);
-    g_Multi.m_nUnits = nUnits;
-    g_Multi.m_bOK = g_Multi.glActiveTexture && g_Multi.glMultiTexCoord2f && nUnits >= 2;
-    const char* pExt = (const char*)glGetString(GL_EXTENSIONS);
-    g_Multi.m_bCombine = pExt && (strstr(pExt, "GL_ARB_texture_env_combine") || strstr(pExt, "GL_EXT_texture_env_combine"));
-}
+#include "mrscene.h"
+#include "mrobjects.h"
 
 // r_CreateContext: the engine binds a loaded world to the renderer and keeps
 // what this returns at MainWorld+0x1c8, handing it back in every SceneDesc
 // (NULL fails the whole renderer init). The lightmaps are built here.
-void* glr_CreateContext(RenderContextInit* pInit)
+void* mr_CreateContext(RenderContextInit* pInit)
 {
-    GLRContext* pContext = (GLRContext*)calloc(1, sizeof(GLRContext));
+    MRContext* pContext = (MRContext*)calloc(1, sizeof(MRContext));
     if (!pContext)
         return NULL;
     pContext->m_FrameCode = 0xffff;
     pContext->m_pWorld = pInit ? (MainWorld*)pInit->m_pWorld : NULL;
     if (pContext->m_pWorld)
-        glr_BuildLightmaps(pContext);
+        mr_BuildLightmaps(pContext);
     return pContext;
 }
 
-void glr_DeleteContext(void* pContext)
+void mr_DeleteContext(void* pContext)
 {
     if (!pContext)
         return;
-    glr_FreeLightmaps((GLRContext*)pContext);
+    mr_FreeLightmaps((MRContext*)pContext);
     free(pContext);
 }
 
 // ---- the frame ----------------------------------------------------------------------
 
-GLRFrame g_Frame;
+MRFrame g_Frame;
 
-static void glr_QuatToMatrix(const LTRotation& q, float m[3][3])
+static void mr_QuatToMatrix(const LTRotation& q, float m[3][3])
 {
     float n = q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
     float s = n > 0.0f ? 2.0f / n : 0.0f;
@@ -79,24 +61,24 @@ static void glr_QuatToMatrix(const LTRotation& q, float m[3][3])
     m[2][0] = xz - wy;       m[2][1] = yz + wx;       m[2][2] = 1 - (xx + yy);
 }
 
-void glr_RotationMatrix(const LTRotation& q, float m[3][3])
+void mr_RotationMatrix(const LTRotation& q, float m[3][3])
 {
-    glr_QuatToMatrix(q, m);
+    mr_QuatToMatrix(q, m);
 }
 
-static void glr_SetupCamera(SceneDesc* pScene, GLRCamera* pCam)
+static void mr_SetupCamera(SceneDesc* pScene, MRCamera* pCam)
 {
     const LTRect& r = pScene->m_Rect;
     int w = r.right - r.left, h = r.bottom - r.top;
     if (w < 1) w = 1;
     if (h < 1) h = 1;
     pCam->m_nViewX = r.left;
-    pCam->m_nViewY = (int)g.nHeight - r.bottom;
+    pCam->m_nViewY = r.top;
     pCam->m_nViewW = w;
     pCam->m_nViewH = h;
 
     pCam->m_Pos = pScene->m_Pos;
-    glr_QuatToMatrix(pScene->m_Rotation, pCam->m_R);
+    mr_QuatToMatrix(pScene->m_Rotation, pCam->m_R);
 
     // Hor+ (MODERN.md M-P0-01, as the modern d3d.ren does): the game's
     // horizontal field of view is for a 4:3 view; a wider rect sees more.
@@ -111,7 +93,7 @@ static void glr_SetupCamera(SceneDesc* pScene, GLRCamera* pCam)
 
 // The six world-space frustum planes, normals pointing in: a point p is
 // inside a plane when N.p - D >= 0.
-static void glr_SetupFrustum(GLRCamera* pCam)
+static void mr_SetupFrustum(MRCamera* pCam)
 {
     float tx = pCam->m_fTanX, ty = pCam->m_fTanY;
     float cam[6][4] = {
@@ -134,7 +116,7 @@ static void glr_SetupFrustum(GLRCamera* pCam)
     }
 }
 
-bool glr_SphereVisible(const LTVector& c, float r)
+bool mr_SphereVisible(const LTVector& c, float r)
 {
     for (int i = 0; i < 6; i++)
     {
@@ -145,12 +127,12 @@ bool glr_SphereVisible(const LTVector& c, float r)
     return true;
 }
 
-// Projection and view for GL (column-major), and the viewport. The view
+// Projection and view (column-major, rdev.h), and the viewport. The view
 // carries the camera's scale (the sky's SkyScale) as the Mac's
 // m_MatWorld = Scale * R^T * T(-pos) does.
-void glr_LoadCamera(const GLRCamera* pCam)
+void mr_LoadCamera(const MRCamera* pCam)
 {
-    glViewport(pCam->m_nViewX, pCam->m_nViewY, pCam->m_nViewW, pCam->m_nViewH);
+    rd_Viewport(pCam->m_nViewX, pCam->m_nViewY, pCam->m_nViewW, pCam->m_nViewH);
 
     float n = pCam->m_fNear, f = pCam->m_fFar;
     float P[16] = {
@@ -159,8 +141,8 @@ void glr_LoadCamera(const GLRCamera* pCam)
         0, 0, (f + n) / (f - n), 1,
         0, 0, -2.0f * f * n / (f - n), 0,
     };
-    glMatrixMode(GL_PROJECTION);
-    glLoadMatrixf(P);
+    rd_MatrixMode(RD_PROJECTION);
+    rd_LoadMatrix(P);
 
     const float (*R)[3] = pCam->m_R;
     const LTVector& p = pCam->m_Pos;
@@ -175,91 +157,84 @@ void glr_LoadCamera(const GLRCamera* pCam)
     }
     V[3] = V[7] = V[11] = 0.0f;
     V[15] = 1.0f;
-    glMatrixMode(GL_MODELVIEW);
-    glLoadMatrixf(V);
+    rd_MatrixMode(RD_MODELVIEW);
+    rd_LoadMatrix(V);
 }
 
-void glr_MultMatrix(const LTMatrix& M)
+void mr_MultMatrix(const LTMatrix& M)
 {
     float m[16];
     for (int row = 0; row < 4; row++)
         for (int col = 0; col < 4; col++)
             m[col * 4 + row] = M.m[row][col];
-    glMultMatrixf(m);
+    rd_MultMatrix(m);
 }
 
 // ---- fog ---------------------------------------------------------------------------
 
-static void glr_SetFog(bool bSky)
+static void mr_SetFog(bool bSky)
 {
     bool bOn = bSky ? cvi(CV_FogEnable) && cvi(CV_SkyFogEnable) : cvi(CV_FogEnable) != 0;
     if (!bOn)
     {
-        glDisable(GL_FOG);
+        rd_Disable(RD_FOG);
         g_Frame.m_bFog = false;
         return;
     }
-    float col[4] = { cvf(CV_FogR) / 255.0f, cvf(CV_FogG) / 255.0f, cvf(CV_FogB) / 255.0f, 1.0f };
-    glFogi(GL_FOG_MODE, GL_LINEAR);
-    glFogfv(GL_FOG_COLOR, col);
+    rd_FogColor(cvf(CV_FogR) / 255.0f, cvf(CV_FogG) / 255.0f, cvf(CV_FogB) / 255.0f);
     if (bSky)
     {
         // d3d.ren hands SkyFogNearZ/FarZ to the device as the fog range for
         // vertices it has already projected, whose depth runs 0..1 (and the
         // Mac's sky fog coordinate is that fraction too): the sky is fogged
         // all over by (far - 1)/(far - near), not by its distance. A range
-        // far wider than the sky gives GL that constant.
+        // far wider than the sky gives that constant.
         float fNear = cvf(CV_SkyFogNearZ), fFar = cvf(CV_SkyFogFarZ);
         float f = fFar > fNear ? (fFar - 1.0f) / (fFar - fNear) : 0.0f;
         f = f < 0.0f ? 0.0f : f;
         if (f >= 1.0f)
         {
-            glDisable(GL_FOG);
+            rd_Disable(RD_FOG);
             g_Frame.m_bFog = false;
             return;
         }
         const float fEnd = 1.0e7f;
-        glFogf(GL_FOG_START, f > 0.0f ? fEnd - fEnd / f : -1.0e30f);
-        glFogf(GL_FOG_END, fEnd);
+        rd_FogRange(f > 0.0f ? fEnd - fEnd / f : -1.0e30f, fEnd);
     }
     else
-    {
-        glFogf(GL_FOG_START, cvf(CV_FogNearZ));
-        glFogf(GL_FOG_END, cvf(CV_FogFarZ));
-    }
-    glHint(GL_FOG_HINT, GL_NICEST);
-    glEnable(GL_FOG);
+        rd_FogRange(cvf(CV_FogNearZ), cvf(CV_FogFarZ));
+    rd_Enable(RD_FOG);
     g_Frame.m_bFog = true;
 }
 
 // An object that asks for no fog (FLAG_FOGDISABLE) turns it off while it
 // draws.
-void glr_ObjectFog(LTObject* pObj, bool bBegin)
+void mr_ObjectFog(LTObject* pObj, bool bBegin)
 {
     if (!g_Frame.m_bFog || !(pObj->m_Flags & FLAG_FOGDISABLE))
         return;
     if (bBegin)
-        glDisable(GL_FOG);
+        rd_Disable(RD_FOG);
     else
-        glEnable(GL_FOG);
+        rd_Enable(RD_FOG);
 }
 
 // ---- polygons ----------------------------------------------------------------------
 
-struct GLRDrawPoly {
-    GLRTexture* m_pTex;
+struct MRDrawPoly {
+    MRTexture* m_pTex;
     WorldPoly*  m_pPoly;
 };
 
-static GLRDrawPoly* g_pDrawList;
+static MRDrawPoly* g_pDrawList;
 static uint32_t     g_nDrawList, g_nDrawAlloc;
 
-static void glr_QueuePoly(GLRTexture* pTex, WorldPoly* pPoly)
+static void mr_QueuePoly(MRTexture* pTex, WorldPoly* pPoly)
 {
     if (g_nDrawList == g_nDrawAlloc)
     {
         uint32_t n = g_nDrawAlloc ? g_nDrawAlloc * 2 : 4096;
-        GLRDrawPoly* p = (GLRDrawPoly*)realloc(g_pDrawList, n * sizeof(GLRDrawPoly));
+        MRDrawPoly* p = (MRDrawPoly*)realloc(g_pDrawList, n * sizeof(MRDrawPoly));
         if (!p)
             return;
         g_pDrawList = p;
@@ -270,36 +245,36 @@ static void glr_QueuePoly(GLRTexture* pTex, WorldPoly* pPoly)
     g_nDrawList++;
 }
 
-static int glr_CompareDrawPoly(const void* a, const void* b)
+static int mr_CompareDrawPoly(const void* a, const void* b)
 {
-    const GLRDrawPoly* x = (const GLRDrawPoly*)a;
-    const GLRDrawPoly* y = (const GLRDrawPoly*)b;
+    const MRDrawPoly* x = (const MRDrawPoly*)a;
+    const MRDrawPoly* y = (const MRDrawPoly*)b;
     if (x->m_pTex != y->m_pTex)
         return (uintptr_t)x->m_pTex < (uintptr_t)y->m_pTex ? -1 : 1;
-    GLRPolyLM* lx = (GLRPolyLM*)x->m_pPoly->m_pLMPage;
-    GLRPolyLM* ly = (GLRPolyLM*)y->m_pPoly->m_pLMPage;
+    MRPolyLM* lx = (MRPolyLM*)x->m_pPoly->m_pLMPage;
+    MRPolyLM* ly = (MRPolyLM*)y->m_pPoly->m_pLMPage;
     void* ax = lx ? lx->m_pAtlas : NULL;
     void* ay = ly ? ly->m_pAtlas : NULL;
     return (uintptr_t)ax < (uintptr_t)ay ? -1 : (uintptr_t)ax > (uintptr_t)ay ? 1 : 0;
 }
 
-GLRTexture* glr_SurfaceTexture(Surface* pSurf)
+MRTexture* mr_SurfaceTexture(Surface* pSurf)
 {
     if (!pSurf->m_pTexture)
         return NULL;
-    glr_TextureId(pSurf->m_pTexture);
-    return (GLRTexture*)pSurf->m_pTexture->m_pRenderData;
+    mr_TextureId(pSurf->m_pTexture);
+    return (MRTexture*)pSurf->m_pTexture->m_pRenderData;
 }
 
 // Queue a poly unless it faces away from vCam (in the poly's own space).
-static void glr_QueueFacingPoly(WorldPoly* pPoly, const LTVector& vCam)
+static void mr_QueueFacingPoly(WorldPoly* pPoly, const LTVector& vCam)
 {
     Surface* pSurf = pPoly->m_pSurface;
     const LTPlane* pPlane = pSurf->m_pPlane;
     if (pPlane && pPlane->m_Normal.x * vCam.x + pPlane->m_Normal.y * vCam.y +
                   pPlane->m_Normal.z * vCam.z - pPlane->m_Dist <= 0.01f)
         return;
-    glr_QueuePoly(glr_SurfaceTexture(pSurf), pPoly);
+    mr_QueuePoly(mr_SurfaceTexture(pSurf), pPoly);
 }
 
 // ---- texture units ---------------------------------------------------------------------
@@ -311,86 +286,78 @@ static void glr_QueueFacingPoly(WorldPoly* pPoly, const LTVector& vCam)
 // the lightmap; without three units or texture combiners the detail goes.
 
 static int g_nDetailUnit = -1, g_nLMUnit = -1;
-static GLRLMAtlas* g_pBoundAtlas;
-static GLRTexture* g_pBoundDetail;
-static GLRTexture* g_pBoundTex;
+static MRLMAtlas* g_pBoundAtlas;
+static MRTexture* g_pBoundDetail;
+static MRTexture* g_pBoundTex;
 
-static void glr_ActiveUnit(int n)
+static void mr_ActiveUnit(int n)
 {
-    g_Multi.glActiveTexture(GL_TEXTURE0_ARB + n);
+    rd_ActiveTexture(n);
 }
 
-// combine RGB = op(TEXTURE, PREVIOUS) * scale, alpha = PREVIOUS
-static void glr_CombineUnit(GLenum op, float fScale)
+// combine RGB = op(TEXTURE, PREVIOUS) * scale, alpha = eAlpha
+static void mr_CombineUnit(RDCombineOp op, float fScale, RDCombineArg eAlpha = RD_ARG_PREVIOUS)
 {
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
-    glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, op);
-    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB, GL_TEXTURE);
-    glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_ARB, GL_SRC_COLOR);
-    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_ARB, GL_PREVIOUS_ARB);
-    glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB_ARB, GL_SRC_COLOR);
-    glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, fScale);
-    glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_ARB, GL_REPLACE);
-    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_PREVIOUS_ARB);
-    glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA_ARB, GL_SRC_ALPHA);
+    RDCombine c = { op, RD_ARG_TEXTURE, RD_ARG_PREVIOUS, fScale, RD_OP_REPLACE, eAlpha, eAlpha };
+    rd_TexCombine(c);
 }
 
-static void glr_BeginUnits(bool bLightmaps)
+static void mr_BeginUnits(bool bLightmaps)
 {
     g_nDetailUnit = g_nLMUnit = -1;
     if (!bLightmaps)
         return;
     g_nLMUnit = 1;
-    if (g_Multi.m_bCombine && g_Multi.m_nUnits >= 3 && (cvi(CV_DetailTextures) || cvi(CV_EnvMapWorld)))
+    if (g_RDCaps.bCombine && g_RDCaps.nTextureUnits >= 3 && (cvi(CV_DetailTextures) || cvi(CV_EnvMapWorld)))
     {
         g_nDetailUnit = 1;
         g_nLMUnit = 2;
-        glr_ActiveUnit(g_nDetailUnit);
-        glr_CombineUnit(cvi(CV_DetailTextureAdd) ? GL_ADD_SIGNED_ARB : GL_MODULATE, 1.0f);
-        glDisable(GL_TEXTURE_2D);
+        mr_ActiveUnit(g_nDetailUnit);
+        mr_CombineUnit(cvi(CV_DetailTextureAdd) ? RD_OP_ADD_SIGNED : RD_OP_MODULATE, 1.0f);
+        rd_Disable(RD_TEXTURE_2D);
     }
-    glr_ActiveUnit(g_nLMUnit);
-    if (g_Multi.m_bCombine)
-        glr_CombineUnit(GL_MODULATE, cvi(CV_Saturate) ? 2.0f : 1.0f);
+    mr_ActiveUnit(g_nLMUnit);
+    if (g_RDCaps.bCombine)
+        mr_CombineUnit(RD_OP_MODULATE, cvi(CV_Saturate) ? 2.0f : 1.0f);
     else
-        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    glDisable(GL_TEXTURE_2D);
-    glr_ActiveUnit(0);
+        rd_TexEnv(RD_ENV_MODULATE);
+    rd_Disable(RD_TEXTURE_2D);
+    mr_ActiveUnit(0);
 }
 
-static void glr_EndUnits(void)
+static void mr_EndUnits(void)
 {
     for (int n = 1; n <= 2; n++)
     {
         if (n != g_nDetailUnit && n != g_nLMUnit)
             continue;
-        glr_ActiveUnit(n);
-        glDisable(GL_TEXTURE_2D);
-        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+        mr_ActiveUnit(n);
+        rd_Disable(RD_TEXTURE_2D);
+        rd_TexEnv(RD_ENV_MODULATE);
     }
     if (g_nLMUnit >= 0)
-        glr_ActiveUnit(0);
+        mr_ActiveUnit(0);
     g_nDetailUnit = g_nLMUnit = -1;
 }
 
-static void glr_SetUnitTexture(int nUnit, GLuint id)
+static void mr_SetUnitTexture(int nUnit, uint32_t id)
 {
-    glr_ActiveUnit(nUnit);
+    mr_ActiveUnit(nUnit);
     if (id)
     {
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, id);
+        rd_Enable(RD_TEXTURE_2D);
+        rd_BindTexture(id);
     }
     else
-        glDisable(GL_TEXTURE_2D);
-    glr_ActiveUnit(0);
+        rd_Disable(RD_TEXTURE_2D);
+    mr_ActiveUnit(0);
 }
 
-static void glr_SetLightmapUnit(GLRLMAtlas* pAtlas)
+static void mr_SetLightmapUnit(MRLMAtlas* pAtlas)
 {
     if (pAtlas == g_pBoundAtlas || g_nLMUnit < 0)
         return;
-    glr_SetUnitTexture(g_nLMUnit, pAtlas ? pAtlas->m_Id : 0);
+    mr_SetUnitTexture(g_nLMUnit, pAtlas ? pAtlas->m_Id : 0);
     g_pBoundAtlas = pAtlas;
 }
 
@@ -398,18 +365,18 @@ static void glr_SetLightmapUnit(GLRLMAtlas* pAtlas)
 // RenderStruct's PanInfo[GLOBALPAN_SKYSHADOW], planar on world XZ, its
 // offsets animated by the engine (docs/world.md 3.4).
 struct PanInfo { SharedTexture* m_pTexture; float m_xOffset, m_zOffset, m_xScale, m_zScale; };
-static GLRTexture* g_pPanTex;
+static MRTexture* g_pPanTex;
 static float g_fPanU, g_fPanV, g_fPanOffX, g_fPanOffZ;
-#define GLR_PANBOUND ((GLRLMAtlas*)&g_pPanTex)  // g_pBoundAtlas when the pan texture is on the unit
+#define MR_PANBOUND ((MRLMAtlas*)&g_pPanTex)  // g_pBoundAtlas when the pan texture is on the unit
 
-static void glr_SetupPan(bool bWorld)
+static void mr_SetupPan(bool bWorld)
 {
     g_pPanTex = NULL;
     const PanInfo* pPan = (const PanInfo*)g.pStruct->m_GlobalPanInfo;
     if (!bWorld || !pPan->m_pTexture || pPan->m_xScale == 0.0f || pPan->m_zScale == 0.0f)
         return;
-    glr_TextureId(pPan->m_pTexture);
-    g_pPanTex = (GLRTexture*)pPan->m_pTexture->m_pRenderData;
+    mr_TextureId(pPan->m_pTexture);
+    g_pPanTex = (MRTexture*)pPan->m_pTexture->m_pRenderData;
     if (!g_pPanTex)
         return;
     g_fPanU = g_pPanTex->m_fUMul / pPan->m_xScale;
@@ -418,44 +385,44 @@ static void glr_SetupPan(bool bWorld)
     g_fPanOffZ = pPan->m_zOffset;
 }
 
-static void glr_SetDetailUnit(GLRTexture* pDetail)
+static void mr_SetDetailUnit(MRTexture* pDetail)
 {
     if (pDetail == g_pBoundDetail || g_nDetailUnit < 0)
         return;
-    glr_SetUnitTexture(g_nDetailUnit, pDetail ? pDetail->m_Id : 0);
+    mr_SetUnitTexture(g_nDetailUnit, pDetail ? pDetail->m_Id : 0);
     g_pBoundDetail = pDetail;
 }
 
-void glr_SetBaseTexture(GLRTexture* pTex)
+void mr_SetBaseTexture(MRTexture* pTex)
 {
     if (pTex == g_pBoundTex)
         return;
     if (pTex)
     {
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, pTex->m_Id);
+        rd_Enable(RD_TEXTURE_2D);
+        rd_BindTexture(pTex->m_Id);
     }
     else
-        glDisable(GL_TEXTURE_2D);
+        rd_Disable(RD_TEXTURE_2D);
     g_pBoundTex = pTex;
 }
 
-void glr_ForgetBindings(void)
+void mr_ForgetBindings(void)
 {
-    g_pBoundTex = (GLRTexture*)-1;
-    g_pBoundAtlas = (GLRLMAtlas*)-1;
-    g_pBoundDetail = (GLRTexture*)-1;
+    g_pBoundTex = (MRTexture*)-1;
+    g_pBoundAtlas = (MRLMAtlas*)-1;
+    g_pBoundDetail = (MRTexture*)-1;
 }
 
 // The detail texture a base texture names (DTX "DetailTex", link type 0).
 // The texture's linked texture of this kind (0 detail, 1 environment map).
-static GLRTexture* glr_LinkedOf(Surface* pSurf, uint32_t nType)
+static MRTexture* mr_LinkedOf(Surface* pSurf, uint32_t nType)
 {
     SharedTexture* pBase = pSurf->m_pTexture;
     if (!pBase || !pBase->m_pLinkedTexture || pBase->m_nLinkType != nType)
         return NULL;
-    glr_TextureId(pBase->m_pLinkedTexture);
-    return (GLRTexture*)pBase->m_pLinkedTexture->m_pRenderData;
+    mr_TextureId(pBase->m_pLinkedTexture);
+    return (MRTexture*)pBase->m_pLinkedTexture->m_pRenderData;
 }
 
 // The camera in the space of the polys being drawn (world models'), for
@@ -464,7 +431,7 @@ static LTVector g_vPolyCam;
 
 // d3d.ren's 0x1001e950 (the Mac's r_CalcEnvMapCoords): the eye-to-vertex
 // direction reflected about the normal, two of its components into [0, 1].
-void glr_ReflectCoords(const LTVector& vCam, const LTVector& pos, const LTVector& N, float* pS, float* pT)
+void mr_ReflectCoords(const LTVector& vCam, const LTVector& pos, const LTVector& N, float* pS, float* pT)
 {
     float dx = pos.x - vCam.x, dy = pos.y - vCam.y, dz = pos.z - vCam.z;
     float k = 2.0f * (dx * N.x + dy * N.y + dz * N.z);
@@ -481,48 +448,47 @@ void glr_ReflectCoords(const LTVector& vCam, const LTVector& pos, const LTVector
 
 // The world's coordinates are scaled by DetailTextureScale, as the detail
 // texture's are.
-static void glr_EnvMapCoords(const LTVector& pos, const LTVector& N, float fScale, float* pS, float* pT)
+static void mr_EnvMapCoords(const LTVector& pos, const LTVector& N, float fScale, float* pS, float* pT)
 {
-    glr_ReflectCoords(g_vPolyCam, pos, N, pS, pT);
+    mr_ReflectCoords(g_vPolyCam, pos, N, pS, pT);
     *pS *= fScale;
     *pT *= fScale;
 }
 
-GLRTexture* glr_EnvMapOf(SharedTexture* pBase)
+MRTexture* mr_EnvMapOf(SharedTexture* pBase)
 {
     if (!pBase || !pBase->m_pLinkedTexture || pBase->m_nLinkType != 1)
         return NULL;
-    glr_TextureId(pBase->m_pLinkedTexture);
-    return (GLRTexture*)pBase->m_pLinkedTexture->m_pRenderData;
+    mr_TextureId(pBase->m_pLinkedTexture);
+    return (MRTexture*)pBase->m_pLinkedTexture->m_pRenderData;
 }
 
 // An object's surface texture on unit 1 over its environment map on unit
 // 0, as both renderers stage them (r_SetEnvMapTextureStates, d3d.ren's
 // 0x10011450): the map times the vertex colour, the texture added signed
 // under DetailTextureAdd (else modulating), the alpha the texture's alone.
-bool glr_BeginEnvUnit(GLRTexture* pTex)
+bool mr_BeginEnvUnit(MRTexture* pTex)
 {
-    if (!pTex || !g_Multi.m_bCombine || g_Multi.m_nUnits < 2)
+    if (!pTex || !g_RDCaps.bCombine || g_RDCaps.nTextureUnits < 2)
         return false;
-    glr_ActiveUnit(1);
-    glr_CombineUnit(cvi(CV_DetailTextureAdd) ? GL_ADD_SIGNED_ARB : GL_MODULATE, 1.0f);
-    glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_TEXTURE);
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, pTex->m_Id);
-    glr_ActiveUnit(0);
+    mr_ActiveUnit(1);
+    mr_CombineUnit(cvi(CV_DetailTextureAdd) ? RD_OP_ADD_SIGNED : RD_OP_MODULATE, 1.0f, RD_ARG_TEXTURE);
+    rd_Enable(RD_TEXTURE_2D);
+    rd_BindTexture(pTex->m_Id);
+    mr_ActiveUnit(0);
     return true;
 }
 
-void glr_EndEnvUnit(void)
+void mr_EndEnvUnit(void)
 {
-    glr_ActiveUnit(1);
-    glDisable(GL_TEXTURE_2D);
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    glr_ActiveUnit(0);
-    glr_ForgetBindings();
+    mr_ActiveUnit(1);
+    rd_Disable(RD_TEXTURE_2D);
+    rd_TexEnv(RD_ENV_MODULATE);
+    mr_ActiveUnit(0);
+    mr_ForgetBindings();
 }
 
-static inline uint8_t glr_Saturate(uint8_t c, float fTint, bool bDouble)
+static inline uint8_t mr_Saturate(uint8_t c, float fTint, bool bDouble)
 {
     float v = c * fTint * (bDouble ? 2.0f : 1.0f);
     return (uint8_t)(v > 255.0f ? 255.0f : v);
@@ -534,26 +500,26 @@ static inline uint8_t glr_Saturate(uint8_t c, float fTint, bool bDouble)
 // colour (r_SetupWMColorScale) with its alpha.
 // ---- dynamic lights on the world (r_DrawLight, r_ProcessBspLight) -------------------
 
-static GLRWorldLight g_WLights[GLR_MAXWORLDLIGHTS];
+static MRWorldLight g_WLights[MR_MAXWORLDLIGHTS];
 static uint32_t      g_nWLights;
 
 // The frame's lights that light the world, in the space of the BSP about to
 // draw (pBack: world -> model; NULL for the main world).
-static void glr_SetupWorldLights(const LTMatrix* pBack)
+static void mr_SetupWorldLights(const LTMatrix* pBack)
 {
     g_nWLights = 0;
     if (!cvi(CV_DynamicLight) || !g_Frame.m_pContext)
         return;
     bool bFast = cvi(CV_FastLight) != 0;
-    GLRObjList* pList = glr_ObjList(VS_LIGHTS);
-    for (uint32_t i = 0; i < pList->m_nObjects && g_nWLights < GLR_MAXWORLDLIGHTS; i++)
+    MRObjList* pList = mr_ObjList(VS_LIGHTS);
+    for (uint32_t i = 0; i < pList->m_nObjects && g_nWLights < MR_MAXWORLDLIGHTS; i++)
     {
         LTObject* L = pList->m_pObjects[i];
         float r;
         memcpy(&r, (const uint8_t*)L + 0x1a8, 4);
         if ((L->m_Flags & FLAG_ONLYLIGHTOBJECTS) || r <= 0.0f)
             continue;
-        GLRWorldLight& W = g_WLights[g_nWLights++];
+        MRWorldLight& W = g_WLights[g_nWLights++];
         const LTVector& v = L->m_Pos;
         if (pBack)
         {
@@ -577,7 +543,7 @@ static void glr_SetupWorldLights(const LTMatrix* pBack)
 
 // r_DoesLightTouchPoly: the light's sphere reaches the poly's plane and its
 // bounding sphere.
-static bool glr_LightTouchesPoly(const GLRWorldLight& L, const WorldPoly* pPoly)
+static bool mr_LightTouchesPoly(const MRWorldLight& L, const WorldPoly* pPoly)
 {
     const LTPlane* pPlane = pPoly->m_pSurface->m_pPlane;
     if (pPlane)
@@ -593,25 +559,25 @@ static bool glr_LightTouchesPoly(const GLRWorldLight& L, const WorldPoly* pPoly)
 }
 
 // The lights that reach the poly, into pOut; how many.
-static uint32_t glr_PolyLights(const WorldPoly* pPoly, GLRWorldLight* pOut)
+static uint32_t mr_PolyLights(const WorldPoly* pPoly, MRWorldLight* pOut)
 {
     uint32_t n = 0;
     for (uint32_t i = 0; i < g_nWLights; i++)
-        if (glr_LightTouchesPoly(g_WLights[i], pPoly))
+        if (mr_LightTouchesPoly(g_WLights[i], pPoly))
             pOut[n++] = g_WLights[i];
     return n;
 }
 
 // A gouraud poly's vertex: its colour plus the lights, as r_LightData's
 // texel (r_DrawGouraudDynamicLight).
-static void glr_LightVertex(const LTVector& pos, const GLRWorldLight* pLights, uint32_t nLights,
+static void mr_LightVertex(const LTVector& pos, const MRWorldLight* pLights, uint32_t nLights,
                             uint8_t* pRGB)
 {
     float fSat = cvf(CV_LightSaturate) / 63.0f;
     int c[3] = { pRGB[0], pRGB[1], pRGB[2] };
     for (uint32_t l = 0; l < nLights; l++)
     {
-        const GLRWorldLight& L = pLights[l];
+        const MRWorldLight& L = pLights[l];
         float dx = pos.x - L.m_Pos.x, dy = pos.y - L.m_Pos.y, dz = pos.z - L.m_Pos.z;
         float d2 = dx * dx + dy * dy + dz * dz, r2 = L.m_fRadius * L.m_fRadius;
         if (d2 >= r2)
@@ -633,46 +599,46 @@ static void glr_LightVertex(const LTVector& pos, const GLRWorldLight* pLights, u
         pRGB[j] = (uint8_t)(c[j] < 0 ? 0 : c[j] > 255 ? 255 : c[j]);
 }
 
-static void glr_DrawPoly(WorldPoly* pPoly, GLRTexture* pTex, bool bLightmaps,
+static void mr_DrawPoly(WorldPoly* pPoly, MRTexture* pTex, bool bLightmaps,
                          const float* pTint, uint8_t nAlpha)
 {
     float fU = pTex ? pTex->m_fUMul : 0.0f, fV = pTex ? pTex->m_fVMul : 0.0f;
     bool bFullbright = pTex && (pTex->m_DtxFlags & DTX_FULLBRITE);
-    GLRPolyLM* pLM = bLightmaps && !bFullbright ? (GLRPolyLM*)pPoly->m_pLMPage : NULL;
+    MRPolyLM* pLM = bLightmaps && !bFullbright ? (MRPolyLM*)pPoly->m_pLMPage : NULL;
     // A panning-sky receiver takes the pan texture where a lightmap would go
     // (r_DrawSPMTPanningSkyPoly): surface texture times the pan texture.
-    GLRTexture* pPan = bLightmaps && !pLM && !bFullbright && g_pPanTex && g_nLMUnit >= 0 &&
+    MRTexture* pPan = bLightmaps && !pLM && !bFullbright && g_pPanTex && g_nLMUnit >= 0 &&
                        (pPoly->m_pSurface->m_Flags & SURF_PANNINGSKY) ? g_pPanTex : NULL;
     if (pPan)
     {
-        if (g_pBoundAtlas != GLR_PANBOUND)
+        if (g_pBoundAtlas != MR_PANBOUND)
         {
-            glr_SetUnitTexture(g_nLMUnit, pPan->m_Id);
-            g_pBoundAtlas = GLR_PANBOUND;
+            mr_SetUnitTexture(g_nLMUnit, pPan->m_Id);
+            g_pBoundAtlas = MR_PANBOUND;
         }
     }
     else if (bLightmaps)
-        glr_SetLightmapUnit(pLM ? pLM->m_pAtlas : NULL);
+        mr_SetLightmapUnit(pLM ? pLM->m_pAtlas : NULL);
     // The detail unit takes the texture's detail texture or, in its place,
     // its environment map (d3d.ren's two second-pass paths: the base added
     // signed to either).
-    GLRTexture* pDetail = NULL;
-    GLRTexture* pEnv = NULL;
+    MRTexture* pDetail = NULL;
+    MRTexture* pEnv = NULL;
     if (pLM && g_nDetailUnit >= 0)
     {
         if (cvi(CV_DetailTextures))
-            pDetail = glr_LinkedOf(pPoly->m_pSurface, 0);
+            pDetail = mr_LinkedOf(pPoly->m_pSurface, 0);
         if (!pDetail && cvi(CV_EnvMapWorld) && pPoly->m_pSurface->m_pPlane)
-            pEnv = glr_LinkedOf(pPoly->m_pSurface, 1);
+            pEnv = mr_LinkedOf(pPoly->m_pSurface, 1);
     }
     if (g_nDetailUnit >= 0)
-        glr_SetDetailUnit(pDetail ? pDetail : pEnv);
+        mr_SetDetailUnit(pDetail ? pDetail : pEnv);
 
     LTVector P, Q;
     float fInvSize = 0.0f, fOffU = 0.0f, fOffV = 0.0f, fGrid = 1.0f;
     if (pLM)
     {
-        glr_LMVectors(pPoly->m_pSurface, &P, &Q);
+        mr_LMVectors(pPoly->m_pSurface, &P, &Q);
         fInvSize = 1.0f / pLM->m_pAtlas->m_nSize;
         fOffU = pLM->m_X + 0.5f;
         fOffV = pLM->m_Y + 0.5f;
@@ -700,8 +666,8 @@ static void glr_DrawPoly(WorldPoly* pPoly, GLRTexture* pTex, bool bLightmaps,
         b = (uint8_t)(255 * pTint[2]);
     }
 
-    GLRWorldLight lights[GLR_MAXWORLDLIGHTS];
-    uint32_t nLights = !bFullbright && !pLM && g_nWLights ? glr_PolyLights(pPoly, lights) : 0;
+    MRWorldLight lights[MR_MAXWORLDLIGHTS];
+    uint32_t nLights = !bFullbright && !pLM && g_nWLights ? mr_PolyLights(pPoly, lights) : 0;
 
     const WorldPolyVertex* pVerts = pPoly->m_Verts;
     uint32_t nVerts = pPoly->m_nVerts;
@@ -710,30 +676,30 @@ static void glr_DrawPoly(WorldPoly* pPoly, GLRTexture* pTex, bool bLightmaps,
         pVerts = pPoly->m_pFixVerts;
         nVerts = pPoly->m_nFixVerts;
     }
-    glBegin(GL_TRIANGLE_FAN);
+    rd_Begin(RD_TRIANGLE_FAN);
     for (uint32_t v = 0; v < nVerts; v++)
     {
         const WorldPolyVertex& vert = pVerts[v];
         const LTVector& pos = *vert.m_pPos;
         if (bFullbright || pLM)
-            glColor4ub(r, gg, b, nAlpha);
+            rd_Color4ub(r, gg, b, nAlpha);
         else
         {
             uint8_t rgb[3] = { vert.m_R, vert.m_G, vert.m_B };
             if (nLights)
-                glr_LightVertex(pos, lights, nLights, rgb);
-            glColor4ub(glr_Saturate(rgb[0], pTint[0], bDouble), glr_Saturate(rgb[1], pTint[1], bDouble),
-                       glr_Saturate(rgb[2], pTint[2], bDouble), nAlpha);
+                mr_LightVertex(pos, lights, nLights, rgb);
+            rd_Color4ub(mr_Saturate(rgb[0], pTint[0], bDouble), mr_Saturate(rgb[1], pTint[1], bDouble),
+                       mr_Saturate(rgb[2], pTint[2], bDouble), nAlpha);
         }
-        glTexCoord2f(vert.m_U * fU, vert.m_V * fV);
+        rd_TexCoord2f(vert.m_U * fU, vert.m_V * fV);
         if (pDetail)
-            g_Multi.glMultiTexCoord2f(GL_TEXTURE0_ARB + g_nDetailUnit,
+            rd_MultiTexCoord2f(g_nDetailUnit,
                                       vert.m_U * fDA + vert.m_V * fDB, vert.m_U * fDC + vert.m_V * fDD);
         else if (pEnv)
         {
             float s, t;
-            glr_EnvMapCoords(pos, pPoly->m_pSurface->m_pPlane->m_Normal, cvf(CV_DetailTextureScale), &s, &t);
-            g_Multi.glMultiTexCoord2f(GL_TEXTURE0_ARB + g_nDetailUnit, s, t);
+            mr_EnvMapCoords(pos, pPoly->m_pSurface->m_pPlane->m_Normal, cvf(CV_DetailTextureScale), &s, &t);
+            rd_MultiTexCoord2f(g_nDetailUnit, s, t);
         }
         if (pLM)
         {
@@ -741,26 +707,26 @@ static void glr_DrawPoly(WorldPoly* pPoly, GLRTexture* pTex, bool bLightmaps,
                   dz = pos.z - pPoly->m_LMOrigin.z;
             float lu = (dx * P.x + dy * P.y + dz * P.z) / fGrid + fOffU;
             float lv = (dx * Q.x + dy * Q.y + dz * Q.z) / fGrid + fOffV;
-            g_Multi.glMultiTexCoord2f(GL_TEXTURE0_ARB + g_nLMUnit, lu * fInvSize, lv * fInvSize);
+            rd_MultiTexCoord2f(g_nLMUnit, lu * fInvSize, lv * fInvSize);
         }
         else if (pPan)
-            g_Multi.glMultiTexCoord2f(GL_TEXTURE0_ARB + g_nLMUnit, (pos.x + g_fPanOffX) * g_fPanU,
+            rd_MultiTexCoord2f(g_nLMUnit, (pos.x + g_fPanOffX) * g_fPanU,
                                       (pos.z + g_fPanOffZ) * g_fPanV);
-        glVertex3f(pos.x, pos.y, pos.z);
+        rd_Vertex3f(pos.x, pos.y, pos.z);
     }
-    glEnd();
+    rd_End();
 }
 
 static const float g_White[3] = { 1, 1, 1 };
 
 // Draw the queue, sorted by texture and lightmap atlas. pBack brings the
 // frame's dynamic lights into the queued polys' space (world models).
-static void glr_FlushPolys(const float* pTint, uint8_t nAlpha, const LTMatrix* pBack)
+static void mr_FlushPolys(const float* pTint, uint8_t nAlpha, const LTMatrix* pBack)
 {
-    qsort(g_pDrawList, g_nDrawList, sizeof(GLRDrawPoly), glr_CompareDrawPoly);
+    qsort(g_pDrawList, g_nDrawList, sizeof(MRDrawPoly), mr_CompareDrawPoly);
     bool bLightmaps = g_Frame.m_bLightmaps;
-    glr_SetupWorldLights(pBack);
-    glr_SetupPan(!pBack);
+    mr_SetupWorldLights(pBack);
+    mr_SetupPan(!pBack);
     const LTVector& c = g_Frame.m_Cam.m_Pos;
     if (pBack)
     {
@@ -773,27 +739,27 @@ static void glr_FlushPolys(const float* pTint, uint8_t nAlpha, const LTMatrix* p
         g_vPolyCam = c;
     if (bLightmaps)
     {
-        GLRWorldLight lights[GLR_MAXWORLDLIGHTS];
+        MRWorldLight lights[MR_MAXWORLDLIGHTS];
         for (uint32_t i = 0; g_nWLights && i < g_nDrawList; i++)
         {
             WorldPoly* pPoly = g_pDrawList[i].m_pPoly;
-            GLRTexture* pTex = g_pDrawList[i].m_pTex;
+            MRTexture* pTex = g_pDrawList[i].m_pTex;
             if (!pPoly->m_pLMPage || (pTex && (pTex->m_DtxFlags & DTX_FULLBRITE)))
                 continue;
-            uint32_t n = glr_PolyLights(pPoly, lights);
+            uint32_t n = mr_PolyLights(pPoly, lights);
             if (n)
-                glr_LightPolyLM(g_Frame.m_pContext, pPoly, lights, n);
+                mr_LightPolyLM(g_Frame.m_pContext, pPoly, lights, n);
         }
-        glr_UploadLightmaps(g_Frame.m_pContext);
+        mr_UploadLightmaps(g_Frame.m_pContext);
     }
-    glr_ForgetBindings();
-    glr_BeginUnits(bLightmaps);
+    mr_ForgetBindings();
+    mr_BeginUnits(bLightmaps);
     for (uint32_t i = 0; i < g_nDrawList; i++)
     {
-        glr_SetBaseTexture(g_pDrawList[i].m_pTex);
-        glr_DrawPoly(g_pDrawList[i].m_pPoly, g_pDrawList[i].m_pTex, bLightmaps, pTint, nAlpha);
+        mr_SetBaseTexture(g_pDrawList[i].m_pTex);
+        mr_DrawPoly(g_pDrawList[i].m_pPoly, g_pDrawList[i].m_pTex, bLightmaps, pTint, nAlpha);
     }
-    glr_EndUnits();
+    mr_EndUnits();
     g_nDrawList = 0;
     g_nWLights = 0;
 }
@@ -801,7 +767,7 @@ static void glr_FlushPolys(const float* pTint, uint8_t nAlpha, const LTMatrix* p
 // ---- visibility -------------------------------------------------------------------
 
 // r_ProcessObject's test (docs/objects.md 2.4); no portal views here.
-bool glr_ShouldDraw(LTObject* pObj)
+bool mr_ShouldDraw(LTObject* pObj)
 {
     int nType = pObj->m_ObjectType;
     if (nType <= OT_NORMAL || nType >= NUM_OBJECTTYPES || nType == OT_CAMERA || nType == OT_POLYGRID)
@@ -811,7 +777,7 @@ bool glr_ShouldDraw(LTObject* pObj)
     return (pObj->m_Flags & FLAG_VISIBLE) != 0;
 }
 
-static void glr_ProcessAttachments(LTObject* pObj, uint32_t nDepth)
+static void mr_ProcessAttachments(LTObject* pObj, uint32_t nDepth)
 {
     if (nDepth > 32)
         return;
@@ -821,23 +787,23 @@ static void glr_ProcessAttachments(LTObject* pObj, uint32_t nDepth)
         LTObject* pChild = g.pStruct->ProcessAttachment(pObj, a);
         if (!pChild || pChild->m_FrameCode == g_Frame.m_ObjectFrameCode)
             continue;
-        glr_ProcessAttachments(pChild, nDepth + 1);
-        if (glr_ShouldDraw(pChild))
+        mr_ProcessAttachments(pChild, nDepth + 1);
+        if (mr_ShouldDraw(pChild))
         {
-            glr_QueueObject(pChild);
+            mr_QueueObject(pChild);
             pChild->m_FrameCode = g_Frame.m_ObjectFrameCode;
         }
     }
 }
 
-static void glr_ReallyProcessObject(LTObject* pObj)
+static void mr_ReallyProcessObject(LTObject* pObj)
 {
-    glr_QueueObject(pObj);
+    mr_QueueObject(pObj);
     if (pObj->m_pAttachments)
-        glr_ProcessAttachments(pObj, 0);
+        mr_ProcessAttachments(pObj, 0);
 }
 
-static void glr_QueueWorldPoly(WorldPoly* pPoly)
+static void mr_QueueWorldPoly(WorldPoly* pPoly)
 {
     if (pPoly->m_FrameCode == g_Frame.m_WorldFrameCode)
         return;
@@ -854,14 +820,14 @@ static void glr_QueueWorldPoly(WorldPoly* pPoly)
         return;
     }
     if (cvi(CV_DrawWorld))
-        glr_QueueFacingPoly(pPoly, g_Frame.m_Cam.m_Pos);
+        mr_QueueFacingPoly(pPoly, g_Frame.m_Cam.m_Pos);
 }
 
 static void cb_Object(LTObject* pObj, void* pUser)
 {
     (void)pUser;
-    if (glr_ShouldDraw(pObj))
-        glr_ReallyProcessObject(pObj);
+    if (mr_ShouldDraw(pObj))
+        mr_ReallyProcessObject(pObj);
 }
 
 // r_AddRenderObjects: a world tree node's objects, those that may be drawn.
@@ -872,7 +838,7 @@ static void cb_AddObjects(LTLink* pHead, LTObject*** ppArray, int* pnCount)
         LTObject* pObj = (LTObject*)pCur->m_pData;
         if (pObj->m_188)
             break;
-        if (glr_ShouldDraw(pObj))
+        if (mr_ShouldDraw(pObj))
             (*ppArray)[(*pnCount)++] = pObj;
     }
 }
@@ -889,12 +855,12 @@ static void cb_Leaf(Leaf* pLeaf, void* pUser)
             pObj->m_FrameCode != g_Frame.m_ObjectFrameCode)
         {
             pObj->m_FrameCode = g_Frame.m_ObjectFrameCode;
-            glr_ReallyProcessObject(pObj);
+            mr_ReallyProcessObject(pObj);
         }
     }
     for (uint32_t i = 0; i < pLeaf->m_nPolies; i++)
         if (pLeaf->m_Polies[i])
-            glr_QueueWorldPoly(pLeaf->m_Polies[i]);
+            mr_QueueWorldPoly(pLeaf->m_Polies[i]);
 }
 
 static LTBOOL cb_PortalTest(void* pUserPortal)
@@ -906,12 +872,12 @@ static LTBOOL cb_PortalTest(void* pUserPortal)
 // r_NodeFilter: a world tree node wholly outside the frustum is skipped.
 static LTBOOL cb_NodeFilter(WorldTreeNode* pNode)
 {
-    return glr_SphereVisible(wtn_Center(pNode), wtn_Radius(pNode));
+    return mr_SphereVisible(wtn_Center(pNode), wtn_Radius(pNode));
 }
 
 // r_IncrementFrameCode: the world's frame code; at its wrap every leaf and
 // poly stamp is cleared.
-static void glr_IncrementFrameCode(GLRContext* pContext)
+static void mr_IncrementFrameCode(MRContext* pContext)
 {
     MainWorld* pWorld = pContext->m_pWorld;
     if (pContext->m_FrameCode == 0xffff)
@@ -934,7 +900,7 @@ static void glr_IncrementFrameCode(GLRContext* pContext)
         pContext->m_FrameCode++;
 }
 
-static WorldBsp* glr_FindBsp(MainWorld* pWorld, uint32_t nFlag)
+static WorldBsp* mr_FindBsp(MainWorld* pWorld, uint32_t nFlag)
 {
     for (uint32_t i = 0; i < pWorld->m_Worlds.m_nElements; i++)
     {
@@ -947,14 +913,14 @@ static WorldBsp* glr_FindBsp(MainWorld* pWorld, uint32_t nFlag)
 
 // No PVS (or DrawAll): every poly of the main world, and every object filed
 // in the vis BSP's nodes (r_DrawBSP).
-static void glr_VisitAll(MainWorld* pWorld)
+static void mr_VisitAll(MainWorld* pWorld)
 {
-    WorldBsp* pMain = glr_FindBsp(pWorld, WORLDINFO_MAINWORLD);
+    WorldBsp* pMain = mr_FindBsp(pWorld, WORLDINFO_MAINWORLD);
     if (pMain)
         for (uint32_t i = 0; i < pMain->m_nPolies; i++)
             if (pMain->m_Polies[i])
-                glr_QueueWorldPoly(pMain->m_Polies[i]);
-    WorldBsp* pVis = glr_FindBsp(pWorld, WORLDINFO_VIS);
+                mr_QueueWorldPoly(pMain->m_Polies[i]);
+    WorldBsp* pVis = mr_FindBsp(pWorld, WORLDINFO_VIS);
     if (!pVis)
         pVis = pMain;
     Node* pNodes = pVis ? (Node*)pVis->m_Nodes : NULL;
@@ -966,10 +932,10 @@ static void glr_VisitAll(MainWorld* pWorld)
             LTObject* pObj = (LTObject*)pCur->m_pData;
             if (!pObj || pObj->m_188)
                 break;
-            if (pObj->m_FrameCode != g_Frame.m_ObjectFrameCode && glr_ShouldDraw(pObj))
+            if (pObj->m_FrameCode != g_Frame.m_ObjectFrameCode && mr_ShouldDraw(pObj))
             {
                 pObj->m_FrameCode = g_Frame.m_ObjectFrameCode;
-                glr_ReallyProcessObject(pObj);
+                mr_ReallyProcessObject(pObj);
             }
         }
     }
@@ -983,9 +949,9 @@ static void glr_VisitAll(MainWorld* pWorld)
 // to a node's front, the node's poly is hit if it is solid and the
 // crossing is inside its edges.
 
-#define GLR_ISECT_EPS 0.01f
+#define MR_ISECT_EPS 0.01f
 
-static WorldPoly* glr_IntersectNode(Node* pNode, LTVector vFrom, LTVector vTo, int nDepth)
+static WorldPoly* mr_IntersectNode(Node* pNode, LTVector vFrom, LTVector vTo, int nDepth)
 {
     while (pNode && !(pNode->m_Flags & 3) && nDepth < 512)
     {
@@ -995,33 +961,33 @@ static WorldPoly* glr_IntersectNode(Node* pNode, LTVector vFrom, LTVector vTo, i
         const LTPlane& P = *pPoly->m_pSurface->m_pPlane;
         float d1 = P.m_Normal.x * vFrom.x + P.m_Normal.y * vFrom.y + P.m_Normal.z * vFrom.z - P.m_Dist;
         float d2 = P.m_Normal.x * vTo.x + P.m_Normal.y * vTo.y + P.m_Normal.z * vTo.z - P.m_Dist;
-        if (d1 > GLR_ISECT_EPS && d2 > GLR_ISECT_EPS)
+        if (d1 > MR_ISECT_EPS && d2 > MR_ISECT_EPS)
         {
             pNode = pNode->m_Sides[1];
             continue;
         }
         int iSide;
-        if (d1 < -GLR_ISECT_EPS)
+        if (d1 < -MR_ISECT_EPS)
         {
-            if (d2 < -GLR_ISECT_EPS)
+            if (d2 < -MR_ISECT_EPS)
             {
                 pNode = pNode->m_Sides[0];
                 continue;
             }
             iSide = 0;
         }
-        else if (d1 > GLR_ISECT_EPS)
+        else if (d1 > MR_ISECT_EPS)
             iSide = 1;
         else
             iSide = d2 < 0.0f ? 1 : 0;
 
         float fDenom = d2 - d1;
-        if (fDenom != 0.0f && (d1 < -GLR_ISECT_EPS || d1 > GLR_ISECT_EPS))
+        if (fDenom != 0.0f && (d1 < -MR_ISECT_EPS || d1 > MR_ISECT_EPS))
         {
             float t = -d1 / fDenom;
             LTVector vMid = { vFrom.x + (vTo.x - vFrom.x) * t, vFrom.y + (vTo.y - vFrom.y) * t,
                               vFrom.z + (vTo.z - vFrom.z) * t };
-            WorldPoly* pHit = glr_IntersectNode(pNode->m_Sides[iSide], vFrom, vMid, nDepth + 1);
+            WorldPoly* pHit = mr_IntersectNode(pNode->m_Sides[iSide], vFrom, vMid, nDepth + 1);
             if (pHit)
                 return pHit;
             if (iSide == 1)
@@ -1048,7 +1014,7 @@ static WorldPoly* glr_IntersectNode(Node* pNode, LTVector vFrom, LTVector vTo, i
                     }
                     float fEdge = n.x * pV->x + n.y * pV->y + n.z * pV->z;
                     float fMid = n.x * vMid.x + n.y * vMid.y + n.z * vMid.z;
-                    if (fMid - fEdge < -GLR_ISECT_EPS)
+                    if (fMid - fEdge < -MR_ISECT_EPS)
                         bHit = false;
                     pPrev = pV;
                 }
@@ -1066,20 +1032,20 @@ static WorldPoly* glr_IntersectNode(Node* pNode, LTVector vFrom, LTVector vTo, i
 
 // d3d.ren's 0x1001be00: does the segment from vFrom along vRay first hit
 // a sky poly?
-bool glr_SeesSky(const LTVector& vFrom, const LTVector& vRay)
+bool mr_SeesSky(const LTVector& vFrom, const LTVector& vRay)
 {
     MainWorld* pWorld = g_Frame.m_pContext ? g_Frame.m_pContext->m_pWorld : NULL;
-    WorldBsp* pMain = pWorld ? glr_FindBsp(pWorld, WORLDINFO_MAINWORLD) : NULL;
+    WorldBsp* pMain = pWorld ? mr_FindBsp(pWorld, WORLDINFO_MAINWORLD) : NULL;
     if (!pMain || !pMain->m_RootNode)
         return false;
     LTVector vTo = { vFrom.x + vRay.x, vFrom.y + vRay.y, vFrom.z + vRay.z };
-    WorldPoly* pHit = glr_IntersectNode((Node*)pMain->m_RootNode, vFrom, vTo, 0);
+    WorldPoly* pHit = mr_IntersectNode((Node*)pMain->m_RootNode, vFrom, vTo, 0);
     return pHit && (pHit->m_pSurface->m_Flags & SURF_SKY);
 }
 
 // The world's size as the sun test reads it (MainWorld+0xb8, in its world
 // tree); the extents' diagonal if that is not set.
-float glr_WorldSize(void)
+float mr_WorldSize(void)
 {
     MainWorld* pWorld = g_Frame.m_pContext ? g_Frame.m_pContext->m_pWorld : NULL;
     if (!pWorld)
@@ -1095,14 +1061,14 @@ float glr_WorldSize(void)
 
 // ---- world models -----------------------------------------------------------------
 
-static void glr_ObjectTint(LTObject* pObj, float* pTint)
+static void mr_ObjectTint(LTObject* pObj, float* pTint)
 {
     pTint[0] = pObj->m_ColorR / 255.0f;
     pTint[1] = pObj->m_ColorG / 255.0f;
     pTint[2] = pObj->m_ColorB / 255.0f;
 }
 
-static uint32_t glr_FirstSurfaceFlags(WorldModelInstance* pWM)
+static uint32_t mr_FirstSurfaceFlags(WorldModelInstance* pWM)
 {
     WorldBsp* pBsp = pWM->m_pWorldBsp;
     if (!pBsp || !pBsp->m_nPolies || !pBsp->m_Polies[0] || !pBsp->m_Polies[0]->m_pSurface)
@@ -1111,20 +1077,20 @@ static uint32_t glr_FirstSurfaceFlags(WorldModelInstance* pWM)
 }
 
 // r_ProcessWorldModel: which set it goes in.
-void glr_ProcessWorldModel(LTObject* pObj)
+void mr_ProcessWorldModel(LTObject* pObj)
 {
     WorldModelInstance* pWM = (WorldModelInstance*)pObj;
     if (!pWM->m_pWorldBsp || !pWM->m_pWorldBsp->m_nPolies)
         return;
-    if (glr_FirstSurfaceFlags(pWM) & SURF_TRANSLUCENT)
-        glr_AddTranslucent(pObj, glr_DrawTranslucentWorldModel);
+    if (mr_FirstSurfaceFlags(pWM) & SURF_TRANSLUCENT)
+        mr_AddTranslucent(pObj, mr_DrawTranslucentWorldModel);
     else if (pObj->m_Flags2 & FLAG2_CHROMAKEY)
-        glr_ObjList(VS_WORLDMODELS_CHROMAKEY)->Add(pObj);
+        mr_ObjList(VS_WORLDMODELS_CHROMAKEY)->Add(pObj);
     else
-        glr_ObjList(VS_WORLDMODELS)->Add(pObj);
+        mr_ObjList(VS_WORLDMODELS)->Add(pObj);
 }
 
-static LTVector glr_ToLocal(const LTMatrix& M, const LTVector& v)
+static LTVector mr_ToLocal(const LTMatrix& M, const LTVector& v)
 {
     LTVector r;
     r.x = M.m[0][0] * v.x + M.m[0][1] * v.y + M.m[0][2] * v.z + M.m[0][3];
@@ -1135,16 +1101,16 @@ static LTVector glr_ToLocal(const LTMatrix& M, const LTVector& v)
 
 // r_DrawSolidWorldModel: every poly of the model's BSP that faces the
 // camera, under the model's matrix, lit like the world.
-void glr_DrawSolidWorldModel(LTObject* pObj)
+void mr_DrawSolidWorldModel(LTObject* pObj)
 {
     WorldModelInstance* pWM = (WorldModelInstance*)pObj;
     WorldBsp* pBsp = pWM->m_pWorldBsp;
     if (!pBsp || !cvi(CV_DrawWorldModels))
         return;
     float fRadius = *(float*)((uint8_t*)pBsp + 0x14c);
-    if (fRadius > 0.0f && !glr_SphereVisible(pObj->m_Pos, fRadius))
+    if (fRadius > 0.0f && !mr_SphereVisible(pObj->m_Pos, fRadius))
         return;
-    LTVector vCam = glr_ToLocal(pWM->m_BackTransform, g_Frame.m_Cam.m_Pos);
+    LTVector vCam = mr_ToLocal(pWM->m_BackTransform, g_Frame.m_Cam.m_Pos);
     for (uint32_t i = 0; i < pBsp->m_nPolies; i++)
     {
         WorldPoly* pPoly = pBsp->m_Polies[i];
@@ -1153,22 +1119,22 @@ void glr_DrawSolidWorldModel(LTObject* pObj)
         pPoly->m_FrameCode = g_Frame.m_WorldFrameCode;
         if (pPoly->m_pSurface->m_Flags & (SURF_INVISIBLE | SURF_SKY))
             continue;
-        glr_QueueFacingPoly(pPoly, vCam);
+        mr_QueueFacingPoly(pPoly, vCam);
     }
     float tint[3];
-    glr_ObjectTint(pObj, tint);
-    glr_ObjectFog(pObj, true);
-    glPushMatrix();
-    glr_MultMatrix(pWM->m_Transform);
-    glr_FlushPolys(tint, pObj->m_ColorA, &pWM->m_BackTransform);
-    glPopMatrix();
-    glr_ObjectFog(pObj, false);
+    mr_ObjectTint(pObj, tint);
+    mr_ObjectFog(pObj, true);
+    rd_PushMatrix();
+    mr_MultMatrix(pWM->m_Transform);
+    mr_FlushPolys(tint, pObj->m_ColorA, &pWM->m_BackTransform);
+    rd_PopMatrix();
+    mr_ObjectFog(pObj, false);
 }
 
 // Back to front through the model's own BSP (r_RecurseAndDrawWM), with the
 // camera in model space (the shipped code uses the world-space camera,
 // right only for a model that has not moved).
-static void glr_DrawBspBackToFront(Node* pNode, const LTVector& vCam, const float* pTint,
+static void mr_DrawBspBackToFront(Node* pNode, const LTVector& vCam, const float* pTint,
                                    uint8_t nAlpha, int nDepth)
 {
     if (!pNode || (pNode->m_Flags & 3) || nDepth > 1024 || !pNode->m_pPoly)
@@ -1177,44 +1143,44 @@ static void glr_DrawBspBackToFront(Node* pNode, const LTVector& vCam, const floa
     const LTPlane* pPlane = pPoly->m_pSurface->m_pPlane;
     int nSide = (pPlane->m_Normal.x * vCam.x + pPlane->m_Normal.y * vCam.y +
                  pPlane->m_Normal.z * vCam.z - pPlane->m_Dist) >= 0.0f;
-    glr_DrawBspBackToFront(pNode->m_Sides[!nSide], vCam, pTint, nAlpha, nDepth + 1);
+    mr_DrawBspBackToFront(pNode->m_Sides[!nSide], vCam, pTint, nAlpha, nDepth + 1);
     if (!(pPoly->m_pSurface->m_Flags & SURF_INVISIBLE))
     {
-        GLRTexture* pTex = glr_SurfaceTexture(pPoly->m_pSurface);
-        glr_SetBaseTexture(pTex);
-        glr_DrawPoly(pPoly, pTex, false, pTint, nAlpha);
+        MRTexture* pTex = mr_SurfaceTexture(pPoly->m_pSurface);
+        mr_SetBaseTexture(pTex);
+        mr_DrawPoly(pPoly, pTex, false, pTint, nAlpha);
     }
-    glr_DrawBspBackToFront(pNode->m_Sides[nSide], vCam, pTint, nAlpha, nDepth + 1);
+    mr_DrawBspBackToFront(pNode->m_Sides[nSide], vCam, pTint, nAlpha, nDepth + 1);
 }
 
-void glr_DrawTranslucentWorldModel(LTObject* pObj)
+void mr_DrawTranslucentWorldModel(LTObject* pObj)
 {
     WorldModelInstance* pWM = (WorldModelInstance*)pObj;
     WorldBsp* pBsp = pWM->m_pWorldBsp;
     if (!pBsp || !cvi(CV_DrawWorldModels))
         return;
-    bool bAdditive = (glr_FirstSurfaceFlags(pWM) & SURF_ADDITIVE) != 0;
-    glPushAttrib(GL_COLOR_BUFFER_BIT);
+    bool bAdditive = (mr_FirstSurfaceFlags(pWM) & SURF_ADDITIVE) != 0;
+    rd_PushAttrib(RD_ATTR_COLOR);
     if (bAdditive)
-        glBlendFunc(GL_ONE, GL_ONE);
+        rd_BlendFunc(RD_ONE, RD_ONE);
     float tint[3];
-    glr_ObjectTint(pObj, tint);
-    glr_ObjectFog(pObj, true);
-    glPushMatrix();
-    glr_MultMatrix(pWM->m_Transform);
-    LTVector vCam = glr_ToLocal(pWM->m_BackTransform, g_Frame.m_Cam.m_Pos);
-    glr_ForgetBindings();
-    glr_DrawBspBackToFront((Node*)pBsp->m_RootNode, vCam, tint, pObj->m_ColorA, 0);
-    glPopMatrix();
-    glr_ObjectFog(pObj, false);
-    glPopAttrib();
+    mr_ObjectTint(pObj, tint);
+    mr_ObjectFog(pObj, true);
+    rd_PushMatrix();
+    mr_MultMatrix(pWM->m_Transform);
+    LTVector vCam = mr_ToLocal(pWM->m_BackTransform, g_Frame.m_Cam.m_Pos);
+    mr_ForgetBindings();
+    mr_DrawBspBackToFront((Node*)pBsp->m_RootNode, vCam, tint, pObj->m_ColorA, 0);
+    rd_PopMatrix();
+    mr_ObjectFog(pObj, false);
+    rd_PopAttrib();
 }
 
 // ---- the sky ----------------------------------------------------------------------
 
 // A sky world model: its BSP as authored (sky brushes do not move), front-
 // facing polys only, node poly before its far side (r_DrawSkyWorldModel).
-static void glr_DrawSkyBsp(Node* pNode, const LTVector& vCam, const float* pTint, uint8_t nAlpha, int nDepth)
+static void mr_DrawSkyBsp(Node* pNode, const LTVector& vCam, const float* pTint, uint8_t nAlpha, int nDepth)
 {
     if (!pNode || (pNode->m_Flags & 3) || nDepth > 1024 || !pNode->m_pPoly)
         return;
@@ -1224,22 +1190,22 @@ static void glr_DrawSkyBsp(Node* pNode, const LTVector& vCam, const float* pTint
                   pPlane->m_Normal.z * vCam.z - pPlane->m_Dist) > 0.0f;
     if (bFront && !(pPoly->m_pSurface->m_Flags & SURF_INVISIBLE))
     {
-        GLRTexture* pTex = glr_SurfaceTexture(pPoly->m_pSurface);
-        glr_SetBaseTexture(pTex);
-        glr_DrawPoly(pPoly, pTex, false, pTint, nAlpha);
+        MRTexture* pTex = mr_SurfaceTexture(pPoly->m_pSurface);
+        mr_SetBaseTexture(pTex);
+        mr_DrawPoly(pPoly, pTex, false, pTint, nAlpha);
     }
-    glr_DrawSkyBsp(pNode->m_Sides[!bFront], vCam, pTint, nAlpha, nDepth + 1);
-    glr_DrawSkyBsp(pNode->m_Sides[bFront], vCam, pTint, nAlpha, nDepth + 1);
+    mr_DrawSkyBsp(pNode->m_Sides[!bFront], vCam, pTint, nAlpha, nDepth + 1);
+    mr_DrawSkyBsp(pNode->m_Sides[bFront], vCam, pTint, nAlpha, nDepth + 1);
 }
 
 // r_DrawSky: the sky objects in their list order, depth off, seen with the
 // main camera's rotation from the camera's place squashed into the sky box
 // (r_SetupSkyStuff).
-static void glr_DrawSky(SceneDesc* pScene, MainWorld* pWorld)
+static void mr_DrawSky(SceneDesc* pScene, MainWorld* pWorld)
 {
     if (!cvi(CV_DrawSky) || pScene->m_nSkyObjects <= 0 || !g_Frame.m_nSkyPolys)
         return;
-    GLRCamera sky = g_Frame.m_Cam;
+    MRCamera sky = g_Frame.m_Cam;
     LTVector t = { 0.5f, 0.5f, 0.5f };
     LTVector ext = { pWorld->m_ExtentsMax.x - pWorld->m_ExtentsMin.x,
                      pWorld->m_ExtentsMax.y - pWorld->m_ExtentsMin.y,
@@ -1256,13 +1222,13 @@ static void glr_DrawSky(SceneDesc* pScene, MainWorld* pWorld)
     sky.m_Pos.z = def.m_ViewMin.z + (def.m_ViewMax.z - def.m_ViewMin.z) * t.z;
     sky.m_fNear = 0.01f;
     sky.m_fScale = cvf(CV_SkyScale) > 0.0f ? cvf(CV_SkyScale) : 1.0f;
-    glr_LoadCamera(&sky);
+    mr_LoadCamera(&sky);
 
-    glPushAttrib(GL_ALL_ATTRIB_BITS);
-    glDisable(GL_DEPTH_TEST);
-    glDepthMask(GL_FALSE);
-    glDisable(GL_ALPHA_TEST);
-    glr_SetFog(true);
+    rd_PushAttrib(RD_ATTR_ALL);
+    rd_Disable(RD_DEPTH_TEST);
+    rd_DepthMask(false);
+    rd_Disable(RD_ALPHA_TEST);
+    mr_SetFog(true);
     LTVector vSkyCam = sky.m_Pos;
     for (int i = 0; i < pScene->m_nSkyObjects; i++)
     {
@@ -1277,56 +1243,56 @@ static void glr_DrawSky(SceneDesc* pScene, MainWorld* pWorld)
             // Only a translucent sky model blends (r_SetTranslucentObjectStates);
             // the others are opaque (r_UnsetTranslucentObjectStates), whatever
             // alpha their textures or the object carry (d3d.ren 0x10030a60).
-            uint32_t nFlags = glr_FirstSurfaceFlags(pWM);
+            uint32_t nFlags = mr_FirstSurfaceFlags(pWM);
             if (nFlags & SURF_TRANSLUCENT)
             {
-                glEnable(GL_BLEND);
+                rd_Enable(RD_BLEND);
                 if (nFlags & SURF_ADDITIVE)
-                    glBlendFunc(GL_ONE, GL_ONE);
+                    rd_BlendFunc(RD_ONE, RD_ONE);
                 else
-                    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                    rd_BlendFunc(RD_SRC_ALPHA, RD_ONE_MINUS_SRC_ALPHA);
             }
             else
-                glDisable(GL_BLEND);
+                rd_Disable(RD_BLEND);
             float tint[3];
-            glr_ObjectTint(pObj, tint);
-            glr_ObjectFog(pObj, true);
-            glr_ForgetBindings();
-            glr_DrawSkyBsp((Node*)pWM->m_pWorldBsp->m_RootNode, vSkyCam, tint, pObj->m_ColorA, 0);
-            glr_ObjectFog(pObj, false);
+            mr_ObjectTint(pObj, tint);
+            mr_ObjectFog(pObj, true);
+            mr_ForgetBindings();
+            mr_DrawSkyBsp((Node*)pWM->m_pWorldBsp->m_RootNode, vSkyCam, tint, pObj->m_ColorA, 0);
+            mr_ObjectFog(pObj, false);
         }
         else
         {
             g_Frame.m_SkyCam = sky;
-            glr_DrawSkyObject(pObj);
+            mr_DrawSkyObject(pObj);
         }
     }
-    glPopAttrib();
-    glr_LoadCamera(&g_Frame.m_Cam);
+    rd_PopAttrib();
+    mr_LoadCamera(&g_Frame.m_Cam);
 }
 
 // ---- screen passes --------------------------------------------------------------------
 
-static void glr_ScreenQuad(void)
+static void mr_ScreenQuad(void)
 {
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-    glBegin(GL_QUADS);
-    glVertex2f(-1, -1); glVertex2f(1, -1); glVertex2f(1, 1); glVertex2f(-1, 1);
-    glEnd();
-    glPopMatrix();
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
+    rd_MatrixMode(RD_PROJECTION);
+    rd_PushMatrix();
+    rd_LoadIdentity();
+    rd_MatrixMode(RD_MODELVIEW);
+    rd_PushMatrix();
+    rd_LoadIdentity();
+    rd_Begin(RD_QUADS);
+    rd_Vertex2f(-1, -1); rd_Vertex2f(1, -1); rd_Vertex2f(1, 1); rd_Vertex2f(-1, 1);
+    rd_End();
+    rd_PopMatrix();
+    rd_MatrixMode(RD_PROJECTION);
+    rd_PopMatrix();
+    rd_MatrixMode(RD_MODELVIEW);
 }
 
 // The global light scale darkens the view (dst * scale, as dst*src + src*dst
 // with src = scale/2), and the camera's light add brightens it.
-static void glr_ScreenPasses(SceneDesc* pScene)
+static void mr_ScreenPasses(SceneDesc* pScene)
 {
     const LTVector& s = pScene->m_GlobalLightScale;
     const LTVector& a = pScene->m_GlobalLightAdd;
@@ -1334,43 +1300,42 @@ static void glr_ScreenPasses(SceneDesc* pScene)
     bool bAdd = cvi(CV_LightAddPoly) && (a.x >= 0.001f || a.y >= 0.001f || a.z >= 0.001f);
     if (!bScale && !bAdd)
         return;
-    glPushAttrib(GL_ALL_ATTRIB_BITS);
-    glDisable(GL_TEXTURE_2D);
-    glDisable(GL_FOG);
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_ALPHA_TEST);
-    glDepthMask(GL_FALSE);
-    glEnable(GL_BLEND);
+    rd_PushAttrib(RD_ATTR_ALL);
+    rd_Disable(RD_TEXTURE_2D);
+    rd_Disable(RD_FOG);
+    rd_Disable(RD_DEPTH_TEST);
+    rd_Disable(RD_ALPHA_TEST);
+    rd_DepthMask(false);
+    rd_Enable(RD_BLEND);
     if (bScale)
     {
-        glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
-        glColor4f(s.x * 0.5f, s.y * 0.5f, s.z * 0.5f, 1.0f);
-        glr_ScreenQuad();
+        rd_BlendFunc(RD_DST_COLOR, RD_SRC_COLOR);
+        rd_Color4f(s.x * 0.5f, s.y * 0.5f, s.z * 0.5f, 1.0f);
+        mr_ScreenQuad();
     }
     if (bAdd)
     {
-        glBlendFunc(GL_ONE, GL_ONE);
-        glColor4f(a.x, a.y, a.z, 1.0f);
-        glr_ScreenQuad();
+        rd_BlendFunc(RD_ONE, RD_ONE);
+        rd_Color4f(a.x, a.y, a.z, 1.0f);
+        mr_ScreenQuad();
     }
-    glPopAttrib();
+    rd_PopAttrib();
 }
 
 // ---- RenderScene ---------------------------------------------------------------------
 
-LTBOOL glr_RenderScene(SceneDesc* pScene)
+LTBOOL mr_RenderScene(SceneDesc* pScene)
 {
     if (!g.bContext || !pScene)
         return 0;
     if (g.bInOptimized2D)
     {
-        glr_Print("Error: tried to render 3D while in optimized 2D mode.");
+        mr_Print("Error: tried to render 3D while in optimized 2D mode.");
         return 0;
     }
-    glr_ReadConsoleVariables();         // the Mac re-reads them every frame
-    glr_InitMultitexture();
+    mr_ReadConsoleVariables();         // the Mac re-reads them every frame
 
-    GLRContext* pContext = pScene->m_DrawMode == DRAWMODE_NORMAL ? (GLRContext*)pScene->m_pRenderContext : NULL;
+    MRContext* pContext = pScene->m_DrawMode == DRAWMODE_NORMAL ? (MRContext*)pScene->m_pRenderContext : NULL;
     if (pScene->m_DrawMode == DRAWMODE_NORMAL && (!pContext || !pContext->m_pWorld))
         return 0;
     MainWorld* pWorld = pContext ? pContext->m_pWorld : NULL;
@@ -1378,14 +1343,14 @@ LTBOOL glr_RenderScene(SceneDesc* pScene)
     memset(&g_Frame, 0, sizeof(g_Frame));
     g_Frame.m_pScene = pScene;
     g_Frame.m_pContext = pContext;
-    glr_SetupCamera(pScene, &g_Frame.m_Cam);
-    glr_SetupFrustum(&g_Frame.m_Cam);
+    mr_SetupCamera(pScene, &g_Frame.m_Cam);
+    mr_SetupFrustum(&g_Frame.m_Cam);
     if (pContext)
     {
-        glr_IncrementFrameCode(pContext);
+        mr_IncrementFrameCode(pContext);
         g_Frame.m_WorldFrameCode = pContext->m_FrameCode;
         g_Frame.m_fLMGrid = pWorld->m_LMGridSize > 0.0f ? pWorld->m_LMGridSize : 1.0f;
-        g_Frame.m_bLightmaps = g_Multi.m_bOK && pContext->m_pAtlases && cvi(CV_LightMap) &&
+        g_Frame.m_bLightmaps = g_RDCaps.nTextureUnits >= 2 && pContext->m_pAtlases && cvi(CV_LightMap) &&
                                pContext->m_nContextGen == g.nContextGen;
     }
     // The object frame code stamps LTObject+0x58: the engine's visibility
@@ -1393,7 +1358,7 @@ LTBOOL glr_RenderScene(SceneDesc* pScene)
     g_Frame.m_ObjectFrameCode = g.pStruct->IncObjectFrameCode();
     if (g.pStruct->IncCurTextureFrameCode)
         g.pStruct->IncCurTextureFrameCode();
-    glr_BeginObjects();
+    mr_BeginObjects();
 
     // What is visible.
     if (pContext)
@@ -1412,7 +1377,7 @@ LTBOOL glr_RenderScene(SceneDesc* pScene)
             mw_DoVisQuery(pWorld, &req);
         }
         else
-            glr_VisitAll(pWorld);
+            mr_VisitAll(pWorld);
     }
     else
     {
@@ -1420,61 +1385,58 @@ LTBOOL glr_RenderScene(SceneDesc* pScene)
         {
             LTObject* pObj = pScene->m_pObjectList ? pScene->m_pObjectList[i] : NULL;
             if (pObj && pObj->m_ObjectType > OT_NORMAL && pObj->m_ObjectType < NUM_OBJECTTYPES)
-                glr_QueueObject(pObj);
+                mr_QueueObject(pObj);
         }
     }
 
     // Draw it.
-    glPushAttrib(GL_ALL_ATTRIB_BITS);
-    glMatrixMode(GL_TEXTURE);
-    glPushMatrix();
-    glLoadIdentity();
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glr_LoadCamera(&g_Frame.m_Cam);
+    rd_PushAttrib(RD_ATTR_ALL);
+    rd_MatrixMode(RD_TEXTURE);
+    rd_PushMatrix();
+    rd_LoadIdentity();
+    rd_MatrixMode(RD_PROJECTION);
+    rd_PushMatrix();
+    rd_MatrixMode(RD_MODELVIEW);
+    rd_PushMatrix();
+    mr_LoadCamera(&g_Frame.m_Cam);
 
-    glDisable(GL_BLEND);
-    glDisable(GL_CULL_FACE);
-    glDisable(GL_LIGHTING);
+    rd_Disable(RD_BLEND);
     // Texels are punched out only in the chromakey sets (d3d.ren's
     // sub_10023eb0/sub_10023f40 around them): solid textures' alpha means
     // nothing, and many 5551 ones (window shutters, the sky) carry 0. The
     // Mac renderer leaves r_Init's alpha test on everywhere.
-    glDisable(GL_ALPHA_TEST);
-    glAlphaFunc(GL_GREATER, 0.1666f);
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    glShadeModel(GL_SMOOTH);
+    rd_Disable(RD_ALPHA_TEST);
+    rd_AlphaGreater(0.1666f);
+    rd_TexEnv(RD_ENV_MODULATE);
 
     if (pContext)
-        glr_DrawSky(pScene, pWorld);
+        mr_DrawSky(pScene, pWorld);
 
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LEQUAL);
-    glDepthMask(GL_TRUE);
-    glr_SetFog(false);
+    rd_Enable(RD_DEPTH_TEST);
+    rd_DepthFunc(RD_LEQUAL);
+    rd_DepthMask(true);
+    mr_SetFog(false);
     if (pContext)
     {
         if (g_Frame.m_bLightmaps)
-            glr_UpdateLightmaps(pContext);
-        glr_FlushPolys(g_White, 255, NULL);
+            mr_UpdateLightmaps(pContext);
+        mr_FlushPolys(g_White, 255, NULL);
     }
-    glr_FlushObjects();
+    mr_FlushObjects();
 
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_TEXTURE);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    glPopAttrib();
+    rd_MatrixMode(RD_MODELVIEW);
+    rd_PopMatrix();
+    rd_MatrixMode(RD_PROJECTION);
+    rd_PopMatrix();
+    rd_MatrixMode(RD_TEXTURE);
+    rd_PopMatrix();
+    rd_MatrixMode(RD_MODELVIEW);
+    rd_PopAttrib();
 
     // The screen passes cover the camera's rect.
-    glPushAttrib(GL_VIEWPORT_BIT);
-    glViewport(g_Frame.m_Cam.m_nViewX, g_Frame.m_Cam.m_nViewY, g_Frame.m_Cam.m_nViewW, g_Frame.m_Cam.m_nViewH);
-    glr_ScreenPasses(pScene);
-    glPopAttrib();
+    rd_PushAttrib(RD_ATTR_VIEWPORT);
+    rd_Viewport(g_Frame.m_Cam.m_nViewX, g_Frame.m_Cam.m_nViewY, g_Frame.m_Cam.m_nViewW, g_Frame.m_Cam.m_nViewH);
+    mr_ScreenPasses(pScene);
+    rd_PopAttrib();
     return 0;
 }

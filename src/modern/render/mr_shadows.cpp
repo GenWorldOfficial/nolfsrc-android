@@ -1,4 +1,4 @@
-// gl_shadows.cpp -- model shadows: d3d.ren's projected-shadow pass
+// mr_shadows.cpp -- model shadows: d3d.ren's projected-shadow pass
 // (0x10048180, 0x10049bb4, the collector 0x10073700).
 //
 // A model with FLAG_SHADOW (after the model hook) and ShadowEnable in its
@@ -16,16 +16,16 @@
 
 #include <math.h>
 
-#include "globjects.h"
+#include "mrobjects.h"
 
 template <typename T> static inline T rd(const void* p, uint32_t off) { T v; memcpy(&v, (const uint8_t*)p + off, sizeof(T)); return v; }
 
 // ---- the blob (d3d.ren's 0x10039210 at device start, d3dqip2.cpp) -----------------
 
-static GLuint   g_BlobId;
+static uint32_t g_BlobId;
 static uint32_t g_nBlobGen;
 
-static GLuint glr_BlobTexture(void)
+static uint32_t mr_BlobTexture(void)
 {
     if (g_BlobId && g_nBlobGen == g.nContextGen)
         return g_BlobId;
@@ -44,14 +44,12 @@ static GLuint glr_BlobTexture(void)
             p[0] = p[1] = p[2] = 255;
             p[3] = (uint8_t)(a < 0 ? 0 : a > 255 ? 255 : a);
         }
-    glGenTextures(1, &g_BlobId);
-    glBindTexture(GL_TEXTURE_2D, g_BlobId);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 16, 16, 0, GL_RGBA, GL_UNSIGNED_BYTE, px);
+    g_BlobId = rd_GenTexture();
+    rd_BindTexture(g_BlobId);
+    rd_TexFilter(RD_LINEAR, RD_LINEAR);
+    rd_TexWrap(false, false);
+    rd_TexMaxLevel(0);
+    rd_TexImage(0, RD_FMT_RGBA8, 16, 16, RD_PIX_RGBA, px);
     g_nBlobGen = g.nContextGen;
     return g_BlobId;
 }
@@ -87,7 +85,7 @@ static inline LTVector vrot(const LTMatrix& M, const LTVector& v)
 
 // ---- gathering the receivers (d3d.ren's 0x10073700) --------------------------------
 
-#define GLR_MAXSHADOWPOLYS 256
+#define MR_MAXSHADOWPOLYS 256
 
 struct ShadowItem {
     WorldPoly*                m_pPoly;
@@ -105,7 +103,7 @@ struct ShadowQuery {
 // callback (d3d.ren calls it with the model's position and this collector).
 typedef void (__thiscall* NearObjectsFn)(void* pTree, LTVector* pPos, void* pCB, void* pUser, uint32_t nFlags);
 
-static bool glr_IsIdentity(const LTMatrix& M)
+static bool mr_IsIdentity(const LTMatrix& M)
 {
     for (int r = 0; r < 4; r++)
         for (int c = 0; c < 4; c++)
@@ -117,7 +115,7 @@ static bool glr_IsIdentity(const LTMatrix& M)
 // Walk an object's BSP along the light's segment (its space), collecting the
 // polys drawn this frame that face the camera and face up the segment
 // enough to take a shadow, near enough to it.
-static void glr_ShadowCollect(LTObject* pObj, void* pUser)
+static void mr_ShadowCollect(LTObject* pObj, void* pUser)
 {
     ShadowQuery* q = (ShadowQuery*)pUser;
     if (rd<uint32_t>(pObj, 0x54) || pObj->m_ObjectType != OT_WORLDMODEL)
@@ -132,7 +130,7 @@ static void glr_ShadowCollect(LTObject* pObj, void* pUser)
     Node* pRoot = ((*(GetRootNodeFn**)pBsp)[1])(pBsp);
     if (!pRoot)
         return;
-    bool bMoved = !glr_IsIdentity(pWM->m_Transform);
+    bool bMoved = !mr_IsIdentity(pWM->m_Transform);
     LTVector vStart = q->m_vStart, vEnd = q->m_vEnd, vCam = g_Frame.m_Cam.m_Pos;
     if (bMoved)
     {
@@ -177,7 +175,7 @@ static void glr_ShadowCollect(LTObject* pObj, void* pUser)
         int side = d1 > 0.0f ? 1 : 0;
         float t = fabsf(d1 - d2) > 0.00001f ? d1 / (d1 - d2) : 0.0f;
         LTVector vMid = vadd(vStart, vmul(vsub(vEnd, vStart), t));
-        if (pPoly->m_FrameCode == g_Frame.m_WorldFrameCode && q->m_nItems < GLR_MAXSHADOWPOLYS &&
+        if (pPoly->m_FrameCode == g_Frame.m_WorldFrameCode && q->m_nItems < MR_MAXSHADOWPOLYS &&
             vdot(P.m_Normal, vCam) - P.m_Dist > 1.0f && vdot(P.m_Normal, vDir) < 0.7f &&
             !(pPoly->m_pSurface->m_Flags & (SURF_INVISIBLE | SURF_SKY)))
         {
@@ -229,7 +227,7 @@ static void mat_Mul4(LTMatrix* pOut, const LTMatrix& a, const LTMatrix& b)
 }
 
 // Clip a polygon to keep where dot(n, p) - d > 0 (d3d.ren's 0x10047d80).
-static int glr_ClipToPlane(const LTVector* pIn, int nIn, const LTPlane& P, LTVector* pOut)
+static int mr_ClipToPlane(const LTVector* pIn, int nIn, const LTPlane& P, LTVector* pOut)
 {
     int nOut = 0;
     for (int i = 0; i < nIn; i++)
@@ -248,7 +246,7 @@ static int glr_ClipToPlane(const LTVector* pIn, int nIn, const LTPlane& P, LTVec
     return nOut;
 }
 
-void glr_DrawModelShadow(LTObject* pInst, const void* pModel)
+void mr_DrawModelShadow(LTObject* pInst, const void* pModel)
 {
     int nDirs = cvi(CV_MaxModelShadows);
     MainWorld* pWorld = g_Frame.m_pContext ? g_Frame.m_pContext->m_pWorld : NULL;
@@ -270,7 +268,7 @@ void glr_DrawModelShadow(LTObject* pInst, const void* pModel)
     LTVector vDir = vnorm(vsub(vadd(vPos, vOffset), vStart));
     LTVector vEnd = vadd(vStart, vmul(vDir, fLength));
 
-    static ShadowItem s_Items[GLR_MAXSHADOWPOLYS];
+    static ShadowItem s_Items[MR_MAXSHADOWPOLYS];
     ShadowQuery q;
     q.m_pItems = s_Items;
     q.m_nItems = 0;
@@ -279,7 +277,7 @@ void glr_DrawModelShadow(LTObject* pInst, const void* pModel)
     q.m_fRadius = fHalfH > fHalfW ? fHalfH : fHalfW;
     void* pTree = pWorld->m_WorldTree;
     LTVector vQueryPos = vPos;
-    ((*(NearObjectsFn**)pTree)[3])(pTree, &vQueryPos, (void*)glr_ShadowCollect, &q, 0);
+    ((*(NearObjectsFn**)pTree)[3])(pTree, &vQueryPos, (void*)mr_ShadowCollect, &q, 0);
     if (!q.m_nItems)
         return;
 
@@ -333,19 +331,19 @@ void glr_DrawModelShadow(LTObject* pInst, const void* pModel)
     mat_Mul4(&mTemp, mScale, mBasis);
     mat_Mul4(&mTex, mTemp, mShadow);
 
-    glPushAttrib(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_ENABLE_BIT | GL_TEXTURE_BIT);
-    glr_ForgetBindings();
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, glr_BlobTexture());
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glDisable(GL_ALPHA_TEST);
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LEQUAL);
-    glDepthMask(GL_FALSE);
+    rd_PushAttrib(RD_ATTR_COLOR | RD_ATTR_DEPTH | RD_ATTR_ENABLE | RD_ATTR_TEXTURE);
+    mr_ForgetBindings();
+    rd_Enable(RD_TEXTURE_2D);
+    rd_BindTexture(mr_BlobTexture());
+    rd_TexEnv(RD_ENV_MODULATE);
+    rd_Enable(RD_BLEND);
+    rd_BlendFunc(RD_SRC_ALPHA, RD_ONE_MINUS_SRC_ALPHA);
+    rd_Disable(RD_ALPHA_TEST);
+    rd_Enable(RD_DEPTH_TEST);
+    rd_DepthFunc(RD_LEQUAL);
+    rd_DepthMask(false);
     float fAlpha = cvf(CV_ModelShadowAlpha);
-    glColor4ub(0, 0, 0, (uint8_t)(fAlpha < 0.0f ? 0.0f : fAlpha > 255.0f ? 255.0f : fAlpha));
+    rd_Color4ub(0, 0, 0, (uint8_t)(fAlpha < 0.0f ? 0.0f : fAlpha > 255.0f ? 255.0f : fAlpha));
     float fLift = cvf(CV_ModelShadowOffset);
 
     LTVector bufA[64], bufB[64];
@@ -371,23 +369,23 @@ void glr_DrawModelShadow(LTObject* pInst, const void* pModel)
         LTVector* pOut = bufB;
         for (int pl = 0; pl < 6 && n >= 3; pl++)
         {
-            n = glr_ClipToPlane(pIn, n, planes[pl], pOut);
+            n = mr_ClipToPlane(pIn, n, planes[pl], pOut);
             LTVector* t = pIn; pIn = pOut; pOut = t;
         }
         if (n < 3)
             continue;
-        glBegin(GL_TRIANGLE_FAN);
+        rd_Begin(RD_TRIANGLE_FAN);
         for (int v = 0; v < n; v++)
         {
             const LTVector& p = pIn[v];
             float u = mTex.m[0][0] * p.x + mTex.m[0][1] * p.y + mTex.m[0][2] * p.z + mTex.m[0][3];
             float w = mTex.m[1][0] * p.x + mTex.m[1][1] * p.y + mTex.m[1][2] * p.z + mTex.m[1][3];
             float qq = mTex.m[3][0] * p.x + mTex.m[3][1] * p.y + mTex.m[3][2] * p.z + mTex.m[3][3];
-            glTexCoord4f(u, w, 0.0f, qq);
-            glVertex3f(p.x, p.y, p.z);
+            rd_TexCoord4f(u, w, 0.0f, qq);
+            rd_Vertex3f(p.x, p.y, p.z);
         }
-        glEnd();
+        rd_End();
     }
-    glPopAttrib();
-    glr_ForgetBindings();
+    rd_PopAttrib();
+    mr_ForgetBindings();
 }
