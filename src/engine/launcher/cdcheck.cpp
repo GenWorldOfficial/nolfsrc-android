@@ -39,6 +39,16 @@ char	CheckDriveForOtherCd(char chDrive);
 BOOL CheckCd(HWND hWnd)
 {
 	BOOL bOtherCd = FALSE;
+#ifdef NOLFSRC_MODERN
+	// M-P1-15: no disc check. The game's data is installed beside the
+	// launcher (FindRezFiles found it in the game directory at startup):
+	// the disc is only needed when the data is on it.
+	{
+		char* sGameRez = GetGameRezFile();
+		if (sGameRez && sGameRez[0] != '\0' && sGameRez[1] != ':')
+			return(TRUE);
+	}
+#endif
 
 	{
 		CWaitCursor wait;

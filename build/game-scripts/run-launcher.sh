@@ -13,7 +13,8 @@
 # plus WINESERVER, default wineserver; default prefix $HOME/.wine-nolf):
 #   * a CD-ROM drive holding \DATA\NOLF.REZ -- its disc check. Drive N: is
 #     mapped to the cd/ directory beside this script, which holds
-#     DATA/NOLF.REZ as a link to nolf.rez.
+#     DATA/NOLF.REZ as a link to nolf.rez. Not in the modern build, whose
+#     launcher has no disc check (MODERN.md M-P1-15).
 #   * the installer's registry values under HKLM\Software\Monolith
 #     Productions\No One Lives Forever\1.0: the extra rez archives the
 #     launcher adds to the command line (the update, then the GOTY content
@@ -38,13 +39,20 @@ export WINEPREFIX WINEDEBUG
 WINE="${WINE:-wine}"
 command -v "$WINE" >/dev/null 2>&1 || { echo "run-launcher.sh: '$WINE' not found -- install Wine" >&2; exit 1; }
 
+# The modern build: its own Bink player (MANIFEST.txt lists it as EXT).
+MODERN=0
+grep -q '^EXT .*	binkw32\.dll$' MANIFEST.txt 2>/dev/null && MODERN=1
+
 [ -f autoexec.cfg ] || cp defaults.cfg autoexec.cfg
-mkdir -p Save cd/DATA
-ln -sf ../../nolf.rez cd/DATA/NOLF.REZ
+mkdir -p Save
 
 # a prefix to set up: make it now if it does not exist yet
 [ -d "$WINEPREFIX/dosdevices" ] || "$WINE" wineboot -i >/dev/null 2>&1 || true
-ln -sfn "$HERE/cd" "$WINEPREFIX/dosdevices/n:"
+if [ $MODERN = 0 ]; then
+    mkdir -p cd/DATA
+    ln -sf ../../nolf.rez cd/DATA/NOLF.REZ
+    ln -sfn "$HERE/cd" "$WINEPREFIX/dosdevices/n:"
+fi
 
 KEY='HKLM\Software\Monolith Productions\No One Lives Forever\1.0'
 # Both registry views: in a 64-bit prefix `wine reg` writes the 64-bit one,
@@ -59,11 +67,11 @@ reg() { "$WINE" reg add "$@" /reg:32 /f >/dev/null 2>&1
 # lists it as EXT).
 MOVIES_OFF=1
 MODE="++screenwidth 640 ++screenheight 480 ++bitdepth 16"
-if grep -q '^EXT .*	binkw32\.dll$' MANIFEST.txt 2>/dev/null; then
+if [ $MODERN = 1 ]; then
     MOVIES_OFF=0
     MODE=""
 fi
-reg 'HKLM\Software\Wine\Drives' /v 'n:' /t REG_SZ /d cdrom
+[ $MODERN = 1 ] || reg 'HKLM\Software\Wine\Drives' /v 'n:' /t REG_SZ /d cdrom
 reg "$KEY" /v 'Update Command Line'  /t REG_SZ /d '-rez nolfu003.rez'
 reg "$KEY" /v 'Content Command Line' /t REG_SZ /d '-rez nolfgoty.rez -rez custom'
 reg "$KEY" /v 'Disable Movies'       /t REG_DWORD /d $MOVIES_OFF
