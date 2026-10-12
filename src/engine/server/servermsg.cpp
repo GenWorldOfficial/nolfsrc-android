@@ -926,7 +926,14 @@ void ServerMessage::ReadData(void* pData, uint32 nBytes)
 	{
 		uint32 nAlloc = m_DataSize;
 
+#ifdef NOLFSRC_MODERN
+		// fixed: ServerMessage::ReadData and WriteData bound-check a
+		// truncated size (RETAIL_BUGS.md). The allocation is compared at its
+		// full 32 bits, as CPacket::WriteType does.
+		if (nPos + nCount >= nAlloc)
+#else
 		if (nPos + nCount >= (uint16)nAlloc)
+#endif
 			nCount = (uint16)(nAlloc - nPos);
 	}
 
@@ -979,7 +986,11 @@ void ServerMessage::WriteData(void* pData, uint32 nBytes)
 	// GetSize(), not the bare m_DataSize: lithtech.exe's /O2 copy reads the
 	// dword and masks it (0x0045c3ce / 0x0045c4ad `mov 0x58 ; and $0xffff`)
 	// where a bare member narrows to a 16-bit load.
+#ifdef NOLFSRC_MODERN
+	while (m_Unknown38 + nCount >= ((CMoArray<uint8>*)&m_PacketData)->GetSize())
+#else
 	while (m_Unknown38 + nCount >= (uint16)((CMoArray<uint8>*)&m_PacketData)->GetSize())
+#endif
 	{
 		uint8            dummy  = 0;
 		CMoArray<uint8>* pPData = (CMoArray<uint8>*)&m_PacketData;

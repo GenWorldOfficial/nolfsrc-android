@@ -51,6 +51,7 @@ in.
 * [`CBaseStream::WriteStream`: the source offset is ignored](#cbasestreamwritestream-the-source-offset-is-ignored)
 * [`CString::Concat(LPCTSTR)`: appending leaves the length short](#cstringconcatlpctstr-appending-leaves-the-length-short)
 * [`Model::LoadChildModels` reports success when it cannot size one table](#modelloadchildmodels-reports-success-when-it-cannot-size-one-table)
+* [`ServerMessage::ReadData` and `WriteData` bound-check a truncated size](#servermessagereaddata-and-writedata-bound-check-a-truncated-size)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -562,6 +563,11 @@ other two paths `sprintf` into the caller's buffer without any bound.
 
 ### `ServerMessage::ReadData` and `WriteData` bound-check a truncated size
 `0x100260d9`, `0x1002616a` (server.dll) · `src/engine/server/servermsg.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`):
+> both compare against the allocation's full 32-bit size
+> (`src/engine/server/servermsg.cpp`). The release build keeps the 16-bit
+> compares.
 
 Both compare the position against `(uint16)m_Data.m_AllocSize`, a 16-bit
 truncation of a 32-bit field (`0x1002619e`, `0x10026102`), while
