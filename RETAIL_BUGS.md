@@ -27,6 +27,7 @@ in.
 * [Player names and chat are used as printf format strings](#player-names-and-chat-are-used-as-printf-format-strings)
 * [The server browser indexes an option table with a value from the network](#the-server-browser-indexes-an-option-table-with-a-value-from-the-network)
 * [`ar_FindFile` closes a find handle it never opened](#ar_findfile-closes-a-find-handle-it-never-opened)
+* [`ci_GetRenderModes` never closes its find handle](#ci_getrendermodes-never-closes-its-find-handle)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -515,6 +516,10 @@ browser read past the array.
 
 ### `ci_GetRenderModes` never closes its find handle
 `0x0042de00` (lithtech.exe) · `src/engine/lithtech/clientinterface.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`):
+> `src/engine/lithtech/clientinterface.cpp` closes it after the walk. The
+> release build keeps the leak.
 
 It walks every `*.ren` beside the executable with `_findfirst`/`_findnext`
 and has no `_findclose` on any path.

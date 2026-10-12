@@ -1733,6 +1733,10 @@ RMode* ci_GetRenderModes()
 	}
 	while (_findnext(hFind, &findData) != -1);
 
+#ifdef NOLFSRC_MODERN
+	// fixed: the find handle is closed (RETAIL_BUGS.md)
+	_findclose(hFind);
+#endif
 	return pModeList;
 }
 
