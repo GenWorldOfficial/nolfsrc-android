@@ -20,9 +20,12 @@
 #     and -- ours -- the custom/ directory holding the game DLLs built from
 #     source), and movies off (on in the modern build, whose own Bink
 #     player plays them).
-# It also starts the game in a 640x480 window (++windowed 1 ...): the
-# launcher appends its own arguments to the command file, and full screen
-# fails under many Wine setups ("Couldn't set D3D Emulation mode").
+# It also starts the game in a window (++windowed 1: the launcher appends
+# its own arguments to the command file, and full screen fails under many
+# Wine setups, "Couldn't set D3D Emulation mode"), at 640x480 -- except in
+# the modern build, whose launcher offers every resolution the game can run
+# at (wide ones too) and starts at the largest 4:3 one that fits the
+# desktop, and which is played at the resolution picked there.
 #
 # Sound needs Wine's audio working, and music Microsoft's DirectMusic in the
 # prefix (see run.sh).
@@ -55,7 +58,11 @@ reg() { "$WINE" reg add "$@" /reg:32 /f >/dev/null 2>&1
 # many Wine setups; on with the modern build's own player (MANIFEST.txt
 # lists it as EXT).
 MOVIES_OFF=1
-grep -q '^EXT .*	binkw32\.dll$' MANIFEST.txt 2>/dev/null && MOVIES_OFF=0
+MODE="++screenwidth 640 ++screenheight 480 ++bitdepth 16"
+if grep -q '^EXT .*	binkw32\.dll$' MANIFEST.txt 2>/dev/null; then
+    MOVIES_OFF=0
+    MODE=""
+fi
 reg 'HKLM\Software\Wine\Drives' /v 'n:' /t REG_SZ /d cdrom
 reg "$KEY" /v 'Update Command Line'  /t REG_SZ /d '-rez nolfu003.rez'
 reg "$KEY" /v 'Content Command Line' /t REG_SZ /d '-rez nolfgoty.rez -rez custom'
@@ -65,4 +72,4 @@ reg "$KEY" /v 'Disable Movies'       /t REG_DWORD /d $MOVIES_OFF
 "${WINESERVER:-wineserver}" -k >/dev/null 2>&1 || true
 sleep 1
 
-exec "$WINE" NOLF.exe ++windowed 1 ++screenwidth 640 ++screenheight 480 ++bitdepth 16 "$@"
+exec "$WINE" NOLF.exe ++windowed 1 $MODE "$@"

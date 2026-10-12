@@ -264,6 +264,60 @@ BOOL CCard::FillModeList(HWND hList)
 }
 
 
+#ifdef NOLFSRC_MODERN
+// *********************************************************************** //
+//
+//	The modern launcher's modes (MODERN.md, M-P1-07 and M-L-01): every mode
+//	of at least 640x480, wide screens included -- what the game's own
+//	Display options list -- in 32 bits, or in 16 where the card offers
+//	that size in nothing else; and, for a card the config names no mode
+//	for, the largest 4:3 one that fits the desktop (the game was made for
+//	4:3; wide modes are there to be picked).
+//
+// *********************************************************************** //
+
+static BOOL ModernHasDeeperMode(RMode* pModes, RMode* pMode)
+{
+	for (RMode* p = pModes; p; p = p->m_pNext)
+	{
+		if (p->m_BitDepth > pMode->m_BitDepth && p->m_Width == pMode->m_Width &&
+			p->m_Height == pMode->m_Height &&
+			strcmp(p->m_InternalName, pMode->m_InternalName) == 0)
+		{
+			return(TRUE);
+		}
+	}
+
+	return(FALSE);
+}
+
+static CDisplayMode* ModernDefaultMode(CCard* pCard)
+{
+	int nMaxW = GetSystemMetrics(SM_CXSCREEN);
+	int nMaxH = GetSystemMetrics(SM_CYSCREEN);
+	CDisplayMode* pBest = NULL;		// the largest 4:3 mode that fits
+	CDisplayMode* pAny  = NULL;		// failing that, the largest that fits
+
+	for (POSITION pos = pCard->m_modes.GetHeadPosition(); pos; )
+	{
+		CDisplayMode* pMode = (CDisplayMode*)pCard->m_modes.GetNext(pos);
+		if (!pMode) continue;
+		if (nMaxW > 0 && nMaxH > 0 && (pMode->m_nWidth > nMaxW || pMode->m_nHeight > nMaxH)) continue;
+
+		CDisplayMode** ppBest = (pMode->m_nWidth * 3 == pMode->m_nHeight * 4) ? &pBest : &pAny;
+		CDisplayMode* p = *ppBest;
+		if (!p || pMode->m_nHeight > p->m_nHeight ||
+			(pMode->m_nHeight == p->m_nHeight && pMode->m_nWidth > p->m_nWidth) ||
+			(pMode->m_nHeight == p->m_nHeight && pMode->m_nWidth == p->m_nWidth && pMode->m_nDepth > p->m_nDepth))
+		{
+			*ppBest = pMode;
+		}
+	}
+
+	return(pBest ? pBest : pAny);
+}
+
+#endif
 // *********************************************************************** //
 //
 //	ROUTINE:	CRenderer::Init   [0x402220]
@@ -315,8 +369,13 @@ BOOL CRenderer::Init(const char* sDll)
 	RMode* pMode = pModes;
 	do
 	{
+#ifdef NOLFSRC_MODERN
+		if (pMode->m_Width >= 640 && pMode->m_Height >= 480 &&
+			(pMode->m_BitDepth >= 32 || !ModernHasDeeperMode(pModes, pMode)))
+#else
 		if (pMode->m_Width >= 640 && pMode->m_Height >= 480 &&
 			(pMode->m_Height * 4) / 3 == pMode->m_Width)
+#endif
 		{
 			CCard* pCard = FindCard(pMode);
 			if (!pCard)
@@ -1048,6 +1107,10 @@ void CDisplayModes::SetDefaultModes()
 				}
 				else
 				{
+#ifdef NOLFSRC_MODERN
+					pMode = ModernDefaultMode(pCard);
+					if (!pMode)
+#endif
 					pMode = pCard->FindMode(640, 480, 16);
 					if (!pMode) pMode = pCard->FindMode(512, 384, 16);
 					if (!pMode) pMode = pCard->FindMode(800, 600, 16);
