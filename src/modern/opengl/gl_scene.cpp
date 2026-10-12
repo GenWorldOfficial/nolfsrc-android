@@ -202,8 +202,31 @@ static void glr_SetFog(bool bSky)
     float col[4] = { cvf(CV_FogR) / 255.0f, cvf(CV_FogG) / 255.0f, cvf(CV_FogB) / 255.0f, 1.0f };
     glFogi(GL_FOG_MODE, GL_LINEAR);
     glFogfv(GL_FOG_COLOR, col);
-    glFogf(GL_FOG_START, cvf(bSky ? CV_SkyFogNearZ : CV_FogNearZ));
-    glFogf(GL_FOG_END, cvf(bSky ? CV_SkyFogFarZ : CV_FogFarZ));
+    if (bSky)
+    {
+        // d3d.ren hands SkyFogNearZ/FarZ to the device as the fog range for
+        // vertices it has already projected, whose depth runs 0..1 (and the
+        // Mac's sky fog coordinate is that fraction too): the sky is fogged
+        // all over by (far - 1)/(far - near), not by its distance. A range
+        // far wider than the sky gives GL that constant.
+        float fNear = cvf(CV_SkyFogNearZ), fFar = cvf(CV_SkyFogFarZ);
+        float f = fFar > fNear ? (fFar - 1.0f) / (fFar - fNear) : 0.0f;
+        f = f < 0.0f ? 0.0f : f;
+        if (f >= 1.0f)
+        {
+            glDisable(GL_FOG);
+            g_Frame.m_bFog = false;
+            return;
+        }
+        const float fEnd = 1.0e7f;
+        glFogf(GL_FOG_START, f > 0.0f ? fEnd - fEnd / f : -1.0e30f);
+        glFogf(GL_FOG_END, fEnd);
+    }
+    else
+    {
+        glFogf(GL_FOG_START, cvf(CV_FogNearZ));
+        glFogf(GL_FOG_END, cvf(CV_FogFarZ));
+    }
     glHint(GL_FOG_HINT, GL_NICEST);
     glEnable(GL_FOG);
     g_Frame.m_bFog = true;
@@ -1253,7 +1276,7 @@ static void glr_DrawSky(SceneDesc* pScene, MainWorld* pWorld)
                 continue;
             // Only a translucent sky model blends (r_SetTranslucentObjectStates);
             // the others are opaque (r_UnsetTranslucentObjectStates), whatever
-            // alpha their textures carry.
+            // alpha their textures or the object carry (d3d.ren 0x10030a60).
             uint32_t nFlags = glr_FirstSurfaceFlags(pWM);
             if (nFlags & SURF_TRANSLUCENT)
             {
