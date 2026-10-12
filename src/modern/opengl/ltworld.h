@@ -274,6 +274,7 @@ enum {
 };
 
 #define FLAG_VISIBLE         0x1
+#define FLAG_SHADOW          0x2     // a model's: it casts a shadow
 #define FLAG_SPRITE_NOZ      0x10
 #define FLAG_REALLYCLOSE     0x40
 #define FLAG_FOGDISABLE      0x80

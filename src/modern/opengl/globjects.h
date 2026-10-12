@@ -52,4 +52,7 @@ void glr_DrawTranslucentModel(LTObject* pObj);
 void glr_BeginReallyClose(LTObject* pObj);     // the camera-space view for it
 void glr_EndReallyClose(void);
 
+// gl_shadows.cpp: a model's shadow on the world (d3d.ren 0x10048180).
+void glr_DrawModelShadow(LTObject* pInst, const void* pModel);
+
 #endif

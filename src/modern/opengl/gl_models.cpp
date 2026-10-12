@@ -882,6 +882,9 @@ static void glr_DrawModelWith(LTObject* pInst, bool bReallyClose)
         glPopMatrix();
     if (pEnv)
         glPopAttrib();
+    // The shadow, after the model (DoModelDrawing, on the hook's flags).
+    if (!bReallyClose && (L.m_Flags & FLAG_SHADOW))
+        glr_DrawModelShadow(pInst, model.m_p);
     glr_ObjectFog(pInst, false);
 }
 

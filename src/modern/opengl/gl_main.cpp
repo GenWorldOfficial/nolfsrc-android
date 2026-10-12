@@ -74,6 +74,7 @@ GLRVar g_Vars[CV_Count] = {
     { "ModelApplySun", 1 }, { "ModelSunVariance", 0.05f },
     { "EnvMapWorld", 1 }, { "EnvMapEnable", 0 }, { "EnvMapAll", 0 }, { "EnvScale", 1 },
     { "EnvPanSpeed", 0.0005f }, { "EnvMapPolyGrids", 1 },
+    { "MaxModelShadows", 1 }, { "ModelShadowAlpha", 230 }, { "ModelShadowOffset", 0.05f },
 };
 
 // Find a variable, creating it with its default if the engine has none
