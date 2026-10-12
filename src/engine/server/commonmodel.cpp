@@ -615,14 +615,22 @@ LTRESULT ci_GetModelNodeName(HOBJECT hObject, HMODELNODE hNode, char* pName, uin
 
 	if (!hNode || !maxLen || !hObject || hObject->m_ObjectType != OT_MODEL)
 	{
+#ifdef NOLFSRC_MODERN
+		RETURN_ERROR(1, "GetModelNodeName", LT_INVALIDPARAMS);
+#else
 		RETURN_ERROR(1, "GetNextModelNode", LT_INVALIDPARAMS);
+#endif
 	}
 
 	pModel = ((ModelInstance*)hObject)->m_AnimTracker.m_TimeRef.m_pModel;
 
 	if (hNode >= pModel->m_NodeTransforms.m_nElements)
 	{
+#ifdef NOLFSRC_MODERN
+		RETURN_ERROR(1, "GetModelNodeName", LT_INVALIDPARAMS);
+#else
 		RETURN_ERROR(1, "GetNextModelNode", LT_INVALIDPARAMS);
+#endif
 	}
 
 	strncpy(pName, pModel->m_Nodes.m_pArray[hNode]->m_pName, maxLen - 1);

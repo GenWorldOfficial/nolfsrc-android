@@ -1536,7 +1536,11 @@ void ci_RemoveLine(HLOCALOBJ hObj, HLTLINE hLine)
 LTRESULT ci_GetParticleTotalLifetime(HLOCALOBJ hSystem, LTParticle* pParticle, LTFLOAT& fTotalLifetime)
 {
 	if (!pParticle)
+#ifdef NOLFSRC_MODERN
+		RETURN_ERROR(1, "CLTClient::GetParticleTotalLifetime", LT_INVALIDPARAMS);
+#else
 		RETURN_ERROR(1, "CLTClient::GetParticleLifetime", LT_INVALIDPARAMS);
+#endif
 
 	fTotalLifetime = ((CClientParticle*)pParticle)->m_TotalLifetime;
 	return LT_OK;
@@ -1619,7 +1623,11 @@ HLTLINE ci_GetNextLine(HLOCALOBJ hObj, HLTLINE hPrev)
 LTRESULT ci_FreeServiceList(NetService* pListHead)
 {
 	if (!pListHead)
+#ifdef NOLFSRC_MODERN
+		RETURN_ERROR(2, "CLTClient::FreeServiceList", LT_INVALIDPARAMS);
+#else
 		RETURN_ERROR(2, "CLTClient::GetServiceList", LT_INVALIDPARAMS);
+#endif
 
 	return g_pClientMgr->m_NetMgr.FreeServiceList(pListHead);
 }
@@ -1975,7 +1983,11 @@ LTRESULT ci_OptimizeParticles(HLOCALOBJ hSystem)
 LTRESULT ci_UnoptimizeSurface(HSURFACE hSurface)
 {
 	if (!hSurface)
+#ifdef NOLFSRC_MODERN
+		RETURN_ERROR(1, "UnoptimizeSurface", LT_INVALIDPARAMS);
+#else
 		RETURN_ERROR(1, "OptimizeSurface", LT_INVALIDPARAMS);
+#endif
 
 	if (((CSurface*)hSurface)->m_nFlags & 2)
 	{
@@ -2807,13 +2819,25 @@ LTRESULT ci_EndOptimized2D()
 LTRESULT ci_RenderObjects(HLOCALOBJ hCamera, HLOCALOBJ* pObjects, int nObjects)
 {
 	if (!g_RenderStruct.m_bInited)
+#ifdef NOLFSRC_MODERN
+		RETURN_ERROR(1, "RenderObjects", LT_NOTINITIALIZED);
+#else
 		RETURN_ERROR(1, "RenderCamera", LT_NOTINITIALIZED);
+#endif
 
 	if (!g_RenderStruct.IsIn3D())
+#ifdef NOLFSRC_MODERN
+		RETURN_ERROR(1, "RenderObjects", LT_NOTIN3D);
+#else
 		RETURN_ERROR(1, "RenderCamera", LT_NOTIN3D);
+#endif
 
 	if (!hCamera || ((CClientObject*)hCamera)->m_ObjectType != OT_CAMERA)
+#ifdef NOLFSRC_MODERN
+		RETURN_ERROR(1, "RenderObjects", LT_INVALIDPARAMS);
+#else
 		RETURN_ERROR(1, "RenderCamera", LT_INVALIDPARAMS);
+#endif
 
 	if (!pObjects || nObjects <= 0)
 		return LT_OK;
@@ -2933,7 +2957,11 @@ LTRESULT ci_DrawSurfaceToSurfaceTransparent(HSURFACE hDest, HSURFACE hSrc, LTRec
 LTRESULT ci_SetSurfaceAlpha(HSURFACE hSurface, float alpha)
 {
 	if (!hSurface)
+#ifdef NOLFSRC_MODERN
+		RETURN_ERROR_NAMED(2, "ILTClient::SetSurfaceAlpha", LT_INVALIDPARAMS);
+#else
 		RETURN_ERROR_NAMED(2, "ILTClient::GetSurfaceAlpha", LT_INVALIDPARAMS);
+#endif
 
 	((CSurface*)hSurface)->m_fAlpha = alpha < 0.0f ? 0.0f : (alpha > 1.0f ? 1.0f : alpha);
 	return LT_OK;
@@ -3005,7 +3033,11 @@ LTRESULT ci_GetModelNodeName(HLOCALOBJ hObject, HMODELNODE hNode, char* pName, u
 
 	if (!hNode || !maxLen || !hObject
 	    || ((CClientObject*)hObject)->m_ObjectType != OT_MODEL)
+#ifdef NOLFSRC_MODERN
+		RETURN_ERROR(1, "GetModelNodeName", LT_INVALIDPARAMS);
+#else
 		RETURN_ERROR(1, "GetNextModelNode", LT_INVALIDPARAMS);
+#endif
 
 	pModel = ((CClientModel*)hObject)->m_pModel;
 
@@ -3016,7 +3048,11 @@ LTRESULT ci_GetModelNodeName(HLOCALOBJ hObject, HMODELNODE hNode, char* pName, u
 	// the choice is invisible at runtime and visible in one displacement
 	// byte.
 	if (hNode >= pModel->m_NodeTransforms.m_nElements)
+#ifdef NOLFSRC_MODERN
+		RETURN_ERROR(1, "GetModelNodeName", LT_INVALIDPARAMS);
+#else
 		RETURN_ERROR(1, "GetNextModelNode", LT_INVALIDPARAMS);
+#endif
 
 	strncpy(pName, pModel->m_Nodes.m_pArray[hNode]->m_pName, maxLen - 1);
 	return LT_OK;

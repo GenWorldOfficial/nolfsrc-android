@@ -35,6 +35,7 @@ in.
 * [`ci_SetLightRadius` does not check its object handle](#ci_setlightradius-does-not-check-its-object-handle)
 * [`ci_GetSurfaceDims` writes through unchecked pointers](#ci_getsurfacedims-writes-through-unchecked-pointers)
 * [`sm_WriteObjectFiles` dereferences the first file identifier unchecked](#sm_writeobjectfiles-dereferences-the-first-file-identifier-unchecked)
+* [Error messages that name the wrong function](#error-messages-that-name-the-wrong-function)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -579,6 +580,14 @@ that is null the whole body is skipped, so the eight-byte record is lost.
 Minor: these change what the engine reports, not what it does.
 
 ### Error messages that name the wrong function
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`): every one in the
+> table reports its own name (`src/engine/lithtech/clientinterface.cpp`,
+> `clientphysics.cpp`, `src/engine/server/servermessage.cpp`, and
+> `commonmodel.cpp`'s twin of `ci_GetModelNodeName`), and
+> `CPhysicsLT::SetObjectDims`'s first check uses the client's debug level.
+> The release build keeps the retail names.
+
 The engine's parameter checks report through a macro taking the function's
 own name. These were written by copying a neighbour, and the name was never
 changed:

@@ -134,7 +134,11 @@ LTRESULT CPhysicsLT::SetObjectDims(HOBJECT hObj, LTVector* pNewDims, uint32 flag
 	state.m_nUnknown64 = 0;
 
 	if (!hObj || !pNewDims)
+#ifdef NOLFSRC_MODERN
+		RETURN_ERROR(1, "CPhysicsLT::SetObjectDims", LT_INVALIDPARAMS);
+#else
 		RETURN_ERROR(2, "SPhysicsLT::SetObjectDims", LT_INVALIDPARAMS);
+#endif
 
 	pWorld = (CUnknown210*)m_pClientMgr->m_World;
 
