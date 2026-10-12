@@ -1094,7 +1094,12 @@ uint32 CGameClientShell::OnEngineInitialized(RMode *pMode, LTGUID *pAppGuid)
 
             rMode.m_bHardware = LTFALSE;
 
+#ifdef NOLFSRC_MODERN
+			// the modern build's default renderer (no d3d.ren there)
+			sprintf(rMode.m_RenderDLL, "d3d9.ren");
+#else
 			sprintf(rMode.m_RenderDLL, "d3d.ren");
+#endif
 			sprintf(rMode.m_InternalName, "");
 			sprintf(rMode.m_Description, "");
 

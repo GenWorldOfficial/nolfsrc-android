@@ -11,7 +11,7 @@
 #include "GameSettings.h"
 extern CGameClientShell* g_pGameClientShell;
 #ifdef NOLFSRC_MODERN
-// M-P1-09: texture filtering
+// M-P1-09: texture filtering; M-P1-18: antialiasing
 #include "cshell/p1_modern.h"
 
 namespace
@@ -57,6 +57,23 @@ namespace
 		if (GetConsoleInt("Bilinear",1) > 0)
 			return 1;
 		return 0;
+	}
+
+	// The antialiasing cycle's choices: the renderers' Antialiasing
+	// variable (samples per pixel; 0 is off).
+	const int s_aP1AASamples[] = { 0, 2, 4, 8 };
+	const int kP1NumAA = sizeof(s_aP1AASamples) / sizeof(s_aP1AASamples[0]);
+
+	int P1CurrentAA()
+	{
+		int nSamples = GetConsoleInt("Antialiasing",0);
+		int i;
+		for (i = kP1NumAA - 1; i > 0; i--)
+		{
+			if (nSamples >= s_aP1AASamples[i])
+				break;
+		}
+		return i;
 	}
 }
 #endif
@@ -104,6 +121,8 @@ CFolderAdvDisplay::CFolderAdvDisplay()
 	// M-P1-09: texture filtering
 	m_nP1Filter = 0;
 	m_nP1FilterShown = 0;
+	m_nP1AA = 0;
+	m_nP1AAShown = 0;
 #endif
 
 	m_pShadows = LTNULL;
@@ -175,6 +194,13 @@ LTBOOL CFolderAdvDisplay::Build()
 	{
 		pP1Filter->AddString(s_aP1Filters[nP1].nStringId);
 	}
+
+	// M-P1-18: antialiasing
+	CCycleCtrl* pP1AA = AddCycleItem(IDS_P1_ANTIALIAS,IDS_P1_HELP_ANTIALIAS,kHeaderWidth,kSpacerWidth,&m_nP1AA);
+	pP1AA->AddString(IDS_OFF);
+	pP1AA->AddString(IDS_P1_ANTIALIAS_2X);
+	pP1AA->AddString(IDS_P1_ANTIALIAS_4X);
+	pP1AA->AddString(IDS_P1_ANTIALIAS_8X);
 #else
 	pToggle = AddToggle(IDS_TRILINEAR, IDS_HELP_TRILINEAR, kTotalWidth, &m_bTrilinear );
 	pToggle->SetOnString(IDS_ON);
@@ -246,6 +272,7 @@ void CFolderAdvDisplay::OnFocus(LTBOOL bFocus)
 #ifdef NOLFSRC_MODERN
 		// M-P1-09: texture filtering
 		m_nP1Filter = m_nP1FilterShown = P1CurrentFilter();
+		m_nP1AA = m_nP1AAShown = P1CurrentAA();
 #endif
 
 		m_nShadows = 0;
@@ -289,6 +316,21 @@ void CFolderAdvDisplay::OnFocus(LTBOOL bFocus)
 		WriteConsoleInt("DrawShadows",(m_nShadows > 0) );
 		WriteConsoleInt("MaxModelShadows",(m_nShadows > 0) );
 		WriteConsoleInt("ModelShadowProj",(m_nShadows > 1) );
+#ifdef NOLFSRC_MODERN
+
+		// M-P1-18: antialiasing, which the renderer reads when it starts:
+		// restart it (once, with a triple-buffer change below)
+		if (m_nP1AA != m_nP1AAShown && m_nP1AA >= 0 && m_nP1AA < kP1NumAA)
+		{
+			WriteConsoleInt("Antialiasing",s_aP1AASamples[m_nP1AA]);
+			if (bOldTB == m_bTripleBuffer)
+			{
+				g_pInterfaceMgr->SetSwitchingRenderModes(LTTRUE);
+				g_pLTClient->RunConsoleString("RestartRender");
+				g_pInterfaceMgr->SetSwitchingRenderModes(LTFALSE);
+			}
+		}
+#endif
 
 		if (bOldTB != m_bTripleBuffer)
 		{

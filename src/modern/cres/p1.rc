@@ -26,4 +26,9 @@ BEGIN
     IDS_P1_TEXFILTER_ANISO4     "Anisotropic 4x"
     IDS_P1_TEXFILTER_ANISO8     "Anisotropic 8x"
     IDS_P1_TEXFILTER_ANISO16    "Anisotropic 16x"
+    IDS_P1_ANTIALIAS            "Antialiasing"
+    IDS_P1_HELP_ANTIALIAS       "Smooths the jagged edges of 3D objects (multisampling). Changing it restarts the renderer. The OpenGL and Direct3D 9 renderers only."
+    IDS_P1_ANTIALIAS_2X         "2x"
+    IDS_P1_ANTIALIAS_4X         "4x"
+    IDS_P1_ANTIALIAS_8X         "8x"
 END

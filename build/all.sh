@@ -102,7 +102,7 @@ cp build/game-scripts/run.sh build/game-scripts/run-launcher.sh "$OUT/"
 chmod +x "$OUT/run.sh" "$OUT/run-launcher.sh"
 
 if [ "${NOLF_MIDDLEWARE:-retail}" = open ]; then
-    step "2. open runtime: OpenMiles, our Bink player on FFmpeg and our OpenGL renderer (build/ext.sh)"
+    step "2. open runtime: OpenMiles, our Bink player on FFmpeg and our renderers (build/ext.sh)"
     bash build/ext.sh
     python3 tools/retailextract.py openruntime "${NOLF_EXT_OUT:-out/ext}" "$OUT"
 else
@@ -134,7 +134,14 @@ install_built() {  # install_built <built file> <dest relative to $OUT>
 }
 install_built src/engine/lithtech/Release/lithtech.exe   lithtech.exe
 install_built src/engine/server/Release/server.dll       server.dll
-install_built src/engine/d3d/Release/d3d.ren             d3d.ren
+# The modern build's default renderer is d3d9.ren (src/modern/render/); our
+# d3d.ren, with the modern fixes, ships beside it as d3d7.ren.
+case "${NOLFSRC_CFLAGS:-}" in
+    *NOLFSRC_MODERN*) rm -f "$OUT/d3d.ren"         # from a build before the rename
+                      [ -f "$OUT/MANIFEST.txt" ] && sed -i '/\td3d\.ren$/d' "$OUT/MANIFEST.txt"
+                      install_built src/engine/d3d/Release/d3d.ren d3d7.ren ;;
+    *)                install_built src/engine/d3d/Release/d3d.ren d3d.ren ;;
+esac
 install_built src/engine/launcher/Release/NOLF.exe       NOLF.exe
 install_built src/engine/ltmsg/Release/ltmsg.dll         ltmsg.dll
 # the game DLLs and sres.dll go in the custom/ rez directory, which overrides

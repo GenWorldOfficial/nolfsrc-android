@@ -121,6 +121,17 @@ void P1Config_AfterInit()
 		}
 	}
 
+	if (fSeen < 1.1f)
+	{
+		// The modern build's d3d.ren is d3d7.ren now, and its default
+		// renderer d3d9.ren (which the engine already loaded for a config
+		// naming d3d.ren): say so in the config.
+		char sDll[128];
+		GetConsoleString("RenderDll", sDll, "");
+		if (!_stricmp(sDll, "d3d.ren"))
+			g_pLTClient->RunConsoleString("RenderDll d3d9.ren");
+	}
+
 	WriteConsoleFloat("ModPatchNum", P1_CONFIG_VERSION);
 	g_pLTClient->WriteConfigFile("autoexec.cfg");
 }

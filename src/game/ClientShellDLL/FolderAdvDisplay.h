@@ -53,6 +53,9 @@ protected:
 	// M-P1-09: texture filtering (none, bilinear, trilinear, anisotropic)
 	int		m_nP1Filter;		// the cycle's index
 	int		m_nP1FilterShown;	// the index the folder opened with
+	// M-P1-18: antialiasing (off, 2x, 4x, 8x)
+	int		m_nP1AA;
+	int		m_nP1AAShown;
 #endif
 };
 
