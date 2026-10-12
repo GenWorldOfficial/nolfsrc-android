@@ -291,8 +291,42 @@ static BOOL ModernHasDeeperMode(RMode* pModes, RMode* pMode)
 	return(FALSE);
 }
 
+// M-P1-17: on a Steam Deck (Steam sets SteamDeck=1, and Proton passes it
+// on) the panel's own 1280x800, wide as it is, or failing that the largest
+// mode that fits it: what the desktop reports there (gamescope's) can be
+// far larger than the screen.
+static BOOL ModernIsSteamDeck()
+{
+	char sValue[8];
+	DWORD n = GetEnvironmentVariable("SteamDeck", sValue, sizeof(sValue));
+	return(n > 0 && n < sizeof(sValue) && strcmp(sValue, "1") == 0);
+}
+
+static CDisplayMode* ModernDeckMode(CCard* pCard)
+{
+	CDisplayMode* pBest = NULL;
+	for (POSITION pos = pCard->m_modes.GetHeadPosition(); pos; )
+	{
+		CDisplayMode* pMode = (CDisplayMode*)pCard->m_modes.GetNext(pos);
+		if (!pMode || pMode->m_nWidth > 1280 || pMode->m_nHeight > 800) continue;
+		if (!pBest || pMode->m_nWidth * pMode->m_nHeight > pBest->m_nWidth * pBest->m_nHeight ||
+			(pMode->m_nWidth == pBest->m_nWidth && pMode->m_nHeight == pBest->m_nHeight &&
+			 pMode->m_nDepth > pBest->m_nDepth))
+		{
+			pBest = pMode;
+		}
+	}
+	return(pBest);
+}
+
 static CDisplayMode* ModernDefaultMode(CCard* pCard)
 {
+	if (ModernIsSteamDeck())
+	{
+		CDisplayMode* pDeck = ModernDeckMode(pCard);
+		if (pDeck) return(pDeck);
+	}
+
 	int nMaxW = GetSystemMetrics(SM_CXSCREEN);
 	int nMaxH = GetSystemMetrics(SM_CYSCREEN);
 	CDisplayMode* pBest = NULL;		// the largest 4:3 mode that fits

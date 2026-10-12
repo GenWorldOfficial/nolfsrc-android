@@ -207,6 +207,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	g_csUpdateCmdLine = g_pRegMgr->Get("Update Command Line", sBuf, dwSize, NULL);
 	dwSize = 256;
 	g_csContentCmdLine = g_pRegMgr->Get("Content Command Line", sBuf, dwSize, NULL);
+#ifdef NOLFSRC_MODERN
+	// M-P1-16: the 1.003 update and the GOTY content, which the retail
+	// installers named in the registry (and run-launcher.sh does under
+	// Wine), from the game directory when nothing names them: a copied or
+	// unpacked install (a Steam Deck, a friend's machine) has no registry.
+	if (g_csUpdateCmdLine.IsEmpty() && GetFileAttributes("nolfu003.rez") != (DWORD)-1)
+		g_csUpdateCmdLine = "-rez nolfu003.rez";
+	if (g_csContentCmdLine.IsEmpty() && GetFileAttributes("nolfgoty.rez") != (DWORD)-1)
+		g_csContentCmdLine = "-rez nolfgoty.rez";
+#endif
 
 	LoadSoundSettings(g_pRegMgr);
 
@@ -393,6 +403,26 @@ Done:
 //
 // *********************************************************************** //
 
+#ifdef NOLFSRC_MODERN
+// Does the config name a whole display mode (a "bitdepth" line, which the
+// game writes into autoexec.cfg on exit and the shipped defaults lack)?
+static BOOL ModernConfigHasMode(const char* sFile)
+{
+	FILE* pFile = fopen(sFile, "rt");
+	if (!pFile) return(FALSE);
+	BOOL bFound = FALSE;
+	char sLine[256];
+	while (!bFound && fgets(sLine, sizeof(sLine), pFile))
+	{
+		char* p = sLine;
+		while (*p == ' ' || *p == '\t' || *p == '"') p++;
+		if (_strnicmp(p, "bitdepth", 8) == 0) bFound = TRUE;
+	}
+	fclose(pFile);
+	return(bFound);
+}
+
+#endif
 BOOL LaunchGame(char* sCmdLine, BOOL bMultiplayer)
 {
 	// Make sure the performance settings have been chosen...
@@ -453,6 +483,11 @@ BOOL LaunchGame(char* sCmdLine, BOOL bMultiplayer)
 		csCmd += " ";
 		csCmd += g_csContentCmdLine;
 	}
+#ifdef NOLFSRC_MODERN
+	// custom/ -- the game code built from source -- last, over whatever the
+	// update and content archives carry (the engine searches last-first).
+	csCmd += " -rez custom";
+#endif
 
 	if (bMultiplayer)
 	{
@@ -470,6 +505,45 @@ BOOL LaunchGame(char* sCmdLine, BOOL bMultiplayer)
 		csCmd += csAdv;
 	}
 
+#ifdef NOLFSRC_MODERN
+	// M-P1-17: a fresh install -- autoexec.cfg is still the shipped
+	// defaults.cfg, which names no colour depth; the game writes one on its
+	// first exit -- starts at the launcher's default mode (the largest 4:3
+	// one that fits the desktop, a Steam Deck's own 1280x800), not the
+	// defaults' 640x480, without the Display dialog having been opened.
+	if (!g_bDisplaySet && !ModernConfigHasMode("autoexec.cfg"))
+	{
+		if (!g_pDisplayModes)
+		{
+			g_pDisplayModes = new CDisplayModes;
+			if (!g_pDisplayModes->Init("", "autoexec.cfg"))
+			{
+				delete g_pDisplayModes;
+				g_pDisplayModes = NULL;
+			}
+		}
+		// The shipped defaults name the renderer but no card, which only
+		// the Display dialog picks: the config's renderer (else the first)
+		// and its first hardware card (else its first).
+		CRenderer* pRenderer = g_pDisplayModes ? g_pDisplayModes->m_pCurRenderer : NULL;
+		if (g_pDisplayModes && !pRenderer && !g_pDisplayModes->m_renderers.IsEmpty())
+			pRenderer = (CRenderer*)g_pDisplayModes->m_renderers.GetHead();
+		if (pRenderer && !pRenderer->m_pCurCard)
+		{
+			for (POSITION pos = pRenderer->m_cards.GetHeadPosition(); pos; )
+			{
+				CCard* pCard = (CCard*)pRenderer->m_cards.GetNext(pos);
+				if (pCard && (!pRenderer->m_pCurCard || (pCard->m_bHardware && !pRenderer->m_pCurCard->m_bHardware)))
+					pRenderer->m_pCurCard = pCard;
+			}
+		}
+		if (pRenderer && pRenderer->m_pCurCard && pRenderer->m_pCurCard->m_pCurMode)
+		{
+			g_pDisplayModes->m_pCurRenderer = pRenderer;
+			g_bDisplaySet = TRUE;
+		}
+	}
+#endif
 	if (g_bDisplaySet && g_pDisplayModes)
 	{
 		CString csDisplay = g_pDisplayModes->GetCommands();
