@@ -1,6 +1,6 @@
 # No One Lives Forever, built from source.
 #
-#   make          build the whole game into out/nolf-legacy-release/ (and out/nolf-legacy-release.tar)
+#   make          build the whole game into out/nolf-legacy-release/ (and out/nolf-legacy-release.tar.gz)
 #   make test     scripted playtest of out/nolf-legacy-release/ on two levels
 #   make debug    the same game with symbols and debug logging, in out/nolf-legacy-debug/
 #   make modern   the game with the retail bugs fixed (NOLFSRC_MODERN), in out/nolf-modern-release/
@@ -41,7 +41,7 @@ TOOLCHAIN_FILES = toolchains/msvc-6.00-9782/VC98/Bin/CL.EXE \
 all: game
 
 help:
-	@echo "make            build everything into out/nolf-legacy-release/ and out/nolf-legacy-release.tar"
+	@echo "make            build everything into out/nolf-legacy-release/ and out/nolf-legacy-release.tar.gz"
 	@echo "make debug      the game with symbols and NOLFSRC_DEBUG logging, in out/nolf-legacy-debug/"
 	@echo "make modern     the game with NOLFSRC_MODERN (the retail bugs fixed), in out/nolf-modern-release/"
 	@echo "make modern-debug  both, in out/nolf-modern-debug/"

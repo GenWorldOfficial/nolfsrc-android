@@ -53,9 +53,9 @@
 #   5. audit              every PE file in out/nolf-legacy-release/ listed with its origin;
 #                         the build fails if any is unaccounted for or if a
 #                         .rez archive still holds one.
-#   6. package            out/nolf-legacy-release.tar: the game directory as one file,
-#                         to copy to the machine that plays it (unpack, then
-#                         ./run.sh -- see its header; Wine needed there).
+#   6. package            out/nolf-legacy-release.tar.gz: the game directory as one
+#                         file, to copy to the machine that plays it (unpack,
+#                         then ./run.sh -- see its header; Wine needed there).
 #
 # Every other input is a committed source file (including the committed link
 # inputs src/engine/*/link/*, src/engine/d3d/d3ddata.cpp and
@@ -153,17 +153,11 @@ install_built src/engine/sres/Release/sres.dll           custom/sres.dll
 step "5. audit: every PE file in $OUT"
 python3 tools/retailextract.py audit "$OUT"
 
-# (NOLF_PACKAGE=0 skips it: build/variant.sh makes no tar)
+# (NOLF_PACKAGE=0 skips it: build/variant.sh packages its game directory
+# itself, once the variant's data and symbols are in)
 if [ "${NOLF_PACKAGE:-1}" = 1 ]; then
-    step "6. package: $OUT -> ${OUT%/*}/nolf-legacy-release.tar"
-    # One file to copy to the machine that plays it: unpack anywhere, ./run.sh.
-    # Links are stored as the files they point to (-h); the per-machine state
-    # run.sh / run-launcher.sh create is left out.
-    PKG="${OUT%/*}/nolf-legacy-release.tar"
-    tar -C "$(dirname "$OUT")" -h -cf "$PKG.part" \
-        --exclude=run-cmds.txt --exclude=cd --exclude='*.part' "$(basename "$OUT")"
-    mv "$PKG.part" "$PKG"
-    echo "   $PKG: $(du -h "$PKG" | cut -f1) (unpacks to $(basename "$OUT")/)"
+    step "6. package: $OUT -> $OUT.tar.gz"
+    bash "$REPO/build/package.sh" "$OUT"
 fi
 
 step "done: $OUT ($(( $(date +%s) - T0 ))s) -- play it with $OUT/run.sh, or test it with make test"

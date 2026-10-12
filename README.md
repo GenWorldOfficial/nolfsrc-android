@@ -93,7 +93,7 @@ You need Linux with Docker and the submodules:
 2. Run
 
 ```sh
-make            # -> out/nolf-legacy-release/ and out/nolf-legacy-release.tar
+make            # -> out/nolf-legacy-release/ and out/nolf-legacy-release.tar.gz
                 #    (about 3 minutes; the first time, also the docker image
                 #    and the retail game's download and install)
 make test       # optional: plays two levels under Xvfb with scripted input
@@ -118,8 +118,10 @@ out/nolf-legacy-release/run.sh --res 1024x768
 out/nolf-legacy-release/run.sh --world 'Worlds\T01S01'
 ```
 
-To play elsewhere, copy `out/nolf-legacy-release.tar` (one file, about 1.1 GB), unpack
-it and run `nolf-legacy-release/run.sh`. `nolf-legacy-release/run-launcher.sh` starts the game through the
+To play elsewhere, copy `out/nolf-legacy-release.tar.gz` (one file), unpack it
+and run `nolf-legacy-release/run.sh`. Every variant is packaged the same way:
+`out/nolf-legacy-debug.tar.gz`, `out/nolf-modern-release.tar.gz` and
+`out/nolf-modern-debug.tar.gz`. `nolf-legacy-release/run-launcher.sh` starts the game through the
 `NOLF.exe` launcher instead. Both scripts document their options in their
 headers. Sound needs Wine's audio to work on that machine.
 

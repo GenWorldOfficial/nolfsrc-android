@@ -48,7 +48,8 @@
 # own build outputs from one run to the next, and only changed sources are
 # rewritten into it, so a rebuild redoes only what changed. The game data
 # are extracted into out/<name>/ on its first run (about 1.1 GB, a few
-# minutes) and kept after that; no tar is made.
+# minutes) and kept after that. Last, the game directory is packaged as
+# out/<name>.tar.gz, like the release build's (build/package.sh).
 set -e
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO"
@@ -127,4 +128,7 @@ case "$VARIANT" in *debug)
         [ -f "$map" ] && cp "$map" "$NOLF_GAME_OUT/$(dirname "$dest")/"
     done ;;
 esac
+echo
+echo "== package: out/$NAME/ -> out/$NAME.tar.gz"
+bash "$TREE/build/package.sh" "out/$NAME"
 echo "== done: out/$NAME/ -- play it with out/$NAME/run.sh"
