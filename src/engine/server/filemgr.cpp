@@ -749,7 +749,26 @@ int sub_100070b6(void* hTree, char* pFilename, char* pOutPath, uint32 nOutLen)
 	if (pTree->m_nKind != 1)
 		return 0;
 
+#ifdef NOLFSRC_MODERN
+	// fixed: the tree-path builder ignores the buffer length it is given
+	// (RETAIL_BUGS.md). A path that does not fit is cut short, terminated,
+	// and reported as a failure.
+	if (!nOutLen)
+		return 0;
+
+	{
+		int nLen = _snprintf(pOutPath, nOutLen, "%s\\%s", pTree->m_szDir,
+		                     pFilename);
+
+		if (nLen < 0 || (uint32)nLen >= nOutLen)
+		{
+			pOutPath[nOutLen - 1] = '\0';
+			return 0;
+		}
+	}
+#else
 	sprintf(pOutPath, "%s\\%s", pTree->m_szDir, pFilename);
+#endif
 
 	return 1;
 }

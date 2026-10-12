@@ -45,6 +45,7 @@ in.
 * [`se_ModelHashCleanup` uses a global instead of its argument, and leaks](#se_modelhashcleanup-uses-a-global-instead-of-its-argument-and-leaks)
 * [`ws_AddClippedContact` divides by a dot product that can be zero](#ws_addclippedcontact-divides-by-a-dot-product-that-can-be-zero)
 * [The property-type guard normalises to a value that is also out of range](#the-property-type-guard-normalises-to-a-value-that-is-also-out-of-range)
+* [The tree-path builder ignores the buffer length it is given](#the-tree-path-builder-ignores-the-buffer-length-it-is-given)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -507,6 +508,11 @@ a name of `maxLen - 1` characters or more comes back unterminated.
 
 ### The tree-path builder ignores the buffer length it is given
 `0x100070b6` (server.dll) · `src/engine/server/filemgr.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`):
+> the path is written with `_snprintf` bounded by `nOutLen`, always
+> terminated, and one that does not fit is reported as a failure
+> (`src/engine/server/filemgr.cpp`). The release build keeps the `sprintf`.
 
 The fourth argument, `nOutLen`, is the size of the caller's buffer; the body
 is `sprintf(pOutPath, "%s\\%s", pTree->m_szDir, pFilename)` and never reads
