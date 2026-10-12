@@ -88,7 +88,7 @@ void glr_End2D(void)
 
 LTBOOL glr_StartOptimized2D(void)
 {
-    if (!g.hRC || !g.bIn3D)
+    if (!g.bContext || !g.bIn3D)
         return 0;
     g.bInOptimized2D = true;
     return 1;
@@ -124,7 +124,7 @@ void* glr_CreateSurface(uint32_t nWidth, uint32_t nHeight)
 static void glr_FreeSurfaceTexture(GLRSurface* s)
 {
     // A texture from an earlier context is gone with that context.
-    if (s->m_Tex && s->m_nTexGen == g.nContextGen && g.hRC)
+    if (s->m_Tex && s->m_nTexGen == g.nContextGen && g.bContext)
         glDeleteTextures(1, &s->m_Tex);
     s->m_Tex = 0;
 }
@@ -288,7 +288,7 @@ static void glr_DrawSurfaceQuad(GLRSurface* s, const float* pSrc, const float* p
 // onto the screen. Rects come clipped; a scaled blit stretches.
 void glr_BlitToScreen(RenderBlitRequest* pRequest)
 {
-    if (!g.hRC || !pRequest || !pRequest->m_pSurfaceData || g.pScreenLock)
+    if (!g.bContext || !pRequest || !pRequest->m_pSurfaceData || g.pScreenLock)
         return;
     GLRSurface* s = (GLRSurface*)pRequest->m_pSurfaceData;
     const LTRect* src = pRequest->m_pSrcRect;
@@ -315,7 +315,7 @@ void glr_BlitToScreen(RenderBlitRequest* pRequest)
 // corners onto the destination corners. Points 0..3 run around the quad.
 LTBOOL glr_WarpToScreen(RenderBlitRequest* pRequest)
 {
-    if (!g.hRC || !pRequest || !pRequest->m_pSurfaceData || !pRequest->m_pPoints ||
+    if (!g.bContext || !pRequest || !pRequest->m_pSurfaceData || !pRequest->m_pPoints ||
         pRequest->m_nPoints != 4 || g.pScreenLock)
         return 0;
     GLRSurface* s = (GLRSurface*)pRequest->m_pSurfaceData;
@@ -361,7 +361,7 @@ LTBOOL glr_WarpToScreen(RenderBlitRequest* pRequest)
 LTBOOL glr_LockScreen(int left, int top, int right, int bottom, void** ppPixels, uint32_t* pPitch)
 {
     glr_Debug(4, "lockscreen (%d,%d,%d,%d)", left, top, right, bottom);
-    if (!g.hRC || g.pScreenLock || !ppPixels || !pPitch)
+    if (!g.bContext || g.pScreenLock || !ppPixels || !pPitch)
         return 0;
     uint32_t bpp = glr_BytesPerPixel();
     uint32_t nPitch = g.nWidth * bpp;
@@ -399,7 +399,7 @@ void glr_UnlockScreen(void)
         return;
     uint8_t* pBuf = g.pScreenLock;
     g.pScreenLock = NULL;
-    if (!g.hRC)
+    if (!g.bContext)
     {
         free(pBuf);
         return;
@@ -446,7 +446,7 @@ LTBOOL glr_FillScreenRect(LTRect* pRect, uint32_t nPixel)
 {
     if (pRect)
         glr_Debug(4, "fill (%d,%d,%d,%d) %08x", pRect->left, pRect->top, pRect->right, pRect->bottom, nPixel);
-    if (!g.hRC || !pRect || g.pScreenLock)
+    if (!g.bContext || !pRect || g.pScreenLock)
         return 0;
     int l = pRect->left < 0 ? 0 : pRect->left, t = pRect->top < 0 ? 0 : pRect->top;
     int r = pRect->right > (int)g.nWidth ? (int)g.nWidth : pRect->right;
@@ -470,7 +470,7 @@ LTBOOL glr_FillScreenRect(LTRect* pRect, uint32_t nPixel)
 // they were.
 void glr_BlitFromScreen(RenderBlitRequest* pRequest)
 {
-    if (!g.hRC || !pRequest || !pRequest->m_pSurfaceData || !pRequest->m_pSrcRect ||
+    if (!g.bContext || !pRequest || !pRequest->m_pSurfaceData || !pRequest->m_pSrcRect ||
         !pRequest->m_pDestRect || g.pScreenLock)
         return;
     GLRSurface* s = (GLRSurface*)pRequest->m_pSurfaceData;

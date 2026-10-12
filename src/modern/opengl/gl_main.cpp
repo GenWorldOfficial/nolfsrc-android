@@ -1,11 +1,11 @@
-// gl_main.cpp -- opengl.ren's exports, device and frame: Init/Term (a WGL
+// gl_main.cpp -- opengl.ren's exports, device and frame: Init/Term (a GL
 // context on the engine's window), the mode list, clearing and flipping,
 // console variables and the small slots.
 //
 // The shape follows the Mac release's opengl_init.cpp (r_Init, r_Term,
 // r_Clear, r_SwapBuffers, glRenderDLLSetup, glGetSupportedModes), with AGL
-// and DrawSprocket replaced by WGL and ChangeDisplaySettings, and the
-// behaviour the PC engine expects from d3d.ren where the two differ.
+// and DrawSprocket replaced by glplatform.h (gl_wgl.cpp on Windows), and
+// the behaviour the PC engine expects from d3d.ren where the two differ.
 
 #include "glr.h"
 
@@ -135,44 +135,42 @@ static void glr_FillMode(RMode* pMode, uint32_t w, uint32_t h, uint32_t bpp)
     pMode->m_BitDepth = bpp;
 }
 
-// Every display mode Windows offers at 16 and 32 bits, 640x480 and up --
-// what d3d.ren's DirectDraw enumeration yields. Called with no device up:
-// nothing here touches GL.
+struct GLRModeList { RMode* m_pHead; RMode* m_pTail; };
+
+static void glr_AddMode(uint32_t w, uint32_t h, uint32_t bpp, void* pUser)
+{
+    GLRModeList* pList = (GLRModeList*)pUser;
+    if ((bpp != 16 && bpp != 32) || w < 640 || h < 480)
+        return;
+    for (RMode* p = pList->m_pHead; p; p = p->m_pNext)
+        if (p->m_Width == w && p->m_Height == h && p->m_BitDepth == bpp)
+            return;
+    RMode* pMode = (RMode*)malloc(sizeof(RMode));
+    if (!pMode)
+        return;
+    glr_FillMode(pMode, w, h, bpp);
+    if (pList->m_pTail)
+        pList->m_pTail->m_pNext = pMode;
+    else
+        pList->m_pHead = pMode;
+    pList->m_pTail = pMode;
+}
+
+// Every display mode the system offers at 16 and 32 bits, 640x480 and up
+// -- what d3d.ren's DirectDraw enumeration yields. Called with no device
+// up: nothing here touches GL.
 extern "C" RMode* GetSupportedModes(void)
 {
-    RMode* pHead = NULL;
-    RMode* pTail = NULL;
-    DEVMODEA dm;
-    memset(&dm, 0, sizeof(dm));
-    dm.dmSize = sizeof(dm);
-    for (DWORD i = 0; EnumDisplaySettingsA(NULL, i, &dm); i++)
-    {
-        uint32_t w = dm.dmPelsWidth, h = dm.dmPelsHeight, bpp = dm.dmBitsPerPel;
-        if ((bpp != 16 && bpp != 32) || w < 640 || h < 480)
-            continue;
-        bool bDup = false;
-        for (RMode* p = pHead; p && !bDup; p = p->m_pNext)
-            bDup = p->m_Width == w && p->m_Height == h && p->m_BitDepth == bpp;
-        if (bDup)
-            continue;
-        RMode* pMode = (RMode*)malloc(sizeof(RMode));
-        if (!pMode)
-            break;
-        glr_FillMode(pMode, w, h, bpp);
-        if (pTail)
-            pTail->m_pNext = pMode;
-        else
-            pHead = pMode;
-        pTail = pMode;
-    }
-    if (!pHead)
+    GLRModeList list = { NULL, NULL };
+    plat_EnumModes(glr_AddMode, &list);
+    if (!list.m_pHead)
     {
         // No list at all: offer the one mode every setup has.
-        pHead = (RMode*)malloc(sizeof(RMode));
-        if (pHead)
-            glr_FillMode(pHead, 640, 480, 32);
+        list.m_pHead = (RMode*)malloc(sizeof(RMode));
+        if (list.m_pHead)
+            glr_FillMode(list.m_pHead, 640, 480, 32);
     }
-    return pHead;
+    return list.m_pHead;
 }
 
 extern "C" void FreeModeList(RMode* pHead)
@@ -185,132 +183,34 @@ extern "C" void FreeModeList(RMode* pHead)
     }
 }
 
-// ---- the window and the context -----------------------------------------------
-
-static void glr_SizeWindow(void)
-{
-    g.nOldStyle = GetWindowLongA(g.hWnd, GWL_STYLE);
-    g.nOldExStyle = GetWindowLongA(g.hWnd, GWL_EXSTYLE);
-    GetWindowRect(g.hWnd, &g.rcOldWindow);
-
-    if (!g.bWindowed)
-    {
-        DEVMODEA dm;
-        memset(&dm, 0, sizeof(dm));
-        dm.dmSize = sizeof(dm);
-        dm.dmPelsWidth = g.nWidth;
-        dm.dmPelsHeight = g.nHeight;
-        dm.dmBitsPerPel = 32;
-        dm.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL;
-        if (ChangeDisplaySettingsA(&dm, CDS_FULLSCREEN) == DISP_CHANGE_SUCCESSFUL)
-        {
-            g.bChangedDisplay = true;
-            SetWindowLongA(g.hWnd, GWL_STYLE, WS_POPUP | WS_VISIBLE);
-            SetWindowLongA(g.hWnd, GWL_EXSTYLE, WS_EX_TOPMOST);
-            SetWindowPos(g.hWnd, HWND_TOPMOST, 0, 0, g.nWidth, g.nHeight,
-                         SWP_FRAMECHANGED | SWP_SHOWWINDOW);
-            return;
-        }
-        glr_Print("opengl.ren: could not switch the display to %ux%u; running in a window",
-                  g.nWidth, g.nHeight);
-        g.bWindowed = true;
-    }
-
-    // A window whose client area is the mode, centred on the desktop
-    // (d3d.ren's AdjustWindowRect + SetWindowPos).
-    LONG style = g.nOldStyle;
-    if (style & WS_POPUP)
-        style = (style & ~WS_POPUP) | WS_OVERLAPPEDWINDOW;
-    SetWindowLongA(g.hWnd, GWL_STYLE, style);
-    RECT rc = { 0, 0, (LONG)g.nWidth, (LONG)g.nHeight };
-    AdjustWindowRectEx(&rc, style, FALSE, g.nOldExStyle & ~WS_EX_TOPMOST);
-    int cx = rc.right - rc.left, cy = rc.bottom - rc.top;
-    int x = (GetSystemMetrics(SM_CXSCREEN) - cx) / 2;
-    int y = (GetSystemMetrics(SM_CYSCREEN) - cy) / 2;
-    SetWindowPos(g.hWnd, HWND_NOTOPMOST, x < 0 ? 0 : x, y < 0 ? 0 : y, cx, cy,
-                 SWP_FRAMECHANGED | SWP_SHOWWINDOW);
-}
-
-static void glr_RestoreWindow(void)
-{
-    if (g.bChangedDisplay)
-    {
-        ChangeDisplaySettingsA(NULL, 0);
-        g.bChangedDisplay = false;
-        SetWindowLongA(g.hWnd, GWL_STYLE, g.nOldStyle);
-        SetWindowLongA(g.hWnd, GWL_EXSTYLE, g.nOldExStyle);
-        SetWindowPos(g.hWnd, HWND_NOTOPMOST, g.rcOldWindow.left, g.rcOldWindow.top,
-                     g.rcOldWindow.right - g.rcOldWindow.left,
-                     g.rcOldWindow.bottom - g.rcOldWindow.top, SWP_FRAMECHANGED);
-    }
-}
+// ---- the context ------------------------------------------------------------------
+//
+// The window and the context are glplatform.h's; what the renderer needs
+// to know of the context is read here.
 
 static bool glr_CreateGLContext(void)
 {
-    g.hDC = GetDC(g.hWnd);
-    if (!g.hDC)
+    if (!plat_CreateContext())
         return false;
-
-    // A window keeps its pixel format for life, and the engine reloads the
-    // renderer on every focus change: reuse the one an earlier Init set.
-    int nFormat = GetPixelFormat(g.hDC);
-    if (!nFormat)
-    {
-        PIXELFORMATDESCRIPTOR pfd;
-        memset(&pfd, 0, sizeof(pfd));
-        pfd.nSize = sizeof(pfd);
-        pfd.nVersion = 1;
-        pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-        pfd.iPixelType = PFD_TYPE_RGBA;
-        pfd.cColorBits = 32;
-        pfd.cAlphaBits = 8;
-        pfd.cDepthBits = 24;
-        pfd.cStencilBits = 8;
-        pfd.iLayerType = PFD_MAIN_PLANE;
-        nFormat = ChoosePixelFormat(g.hDC, &pfd);
-        if (!nFormat || !SetPixelFormat(g.hDC, nFormat, &pfd))
-        {
-            glr_Print("opengl.ren: no usable OpenGL pixel format");
-            return false;
-        }
-    }
-    g.hRC = wglCreateContext(g.hDC);
-    if (!g.hRC || !wglMakeCurrent(g.hDC, g.hRC))
-    {
-        glr_Print("opengl.ren: could not create an OpenGL context");
-        return false;
-    }
-
+    g.bContext = true;
     const char* pExt = (const char*)glGetString(GL_EXTENSIONS);
     if (!pExt)
         pExt = "";
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &g.nMaxTextureSize);
-    g.glCompressedTexImage2D = (PFN_glCompressedTexImage2D)wglGetProcAddress("glCompressedTexImage2DARB");
+    g.glCompressedTexImage2D = (PFN_glCompressedTexImage2D)plat_GetProcAddress("glCompressedTexImage2DARB");
     g.bS3TC = strstr(pExt, "GL_EXT_texture_compression_s3tc") && g.glCompressedTexImage2D;
     g.bAniso = strstr(pExt, "GL_EXT_texture_filter_anisotropic") != NULL;
     g.fMaxAniso = 1.0f;
     if (g.bAniso)
         glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &g.fMaxAniso);
-
-    PFN_wglSwapInterval pSwapInterval = (PFN_wglSwapInterval)wglGetProcAddress("wglSwapIntervalEXT");
-    if (pSwapInterval)
-        pSwapInterval(cvi(CV_VSync) ? 1 : 0);
+    plat_SetSwapInterval(cvi(CV_VSync) ? 1 : 0);
     return true;
 }
 
 static void glr_DestroyGLContext(void)
 {
-    if (g.hRC)
-    {
-        wglMakeCurrent(NULL, NULL);
-        wglDeleteContext(g.hRC);
-        g.hRC = NULL;
-    }
-    if (g.hDC)
-    {
-        ReleaseDC(g.hWnd, g.hDC);
-        g.hDC = NULL;
-    }
+    plat_DestroyContext();
+    g.bContext = false;
 }
 
 // The state every draw starts from (r_SetStartingRenderStates).
@@ -344,7 +244,7 @@ static int r_Init(RenderStructInit* pInit)
     glr_RegisterVars();
     glr_ReadConsoleVariables();
 
-    g.hWnd = (HWND)pInit->m_hWnd;
+    g.hWnd = pInit->m_hWnd;
     g.nWidth = pInit->m_Mode.m_Width;
     g.nHeight = pInit->m_Mode.m_Height;
     g.nBitDepth = pInit->m_Mode.m_BitDepth == 16 ? 16 : 32;
@@ -358,7 +258,7 @@ static int r_Init(RenderStructInit* pInit)
     if (!g.hWnd || !g.nWidth || !g.nHeight)
         return 1;
 
-    glr_SizeWindow();
+    plat_OpenWindow(g.hWnd, g.nWidth, g.nHeight, &g.bWindowed);
     if (!glr_CreateGLContext())
     {
         r_Term();
@@ -387,20 +287,20 @@ static void r_Term(void)
         free(g.pScreenLock);
         g.pScreenLock = NULL;
     }
-    if (g.hRC)
+    if (g.bContext)
     {
         glFlush();
         glFinish();
     }
     glr_DestroyGLContext();
-    glr_RestoreWindow();
+    plat_CloseWindow();
     g.bIn3D = g.bInOptimized2D = false;
 }
 
 // The engine always passes a rect, clamped to the screen.
 static void r_Clear(LTRect* pRect, uint32_t nFlags)
 {
-    if (!g.hRC)
+    if (!g.bContext)
         return;
     GLbitfield bits = 0;
     if (nFlags & CLEARSCREEN_SCREEN)
@@ -474,7 +374,7 @@ static LTBOOL r_GetOptimized2DColor(HLTCOLOR* pColor)
 
 static void r_RenderCommand(int argc, char** argv)
 {
-    if (argc < 1 || !g.hRC)
+    if (argc < 1 || !g.bContext)
         return;
     if (!_stricmp(argv[0], "info") || !_stricmp(argv[0], "gl_strings"))
     {
@@ -500,8 +400,8 @@ static void* r_GetHook(const char* pName)
 static void r_SwapBuffers(uint32_t nFlags)
 {
     (void)nFlags;
-    if (g.hDC)
-        ::SwapBuffers(g.hDC);
+    if (g.bContext)
+        plat_SwapBuffers();
 }
 
 static uint32_t r_GetInfoFlags(void) { return 0; }
@@ -535,7 +435,7 @@ static void r_GetScreenFormat(PFormat* pFormat)
 // glReadPixels and BMP use.
 static void r_MakeScreenShot(const char* pFilename)
 {
-    if (!g.hRC || !pFilename)
+    if (!g.bContext || !pFilename)
         return;
     uint32_t nPitch = (g.nWidth * 3 + 3) & ~3u;
     uint8_t* pBits = (uint8_t*)malloc(nPitch * g.nHeight);

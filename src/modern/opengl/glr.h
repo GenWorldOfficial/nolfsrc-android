@@ -7,8 +7,7 @@
 #ifndef GLR_H
 #define GLR_H
 
-#include <windows.h>
-#include <GL/gl.h>
+#include "glplatform.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,21 +36,16 @@
 
 typedef void (APIENTRY* PFN_glCompressedTexImage2D)(GLenum, GLint, GLenum, GLsizei,
                                                      GLsizei, GLint, GLsizei, const void*);
-typedef BOOL (APIENTRY* PFN_wglSwapInterval)(int);
 
 // ---- the device ------------------------------------------------------------
 
 struct GLRGlobals {
     RenderStruct* pStruct;          // the engine's table (RenderDLLSetup)
-    HWND     hWnd;
-    HDC      hDC;
-    HGLRC    hRC;
+    void*    hWnd;                  // the engine's window
+    bool     bContext;              // a GL context is current (Init succeeded)
     uint32_t nWidth, nHeight;       // the mode
     uint32_t nBitDepth;             // 16 or 32: the format engine surfaces are in
     bool     bWindowed;
-    bool     bChangedDisplay;       // ChangeDisplaySettings to undo in Term
-    LONG     nOldStyle, nOldExStyle;
-    RECT     rcOldWindow;
 
     bool     bIn3D;
     bool     bInOptimized2D;

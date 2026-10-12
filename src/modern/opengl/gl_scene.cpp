@@ -30,8 +30,8 @@ void glr_InitMultitexture(void)
     if (g_nMultiGen == g.nContextGen)
         return;
     g_nMultiGen = g.nContextGen;
-    g_Multi.glActiveTexture = (PFN_glActiveTexture)wglGetProcAddress("glActiveTextureARB");
-    g_Multi.glMultiTexCoord2f = (PFN_glMultiTexCoord2f)wglGetProcAddress("glMultiTexCoord2fARB");
+    g_Multi.glActiveTexture = (PFN_glActiveTexture)plat_GetProcAddress("glActiveTextureARB");
+    g_Multi.glMultiTexCoord2f = (PFN_glMultiTexCoord2f)plat_GetProcAddress("glMultiTexCoord2fARB");
     GLint nUnits = 1;
     glGetIntegerv(0x84E2 /* GL_MAX_TEXTURE_UNITS_ARB */, &nUnits);
     g_Multi.m_nUnits = nUnits;
@@ -1334,7 +1334,7 @@ static void glr_ScreenPasses(SceneDesc* pScene)
 
 LTBOOL glr_RenderScene(SceneDesc* pScene)
 {
-    if (!g.hRC || !pScene)
+    if (!g.bContext || !pScene)
         return 0;
     if (g.bInOptimized2D)
     {

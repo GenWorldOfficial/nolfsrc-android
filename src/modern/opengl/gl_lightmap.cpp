@@ -352,7 +352,7 @@ static void glr_UploadAtlases(GLRContext* pContext)
 bool glr_BuildLightmaps(GLRContext* pContext)
 {
     MainWorld* pWorld = pContext->m_pWorld;
-    if (!pWorld || !g.hRC)
+    if (!pWorld || !g.bContext)
         return false;
 
     // The poly field is ours: nothing hangs on it until placed.
@@ -421,7 +421,7 @@ void glr_FreeLightmaps(GLRContext* pContext)
     {
         GLRLMAtlas* pAtlas = pContext->m_pAtlases;
         pContext->m_pAtlases = pAtlas->m_pNext;
-        if (pAtlas->m_Id && g.hRC && pContext->m_nContextGen == g.nContextGen)
+        if (pAtlas->m_Id && g.bContext && pContext->m_nContextGen == g.nContextGen)
             glDeleteTextures(1, &pAtlas->m_Id);
         free(pAtlas->m_pRGB);
         free(pAtlas);

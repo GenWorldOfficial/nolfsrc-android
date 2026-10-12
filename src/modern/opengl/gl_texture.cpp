@@ -284,7 +284,7 @@ static bool glr_Upload(GLRTexture* pTex, TextureData* pData)
 
 void glr_BindTexture(SharedTexture* pTexture, LTBOOL bChanged)
 {
-    if (!pTexture || !g.hRC)
+    if (!pTexture || !g.bContext)
         return;
     GLRTexture* pTex = (GLRTexture*)pTexture->m_pRenderData;
     if (pTex && !bChanged)
@@ -325,7 +325,7 @@ void glr_UnbindTexture(SharedTexture* pTexture)
     GLRTexture* pTex = (GLRTexture*)pTexture->m_pRenderData;
     if (pTex)
     {
-        if (g.hRC)
+        if (g.bContext)
             glDeleteTextures(1, &pTex->m_Id);
         if (g.pStruct->m_nBytes[2] >= pTex->m_nBytes)
             g.pStruct->m_nBytes[2] -= pTex->m_nBytes;
