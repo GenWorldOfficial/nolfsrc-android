@@ -1418,6 +1418,10 @@ LTBOOL ci_GetCameraLightAdd(HLOCALOBJ hCamera, LTVector* pAdd)
 // byte is read straight off it with no null check first.
 void ci_SetLightRadius(HLOCALOBJ hObj, float radius)
 {
+#ifdef NOLFSRC_MODERN
+	// fixed: a null handle is ignored, as every other accessor does (RETAIL_BUGS.md)
+	if (!hObj) return;
+#endif
 	if (((CClientObject*)hObj)->m_ObjectType == OT_LIGHT)
 	{
 		if (radius > ((CClientLight*)hObj)->m_fLightRadius)

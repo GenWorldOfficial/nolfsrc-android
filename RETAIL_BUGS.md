@@ -32,6 +32,7 @@ in.
 * [`InitLevel`'s trace misspells a parameter](#initlevels-trace-misspells-a-parameter)
 * [`CLTDirectMusicMgr::InitLevel` leaks the path it built when the control file will not open](#cltdirectmusicmgrinitlevel-leaks-the-path-it-built-when-the-control-file-will-not-open)
 * [`CMemStream::Read`'s debug line reads a missing argument](#cmemstreamreads-debug-line-reads-a-missing-argument)
+* [`ci_SetLightRadius` does not check its object handle](#ci_setlightradius-does-not-check-its-object-handle)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -430,6 +431,10 @@ faults here.
 
 ### `ci_SetLightRadius` does not check its object handle
 `0x0040bf30` (lithtech.exe) · `src/engine/lithtech/clientinterface.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`):
+> `src/engine/lithtech/clientinterface.cpp` returns on a null handle. The
+> release build keeps the retail read.
 
 Every other accessor in the client interface checks the handle for null; this
 one reads the object type straight off it, so a null handle is a read of
