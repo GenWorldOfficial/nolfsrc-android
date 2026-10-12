@@ -126,9 +126,9 @@ void P1Config_AfterInit()
 		// The modern build's d3d.ren is d3d7.ren now, and its default
 		// renderer d3d9.ren (which the engine already loaded for a config
 		// naming d3d.ren): say so in the config.
-		char sDll[128];
-		GetConsoleString("RenderDll", sDll, "");
-		if (!_stricmp(sDll, "d3d.ren"))
+		HCONSOLEVAR hDll = g_pLTClient->GetConsoleVar("RenderDll");
+		const char* sDll = hDll ? g_pLTClient->GetVarValueString(hDll) : LTNULL;
+		if (sDll && !_stricmp(sDll, "d3d.ren"))
 			g_pLTClient->RunConsoleString("RenderDll d3d9.ren");
 	}
 
