@@ -55,6 +55,7 @@ in.
 * [The fragment-record allocator passes a null to the list splice](#the-fragment-record-allocator-passes-a-null-to-the-list-splice)
 * [Checks reported at the wrong debug level](#checks-reported-at-the-wrong-debug-level)
 * [The value-returning readers quote the shutdown message](#the-value-returning-readers-quote-the-shutdown-message)
+* [The compressed-vector codec does not round-trip](#the-compressed-vector-codec-does-not-round-trip)
 * [The box-intersect test reports the wrong plane on three of six faces](#the-box-intersect-test-reports-the-wrong-plane-on-three-of-six-faces)
 * [`LTMatrix::TransformPlane` never transforms the point it dots](#ltmatrixtransformplane-never-transforms-the-point-it-dots)
 * [`w_IsPolyBlocking` has no bounds checks](#w_ispolyblocking-has-no-bounds-checks)
@@ -161,6 +162,12 @@ the game passes `WRITESTREAM_DEFAULT`, which is why it never shows.
 ### The compressed-vector codec does not round-trip
 `0x10012d4e` writer, `0x10014830` reader (server.dll) ·
 `src/engine/server/servermsg.cpp`, `src/engine/server/lmessage.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`): the reader divides
+> by 2^18 - 1, the writer's own scale (`src/engine/server/lmessage.cpp`).
+> Only the reader changes, so a vector from a retail writer decodes exactly
+> too, and what the modern writer sends a retail reader is unchanged. The
+> release build keeps the retail constant.
 
 The writer scales each minor-axis fraction by `262143.0` (2^18 - 1); the
 reader multiplies by `3.814697265625e-06`, which is 2^-18 (1/262144). They
