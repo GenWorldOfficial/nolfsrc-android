@@ -124,6 +124,10 @@ void glr_ProcessWorldModel(LTObject* pObj);
 void glr_DrawSolidWorldModel(LTObject* pObj);
 void glr_DrawTranslucentWorldModel(LTObject* pObj);
 bool glr_SeesSky(const LTVector& vFrom, const LTVector& vRay);
+void glr_ReflectCoords(const LTVector& vCam, const LTVector& pos, const LTVector& N, float* pS, float* pT);
+GLRTexture* glr_EnvMapOf(SharedTexture* pBase);
+bool glr_BeginEnvUnit(GLRTexture* pEnv);
+void glr_EndEnvUnit(void);
 float glr_WorldSize(void);
 
 // ---- multitexture (GL 1.3 / ARB_multitexture) -----------------------------------

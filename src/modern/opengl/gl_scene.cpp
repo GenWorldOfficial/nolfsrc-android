@@ -318,7 +318,7 @@ static void glr_BeginUnits(bool bLightmaps)
     if (!bLightmaps)
         return;
     g_nLMUnit = 1;
-    if (g_Multi.m_bCombine && g_Multi.m_nUnits >= 3 && cvi(CV_DetailTextures))
+    if (g_Multi.m_bCombine && g_Multi.m_nUnits >= 3 && (cvi(CV_DetailTextures) || cvi(CV_EnvMapWorld)))
     {
         g_nDetailUnit = 1;
         g_nLMUnit = 2;
@@ -401,13 +401,75 @@ void glr_ForgetBindings(void)
 }
 
 // The detail texture a base texture names (DTX "DetailTex", link type 0).
-static GLRTexture* glr_DetailOf(Surface* pSurf)
+// The texture's linked texture of this kind (0 detail, 1 environment map).
+static GLRTexture* glr_LinkedOf(Surface* pSurf, uint32_t nType)
 {
     SharedTexture* pBase = pSurf->m_pTexture;
-    if (!pBase || !pBase->m_pLinkedTexture || pBase->m_nLinkType != 0)
+    if (!pBase || !pBase->m_pLinkedTexture || pBase->m_nLinkType != nType)
         return NULL;
     glr_TextureId(pBase->m_pLinkedTexture);
     return (GLRTexture*)pBase->m_pLinkedTexture->m_pRenderData;
+}
+
+// The camera in the space of the polys being drawn (world models'), for
+// environment-map coordinates.
+static LTVector g_vPolyCam;
+
+// d3d.ren's 0x1001e950 (the Mac's r_CalcEnvMapCoords): the eye-to-vertex
+// direction reflected about the normal, two of its components into [0, 1].
+void glr_ReflectCoords(const LTVector& vCam, const LTVector& pos, const LTVector& N, float* pS, float* pT)
+{
+    float dx = pos.x - vCam.x, dy = pos.y - vCam.y, dz = pos.z - vCam.z;
+    float k = 2.0f * (dx * N.x + dy * N.y + dz * N.z);
+    float rx = dx - N.x * k, ry = dy - N.y * k, rz = dz - N.z * k;
+    float len = sqrtf(rx * rx + ry * ry + rz * rz);
+    if (len > 0.0f)
+    {
+        rx /= len; ry /= len; rz /= len;
+    }
+    float s = (N.y * N.y > 0.54439f || N.x * N.x < N.z * N.z) ? rx : rz;
+    *pS = -0.5f * s + 0.5f;
+    *pT = -0.5f * ry + 0.5f;
+}
+
+// The world's coordinates are scaled by DetailTextureScale, as the detail
+// texture's are.
+static void glr_EnvMapCoords(const LTVector& pos, const LTVector& N, float fScale, float* pS, float* pT)
+{
+    glr_ReflectCoords(g_vPolyCam, pos, N, pS, pT);
+    *pS *= fScale;
+    *pT *= fScale;
+}
+
+GLRTexture* glr_EnvMapOf(SharedTexture* pBase)
+{
+    if (!pBase || !pBase->m_pLinkedTexture || pBase->m_nLinkType != 1)
+        return NULL;
+    glr_TextureId(pBase->m_pLinkedTexture);
+    return (GLRTexture*)pBase->m_pLinkedTexture->m_pRenderData;
+}
+
+// An object's environment map on unit 1 (r_SetEnvMapTextureStates): added
+// signed to unit 0's texture under DetailTextureAdd, else modulating it.
+bool glr_BeginEnvUnit(GLRTexture* pEnv)
+{
+    if (!pEnv || !g_Multi.m_bCombine || g_Multi.m_nUnits < 2)
+        return false;
+    glr_ActiveUnit(1);
+    glr_CombineUnit(cvi(CV_DetailTextureAdd) ? GL_ADD_SIGNED_ARB : GL_MODULATE, 1.0f);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, pEnv->m_Id);
+    glr_ActiveUnit(0);
+    return true;
+}
+
+void glr_EndEnvUnit(void)
+{
+    glr_ActiveUnit(1);
+    glDisable(GL_TEXTURE_2D);
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    glr_ActiveUnit(0);
+    glr_ForgetBindings();
 }
 
 static inline uint8_t glr_Saturate(uint8_t c, float fTint, bool bDouble)
@@ -529,9 +591,20 @@ static void glr_DrawPoly(WorldPoly* pPoly, GLRTexture* pTex, bool bLightmaps,
     GLRPolyLM* pLM = bLightmaps && !bFullbright ? (GLRPolyLM*)pPoly->m_pLMPage : NULL;
     if (bLightmaps)
         glr_SetLightmapUnit(pLM ? pLM->m_pAtlas : NULL);
-    GLRTexture* pDetail = pLM && g_nDetailUnit >= 0 ? glr_DetailOf(pPoly->m_pSurface) : NULL;
+    // The detail unit takes the texture's detail texture or, in its place,
+    // its environment map (d3d.ren's two second-pass paths: the base added
+    // signed to either).
+    GLRTexture* pDetail = NULL;
+    GLRTexture* pEnv = NULL;
+    if (pLM && g_nDetailUnit >= 0)
+    {
+        if (cvi(CV_DetailTextures))
+            pDetail = glr_LinkedOf(pPoly->m_pSurface, 0);
+        if (!pDetail && cvi(CV_EnvMapWorld) && pPoly->m_pSurface->m_pPlane)
+            pEnv = glr_LinkedOf(pPoly->m_pSurface, 1);
+    }
     if (g_nDetailUnit >= 0)
-        glr_SetDetailUnit(pDetail);
+        glr_SetDetailUnit(pDetail ? pDetail : pEnv);
 
     LTVector P, Q;
     float fInvSize = 0.0f, fOffU = 0.0f, fOffV = 0.0f, fGrid = 1.0f;
@@ -592,6 +665,12 @@ static void glr_DrawPoly(WorldPoly* pPoly, GLRTexture* pTex, bool bLightmaps,
         if (pDetail)
             g_Multi.glMultiTexCoord2f(GL_TEXTURE0_ARB + g_nDetailUnit,
                                       vert.m_U * fDA + vert.m_V * fDB, vert.m_U * fDC + vert.m_V * fDD);
+        else if (pEnv)
+        {
+            float s, t;
+            glr_EnvMapCoords(pos, pPoly->m_pSurface->m_pPlane->m_Normal, cvf(CV_DetailTextureScale), &s, &t);
+            g_Multi.glMultiTexCoord2f(GL_TEXTURE0_ARB + g_nDetailUnit, s, t);
+        }
         if (pLM)
         {
             float dx = pos.x - pPoly->m_LMOrigin.x, dy = pos.y - pPoly->m_LMOrigin.y,
@@ -614,6 +693,16 @@ static void glr_FlushPolys(const float* pTint, uint8_t nAlpha, const LTMatrix* p
     qsort(g_pDrawList, g_nDrawList, sizeof(GLRDrawPoly), glr_CompareDrawPoly);
     bool bLightmaps = g_Frame.m_bLightmaps;
     glr_SetupWorldLights(pBack);
+    const LTVector& c = g_Frame.m_Cam.m_Pos;
+    if (pBack)
+    {
+        const LTMatrix& M = *pBack;
+        g_vPolyCam.x = M.m[0][0] * c.x + M.m[0][1] * c.y + M.m[0][2] * c.z + M.m[0][3];
+        g_vPolyCam.y = M.m[1][0] * c.x + M.m[1][1] * c.y + M.m[1][2] * c.z + M.m[1][3];
+        g_vPolyCam.z = M.m[2][0] * c.x + M.m[2][1] * c.y + M.m[2][2] * c.z + M.m[2][3];
+    }
+    else
+        g_vPolyCam = c;
     if (bLightmaps)
     {
         GLRWorldLight lights[GLR_MAXWORLDLIGHTS];

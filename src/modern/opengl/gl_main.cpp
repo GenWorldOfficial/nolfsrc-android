@@ -72,6 +72,8 @@ GLRVar g_Vars[CV_Count] = {
     { "DrawParticles", 1 }, { "DrawPolyGrids", 1 }, { "DrawLineSystems", 1 }, { "DrawCanvases", 1 },
     { "DynamicLight", 1 }, { "LightSaturate", 1 }, { "FastLight", 0 },
     { "ModelApplySun", 1 }, { "ModelSunVariance", 0.05f },
+    { "EnvMapWorld", 1 }, { "EnvMapEnable", 0 }, { "EnvMapAll", 0 }, { "EnvScale", 1 },
+    { "EnvPanSpeed", 0.0005f }, { "EnvMapPolyGrids", 1 },
 };
 
 // Find a variable, creating it with its default if the engine has none

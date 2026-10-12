@@ -179,13 +179,20 @@ void glr_DrawPolyGrid(LTObject* pObj)
     uint32_t w = rd<uint32_t>(p, 0x1f0), h = rd<uint32_t>(p, 0x1f4);
     if (!pData || !pIndices || w < 2 || h < 2 || w * h > 65000)
         return;
-    if (pObj->m_Flags & FLAG_ENVIRONMENTMAPONLY)
-        return;                         // the env-map pass is not drawn yet
 
     bool bTranslucent = pObj->m_ColorA != 255;
     GLREffectState state(pObj, bTranslucent);
     SharedTexture** ppFrame = rd<SharedTexture**>(p, 0x1b4 + 8);
-    GLRTexture* pTex = glr_BindShared(ppFrame ? *ppFrame : NULL);
+    SharedTexture* pShared = ppFrame ? *ppFrame : NULL;
+
+    // The texture's environment map (EnvMapPolyGrids), on the second unit;
+    // FLAG_ENVIRONMENTMAPONLY draws it alone.
+    GLRTexture* pEnv = cvi(CV_EnvMapPolyGrids) ? glr_EnvMapOf(pShared) : NULL;
+    bool bEnvOnly = (pObj->m_Flags & FLAG_ENVIRONMENTMAPONLY) != 0;
+    if (bEnvOnly && !pEnv)
+        return;
+    GLRTexture* pTex = glr_BindShared(bEnvOnly ? pShared->m_pLinkedTexture : pShared);
+    bool bEnvUnit = pEnv && !bEnvOnly && glr_BeginEnvUnit(pEnv);
     float tu = pTex && pTex->m_nBaseWidth ? 1.0f / pTex->m_nBaseWidth : 0.0f;
     float tv = pTex && pTex->m_nBaseHeight ? 1.0f / pTex->m_nBaseHeight : 0.0f;
     float xPan = rd<float>(p, 0x1cc), yPan = rd<float>(p, 0x1d0);
@@ -201,6 +208,18 @@ void glr_DrawPolyGrid(LTObject* pObj)
     glr_ObjectMatrix(pObj, &M);
     glr_MultMatrix(M);
     float fHalfW = (w - 1) * 0.5f, fHalfH = (h - 1) * 0.5f;
+
+    // Env coordinates (r_DrawPolyGrid's 0x18eb80): each vertex's normal
+    // from the heights around it along the grid's scaled axes, the camera's
+    // reflection off it.
+    LTVector xa = { M.m[0][0], M.m[1][0], M.m[2][0] }, up = { M.m[0][1], M.m[1][1], M.m[2][1] },
+             za = { M.m[0][2], M.m[1][2], M.m[2][2] };
+    float fUp2 = (up.x * up.x + up.y * up.y + up.z * up.z) / 128.0f;
+    float fXa = sqrtf(xa.x * xa.x + xa.y * xa.y + xa.z * xa.z), fZa = sqrtf(za.x * za.x + za.y * za.y + za.z * za.z);
+    float kx = fXa > 0.0f ? 0.5f * fUp2 / fXa : 0.0f, kz = fZa > 0.0f ? 0.5f * fUp2 / fZa : 0.0f;
+    bool bEnvCoords = bEnvUnit || bEnvOnly;
+    const LTVector& vCam = g_Frame.m_Cam.m_Pos;
+
     glBegin(GL_TRIANGLES);
     for (uint32_t i = 0; i < nIndices; i++)
     {
@@ -214,10 +233,37 @@ void glr_DrawPolyGrid(LTObject* pObj)
         float a = c[3] * fA;
         glColor4ub((uint8_t)(c[0] > 255 ? 255 : c[0] < 0 ? 0 : c[0]), (uint8_t)(c[1] > 255 ? 255 : c[1] < 0 ? 0 : c[1]),
                    (uint8_t)(c[2] > 255 ? 255 : c[2] < 0 ? 0 : c[2]), (uint8_t)(a > 255 ? 255 : a < 0 ? 0 : a));
-        glTexCoord2f((col + uPan) * uScale, (row + vPan) * vScale);
+        float s = 0.0f, t = 0.0f;
+        if (bEnvCoords)
+        {
+            int hl = pData[col > 0 ? idx - 1 : idx], hr = pData[col + 1 < w ? idx + 1 : idx];
+            int hu = pData[row > 0 ? idx - w : idx], hd = pData[row + 1 < h ? idx + w : idx];
+            float gx = (hl - hr) * kx, gz = (hu - hd) * kz;
+            LTVector N = { up.x + xa.x * gx + za.x * gz, up.y + xa.y * gx + za.y * gz, up.z + xa.z * gx + za.z * gz };
+            float len = sqrtf(N.x * N.x + N.y * N.y + N.z * N.z);
+            if (len > 0.0f)
+            {
+                N.x /= len; N.y /= len; N.z /= len;
+            }
+            LTVector local = { col - fHalfW, (float)nValue, row - fHalfH };
+            LTVector pos = { M.m[0][0] * local.x + M.m[0][1] * local.y + M.m[0][2] * local.z + M.m[0][3],
+                             M.m[1][0] * local.x + M.m[1][1] * local.y + M.m[1][2] * local.z + M.m[1][3],
+                             M.m[2][0] * local.x + M.m[2][1] * local.y + M.m[2][2] * local.z + M.m[2][3] };
+            glr_ReflectCoords(vCam, pos, N, &s, &t);
+        }
+        if (bEnvOnly)
+            glTexCoord2f(s, t);
+        else
+        {
+            glTexCoord2f((col + uPan) * uScale, (row + vPan) * vScale);
+            if (bEnvUnit)
+                g_Multi.glMultiTexCoord2f(GL_TEXTURE1_ARB, s, t);
+        }
         glVertex3f(col - fHalfW, (float)nValue, row - fHalfH);
     }
     glEnd();
+    if (bEnvUnit)
+        glr_EndEnvUnit();
 }
 
 // ---- line systems ---------------------------------------------------------------------

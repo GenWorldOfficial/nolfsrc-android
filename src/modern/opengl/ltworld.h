@@ -277,6 +277,7 @@ enum {
 #define FLAG_SPRITE_NOZ      0x10
 #define FLAG_REALLYCLOSE     0x40
 #define FLAG_FOGDISABLE      0x80
+#define FLAG_ENVIRONMENTMAP  0x20    // a model's: chrome
 #define FLAG_NOLIGHT         0x200
 #define FLAG_PORTALVISIBLE   0x400
 

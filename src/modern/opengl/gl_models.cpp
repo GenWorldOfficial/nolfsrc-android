@@ -104,6 +104,9 @@ struct ModelView {                      // the Model fields read here
     float        LODDist0() const    { return rd<float>(m_p, 0xa0); }
     float        Radius() const      { return rd<float>(m_p, 0xa4); }
     float        VisRadius() const   { return rd<float>(m_p, 0xa8); }
+    uint32_t     NormalRefNode() const { return rd<uint32_t>(m_p, 0xf4); }
+    const LTMatrix& NormalRefMat() const { return *(const LTMatrix*)((const uint8_t*)m_p + 0xfc); }
+    uint32_t     bNormalRef() const  { return rd<uint32_t>(m_p, 0x13c); }
     uint32_t     bFovOffset() const  { return rd<uint32_t>(m_p, 0x140); }
     float        FovXOffset() const  { return rd<float>(m_p, 0x144); }
     float        FovYOffset() const  { return rd<float>(m_p, 0x148); }
@@ -447,8 +450,10 @@ static float glr_SunAmount(LTObject* pInst, const LTVector& vPos, const LTMatrix
     return fResult;
 }
 
+// world places the model; normWorld (world, or the NormalRef node's frame)
+// is what the lights and the sun are brought into the vertices' space with.
 static void glr_SetupModelLight(LTObject* pInst, const ModelView& model, const LTMatrix& world,
-                                ModelLighting* pL)
+                                const LTMatrix& normWorld, ModelLighting* pL)
 {
     SceneDesc* pScene = g_Frame.m_pScene;
     pL->m_Scale.x = pInst->m_ColorR;
@@ -486,7 +491,7 @@ static void glr_SetupModelLight(LTObject* pInst, const ModelView& model, const L
     }
     LTVector vPos = { world.m[0][3], world.m[1][3], world.m[2][3] };
     LTMatrix W2M;
-    glr_InverseAffine(&W2M, world);
+    glr_InverseAffine(&W2M, normWorld);
 
     // The sun (RenderStruct m_GlobalLightDir, m_GlobalLightColor): how much
     // of the model sees the sky towards it, kept on the instance (+0x238
@@ -682,9 +687,9 @@ static void glr_DrawModelWith(LTObject* pInst, bool bReallyClose)
     // drawn with the camera-space view. Only its lighting needs it in the
     // world.
     LTMatrix lightWorld = world;
+    LTMatrix camToWorld;
     if (bReallyClose)
     {
-        LTMatrix camToWorld;
         for (int r = 0; r < 3; r++)
         {
             camToWorld.m[r][0] = cam.m_R[r][0];
@@ -730,13 +735,54 @@ static void glr_DrawModelWith(LTObject* pInst, bool bReallyClose)
         return;
     maker.ProcessNode(model.RootNode()->m_iNode, &world, 0);
 
-    // Lighting, LOD.
+    // Lighting, LOD. A model with a NormalRef node is lit (and chromed) in
+    // that node's frame, so its light follows the node as it animates.
+    LTMatrix normWorld = lightWorld;
+    if (model.bNormalRef() && model.NormalRefNode() < nNodes)
+    {
+        LTMatrix nodeWorld = g_pNodeXforms[model.NormalRefNode()];
+        if (bReallyClose)
+            mat_Mul(&nodeWorld, camToWorld, nodeWorld);
+        mat_Mul(&normWorld, nodeWorld, model.NormalRefMat());
+    }
     ModelLighting L;
-    glr_SetupModelLight(pInst, model, lightWorld, &L);
+    glr_SetupModelLight(pInst, model, lightWorld, normWorld, &L);
     float dx = vPos.x - cam.m_Pos.x, dy = vPos.y - cam.m_Pos.y, dz = vPos.z - cam.m_Pos.z;
     uint32_t lod = glr_SelectLOD(model, sqrtf(dx * dx + dy * dy + dz * dz));
     uint8_t nAlpha = pInst->m_ColorA;
     uint32_t nHidden = rd<uint32_t>(pInst, 0x204);
+
+    // Chrome (DoModelDrawing, docs/objects.md 5.4): the world's environment
+    // map in a first pass, its coordinates from the bind-pose normals turned
+    // by the view (and the NormalRef node), panned with the camera; the skin
+    // then blends over it by its alpha. EnvMapAll draws the chrome alone.
+    GLRTexture* pEnv = NULL;
+    bool bEnvAll = cvi(CV_EnvMapAll) != 0;
+    float envRow[2][3], envScale = 0.0f, envPanU = 0.0f, envPanV = 0.0f;
+    if ((bEnvAll || (L.m_Flags & FLAG_ENVIRONMENTMAP)) && cvi(CV_EnvMapEnable) && g.pStruct->m_pEnvMap)
+    {
+        glr_TextureId(g.pStruct->m_pEnvMap);
+        pEnv = (GLRTexture*)g.pStruct->m_pEnvMap->m_pRenderData;
+    }
+    if (pEnv)
+    {
+        // The view's right and up rows (world -> camera), times the normals'
+        // frame when the model has a NormalRef node.
+        for (int r = 0; r < 2; r++)
+            for (int c = 0; c < 3; c++)
+            {
+                if (model.bNormalRef())
+                    envRow[r][c] = cam.m_R[0][r] * normWorld.m[0][c] + cam.m_R[1][r] * normWorld.m[1][c] +
+                                   cam.m_R[2][r] * normWorld.m[2][c];
+                else
+                    envRow[r][c] = cam.m_R[c][r];
+            }
+        float fEnvScale = cvf(CV_EnvScale);
+        envScale = fEnvScale != 0.0f ? 0.5f / fEnvScale : 0.5f;
+        envPanU = g_Frame.m_Cam.m_Pos.x * cvf(CV_EnvPanSpeed) + 0.5f;
+        envPanV = g_Frame.m_Cam.m_Pos.z * cvf(CV_EnvPanSpeed) + 0.5f;
+        glPushAttrib(GL_COLOR_BUFFER_BIT);
+    }
 
     glr_ObjectFog(pInst, true);
     if (nAlpha < 255)
@@ -791,6 +837,30 @@ static void glr_DrawModelWith(LTObject* pInst, bool bReallyClose)
                 pTex = (GLRTexture*)pSkin->m_pRenderData;
             }
         }
+        if (pEnv)
+        {
+            glr_SetBaseTexture(pEnv);
+            glBegin(GL_TRIANGLES);
+            for (uint32_t t = 0; t < pLOD->m_nTris; t++)
+            {
+                const ModelTri& tri = pLOD->m_Tris[t];
+                for (int k = 0; k < 3; k++)
+                {
+                    uint32_t idx = tri.m_Indices[k];
+                    if (idx >= pLOD->m_nVerts)
+                        idx = 0;
+                    const LTVector& N = pLOD->m_Verts[idx].m_Normal;
+                    glColor4ubv(&g_pColors[idx * 4]);
+                    glTexCoord2f((envRow[0][0] * N.x + envRow[0][1] * N.y + envRow[0][2] * N.z) * envScale + envPanU,
+                                 (envRow[1][0] * N.x + envRow[1][1] * N.y + envRow[1][2] * N.z) * envScale + envPanV);
+                    glVertex3fv(&g_pSkinned[idx * 3]);
+                }
+            }
+            glEnd();
+            if (bEnvAll)
+                continue;
+            glEnable(GL_BLEND);
+        }
         glr_SetBaseTexture(pTex);
         glBegin(GL_TRIANGLES);
         for (uint32_t t = 0; t < pLOD->m_nTris; t++)
@@ -810,6 +880,8 @@ static void glr_DrawModelWith(LTObject* pInst, bool bReallyClose)
     }
     if (bReallyClose)
         glPopMatrix();
+    if (pEnv)
+        glPopAttrib();
     glr_ObjectFog(pInst, false);
 }
 
