@@ -52,6 +52,7 @@ in.
 * [`CString::Concat(LPCTSTR)`: appending leaves the length short](#cstringconcatlpctstr-appending-leaves-the-length-short)
 * [`Model::LoadChildModels` reports success when it cannot size one table](#modelloadchildmodels-reports-success-when-it-cannot-size-one-table)
 * [`ServerMessage::ReadData` and `WriteData` bound-check a truncated size](#servermessagereaddata-and-writedata-bound-check-a-truncated-size)
+* [The fragment-record allocator passes a null to the list splice](#the-fragment-record-allocator-passes-a-null-to-the-list-splice)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -448,6 +449,11 @@ which is harmless.)
 
 ### The fragment-record allocator passes a null to the list splice
 `0x10023495` (server.dll) · `src/engine/server/netmgr.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`):
+> a record that cannot be allocated is not appended, and the fragment is
+> dropped as an invalid one would be (`src/engine/server/netmgr.cpp`). The
+> release build keeps the retail code.
 
 When the six-record cap is not reached the function does `new CNetFragRec`,
 and on failure (`xor %edi,%edi` at `0x100234f2`) both paths still call

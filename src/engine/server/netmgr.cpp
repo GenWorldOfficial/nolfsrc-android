@@ -2051,6 +2051,13 @@ int CNetMgrSendView::sub_100235e8(NetConnection* pConn, ServerMessage* pMsg)
 		{
 			pRec = sub_10023495();
 
+#ifdef NOLFSRC_MODERN
+			// No record: the fragment is dropped, like any packet the
+			// reassembly cannot take.
+			if (!pRec)
+				return 1;
+
+#endif
 			pRec->m_ID    = nFragID;
 			pRec->m_pConn = pConn;
 		}
@@ -3734,7 +3741,14 @@ CNetFragRec* CNetMgrSendView::sub_10023495()
 		pRec = new CNetFragRec;
 	}
 
+#ifdef NOLFSRC_MODERN
+	// fixed: the fragment-record allocator passes a null to the list splice
+	// (RETAIL_BUGS.md). Out of memory, there is no record to queue.
+	if (pRec)
+		((LMessageList*)&m_QueueC4)->Append((LThreadMessage*)pRec);
+#else
 	((LMessageList*)&m_QueueC4)->Append((LThreadMessage*)pRec);
+#endif
 
 	return pRec;
 }
