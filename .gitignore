@@ -1,5 +1,6 @@
 # Everything the build writes
-/out/
+# (in any directory: a run started from the wrong directory makes one there)
+out/
 # worktrees made by tools/agentwt.sh
 /.worktrees/
 src/engine/*/Release/
