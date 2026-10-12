@@ -19,6 +19,7 @@
 
 typedef uint32_t LTBOOL;
 typedef uint32_t HLTCOLOR;          // 0x00RRGGBB; bit 31 = "transparent" flag
+typedef uint32_t LTRESULT;          // LT_OK 0, LT_ERROR 1, ...
 
 #define RENDERSTRUCT_VERSION 0xd5d  // Init writes it into RenderStructInit
 

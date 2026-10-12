@@ -409,6 +409,8 @@ static void glr_SetupModelLight(LTObject* pInst, const ModelView& model, const L
     for (uint32_t i = 0; i < pLights->m_nObjects && pL->m_nLights < nMax; i++)
     {
         LTObject* pLight = pLights->m_pObjects[i];
+        if ((pLight->m_Flags & 0x20 /* FLAG_ONLYLIGHTWORLD */) || !cvi(CV_DynamicLight))
+            continue;
         float r = rd<float>(pLight, 0x1a8);
         LTVector d = { pLight->m_Pos.x - vPos.x, pLight->m_Pos.y - vPos.y, pLight->m_Pos.z - vPos.z };
         if (sqrtf(d.x * d.x + d.y * d.y + d.z * d.z) - fVis >= r || r <= 0.0f)

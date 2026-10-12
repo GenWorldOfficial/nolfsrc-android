@@ -94,6 +94,7 @@ enum {
     CV_Saturate, CV_DetailTextures, CV_DetailTextureAdd, CV_DetailTextureScale,
     CV_DrawModels, CV_DrawGuns, CV_TextureModels, CV_ModelSaturation, CV_MaxModelLights,
     CV_ModelLODOffset, CV_DrawSprites, CV_32BitTextures,
+    CV_DrawParticles, CV_DrawPolyGrids, CV_DrawLineSystems, CV_DrawCanvases, CV_DynamicLight,
     CV_Count
 };
 extern GLRVar g_Vars[CV_Count];

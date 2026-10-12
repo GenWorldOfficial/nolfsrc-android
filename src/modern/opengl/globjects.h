@@ -39,6 +39,13 @@ void glr_DrawSprite(LTObject* pObj);
 void glr_DrawNoZSprite(LTObject* pObj);
 void glr_DrawSkySprite(LTObject* pObj);
 
+// gl_effects.cpp
+void glr_DrawParticleSystem(LTObject* pObj);
+void glr_DrawPolyGrid(LTObject* pObj);
+void glr_DrawLineSystem(LTObject* pObj);
+void glr_DrawCanvas(LTObject* pObj);
+bool glr_CanvasIsSolid(LTObject* pObj);
+
 // gl_models.cpp
 void glr_DrawModel(LTObject* pObj);
 void glr_DrawTranslucentModel(LTObject* pObj);

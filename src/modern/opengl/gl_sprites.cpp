@@ -61,13 +61,43 @@ void glr_LightGridSample(const LTVector& pos, float* pOut)
     }
 }
 
+#define FLAG_ONLYLIGHTWORLD 0x20     // a light's: it lights the world, not objects
+
+// r_CalcLightAdd (d3d.ren 0x1001e210): the visible lights near the object;
+// a light colour below 128 takes light away.
+void glr_CalcLightAdd(const LTVector& pos, float* pOut)
+{
+    if (!cvi(CV_DynamicLight))
+        return;
+    GLRObjList* pLights = glr_ObjList(VS_LIGHTS);
+    for (uint32_t i = 0; i < pLights->m_nObjects; i++)
+    {
+        LTObject* L = pLights->m_pObjects[i];
+        if (L->m_Flags & FLAG_ONLYLIGHTWORLD)
+            continue;
+        float r;
+        memcpy(&r, (const uint8_t*)L + 0x1a8, 4);
+        float dx = L->m_Pos.x - pos.x, dy = L->m_Pos.y - pos.y, dz = L->m_Pos.z - pos.z;
+        float d2 = dx * dx + dy * dy + dz * dz;
+        if (r * r <= d2)
+            continue;
+        float s = (1.0f - sqrtf(d2) / r) * 0.7f;
+        pOut[0] += (2.0f * L->m_ColorR - 255.0f) * s;
+        pOut[1] += (2.0f * L->m_ColorG - 255.0f) * s;
+        pOut[2] += (2.0f * L->m_ColorB - 255.0f) * s;
+    }
+}
+
 // r_GetSpriteColor: the object's colour plus the light at it (added, not
 // multiplied), its alpha.
 static void glr_SpriteColor(LTObject* pObj, uint8_t* pRGBA)
 {
     float add[3] = { 0, 0, 0 };
     if (!(pObj->m_Flags & FLAG_NOLIGHT))
+    {
         glr_LightGridSample(pObj->m_Pos, add);
+        glr_CalcLightAdd(pObj->m_Pos, add);
+    }
     float c[3] = { pObj->m_ColorR + add[0], pObj->m_ColorG + add[1], pObj->m_ColorB + add[2] };
     for (int i = 0; i < 3; i++)
         pRGBA[i] = (uint8_t)(c[i] > 255.0f ? 255.0f : c[i] < 0.0f ? 0.0f : c[i]);

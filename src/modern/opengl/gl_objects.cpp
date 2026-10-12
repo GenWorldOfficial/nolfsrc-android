@@ -6,9 +6,9 @@
 // grids and canvases; the chromakeyed ones; then everything translucent,
 // far to near; sprites that ignore the depth buffer last.
 //
-// World models are drawn by gl_scene.cpp, which owns the world's polygons.
-// The other types are stage 3 (README.md): they are sorted here already,
-// and draw nothing yet.
+// World models are drawn by gl_scene.cpp, which owns the world's polygons;
+// models by gl_models.cpp, sprites by gl_sprites.cpp, the rest by
+// gl_effects.cpp.
 
 #include <math.h>
 
@@ -140,16 +140,21 @@ void glr_QueueObject(LTObject* pObj)
         break;
     case OT_POLYGRID:
         if (pObj->m_ColorA != 255)
-            glr_AddTranslucent(pObj, NULL);
+            glr_AddTranslucent(pObj, glr_DrawPolyGrid);
         else
             glr_ObjList(VS_POLYGRIDS)->Add(pObj);
         break;
     case OT_PARTICLESYSTEM:
+        glr_AddTranslucent(pObj, glr_DrawParticleSystem);
+        break;
     case OT_LINESYSTEM:
-        glr_AddTranslucent(pObj, NULL);
+        glr_AddTranslucent(pObj, glr_DrawLineSystem);
         break;
     case OT_CANVAS:
-        glr_ObjList(VS_CANVASES)->Add(pObj);
+        if (glr_CanvasIsSolid(pObj))
+            glr_ObjList(VS_CANVASES)->Add(pObj);
+        else
+            glr_AddTranslucent(pObj, glr_DrawCanvas);
         break;
     default:
         break;
@@ -172,6 +177,8 @@ void glr_FlushObjects(void)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);     // r_DrawSolidModels
     glr_DrawSet(VS_MODELS, glr_DrawModel);
     glPopAttrib();
+    glr_DrawSet(VS_POLYGRIDS, glr_DrawPolyGrid);
+    glr_DrawSet(VS_CANVASES, glr_DrawCanvas);
 
     // Chromakey: texels whose alpha the key cleared are dropped.
     glPushAttrib(GL_COLOR_BUFFER_BIT);
@@ -235,4 +242,6 @@ void glr_DrawSkyObject(LTObject* pObj)
 {
     if (pObj->m_ObjectType == OT_SPRITE)
         glr_DrawSkySprite(pObj);
+    else if (pObj->m_ObjectType == OT_POLYGRID)
+        glr_DrawPolyGrid(pObj);
 }

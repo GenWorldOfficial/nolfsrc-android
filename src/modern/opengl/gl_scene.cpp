@@ -859,8 +859,8 @@ static void glr_DrawSky(SceneDesc* pScene, MainWorld* pWorld)
     glPushAttrib(GL_ALL_ATTRIB_BITS);
     glDisable(GL_DEPTH_TEST);
     glDepthMask(GL_FALSE);
+    glDisable(GL_ALPHA_TEST);
     glr_SetFog(true);
-    glEnable(GL_BLEND);
     LTVector vSkyCam = sky.m_Pos;
     for (int i = 0; i < pScene->m_nSkyObjects; i++)
     {
@@ -872,11 +872,20 @@ static void glr_DrawSky(SceneDesc* pScene, MainWorld* pWorld)
             WorldModelInstance* pWM = (WorldModelInstance*)pObj;
             if (!pWM->m_pWorldBsp)
                 continue;
+            // Only a translucent sky model blends (r_SetTranslucentObjectStates);
+            // the others are opaque (r_UnsetTranslucentObjectStates), whatever
+            // alpha their textures carry.
             uint32_t nFlags = glr_FirstSurfaceFlags(pWM);
-            if ((nFlags & SURF_TRANSLUCENT) && (nFlags & SURF_ADDITIVE))
-                glBlendFunc(GL_ONE, GL_ONE);
+            if (nFlags & SURF_TRANSLUCENT)
+            {
+                glEnable(GL_BLEND);
+                if (nFlags & SURF_ADDITIVE)
+                    glBlendFunc(GL_ONE, GL_ONE);
+                else
+                    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            }
             else
-                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                glDisable(GL_BLEND);
             float tint[3];
             glr_ObjectTint(pObj, tint);
             glr_ObjectFog(pObj, true);
