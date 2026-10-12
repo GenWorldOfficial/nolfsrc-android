@@ -908,8 +908,8 @@ void glr_DrawTranslucentModel(LTObject* pInst)
 // Really-close objects (the player's weapon, the menus' 3D parts) are in
 // camera space, drawn in their place in the order with a near plane of
 // their own (d3d.ren: 0.01) and, for a model that asks (FovXOffset /
-// FovYOffset), their own field of view -- widened like the scene's
-// (MODERN.md M-P0-01) so they look as at 4:3. They come after everything
+// FovYOffset), their own scale -- corrected for a widened screen like the
+// scene's (MODERN.md M-P0-01) so they look as at 4:3. They come after everything
 // else, over a cleared depth buffer (glr_FlushObjects).
 void glr_BeginReallyClose(LTObject* pObj)
 {
@@ -924,9 +924,13 @@ void glr_BeginReallyClose(LTObject* pObj)
         const float fMin = 10.0f * 3.14159265f / 180.0f, fMax = 170.0f * 3.14159265f / 180.0f;
         fx = fx < fMin ? fMin : fx > fMax ? fMax : fx;
         fy = fy < fMin ? fMin : fy > fMax ? fMax : fy;
+        // d3d.ren (0x10017ff7) scales the model's camera space by
+        // tan(f/2) under an unscaled projection, so a wider "field of
+        // view" draws the model larger: the player's weapons are drawn
+        // bigger than the scene's own projection would.
         float aspect = (float)cam.m_nViewW / (float)cam.m_nViewH;
-        close.m_fTanX = tanf(fx * 0.5f) * aspect / (4.0f / 3.0f);
-        close.m_fTanY = tanf(fy * 0.5f);
+        close.m_fTanX = aspect / (4.0f / 3.0f) / tanf(fx * 0.5f);
+        close.m_fTanY = 1.0f / tanf(fy * 0.5f);
     }
     glr_LoadCamera(&close);
 }
