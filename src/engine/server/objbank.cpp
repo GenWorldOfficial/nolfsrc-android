@@ -1869,6 +1869,13 @@ uint8 w_IsectObjectGeometry(LTObject* pObj)
 		            &((WorldModelObject*)pObj)->m_Transform1f0,
 		            &pPolyRef->m_pPoly->m_pSurface->m_pPlane->m_Normal);
 
+#ifdef NOLFSRC_MODERN
+		// fixed: LTMatrix::TransformPlane never transforms the point it dots
+		// (RETAIL_BUGS.md). The point goes through the same transform as the
+		// normal, as the SDK's ltmatrix.h has it.
+		MatVMul_InPlace_H(&((WorldModelObject*)pObj)->m_Transform1f0, &vStartPt);
+
+#endif
 		Plane.m_Dist = Plane.m_Normal.Dot(vStartPt);
 
 		g_pIsectObject   = pObj;

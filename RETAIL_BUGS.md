@@ -56,6 +56,7 @@ in.
 * [Checks reported at the wrong debug level](#checks-reported-at-the-wrong-debug-level)
 * [The value-returning readers quote the shutdown message](#the-value-returning-readers-quote-the-shutdown-message)
 * [The box-intersect test reports the wrong plane on three of six faces](#the-box-intersect-test-reports-the-wrong-plane-on-three-of-six-faces)
+* [`LTMatrix::TransformPlane` never transforms the point it dots](#ltmatrixtransformplane-never-transforms-the-point-it-dots)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -219,6 +220,11 @@ the wrong place.
 
 ### `LTMatrix::TransformPlane` never transforms the point it dots
 `0x1000f74e` (server.dll) · `src/engine/server/objbank.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`):
+> the point on the plane goes through the object's transform before the dot
+> product, as in the SDK's `ltmatrix.h` (`src/engine/server/objbank.cpp`).
+> The release build keeps the retail code.
 
 The plane transform inlined into `w_IsectObjectGeometry` is
 `LTMatrix::TransformPlane` from a version of `ltmatrix.h` that is one line
