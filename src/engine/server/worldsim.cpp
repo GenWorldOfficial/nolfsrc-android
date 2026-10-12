@@ -310,6 +310,15 @@ int w_IsPolyBlocking(WorldPolyOwner* pOwner)
 
 	nStored = 0;
 
+#ifdef NOLFSRC_MODERN
+	// fixed: w_IsPolyBlocking has no bounds checks (RETAIL_BUGS.md). A
+	// polygon too big for the lists, or a clip that would run out of room,
+	// is answered as blocking: it has already passed the sphere test, and
+	// colliding with it is the safe mistake.
+	if (nVerts > WS_MAX_POLY_VERTS)
+		return 1;
+
+#endif
 	for (j = 0; j < nVerts; j++)
 		pInList[j] = pOwner->m_Vertices[j].m_pPos;
 
@@ -330,6 +339,13 @@ int w_IsPolyBlocking(WorldPolyOwner* pOwner)
 
 		for (j = 0; j < nVerts; j++)
 		{
+#ifdef NOLFSRC_MODERN
+			// Room for this step's two pointers and one new vertex.
+			if (ppOut + 2 > pWork + WS_MAX_CLIP_VERTS ||
+			    nStored >= WS_MAX_CLIP_VERTS)
+				return 1;
+
+#endif
 			fCurDist = fSign * (*ppIn[j])[nAxis] - *pDist;
 
 			if (fCurDist > WS_CLIP_SLOP)

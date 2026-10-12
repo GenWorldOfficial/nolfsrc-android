@@ -57,6 +57,7 @@ in.
 * [The value-returning readers quote the shutdown message](#the-value-returning-readers-quote-the-shutdown-message)
 * [The box-intersect test reports the wrong plane on three of six faces](#the-box-intersect-test-reports-the-wrong-plane-on-three-of-six-faces)
 * [`LTMatrix::TransformPlane` never transforms the point it dots](#ltmatrixtransformplane-never-transforms-the-point-it-dots)
+* [`w_IsPolyBlocking` has no bounds checks](#w_ispolyblocking-has-no-bounds-checks)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -475,6 +476,13 @@ infinity or NaN is copied into the object's position.
 
 ### `w_IsPolyBlocking` has no bounds checks
 `0x10001cad` (server.dll) · `src/engine/server/worldsim.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`):
+> a polygon of more than 40 vertices, or a clip that would run past the
+> 200-entry pool or pointer list, is answered as blocking, the safe mistake
+> for a polygon already inside the sphere test
+> (`src/engine/server/worldsim.cpp`). The release build keeps the retail
+> code.
 
 The clip pool (200 vertices) and the working pointer list (200) are
 allocated across all six clip rounds and never reset, and the input list
