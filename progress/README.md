@@ -12,6 +12,11 @@ make progress NOLF_SOURCE=<dir>          # score it; fails on any regression
 make progress-update NOLF_SOURCE=<dir>   # record the score here and in README.md
 ```
 
+This is the reference. For a walk-through -- what to run when, what the
+output means, what to do when it fails, and how to score another project
+with the same tools -- see
+[`tools/guides/14-progress.md`](../tools/guides/14-progress.md).
+
 ## What is scored
 
 Every function of each retail binary is compared with what our build

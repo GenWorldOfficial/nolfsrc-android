@@ -88,8 +88,9 @@ You need Linux with Docker and the submodules:
 1. Fetch them: `git submodule update --init` (or clone with
    `--recurse-submodules`). `toolchains/` is the compilers (about 560 MB,
    see `toolchains/README.md`); `rez/` fetches and installs the retail game
-   (see `rez/README.md`); `ext/openmiles` and `ext/ffmpeg` are the modern
-   build's open-source middleware (about 130 MB).
+   (see `rez/README.md`); `tools/` is the build's helpers and the
+   reconstruction tools and guides; `ext/openmiles` and `ext/ffmpeg` are the
+   modern build's open-source middleware (about 130 MB).
 2. Run
 
 ```sh
@@ -177,7 +178,7 @@ Proton version. The music plays from the game directory's own DirectMusic.
 ## Contributing
 
 The remaining work is functions that are written but not yet byte-identical,
-and functions not written yet. `guides/` explains the method, from reading the
+and functions not written yet. `tools/guides/` explains the method, from reading the
 retail machine code to the compiler quirks that decide the last few bytes;
 `make progress` (after `make`) shows where things stand and catches a change
 that breaks a function that matched before.
@@ -191,8 +192,8 @@ that breaks a function that matched before.
 | `src/game/` | Monolith's NOLF Source Code v1.003 (client, server and resource DLLs) |
 | `src/LT2/` | the LithTech SDK and shared-library headers from the same release |
 | `build/` | the build scripts (`all.sh` is the whole build) |
-| `tools/` | the build's helpers, the playtest, and the tools for reading the retail code and comparing ours with it |
-| `guides/` | how to reconstruct a function so it compiles to the retail bytes: start here to contribute |
+| `tools/` | the build's helpers, the playtest, and the tools for reading the retail code and comparing ours with it (a submodule, [nolffan/tools](https://github.com/nolffan/tools), meant for any reconstruction like this one) |
+| `tools/guides/` | how to reconstruct a function so it compiles to the retail bytes: start here to contribute; `14-progress.md` is the scoreboard |
 | `progress/` | the record of what is byte-identical so far, and what `make progress` checks against it |
 | `docker/` | the build image (Ubuntu 24.04 + Wine) |
 | `toolchains/` | the compilers (a submodule) |

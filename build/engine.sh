@@ -13,7 +13,7 @@
 # src/engine/<target>/Release/<target>-link.txt.
 #
 # Each target can also be checked against the retail binaries, function by
-# function (tools/exematch.py), which is the reconstruction loop of guides/:
+# function (tools/exematch.py), which is the reconstruction loop of tools/guides/:
 #   build/engine.sh server verify          compile, then match every object
 #   build/engine.sh server-one smgr.cpp [symbol]
 #                                          recompile ONE file and match it

@@ -15,6 +15,9 @@ parts of it by hand.
     from them as its own setup would, into `rez/games/nolf-eu-goty/`, checked
     file by file against `rez/games.sha256`. `make` does this the first time
     (`make retail`); see `rez/README.md`.
+  * `tools/`, the build's helpers (the scorer, the object makers, the
+    playtest, ...) and the reconstruction tools and guides
+    ([nolffan/tools](https://github.com/nolffan/tools)). Every build needs it.
   * `ext/openmiles` and `ext/ffmpeg`, the upstream projects the modern build
     uses in place of Miles and Bink ("The modern build's middleware" below).
     The release build does not need them.
@@ -141,7 +144,7 @@ compiled into both `server.dll` and `lithtech.exe`; a full build rebuilds
 both after a change to it, a `*-one` loop only the object it names.
 
 The `verify` and `*-one` targets are the reconstruction loop:
-`guides/02-the-loop.md` explains it, and `guides/` the rest of the method.
+`tools/guides/02-the-loop.md` explains it, and `tools/guides/` the rest of the method.
 
 ## Variant builds: debug and modern
 

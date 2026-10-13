@@ -8,8 +8,9 @@
 #                 fails if a function recorded as identical stops matching
 #   make help     everything else
 #
-# Needs only docker on the host and the two submodules (`git submodule update
-# --init`): the compilers, toolchains/ (toolchains/README.md), and rez/, which
+# Needs only docker on the host and the submodules (`git submodule update
+# --init`): tools/, the build's helpers; the compilers, toolchains/
+# (toolchains/README.md); and rez/, which
 # fetches the redump images of the Game of the Year discs from archive.org and
 # installs the game from them (rez/README.md; `make retail`, which every build
 # runs first, does it once). Every step runs in a throwaway container of the
@@ -37,7 +38,7 @@ TOOLCHAIN_FILES = toolchains/msvc-6.00-9782/VC98/Bin/CL.EXE \
 	toolchains/msvc-6.00-8447/BIN/cl.exe \
 	toolchains/icl-4.0/BIN/icl.exe
 
-.PHONY: all game debug modern modern-debug image retail check-rez check-ext check-toolchain test progress progress-update shell clean distclean help
+.PHONY: all game debug modern modern-debug image retail check-rez check-tools check-ext check-toolchain test progress progress-update shell clean distclean help
 
 all: game
 
@@ -89,11 +90,14 @@ endif
 
 # The retail game the build takes its data from (build/retail.sh): installed
 # by rez/ the first time, checked against rez/games.sha256 every time.
-retail: check-rez image
+retail: check-rez check-tools image
 	@$(DOCKER_RUN) bash -c 'source build/retail.sh && retail_install && retail_verify'
 
 check-rez:
 	@[ -f rez/install-games.sh ] || { echo "error: rez/ is empty -- the disc images and their installer are the rez/ submodule: run git submodule update --init (see rez/README.md)" >&2; exit 1; }
+
+check-tools:
+	@[ -f tools/progress.py ] || { echo "error: tools/ is empty -- the build's helpers are the tools/ submodule: run git submodule update --init (see tools/README.md)" >&2; exit 1; }
 
 check-ext:
 	@for d in ext/openmiles ext/ffmpeg; do \
@@ -105,7 +109,7 @@ check-toolchain:
 	  [ -f "$$f" ] || { echo "error: $$f is missing -- the compilers are the toolchains/ submodule: run git submodule update --init (see toolchains/README.md)" >&2; exit 1; }; \
 	done
 
-test: image
+test: check-tools image
 	@[ -f out/nolf-legacy-release/lithtech.exe ] || { echo "error: no out/nolf-legacy-release/ -- run make first" >&2; exit 1; }
 	@rc=0; for w in $(TEST_LEVELS); do \
 	  echo "== playtest: Worlds\\$$w (tools/playtest-basic.txt)"; \
