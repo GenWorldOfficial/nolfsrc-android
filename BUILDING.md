@@ -166,8 +166,11 @@ copies, and refuses them anywhere else, so neither define can reach the
 release build or the scoring by accident. The first run of each variant
 extracts the game data again (about 1.1 GB); later runs take as long as
 what changed takes to rebuild. Each is packaged like the release game, as
-`out/<directory>-private.tar.gz` and `-public.tar.gz` (`out/nolf-modern-release-private.tar.gz`, ...). Play them as the release game, from the directory the table gives:
-`out/nolf-modern-release/linux-run.sh`, or
+`out/<directory>-private.tar.gz` and `-public.tar.gz`
+(`out/nolf-modern-release-private.tar.gz`, ...); `NOLF_ARCHIVES=public
+make ...` writes only the public one, and fails rather than skip it without
+the disc images. Play them as the release game, from the directory the
+table gives: `out/nolf-modern-release/linux-run.sh`, or
 `tools/playtest.sh out/nolf-modern-release 'Worlds\T01S01'`.
 
 ### The modern build: `NOLFSRC_MODERN`

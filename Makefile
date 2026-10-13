@@ -29,6 +29,7 @@ SRC_MOUNT := $(if $(NOLF_SOURCE),-v $(realpath $(NOLF_SOURCE)):/nolfsource:ro -e
 
 DOCKER_RUN = docker run --rm --init --name $(CONTAINER) \
 	-u $(shell id -u):$(shell id -g) -e HOME=/tmp/home $(if $(JOBS),-e NOLFSRC_JOBS=$(JOBS)) \
+	$(if $(NOLF_ARCHIVES),-e NOLF_ARCHIVES="$(NOLF_ARCHIVES)") \
 	-v $(CURDIR):/repo -w /repo $(SRC_MOUNT) $(IMAGE)
 
 TOOLCHAIN_FILES = toolchains/msvc-6.00-9782/VC98/Bin/CL.EXE \
@@ -58,6 +59,7 @@ help:
 	@echo "make distclean  clean, and remove the docker image too"
 	@echo
 	@echo "Variables: TEST_LEVELS=\"$(TEST_LEVELS)\", JOBS=<n> (parallel compiles; default one per CPU)"
+	@echo "           NOLF_ARCHIVES=\"private public\" (the archives build/package.sh writes)"
 	@echo "           NOLF_SOURCE=<dir> (the NOLF Source Code v1.003 release, for"
 	@echo "           make progress), COMPLETE=1, COVERED=1, ACCEPT_LOSSES=1 (progress/README.md)"
 
@@ -72,9 +74,17 @@ debug: check-toolchain retail
 modern modern-debug: check-toolchain check-ext retail
 	$(DOCKER_RUN) bash build/variant.sh $@
 
+# IMAGE_BUILD=0: use $(IMAGE) as it is (CI builds it with a layer cache
+# first, .github/workflows/public-archives.yml).
+IMAGE_BUILD ?= 1
 image:
+ifeq ($(IMAGE_BUILD),0)
+	@docker image inspect $(IMAGE) >/dev/null 2>&1 || \
+	  { echo "error: IMAGE_BUILD=0, but there is no docker image $(IMAGE)" >&2; exit 1; }
+else
 	@docker build -q -t $(IMAGE) docker/ >/dev/null || \
 	  { echo "error: could not build the docker image (docker/Dockerfile)" >&2; exit 1; }
+endif
 	@echo "== docker image $(IMAGE) ready"
 
 # The retail game the build takes its data from (build/retail.sh): installed
