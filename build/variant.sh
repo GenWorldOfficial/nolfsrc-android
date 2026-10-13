@@ -49,7 +49,8 @@
 # rewritten into it, so a rebuild redoes only what changed. The game data
 # are extracted into out/<name>/ on its first run (about 1.1 GB, a few
 # minutes) and kept after that. Last, the game directory is packaged as
-# out/<name>.tar.gz, like the release build's (build/package.sh).
+# out/<name>-private.tar.gz and -public.tar.gz, like the release build's
+# (build/package.sh).
 set -e
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO"
@@ -129,6 +130,6 @@ case "$VARIANT" in *debug)
     done ;;
 esac
 echo
-echo "== package: out/$NAME/ -> out/$NAME.tar.gz"
+echo "== package: out/$NAME/ -> out/$NAME-private.tar.gz, -public.tar.gz"
 bash "$TREE/build/package.sh" "out/$NAME"
 echo "== done: out/$NAME/ -- play it with out/$NAME/linux-run.sh"

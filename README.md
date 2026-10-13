@@ -93,7 +93,7 @@ You need Linux with Docker and the submodules:
 2. Run
 
 ```sh
-make            # -> out/nolf-legacy-release/ and out/nolf-legacy-release.tar.gz
+make            # -> out/nolf-legacy-release/ and its -private / -public .tar.gz
                 #    (about 3 minutes; the first time, also the docker image
                 #    and the retail game's download and install)
 make test       # optional: plays two levels under Xvfb with scripted input
@@ -118,12 +118,34 @@ out/nolf-legacy-release/linux-run.sh --res 1024x768
 out/nolf-legacy-release/linux-run.sh --world 'Worlds\T01S01'
 ```
 
-To play elsewhere, copy `out/nolf-legacy-release.tar.gz` (one file), unpack it
+To play elsewhere, copy `out/nolf-legacy-release-private.tar.gz` (one file), unpack it
 and run `nolf-legacy-release/linux-run.sh`. Every variant is packaged the same way:
-`out/nolf-legacy-debug.tar.gz`, `out/nolf-modern-release.tar.gz` and
-`out/nolf-modern-debug.tar.gz`. `nolf-legacy-release/linux-run-launcher.sh` starts the game through the
+`out/nolf-legacy-debug-private.tar.gz`, `out/nolf-modern-release-private.tar.gz` and
+`out/nolf-modern-debug-private.tar.gz`. `nolf-legacy-release/linux-run-launcher.sh` starts the game through the
 `NOLF.exe` launcher instead. Both scripts document their options in their
 headers. Sound needs Wine's audio to work on that machine.
+
+The `-private` archives hold the retail game's data (1.1 GB of it), so they
+are for your own machines and for others developing on the build. To give
+the game to anyone else, give them the `-public` archive instead
+(`out/nolf-modern-release-public.tar.gz`, about 5 MB): the same directory
+without anything from the discs, and two scripts that copy it out of their
+own disc images of the Game of the Year Edition (Europe). An image can be a
+plain `.iso` (an own rip), redump's `.bin` (or its `.cue`), or redump's
+`.zip` as archive.org serves it; a `.bin` or `.zip` is converted to a
+temporary `.iso` first (about 0.6 GB a disc; on Linux this needs
+`python3`). They check each image's SHA-256 and every file they write, so
+the result is the `-private` archive's directory, byte for byte:
+
+```sh
+nolf-modern-release/linux-install.sh disc1.zip disc2.zip    # Linux, Steam Deck
+```
+
+On Windows, drop both images onto `windows-install.bat` (or put them in the
+game folder and double-click it), then start `NOLF.exe`. Either script finds
+the images in the game directory or the one above it by itself, and can be
+run again: a file already in place is checked and kept. The public archive
+is made only if `rez/isos/` has the two `.iso` images (`tools/mkinstall.py`).
 
 Music needs more in the release build: it is DirectMusic, which Wine
 implements only in part. Its own DirectMusic cannot load the music's styles,
@@ -145,7 +167,8 @@ it is already installed, give DirectSound back to Wine:
 `WINEPREFIX=~/.wine-nolf wine reg delete 'HKCU\Software\Wine\DllOverrides' /v dsound /f`.
 
 On a Steam Deck (or any Steam with Proton), the modern build needs no
-winetricks or Protontricks: unpack `nolf-modern-release.tar.gz`, add its
+winetricks or Protontricks: unpack `nolf-modern-release-private.tar.gz` (or the public one, then run
+`linux-install.sh`), add its
 `NOLF.exe` as a non-Steam game (Desktop Mode, Steam > Games > Add a
 Non-Steam Game), and in the shortcut's Properties > Compatibility force a
 Proton version. The music plays from the game directory's own DirectMusic.

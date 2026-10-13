@@ -19,7 +19,7 @@ parts of it by hand.
     uses in place of Miles and Bink ("The modern build's middleware" below).
     The release build does not need them.
 * About 9 GB of disk: 2.6 GB for the docker image, 2.8 GB for `out/` (the
-  game directory, its .tar.gz, and the 0.6 GB Wine prefix), about 3 GB in `rez/`
+  game directory, its two .tar.gz, and the 0.6 GB Wine prefix), about 3 GB in `rez/`
   (the disc images, zipped and unzipped, and the installed game), a few
   hundred MB of objects.
 
@@ -49,7 +49,7 @@ parts of it by hand.
 | 3. compile | `build/compile.sh`: every compile and link, by `build/build.mk` (below) -- the lithshared libraries (`RegMgr` twice, as Monolith built it for each game DLL: the Release build for `NOLF.exe` and `Object.lto`, the Debug build, `RegMgr_Debug.lib`, for `CShell.dll`, which the Game of the Year `CShell.dll` linked); the game DLLs `CRes.dll`, `CShell.dll`, `Object.lto`; the engine, `ltmsg.dll`, `sres.dll`, `NOLF.exe`, `server.dll`, `lithtech.exe`, `d3d.ren` | `src/lithshared/out/*.lib`, `src/game/*/Release`, `Final_Release`, `src/engine/*/Release` |
 | 4. assemble | the built binaries into the game directory; the game DLLs and `sres.dll` go in `custom/`, the rez directory the engine searches last | `out/nolf-legacy-release/` |
 | 5. audit | every PE file in `out/nolf-legacy-release/` listed with its origin (`out/nolf-legacy-release/MANIFEST.txt`); the build fails if one is unaccounted for, or if a `.rez` archive still holds one | |
-| 6. package | `out/nolf-legacy-release/` as one compressed tar (`build/package.sh`) | `out/nolf-legacy-release.tar.gz` |
+| 6. package | `out/nolf-legacy-release/` as a compressed tar, whole (`-private`), and without the disc data plus the scripts that install it from the player's disc images (`-public`; `build/package.sh`, `tools/mkinstall.py`) | `out/nolf-legacy-release-private.tar.gz`, `out/nolf-legacy-release-public.tar.gz` |
 
 Every binary in `out/nolf-legacy-release/` is built from this repository except the 35
 Miles and Bink files of step 2; the audit prints them all. The steps are
@@ -166,7 +166,7 @@ copies, and refuses them anywhere else, so neither define can reach the
 release build or the scoring by accident. The first run of each variant
 extracts the game data again (about 1.1 GB); later runs take as long as
 what changed takes to rebuild. Each is packaged like the release game, as
-`out/<directory>.tar.gz` (`out/nolf-modern-release.tar.gz`, ...). Play them as the release game, from the directory the table gives:
+`out/<directory>-private.tar.gz` and `-public.tar.gz` (`out/nolf-modern-release-private.tar.gz`, ...). Play them as the release game, from the directory the table gives:
 `out/nolf-modern-release/linux-run.sh`, or
 `tools/playtest.sh out/nolf-modern-release 'Worlds\T01S01'`.
 
