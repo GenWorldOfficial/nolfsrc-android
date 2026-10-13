@@ -2,7 +2,8 @@
 //
 // The device is OpenGL 1.x fixed function with a few extensions
 // (ARB_multitexture, ARB_texture_env_combine, EXT_texture_compression_s3tc,
-// EXT_texture_filter_anisotropic, ARB/NV_depth_clamp), which is what every
+// EXT_texture_filter_anisotropic, ARB/NV_depth_clamp, display lists for
+// rd_NearDepth), which is what every
 // OpenGL a Wine prefix can reach provides; rdev.h is shaped after it, so
 // most calls here are one GL call. The context is WGL's, on the window
 // mr_window.cpp sized. Antialiasing draws into a multisampled framebuffer
@@ -92,6 +93,7 @@ static struct {
     PFN_glBlitFramebuffer               BlitFramebuffer;
 } s_fbo;
 static GLuint s_nFBO, s_nColorRB, s_nDepthRB;   // the multisampled target, 0 without antialiasing
+static GLuint s_nNearList;                       // rd_NearDepth's batch, made at its first use
 static int    s_nWidth;
 
 static HWND  s_hWnd;
@@ -108,6 +110,7 @@ static void gl_DestroyContext(void)
         wglMakeCurrent(NULL, NULL);
         wglDeleteContext(s_hRC);
         s_hRC = NULL;
+        s_nNearList = 0;                // went with the context
     }
     if (s_hDC)
     {
@@ -251,6 +254,7 @@ bool rd_CreateDevice(void* hWnd, uint32_t nWidth, uint32_t nHeight, bool bWindow
     if (g_RDCaps.bAniso)
         glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &g_RDCaps.fMaxAniso);
     g_RDCaps.bDepthClamp = strstr(pExt, "GL_ARB_depth_clamp") || strstr(pExt, "GL_NV_depth_clamp");
+    g_RDCaps.bNearDepth = g_RDCaps.bDepthClamp;
 
     typedef BOOL (APIENTRY* PFN_wglSwapInterval)(int);
     PFN_wglSwapInterval pSwapInterval = (PFN_wglSwapInterval)wglGetProcAddress("wglSwapIntervalEXT");
@@ -361,7 +365,48 @@ void rd_FogRange(float fStart, float fEnd)
 
 void rd_Viewport(int x, int y, int w, int h) { glViewport(x, s_nHeight - y - h, w, h); }
 void rd_DepthRange(float fNear, float fFar)  { glDepthRange(fNear, fFar); }
-void rd_NearDepth(float, float, float, float) {}    // bNearDepth is false
+
+// rd_NearDepth: each batch drawn while it and depth clamping are on is
+// recorded (a display list) and drawn twice, unclamped: as it is, which
+// clips it at the projection's near plane and keeps what lies beyond in
+// the scene's depth; then under the projection with its depth from fClip
+// to that near plane, into window depth fDepth0..fDepth1, which clips it
+// at both. Each part's depth is the projection's own, exact; the parts
+// meet at the near plane.
+static float  s_NearDepth[4];           // clip, near, depth0, depth1; clip 0: off
+static bool   s_bNearRecording;
+
+void rd_NearDepth(float fClip, float fNear, float fDepth0, float fDepth1)
+{
+    s_NearDepth[0] = fClip; s_NearDepth[1] = fNear;
+    s_NearDepth[2] = fDepth0; s_NearDepth[3] = fDepth1;
+}
+
+static void gl_DrawNear(void)
+{
+    glDisable(GL_DEPTH_CLAMP);
+    glCallList(s_nNearList);
+
+    // The projection's depth row for fClip..fNear (mr_LoadCamera's form:
+    // w is the eye depth, z = A*depth + B).
+    GLfloat P[16], range[2];
+    GLint nMode;
+    glGetFloatv(GL_PROJECTION_MATRIX, P);
+    glGetFloatv(GL_DEPTH_RANGE, range);
+    glGetIntegerv(GL_MATRIX_MODE, &nMode);
+    float n = s_NearDepth[0], f = s_NearDepth[1];
+    P[10] = (f + n) / (f - n);
+    P[14] = -2.0f * f * n / (f - n);
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadMatrixf(P);
+    glDepthRange(s_NearDepth[2], s_NearDepth[3]);
+    glCallList(s_nNearList);
+    glPopMatrix();
+    glMatrixMode(nMode);
+    glDepthRange(range[0], range[1]);
+    glEnable(GL_DEPTH_CLAMP);
+}
 void rd_Scissor(int x, int y, int w, int h)  { glScissor(x, s_nHeight - y - h, w, h); }
 
 void rd_PushAttrib(uint32_t nMask)
@@ -511,10 +556,26 @@ void rd_Ortho(double l, double r, double b, double t, double n, double f) { glOr
 void rd_Begin(RDPrim ePrim)
 {
     static const GLenum prim[] = { GL_TRIANGLES, GL_TRIANGLE_FAN, GL_QUADS, GL_LINES };
+    s_bNearRecording = s_NearDepth[0] > 0.0f && s_NearDepth[1] > s_NearDepth[0] && glIsEnabled(GL_DEPTH_CLAMP);
+    if (s_bNearRecording)
+    {
+        if (!s_nNearList)
+            s_nNearList = glGenLists(1);
+        glNewList(s_nNearList, GL_COMPILE);
+    }
     glBegin(prim[ePrim]);
 }
 
-void rd_End(void)                                           { glEnd(); }
+void rd_End(void)
+{
+    glEnd();
+    if (s_bNearRecording)
+    {
+        glEndList();
+        s_bNearRecording = false;
+        gl_DrawNear();
+    }
+}
 void rd_Color4ub(uint8_t r, uint8_t g, uint8_t b, uint8_t a) { glColor4ub(r, g, b, a); }
 void rd_Color4f(float r, float g, float b, float a)         { glColor4f(r, g, b, a); }
 void rd_TexCoord2f(float s, float t)                        { glTexCoord2f(s, t); }
