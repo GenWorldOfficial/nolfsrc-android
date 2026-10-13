@@ -16,6 +16,10 @@
 #                               to give to other people. It needs the images
 #                               in rez/isos/; without them it is skipped.
 #
+# NOLF_ARCHIVES (default "private public") says which to write; with
+# "public" alone (the CI build, .github/workflows/public-archives.yml) the
+# private one is not made, and no disc images is an error, not a skip.
+#
 # build/all.sh runs it for the release build (step 6) and build/variant.sh
 # for each variant, once its data and symbols are in place.
 #
@@ -34,6 +38,7 @@ NAME="$(basename "$OUT")"
 PARENT="$(dirname "$OUT")"
 PKG="$PARENT/$NAME-private.tar.gz"
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ARCHIVES=" ${NOLF_ARCHIVES:-private public} "
 
 # The fresh files, staged beside the directory and renamed into it.
 STAGE=".pkg-$NAME"
@@ -45,21 +50,27 @@ MIDDLEWARE=retail
 grep -q '^EXT .*	binkw32\.dll$' "$OUT/MANIFEST.txt" 2>/dev/null && MIDDLEWARE=open
 bash "$HERE/nolfcmds.sh" $MIDDLEWARE > "$PARENT/$STAGE/nolfcmds.txt"
 
-tar -C "$PARENT" -h -cf - \
-    --exclude="$NAME/Save/*" --exclude="$NAME/autoexec.cfg" --exclude="$NAME/nolfcmds.txt" \
-    --exclude='*.log' --exclude=run-cmds.txt --exclude=cd --exclude='*.part' \
-    --transform="s|^$STAGE/|$NAME/|" \
-    "$NAME" "$STAGE/autoexec.cfg" "$STAGE/nolfcmds.txt" |
-    gzip -6 > "$PKG.part"
-mv "$PKG.part" "$PKG"
 rm -f "$PARENT/$NAME.tar" "$PARENT/$NAME.tar.gz"
-echo "   $PKG: $(du -h "$PKG" | cut -f1) (unpacks to $NAME/)"
+if [[ $ARCHIVES == *" private "* ]]; then
+    tar -C "$PARENT" -h -cf - \
+        --exclude="$NAME/Save/*" --exclude="$NAME/autoexec.cfg" --exclude="$NAME/nolfcmds.txt" \
+        --exclude='*.log' --exclude=run-cmds.txt --exclude=cd --exclude='*.part' \
+        --transform="s|^$STAGE/|$NAME/|" \
+        "$NAME" "$STAGE/autoexec.cfg" "$STAGE/nolfcmds.txt" |
+        gzip -6 > "$PKG.part"
+    mv "$PKG.part" "$PKG"
+    echo "   $PKG: $(du -h "$PKG" | cut -f1) (unpacks to $NAME/)"
+fi
+[[ $ARCHIVES == *" public "* ]] || exit 0
 
 # The public archive: the scripts beside the rest, the disc files left out.
 PUB="$PARENT/$NAME-public.tar.gz"
 rc=0
 python3 "$HERE/../tools/mkinstall.py" "$OUT" "$PARENT/$STAGE" || rc=$?
-if [ $rc = 3 ]; then
+if [ $rc = 3 ] && [ -n "${NOLF_ARCHIVES:-}" ]; then
+    echo "   $PUB: no disc images, but NOLF_ARCHIVES asks for it" >&2
+    exit 1
+elif [ $rc = 3 ]; then
     echo "   $PUB: skipped (no disc images)"
     rm -f "$PUB"
 elif [ $rc != 0 ]; then

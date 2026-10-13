@@ -1,0 +1,153 @@
+# The public archives of every build variant, as workflow artifacts (each
+# the .tar.gz itself, not a zip around it):
+# out/nolf-{legacy,modern}-{release,debug}-public.tar.gz (build/package.sh),
+# the game directory without anything from the discs, with the scripts that
+# install that from the player's own disc images (tools/mkinstall.py). The
+# -private archives, which hold the retail data, are not made here. The
+# release build is also checked for byte regressions (make progress).
+#
+# The build needs the two redump images of the Game of the Year discs
+# (rez/fetch-isos.sh nolf-eu-goty: 0.8 GB of zips from archive.org). The
+# job "prepare" fetches them once, into a cache keyed on
+# rez/isos/SHA256SUMS, and builds the docker image into a layer cache; then
+# the four builds run at the same time, each in a job of its own that
+# restores both and installs the retail game from the zips. None of the
+# builds needs another's output.
+name: Public archives
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: public-archives-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    outputs:
+      discs-key: ${{ steps.key.outputs.key }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # .gitmodules names the submodules by SSH; all of them are public, so
+      # fetch them over HTTPS instead, at the commit this one records. Only
+      # rez/ (the disc list and fetch-isos.sh) is needed here.
+      - name: Submodules
+        run: |
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
+          git submodule sync
+          git submodule update --init --depth 1 rez
+
+      # hashFiles() sees only the checkout, so the key is made once the
+      # submodule is there, and handed to the builds.
+      - name: Cache key
+        id: key
+        run: echo "key=redump-nolf-eu-goty-$(sha256sum rez/isos/SHA256SUMS | cut -c1-64)" >> "$GITHUB_OUTPUT"
+
+      # Only whether the cache has them: nothing is downloaded on a hit.
+      - name: Look for the disc images
+        id: discs
+        uses: actions/cache/restore@v4
+        with:
+          path: rez/isos/*.zip
+          key: ${{ steps.key.outputs.key }}
+          lookup-only: true
+
+      # Checked against SHA256SUMS before it is saved.
+      - name: Fetch the disc images
+        if: steps.discs.outputs.cache-hit != 'true'
+        run: rez/fetch-isos.sh nolf-eu-goty
+
+      - name: Save the disc images
+        if: steps.discs.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: rez/isos/*.zip
+          key: ${{ steps.key.outputs.key }}
+
+      # Written to the layer cache here, once; the builds only read it.
+      - uses: docker/setup-buildx-action@v3
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: docker
+          tags: nolfsrc-build
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build:
+    needs: prepare
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false         # one build failing still lets the others finish
+      matrix:
+        include:
+          - name: nolf-legacy-release
+            target: all
+          - name: nolf-legacy-debug
+            target: debug
+          - name: nolf-modern-release
+            target: modern
+          - name: nolf-modern-debug
+            target: modern-debug
+    name: ${{ matrix.name }}
+    env:
+      NOLF_ARCHIVES: public
+      IMAGE_BUILD: 0           # the step "Build image" loads it, cached
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Submodules
+        run: |
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
+          git submodule sync
+          git submodule update --init --depth 1 --jobs 4
+
+      - name: Restore the disc images
+        uses: actions/cache/restore@v4
+        with:
+          path: rez/isos/*.zip
+          key: ${{ needs.prepare.outputs.discs-key }}
+          fail-on-cache-miss: true
+
+      # Loaded as nolfsrc-build, which the Makefile then uses (IMAGE_BUILD=0).
+      - uses: docker/setup-buildx-action@v3
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: docker
+          tags: nolfsrc-build
+          load: true
+          cache-from: type=gha
+
+      # Checks the zips against SHA256SUMS, then installs the retail game.
+      - name: Install the retail game
+        run: make retail
+
+      - name: Build ${{ matrix.name }}
+        run: make ${{ matrix.target }}
+
+      # The release build scored against the retail binaries: fails if a
+      # function recorded in progress/identical.txt is no longer
+      # byte-identical (build/progress.sh; without NOLF_SOURCE, so the
+      # lithshared libraries are not scored).
+      - name: Byte regressions (make progress)
+        if: matrix.name == 'nolf-legacy-release'
+        run: make progress
+
+      # Uploaded as the .tar.gz itself (archive: false), not zipped again;
+      # the artifact takes the file's name.
+      - uses: actions/upload-artifact@v7
+        with:
+          path: out/${{ matrix.name }}-public.tar.gz
+          archive: false
+          if-no-files-found: error
