@@ -143,6 +143,7 @@ void mr_LoadCamera(const MRCamera* pCam)
     };
     rd_MatrixMode(RD_PROJECTION);
     rd_LoadMatrix(P);
+    rd_DepthRange(MR_CLOSE_DEPTH, 1.0f);
 
     const float (*R)[3] = pCam->m_R;
     const LTVector& p = pCam->m_Pos;

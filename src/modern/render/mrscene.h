@@ -110,6 +110,10 @@ struct MRFrame {
 };
 extern MRFrame g_Frame;
 
+// The camera's projection and view; its depth into the depth buffer's
+// MR_CLOSE_DEPTH..1, the front kept for what really-close objects have
+// nearer than its near plane (mr_BeginReallyClose).
+#define MR_CLOSE_DEPTH (1.0f / 16.0f)
 void mr_LoadCamera(const MRCamera* pCam);
 void mr_MultMatrix(const LTMatrix& M);
 void mr_InverseAffine(LTMatrix* pOut, const LTMatrix& M);

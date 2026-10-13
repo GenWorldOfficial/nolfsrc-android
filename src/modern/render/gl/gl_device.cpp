@@ -360,6 +360,8 @@ void rd_FogRange(float fStart, float fEnd)
 }
 
 void rd_Viewport(int x, int y, int w, int h) { glViewport(x, s_nHeight - y - h, w, h); }
+void rd_DepthRange(float fNear, float fFar)  { glDepthRange(fNear, fFar); }
+void rd_NearDepth(float, float, float, float) {}    // bNearDepth is false
 void rd_Scissor(int x, int y, int w, int h)  { glScissor(x, s_nHeight - y - h, w, h); }
 
 void rd_PushAttrib(uint32_t nMask)

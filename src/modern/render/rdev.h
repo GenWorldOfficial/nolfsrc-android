@@ -34,6 +34,7 @@ struct RDCaps {
     bool     bAniso;
     float    fMaxAniso;
     bool     bDepthClamp;           // RD_DEPTH_CLAMP works
+    bool     bNearDepth;            // and rd_NearDepth with it
     int      nSamples;              // the multisampling the device got (1: none)
 };
 extern RDCaps g_RDCaps;
@@ -81,6 +82,15 @@ void rd_FogColor(float r, float g, float b);
 void rd_FogRange(float fStart, float fEnd);
 
 void rd_Viewport(int x, int y, int w, int h);
+// The part of the depth buffer the projection's near..far map to
+// (glDepthRange; 0..1 to start with). Kept with the viewport.
+void rd_DepthRange(float fNear, float fFar);
+// With g_RDCaps.bNearDepth, while RD_DEPTH_CLAMP is on: what lies between
+// eye depth fClip and the projection's near plane fNear is not clamped to
+// the near plane's depth but drawn into window depth fDepth0..fDepth1 (by
+// 1/z, as a projection with its near plane at fClip would), and what is
+// nearer than fClip is clipped. fClip 0 turns it off.
+void rd_NearDepth(float fClip, float fNear, float fDepth0, float fDepth1);
 void rd_Scissor(int x, int y, int w, int h);
 
 // What the push saves and the pop restores, as glPushAttrib's groups.

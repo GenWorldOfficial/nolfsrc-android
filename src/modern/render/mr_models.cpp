@@ -920,9 +920,20 @@ void mr_BeginReallyClose(LTObject* pObj)
     MRCamera close = cam;
     // d3d.ren clips these at 0.01 but projects them with the scene's depth
     // mapping into the one depth buffer: the scene's near plane, with depth
-    // clamping so what is nearer still draws (in front of everything).
+    // clamping so what is nearer still draws (in front of everything). The
+    // main menu needs the scene's mapping: its flat 3D parts lie behind
+    // Cate Archer, a scene model, and she hides them. d3d.ren's depth for
+    // what is nearer than the near plane is below 0, still in order;
+    // clamped, all of it has the one depth, and the weapon's back faces
+    // drawn last show through its front (an inside-out gun). So where the
+    // device can, that part goes into the front of the depth buffer, which
+    // the scene leaves free (mr_LoadCamera), in order.
     if (g_RDCaps.bDepthClamp)
+    {
         rd_Enable(RD_DEPTH_CLAMP);
+        if (g_RDCaps.bNearDepth)
+            rd_NearDepth(0.01f, close.m_fNear, 0.0f, MR_CLOSE_DEPTH);
+    }
     else
         close.m_fNear = 0.01f;
     ModelView model = { pObj->m_ObjectType == OT_MODEL ? rd<void*>(pObj, 0x1dc) : NULL };
@@ -948,5 +959,7 @@ void mr_EndReallyClose(void)
 {
     if (g_RDCaps.bDepthClamp)
         rd_Disable(RD_DEPTH_CLAMP);
+    if (g_RDCaps.bNearDepth)
+        rd_NearDepth(0.0f, 0.0f, 0.0f, 0.0f);
     mr_LoadCamera(&g_Frame.m_Cam);
 }

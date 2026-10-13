@@ -339,6 +339,8 @@ struct D9State {
     bool        m_bDepthMask, m_bColorMask;
     float       m_Fog[3], m_fFogStart, m_fFogEnd;
     int         m_Viewport[4], m_Scissor[4];
+    float       m_DepthRange[2];
+    float       m_NearDepth[4];         // rd_NearDepth: clip, near, depth0, depth1
     float       m_Clear[4];
     int         m_nActive;
     D9Unit      m_Units[D9_UNITS];
@@ -360,6 +362,7 @@ static void d9_DefaultState(void)
     s_S.m_fFogEnd = 1.0f;
     s_S.m_Viewport[2] = s_S.m_Scissor[2] = s_nWidth;
     s_S.m_Viewport[3] = s_S.m_Scissor[3] = s_nHeight;
+    s_S.m_DepthRange[1] = 1.0f;
     s_S.m_Clear[3] = 1.0f;
     s_nStack = 0;
 }
@@ -402,6 +405,17 @@ void rd_FogRange(float fStart, float fEnd)
 void rd_Viewport(int x, int y, int w, int h)
 {
     s_S.m_Viewport[0] = x; s_S.m_Viewport[1] = y; s_S.m_Viewport[2] = w; s_S.m_Viewport[3] = h;
+}
+
+void rd_DepthRange(float fNear, float fFar)
+{
+    s_S.m_DepthRange[0] = fNear; s_S.m_DepthRange[1] = fFar;
+}
+
+void rd_NearDepth(float fClip, float fNear, float fDepth0, float fDepth1)
+{
+    s_S.m_NearDepth[0] = fClip; s_S.m_NearDepth[1] = fNear;
+    s_S.m_NearDepth[2] = fDepth0; s_S.m_NearDepth[3] = fDepth1;
 }
 
 void rd_Scissor(int x, int y, int w, int h)
@@ -469,7 +483,10 @@ void rd_PopAttrib(void)
         memcpy(s_S.m_Scissor, o.m_Scissor, sizeof(s_S.m_Scissor));
     }
     if (m & RD_ATTR_VIEWPORT)
+    {
         memcpy(s_S.m_Viewport, o.m_Viewport, sizeof(s_S.m_Viewport));
+        memcpy(s_S.m_DepthRange, o.m_DepthRange, sizeof(s_S.m_DepthRange));
+    }
 }
 
 // ---- texture units ------------------------------------------------------------------------
@@ -795,7 +812,8 @@ static void d9_Apply(void)
     }
 
     D3DVIEWPORT9 vp = { (DWORD)s.m_Viewport[0], (DWORD)s.m_Viewport[1],
-                        (DWORD)s.m_Viewport[2], (DWORD)s.m_Viewport[3], 0.0f, 1.0f };
+                        (DWORD)s.m_Viewport[2], (DWORD)s.m_Viewport[3],
+                        s.m_DepthRange[0], s.m_DepthRange[1] };
     s_pDev->SetViewport(&vp);
 
     // GL's projection to Direct3D's: depth from -w..w to 0..w, and the
@@ -906,7 +924,10 @@ static D9Vertex s_Cur = { 0, 0, 0, 0xffffffff, { { 0, 0, 0, 1 }, { 0, 0, 0, 1 },
 // (and the far), and drawn pre-transformed, which Direct3D does not clip
 // in depth. Per vertex where GL clamps per pixel, which is the same for
 // what lies wholly nearer than the near plane: the really-close objects
-// (the player's weapon, the diving mask), all in front of the eye.
+// (the player's weapon, the diving mask), all in front of the eye. With
+// rd_NearDepth, what is nearer than the near plane keeps its order in
+// depth instead (by 1/w, which the screen interpolates exactly): only a
+// triangle that crosses the near plane is approximate.
 struct D9TVertex {
     float x, y, z, rhw;
     DWORD c;
@@ -943,9 +964,22 @@ static void d9_Project(const D9CVertex& v, D9TVertex& t)
     const int* vp = s_S.m_Viewport;
     float iw = 1.0f / v.c[3];
     float z = (v.c[2] * iw + 1.0f) * 0.5f;                 // GL's -1..1 to 0..1
+    const float* nd = s_S.m_NearDepth;
     t.x = vp[0] + (v.c[0] * iw + 1.0f) * 0.5f * vp[2] - 0.5f;
     t.y = vp[1] + (1.0f - v.c[1] * iw) * 0.5f * vp[3] - 0.5f;
-    t.z = z < 0.0f ? 0.0f : z > 1.0f ? 1.0f : z;
+    if (z < 0.0f && nd[0] > 0.0f && nd[1] > nd[0])
+    {
+        // Nearer than the near plane: w is the eye depth, from nd[0]
+        // (depth0) to the near plane nd[1] (depth1).
+        float g = (1.0f / nd[0] - iw) / (1.0f / nd[0] - 1.0f / nd[1]);
+        g = g < 0.0f ? 0.0f : g > 1.0f ? 1.0f : g;
+        t.z = nd[2] + g * (nd[3] - nd[2]);
+    }
+    else
+    {
+        z = z < 0.0f ? 0.0f : z > 1.0f ? 1.0f : z;
+        t.z = s_S.m_DepthRange[0] + z * (s_S.m_DepthRange[1] - s_S.m_DepthRange[0]);
+    }
     t.rhw = iw;
     // Direct3D fogs pre-transformed vertices by the factor they carry.
     float fFog = 1.0f;
@@ -969,7 +1003,7 @@ static void d9_DrawClamped(D3DPRIMITIVETYPE eType, const D9Vertex* pVerts, int n
 {
     D9Matrix MVP = s_Proj[s_nProj];
     d9_Mul(&MVP, s_MV[s_nMV].m);
-    const float fMinW = 1.0e-4f;
+    const float fMinW = s_S.m_NearDepth[0] > 0.0f ? s_S.m_NearDepth[0] : 1.0e-4f;
     int nPer = eType == D3DPT_LINELIST ? 2 : 3;
     int nOut = 0;
     const int nMaxOut = (int)(sizeof(s_TVerts) / sizeof(s_TVerts[0]));
@@ -988,7 +1022,8 @@ static void d9_DrawClamped(D3DPRIMITIVETYPE eType, const D9Vertex* pVerts, int n
             for (int u = 0; u < D9_UNITS; u++)
                 d9_Xform(s_TexM[u][s_nTexM[u]], v.t[u], in[k].t[u]);
         }
-        // Clip against w > 0 (GL clips there; with clamping, nowhere else in depth).
+        // Clip against w > 0 (GL clips there; with clamping, nowhere else in
+        // depth), or at rd_NearDepth's eye depth.
         D9CVertex poly[4];
         int nPoly = 0;
         for (int k = 0; k < nPer; k++)
@@ -1356,6 +1391,7 @@ bool rd_CreateDevice(void* hWnd, uint32_t nWidth, uint32_t nHeight, bool bWindow
     g_RDCaps.bAniso = (caps.RasterCaps & D3DPRASTERCAPS_ANISOTROPY) && caps.MaxAnisotropy > 1;
     g_RDCaps.fMaxAniso = g_RDCaps.bAniso ? (float)caps.MaxAnisotropy : 1.0f;
     g_RDCaps.bDepthClamp = true;
+    g_RDCaps.bNearDepth = true;
 
     // The most samples asked for that the device has.
     s_eMS = D3DMULTISAMPLE_NONE;
