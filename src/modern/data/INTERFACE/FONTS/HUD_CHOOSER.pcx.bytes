@@ -1,2 +1,8 @@
 # M-P4-10: palette entry 255 (the background) magenta -> black, for M-P3-19
 -3 ff00ff 000000
+# Entry 254, the glyphs' shadow edge, (3,0,0) -> (8,0,0): the lowest red a
+# 16-bit screen keeps. At (3,0,0) it rounds to black in a 16-bit surface, so
+# the glyph scan (LithBitmapFont::FindOffset, black now being the background)
+# took a column of shadow for a gap, split a glyph in two, and every character
+# after it drew as the one before ("<Holster Weapon>" as ";Gnkrsdq Vd`onm=").
+-6 030000 080000
