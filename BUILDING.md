@@ -173,6 +173,16 @@ the disc images. Play them as the release game, from the directory the
 table gives: `out/nolf-modern-release/linux-run.sh`, or
 `tools/playtest.sh out/nolf-modern-release 'Worlds\T01S01'`.
 
+The GitHub Actions workflow `.github/workflows/public-archives.yml` builds
+the release game and all three variants that way on every push to `master`
+and every pull request, each in a job of its own and all four at the same
+time, runs `make progress` on the release build (a
+function recorded as byte-identical that stops matching fails the run), and
+keeps the four public archives as the run's artifacts, each the `.tar.gz`
+itself rather than a zip around it. It caches the two redump zips (keyed on
+`rez/isos/SHA256SUMS`) and the docker image's layers, so only the first run
+downloads from archive.org.
+
 ### The modern build: `NOLFSRC_MODERN`
 
 `make modern` compiles everything with `/D NOLFSRC_MODERN` and nothing else
