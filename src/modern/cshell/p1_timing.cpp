@@ -13,11 +13,11 @@
 //                    M-P1-23 put right what went wrong in single player
 //                    (the server's clock, the animations' milliseconds,
 //                    the engine clock, per-frame physics and effects), so
-//                    single player is held at 300 frames a second, for
-//                    high refresh rate screens; multiplayer, where weapons
-//                    fire faster at a higher frame rate, at 60.
-//                    FramerateLock 0 turns it off in single player;
-//                    multiplayer always has it.  The loading screen
+//                    single player is held at FramerateLimit frames a
+//                    second (M-P1-25: 60, 120, 144, 240 -- the default --
+//                    or 0, none), for high refresh rate screens;
+//                    multiplayer, where weapons fire faster at a higher
+//                    frame rate, always at 60.  The loading screen
 //                    suspends it.
 //           M-P1-02  The hosting client tells its own server not to limit
 //                    as well (they share one loop).
@@ -33,7 +33,6 @@
 
 namespace
 {
-	const int		kFramesPerSecond	= 300;	// M-P1-23: single player
 	const int		kMultiplayerFPS		= 60;
 
 	bool			s_bInit				= false;
@@ -84,7 +83,9 @@ void P1Timing_EndFrame(bool bMultiplayer)
 {
 	Init();
 
-	if (!s_liFreq.QuadPart || s_nSuspended || (!bMultiplayer && !P1Config_FramerateLock()))
+	int nFPS = bMultiplayer ? kMultiplayerFPS : P1Config_FramerateLimit();
+
+	if (!s_liFreq.QuadPart || s_nSuspended || nFPS <= 0)
 	{
 		// Unlimited: start afresh when the limit comes back.
 		s_bHaveLastFrame = false;
@@ -101,7 +102,7 @@ void P1Timing_EndFrame(bool bMultiplayer)
 		return;
 	}
 
-	LONGLONG nPeriod = s_liFreq.QuadPart / (bMultiplayer ? kMultiplayerFPS : kFramesPerSecond);
+	LONGLONG nPeriod = s_liFreq.QuadPart / nFPS;
 	LONGLONG nTarget = s_liLastFrame.QuadPart + nPeriod;
 
 	while (liNow.QuadPart < nTarget)

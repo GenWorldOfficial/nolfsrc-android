@@ -1,6 +1,6 @@
 // p3_folderinterface.cpp -- the Interface options folder (MODERN.md,
 // M-P3-13): the HUD's size (M-P3-12), the frame-rate cap (M-P1-01's
-// FramerateLock), the frame-rate counter (M-P3-14), the cutscenes' framing
+// FramerateLimit, M-P1-25), the frame-rate counter (M-P3-14), the cutscenes' framing
 // (M-P3-08) and the main menu's art (M-P3-10).
 
 #include "stdafx.h"
@@ -10,19 +10,25 @@
 #include "InterfaceMgr.h"
 #include "VarTrack.h"
 #include "cshell/p3_ui.h"
+#include "cshell/p1_modern.h"
 #include "cshell/p3_folderinterface.h"
 #include "cres/p3.h"
+#include "cres/p1.h"
 
 namespace
 {
 	int kGap = 225;
 	int kWidth = 200;
+
+	// M-P1-25: the frame-rate limit's choices, FramerateLimit's values
+	const int s_aFramerates[] = { 60, 120, 144, 240, 0 };
+	const int s_nFramerates = sizeof(s_aFramerates) / sizeof(s_aFramerates[0]);
 }
 
 CFolderInterface::CFolderInterface()
 {
 	m_nHUDScale = 50;
-	m_bFramerateLock = LTTRUE;
+	m_nFramerate = 3;
 	m_bShowFramerate = LTFALSE;
 	m_bCinematics4x3 = LTFALSE;
 	m_bGotyMenu = LTTRUE;
@@ -48,9 +54,15 @@ LTBOOL CFolderInterface::Build()
 	pSlider->SetSliderIncrement(5);
 	pSlider->SetNumericDisplay(LTTRUE);
 
-	CToggleCtrl *pToggle = AddToggle(IDS_P3_FRAMERATE_LOCK, IDS_P3_HELP_FRAMERATE_LOCK, kGap, &m_bFramerateLock);
-	pToggle->SetOnString(IDS_P3_FPS_LOCKED);
-	pToggle->SetOffString(IDS_P3_FPS_UNLOCKED);
+	// M-P1-25: 60, 120, 144 or 240 frames a second, or no limit
+	CCycleCtrl *pFramerate = AddCycleItem(IDS_P3_FRAMERATE_LOCK, IDS_P3_HELP_FRAMERATE_LOCK, kGap, 25, &m_nFramerate);
+	pFramerate->AddString(IDS_P1_FPS_60);
+	pFramerate->AddString(IDS_P1_FPS_120);
+	pFramerate->AddString(IDS_P1_FPS_144);
+	pFramerate->AddString(IDS_P1_FPS_240);
+	pFramerate->AddString(IDS_P3_FPS_UNLOCKED);
+
+	CToggleCtrl *pToggle;
 
 	pToggle = AddToggle(IDS_P3_SHOW_FRAMERATE, IDS_P3_HELP_SHOW_FRAMERATE, kGap, &m_bShowFramerate);
 	pToggle->SetOnString(IDS_ON);
@@ -76,7 +88,14 @@ void CFolderInterface::OnFocus(LTBOOL bFocus)
 	if (bFocus)
 	{
 		m_nHUDScale = (int)(100.0f * g_vtP3UIScale.GetFloat(0.5f) + 0.5f);
-		m_bFramerateLock = (GetConsoleInt("FramerateLock", 1) != 0);
+		// the choice for the limit in use; one not among them, the next
+		// higher (or none)
+		int nLimit = P1Config_FramerateLimit();
+		for (m_nFramerate = 0; m_nFramerate < s_nFramerates - 1; m_nFramerate++)
+		{
+			if (nLimit > 0 && s_aFramerates[m_nFramerate] >= nLimit)
+				break;
+		}
 		m_bShowFramerate = (g_vtP3ShowFramerate.GetFloat() != 0.0f);
 		m_bCinematics4x3 = (g_vtP3Cinematics4x3.GetFloat() != 0.0f);
 		m_bGotyMenu = (g_vtP3UseGotyMenu.GetFloat(1.0f) != 0.0f);
@@ -88,7 +107,7 @@ void CFolderInterface::OnFocus(LTBOOL bFocus)
 		UpdateData();
 
 		WriteConsoleFloat("UIScale", (LTFLOAT)m_nHUDScale / 100.0f);
-		WriteConsoleInt("FramerateLock", m_bFramerateLock ? 1 : 0);
+		WriteConsoleInt("FramerateLimit", s_aFramerates[m_nFramerate]);
 		WriteConsoleInt("ShowFramerate", m_bShowFramerate ? 1 : 0);
 		WriteConsoleInt("RestrictCinematicsTo4x3", m_bCinematics4x3 ? 1 : 0);
 		WriteConsoleInt("UseGotyMenu", m_bGotyMenu ? 1 : 0);

@@ -34,4 +34,8 @@ BEGIN
     IDS_P1_WINDOW_FULLSCREEN    "Full screen"
     IDS_P1_WINDOW_WINDOWED      "Window"
     IDS_P1_WINDOW_BORDERLESS    "Borderless window"
+    IDS_P1_FPS_60               "60 fps"
+    IDS_P1_FPS_120              "120 fps"
+    IDS_P1_FPS_144              "144 fps"
+    IDS_P1_FPS_240              "240 fps"
 END

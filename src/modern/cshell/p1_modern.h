@@ -27,13 +27,13 @@
 // The config version this build upgrades autoexec.cfg to (ModPatchNum,
 // M-P1-12).  Raise it, and add a step to P1Config_AfterInit, for every new
 // one-time change.
-#define P1_CONFIG_VERSION		1.4f
+#define P1_CONFIG_VERSION		1.5f
 
 // p1_config.cpp -- the console variables and the start-up steps.
 
 void	P1Config_InitVars();			// M-P1-01/03/10/12 variables, M-P1-08 optimizesurfaces
 void	P1Config_AfterInit();			// M-P1-08 CursorCenter, M-P1-12 one-time upgrade
-bool	P1Config_FramerateLock();		// FramerateLock
+int		P1Config_FramerateLimit();		// FramerateLimit: frames a second, 0 none
 bool	P1Config_OldMouseLook();		// OldMouseLook
 bool	P1Config_NoRawInput();			// NoRawInput
 bool	P1Config_ScreenTinting();		// EnableScreenTinting, with d3d7.ren (else always)

@@ -5,7 +5,9 @@
 // PURPOSE : Package P1 (MODERN.md): the console variables P1 adds, and
 //           the steps it takes when the client shell starts.
 //
-//             FramerateLock        1  M-P1-01  cap the client at 60 fps
+//             FramerateLimit     240  M-P1-25  the client's frames a second at
+//                                           most (0: no limit; 60 always in
+//                                           multiplayer)
 //             OldMouseLook         0  M-P1-03  the retail mouse look
 //             NoRawInput           0  M-P1-03  cursor motion, not raw input
 //             EnableScreenTinting  1  M-P1-10  0: tint with a 2D overlay
@@ -24,7 +26,7 @@
 
 namespace
 {
-	VarTrack	s_vtFramerateLock;
+	VarTrack	s_vtFramerateLimit;
 	VarTrack	s_vtOldMouseLook;
 	VarTrack	s_vtNoRawInput;
 	VarTrack	s_vtScreenTinting;
@@ -83,7 +85,7 @@ namespace
 // the first render mode is set.
 void P1Config_InitVars()
 {
-	s_vtFramerateLock.Init(g_pLTClient, "FramerateLock", LTNULL, 1.0f);
+	s_vtFramerateLimit.Init(g_pLTClient, "FramerateLimit", LTNULL, 240.0f);
 	s_vtOldMouseLook.Init(g_pLTClient, "OldMouseLook", LTNULL, 0.0f);
 	s_vtNoRawInput.Init(g_pLTClient, "NoRawInput", LTNULL, 0.0f);
 	s_vtScreenTinting.Init(g_pLTClient, "EnableScreenTinting", LTNULL, 1.0f);
@@ -160,11 +162,23 @@ void P1Config_AfterInit()
 		WriteConsoleInt("32BitTextures", 1);
 	}
 
+	if (fSeen < 1.5f)
+	{
+		// M-P1-25: the frame-rate cap is a number now (FramerateLimit);
+		// FramerateLock 0 was "unlimited".
+		if (GetConsoleInt("FramerateLock", 1) == 0)
+			WriteConsoleInt("FramerateLimit", 0);
+	}
+
 	WriteConsoleFloat("ModPatchNum", P1_CONFIG_VERSION);
 	g_pLTClient->WriteConfigFile("autoexec.cfg");
 }
 
-bool P1Config_FramerateLock()	{ return ReadFlag(s_vtFramerateLock, true); }
+int P1Config_FramerateLimit()
+{
+	int nLimit = s_vtFramerateLimit.IsInitted() ? (int)s_vtFramerateLimit.GetFloat() : 240;
+	return nLimit < 0 ? 0 : nLimit;
+}
 bool P1Config_OldMouseLook()	{ return ReadFlag(s_vtOldMouseLook, false); }
 bool P1Config_NoRawInput()		{ return ReadFlag(s_vtNoRawInput, false); }
 // M-P1-10: the Intel graphics fix is about Intel's DirectX 7 driver, which

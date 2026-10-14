@@ -18,7 +18,7 @@ public:
 
 protected:
 	int		m_nHUDScale;		// UIScale, in percent
-	LTBOOL	m_bFramerateLock;	// FramerateLock
+	int		m_nFramerate;		// FramerateLimit, as its choice (M-P1-25)
 	LTBOOL	m_bShowFramerate;	// ShowFramerate
 	LTBOOL	m_bCinematics4x3;	// RestrictCinematicsTo4x3
 	LTBOOL	m_bGotyMenu;		// UseGotyMenu
