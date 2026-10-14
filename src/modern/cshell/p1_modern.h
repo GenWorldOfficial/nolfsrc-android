@@ -36,8 +36,10 @@ void	P1Config_AfterInit();			// M-P1-08 CursorCenter, M-P1-12 one-time upgrade
 bool	P1Config_FramerateLock();		// FramerateLock
 bool	P1Config_OldMouseLook();		// OldMouseLook
 bool	P1Config_NoRawInput();			// NoRawInput
-bool	P1Config_ScreenTinting();		// EnableScreenTinting
-bool	P1Config_LightScale();			// EnableLightScale
+bool	P1Config_ScreenTinting();		// EnableScreenTinting, with d3d7.ren (else always)
+bool	P1Config_LightScale();			// EnableLightScale, with d3d7.ren (else always)
+bool	P1Config_IntelFixOn();			// either of the two off, whatever the renderer
+bool	P1Config_IntelFixRenderer(const char* pRenderDll);	// M-P1-10 applies to it
 
 // p1_timing.cpp -- M-P1-01 frame limiter, M-P1-05 clock.
 

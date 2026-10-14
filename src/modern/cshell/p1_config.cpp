@@ -167,5 +167,27 @@ void P1Config_AfterInit()
 bool P1Config_FramerateLock()	{ return ReadFlag(s_vtFramerateLock, true); }
 bool P1Config_OldMouseLook()	{ return ReadFlag(s_vtOldMouseLook, false); }
 bool P1Config_NoRawInput()		{ return ReadFlag(s_vtNoRawInput, false); }
-bool P1Config_ScreenTinting()	{ return ReadFlag(s_vtScreenTinting, true); }
-bool P1Config_LightScale()		{ return ReadFlag(s_vtLightScale, true); }
+// M-P1-10: the Intel graphics fix is about Intel's DirectX 7 driver, which
+// only d3d7.ren (our d3d.ren) draws through; d3d9.ren and opengl.ren draw
+// light scaling and tints themselves.  So it applies with d3d7.ren alone.
+bool P1Config_IntelFixRenderer(const char* pRenderDll)
+{
+	return pRenderDll && (!_stricmp(pRenderDll, "d3d7.ren") || !_stricmp(pRenderDll, "d3d.ren"));
+}
+
+bool P1Config_IntelFixOn()
+{
+	return !ReadFlag(s_vtLightScale, true) || !ReadFlag(s_vtScreenTinting, true);
+}
+
+namespace
+{
+	bool IntelFixApplies()
+	{
+		RMode mode;
+		return g_pLTClient->GetRenderMode(&mode) == LT_OK && P1Config_IntelFixRenderer(mode.m_RenderDLL);
+	}
+}
+
+bool P1Config_ScreenTinting()	{ return ReadFlag(s_vtScreenTinting, true) || !IntelFixApplies(); }
+bool P1Config_LightScale()		{ return ReadFlag(s_vtLightScale, true) || !IntelFixApplies(); }

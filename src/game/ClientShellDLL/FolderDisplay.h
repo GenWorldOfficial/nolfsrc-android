@@ -104,8 +104,10 @@ private:
 	int								m_nP1WindowMode;
 	CCycleCtrl*						m_pP1WindowModeCtrl;
 	LTBOOL							m_bP1ForceModeSet;		// set the mode even if unchanged
-	// M-P1-10: Intel graphics fix
+	// M-P1-10: Intel graphics fix, for d3d7.ren only
 	LTBOOL							m_bP1IntelFix;
+	CToggleCtrl*					m_pP1IntelFixCtrl;
+	void							P1UpdateIntelFix();		// enabled for the renderer selected
 #endif
 
 };

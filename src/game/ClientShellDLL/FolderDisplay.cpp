@@ -91,6 +91,7 @@ CFolderDisplay::CFolderDisplay()
 	m_pP1WindowModeCtrl	= LTNULL;
 	m_bP1ForceModeSet	= LTFALSE;
 	m_bP1IntelFix		= LTFALSE;
+	m_pP1IntelFixCtrl	= LTNULL;
 #endif
 }
 
@@ -157,10 +158,10 @@ LTBOOL CFolderDisplay::Build()
 	m_pHardwareCursor->SetOffString(IDS_OFF);
 	
 #ifdef NOLFSRC_MODERN
-	// M-P1-10: Intel graphics fix
-	CToggleCtrl *pP1IntelFix = AddToggle(IDS_P1_INTELFIX,IDS_P1_HELP_INTELFIX,175,&m_bP1IntelFix);
-	pP1IntelFix->SetOnString(IDS_ON);
-	pP1IntelFix->SetOffString(IDS_OFF);
+	// M-P1-10: Intel graphics fix, for d3d7.ren only (P1UpdateIntelFix)
+	m_pP1IntelFixCtrl = AddToggle(IDS_P1_INTELFIX,IDS_P1_HELP_INTELFIX,175,&m_bP1IntelFix);
+	m_pP1IntelFixCtrl->SetOnString(IDS_ON);
+	m_pP1IntelFixCtrl->SetOffString(IDS_OFF);
 #endif
 
 
@@ -550,7 +551,7 @@ void CFolderDisplay::OnFocus(LTBOOL bFocus)
 		// M-P1-06, M-P1-22, M-P1-10: the window mode, Intel graphics fix
 		m_nP1WindowMode = P1Window_GetMode();
 		m_pResolutionCtrl->Enable(m_nP1WindowMode != P1_WINDOW_BORDERLESS);
-		m_bP1IntelFix = !P1Config_LightScale() || !P1Config_ScreenTinting();
+		m_bP1IntelFix = P1Config_IntelFixOn();
 #endif
 
 		// The current render mode
@@ -618,6 +619,10 @@ void CFolderDisplay::OnFocus(LTBOOL bFocus)
 
         UpdateData(LTFALSE);
 		SetSelection(1);
+#ifdef NOLFSRC_MODERN
+		// M-P1-10: the Intel graphics fix is for d3d7.ren only
+		P1UpdateIntelFix();
+#endif
 
 	}
 	else
@@ -633,7 +638,7 @@ void CFolderDisplay::OnFocus(LTBOOL bFocus)
 #ifdef NOLFSRC_MODERN
 			// M-P1-10: Intel graphics fix -- no light scaling, the tint as
 			// an overlay
-			if ((!P1Config_LightScale() || !P1Config_ScreenTinting()) != (m_bP1IntelFix ? true : false))
+			if (P1Config_IntelFixOn() != (m_bP1IntelFix ? true : false))
 			{
 				WriteConsoleInt("EnableLightScale",!m_bP1IntelFix);
 				WriteConsoleInt("EnableScreenTinting",!m_bP1IntelFix);
@@ -663,6 +668,10 @@ void CFolderDisplay::OnFocus(LTBOOL bFocus)
 #ifdef NOLFSRC_MODERN
 				// M-P1-06: windowed mode
 				m_bP1ForceModeSet = LTFALSE;
+
+				// M-P1-10: the Intel graphics fix follows the renderer
+				if (bSet)
+					g_pGameClientShell->GetLightScaleMgr()->Enable();
 #endif
 
 				// If we didn't switch resolutions and the mipmap offset changed, rebind textures.
@@ -703,6 +712,23 @@ void CFolderDisplay::OnFocus(LTBOOL bFocus)
 	}
 	CBaseFolder::OnFocus(bFocus);
 }
+
+#ifdef NOLFSRC_MODERN
+// M-P1-10: the Intel graphics fix works around Intel's DirectX 7 driver,
+// which only d3d7.ren draws through: the toggle is greyed out for any
+// other renderer selected (and the fix does not apply there, P1Config_*).
+void CFolderDisplay::P1UpdateIntelFix()
+{
+	if (!m_pP1IntelFixCtrl || !m_pRendererCtrl)
+		return;
+
+	int nRenderer = m_pRendererCtrl->GetSelIndex();
+	bool bD3D7 = nRenderer >= 0 && nRenderer < (int)m_rendererArray.GetSize() &&
+		P1Config_IntelFixRenderer(m_rendererArray[nRenderer].m_renderDll);
+
+	m_pP1IntelFixCtrl->Enable(bD3D7 ? LTTRUE : LTFALSE);
+}
+#endif
 
 // Returns the currently selected resolution
 FolderDisplayResolution CFolderDisplay::GetCurrentSelectedResolution()
@@ -785,6 +811,10 @@ LTBOOL CFolderDisplay::OnLButtonUp(int x, int y)
 					if (handled)
 					{
 						SetupResolutionCtrl();
+#ifdef NOLFSRC_MODERN
+						// M-P1-10: the Intel graphics fix is for d3d7.ren only
+						P1UpdateIntelFix();
+#endif
 
 						// Set the resolution for the control
 						SetCurrentCtrlResolution(currentResolution);
@@ -838,6 +868,10 @@ LTBOOL CFolderDisplay::OnRButtonUp(int x, int y)
 					if (handled)
 					{
 						SetupResolutionCtrl();
+#ifdef NOLFSRC_MODERN
+						// M-P1-10: the Intel graphics fix is for d3d7.ren only
+						P1UpdateIntelFix();
+#endif
 						// Set the resolution for the control
 						SetCurrentCtrlResolution(currentResolution);
 					}
@@ -866,6 +900,11 @@ LTBOOL CFolderDisplay::OnRButtonUp(int x, int y)
 LTBOOL CFolderDisplay::OnLeft()
 {
 	if (!CBaseFolder::OnLeft()) return LTFALSE;
+#ifdef NOLFSRC_MODERN
+	// M-P1-10: the Intel graphics fix is for d3d7.ren only
+	if (GetSelectedControl() == m_pRendererCtrl)
+		P1UpdateIntelFix();
+#endif
 	if (GetSelectedControl() == m_pHardwareCursor)
 	{
 		m_pHardwareCursor->UpdateData(LTTRUE);
@@ -886,6 +925,11 @@ LTBOOL CFolderDisplay::OnLeft()
 LTBOOL CFolderDisplay::OnRight()
 {
 	if (!CBaseFolder::OnRight()) return LTFALSE;
+#ifdef NOLFSRC_MODERN
+	// M-P1-10: the Intel graphics fix is for d3d7.ren only
+	if (GetSelectedControl() == m_pRendererCtrl)
+		P1UpdateIntelFix();
+#endif
 	if (GetSelectedControl() == m_pHardwareCursor)
 	{
 		m_pHardwareCursor->UpdateData(LTTRUE);
