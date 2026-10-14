@@ -20,6 +20,7 @@
 #include "VarTrack.h"
 #include "ClientUtilities.h"
 #include "cshell/p1_modern.h"
+#include "cshell/p7_pad.h"
 
 namespace
 {
@@ -88,6 +89,7 @@ void P1Config_InitVars()
 	s_vtScreenTinting.Init(g_pLTClient, "EnableScreenTinting", LTNULL, 1.0f);
 	s_vtLightScale.Init(g_pLTClient, "EnableLightScale", LTNULL, 1.0f);
 	s_vtModPatchNum.Init(g_pLTClient, "ModPatchNum", LTNULL, 0.0f);
+	P7Pad_InitVars();
 
 	// M-P1-08: with surface optimisation off, text is drawn in black boxes,
 	// and the setting can end up off in a config.
@@ -130,6 +132,14 @@ void P1Config_AfterInit()
 		const char* sDll = hDll ? g_pLTClient->GetVarValueString(hDll) : LTNULL;
 		if (sDll && !_stricmp(sDll, "d3d.ren"))
 			g_pLTClient->RunConsoleString("RenderDll d3d9.ren");
+	}
+
+	if (fSeen >= 1.0f && fSeen < 1.2f)
+	{
+		// M-P7-02: the controller's default bindings, alone (a config
+		// from before 1.0 has just had all of defctrls.cfg): the
+		// keyboard's and the mouse's are the player's by now.
+		P7Pad_ApplyDefaultBindings();
 	}
 
 	WriteConsoleFloat("ModPatchNum", P1_CONFIG_VERSION);

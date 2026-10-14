@@ -52,10 +52,14 @@
  [FolderSingle]
  PageRect			= (54,148,585,385)
  ScaleName0			= "InterfaceSpr1"
-@@ -414,6 +459,22 @@
- PageRect			= (70,138,585,385)
- FontSize			= 0
- ColumnWidth			= 300
+@@ -426,6 +471,22 @@
+ ScaleName8			= "RoundyMovingMod3"
+ ScaleName9			= "RoundyMovingMod4"
+ 
++[FolderInterface]
++PageRect			= (70,138,585,385)
++FontSize			= 0
++ColumnWidth			= 250
 +SliderWidth			= 150
 +ScaleName0			= "WeaponBackgroundSpr1"
 +ScaleName1			= "GreenTextBoxMod1"
@@ -68,14 +72,36 @@
 +ScaleName8			= "RoundyMovingMod3"
 +ScaleName9			= "RoundyMovingMod4"
 +
-+[FolderInterface]
-+PageRect			= (70,138,585,385)
-+FontSize			= 0
+ [FolderPerformance]
+ ColumnWidth			= 200
+ PageRect			= (75,115,585,385)
+@@ -529,6 +590,25 @@
+ ScaleName8			= "RoundyMovingMod3"
+ ScaleName9			= "RoundyMovingMod4"
+ 
++[FolderController]
++ItemSpace			= 0
 +ColumnWidth			= 250
- SliderWidth			= 150
- ScaleName0			= "WeaponBackgroundSpr1"
- ScaleName1			= "GreenTextBoxMod1"
-@@ -975,7 +1036,7 @@
++SliderWidth			= 160
++UpArrowPos			= (120,110)
++DownArrowPos		= (120,320)
++PageRect			= (70,135,220,320)
++FontSize			= 0
++ScaleName0			= "WeaponBackgroundSpr1"
++ScaleName1			= "GreenSelectTextBoxMod7"
++ScaleName2			= "GreenSelectTextBoxMod8"
++ScaleName3			= "HorzBarTMod1"
++ScaleName4			= "HorzBarBMod1"
++ScaleName5			= "HelpTextBoxSpr1"
++ScaleName6			= "HelpTextBoxSpr2"
++ScaleName7			= "RoundSelectionSpr9"
++ScaleName8			= "RoundyMovingMod3"
++ScaleName9			= "RoundyMovingMod4"
++
+ [FolderKeyboard]
+ ItemSpace			= 0
+ ColumnWidth			= 250
+@@ -975,7 +1055,7 @@
  [FolderPlayer]
  FontSize                = 0
  PageRect			= (75,95,585,385)
@@ -84,7 +110,7 @@
  CharRotation		= -30.0
  //CharPos				= <35.0,-15.0,100.0>
  //CharScale			= 0.5
-@@ -1079,7 +1140,7 @@
+@@ -1079,7 +1159,7 @@
  PlayerWidth			= 88
  PingWidth			= 45
  TypeWidth			= 112
@@ -93,12 +119,10 @@
  NameWidth			= 184
  ScoreWidth			= 80
  OptionWidth			= 184
-@@ -1163,6 +1224,34 @@
- ScaleName4			= "HelpTextBoxSpr2"
- ScaleName5			= "InterfaceFlowerMod2"
+@@ -1165,6 +1245,34 @@
  ScaleName6			= "RoundSelectionSpr8"
-+
-+
+ 
+ 
 +/***********************************************************
 +**
 +**	FolderJukebox (modern build, M-P4-02)
@@ -125,13 +149,16 @@
 +ScaleName3			= "HelpTextBoxSpr1"
 +ScaleName4			= "HelpTextBoxSpr2"
 +ScaleName5			= "InterfaceFlowerMod2"
- 
- 
++
++
  [LoadScreenSingle]
-@@ -1975,6 +2064,22 @@
+ ScaleName0			= "LoadingSpr1"
+ ScaleName1			= "InterfacePinwheelMod2"
+@@ -1974,6 +2082,22 @@
+ Pos					= <35.0,-30.0,80.0>
  Scale				= 1.3
  Rotation			= 0.0
- 
++
 +[Character1]
 +Name				= "CateCasual"
 +Model				= "IntHero"
@@ -147,7 +174,6 @@
 +Pos					= <35.0,-30.0,80.0>
 +Scale				= 1.3
 +Rotation			= 0.0
-+
+ 
  
  /************************************************************************
- **

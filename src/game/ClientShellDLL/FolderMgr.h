@@ -80,6 +80,10 @@ enum eFolderID
 	// M-P4-02: jukebox
 	FOLDER_ID_JUKEBOX,
 #endif
+#ifdef NOLFSRC_MODERN
+	// M-P7-06: the Controller options folder
+	FOLDER_ID_CONTROLLER,
+#endif
 
 	//this must be the last id
 	FOLDER_ID_UNASSIGNED,

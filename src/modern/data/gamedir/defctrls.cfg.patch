@@ -9,7 +9,7 @@
  AddAction LeaveUnassigned 99
  AddAction Axis3 -3
  AddAction Axis2 -2
-@@ -139,14 +141,15 @@
+@@ -139,13 +141,31 @@
  rangebind "##keyboard" "##11" 0.000000 0.000000 "Weapon_0" 
  rangebind "##keyboard" "##12" 0.000000 0.000000 "IncLayout" 
  rangebind "##keyboard" "##13" 0.000000 0.000000 "DecLayout" 
@@ -26,4 +26,20 @@
  rangebind "##mouse" "Button 1" 0.000000 0.000000 "Activate" 
 -rangebind "##mouse" "Button 2" 0.000000 0.000000 "Reload" 
 +rangebind "##mouse" "Button 2" 0.000000 0.000000 "ToggleZoom" 
- 
++
++enabledevice "##gamepad"
++rangebind "##gamepad" "Right Trigger" 0.000000 0.000000 "Fire" 
++rangebind "##gamepad" "Left Trigger" 0.000000 0.000000 "ToggleZoom" 
++rangebind "##gamepad" "A Button" 0.000000 0.000000 "Jump" 
++rangebind "##gamepad" "B Button" 0.000000 0.000000 "Duck" 
++rangebind "##gamepad" "X Button" 0.000000 0.000000 "Activate" 
++rangebind "##gamepad" "Y Button" 0.000000 0.000000 "Reload" 
++rangebind "##gamepad" "Right Bumper" 0.000000 0.000000 "NextWeapon" 
++rangebind "##gamepad" "Left Bumper" 0.000000 0.000000 "PrevWeapon" 
++rangebind "##gamepad" "Back" 0.000000 0.000000 "Mission" 
++rangebind "##gamepad" "Left Stick Click" 0.000000 0.000000 "Speed" 
++rangebind "##gamepad" "Right Stick Click" 0.000000 0.000000 "CenterView" 
++rangebind "##gamepad" "D-Pad Up" 0.000000 0.000000 "NextAmmo" 
++rangebind "##gamepad" "D-Pad Down" 0.000000 0.000000 "HolsterWeapon" 
++rangebind "##gamepad" "D-Pad Left" 0.000000 0.000000 "FlashLight" 
++rangebind "##gamepad" "D-Pad Right" 0.000000 0.000000 "Score" 

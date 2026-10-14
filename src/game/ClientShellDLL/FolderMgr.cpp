@@ -72,6 +72,10 @@
 // M-P4-02: jukebox
 #include "cshell/p4_jukebox.h"
 #endif
+#ifdef NOLFSRC_MODERN
+// M-P7-06: the Controller options folder
+#include "cshell/p7_foldercontroller.h"
+#endif
 extern CGameClientShell* g_pGameClientShell;
 
 //////////////////////////////////////////////////////////////////////
@@ -576,6 +580,12 @@ void CFolderMgr::AddFolder(eFolderID folderID)
 	// M-P4-02: jukebox
 	case FOLDER_ID_JUKEBOX:
 		pFolder = P4_CreateJukeboxFolder();
+		break;
+#endif
+#ifdef NOLFSRC_MODERN
+	// M-P7-06: the Controller options folder
+	case FOLDER_ID_CONTROLLER:
+		pFolder = debug_new(CFolderController);
 		break;
 #endif
 	}

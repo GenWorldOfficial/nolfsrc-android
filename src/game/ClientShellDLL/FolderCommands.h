@@ -74,6 +74,10 @@ enum eFolderCmds
 	// M-P4-02: jukebox
 	FOLDER_CMD_JUKEBOX,
 #endif
+#ifdef NOLFSRC_MODERN
+	// M-P7-06: the Controller options folder
+	FOLDER_CMD_CONTROLLER,
+#endif
 	FOLDER_CMD_CUSTOM, //this needs to be the last cmd, so that custom commands may be defined after it
 };
 

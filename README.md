@@ -175,6 +175,13 @@ Non-Steam Game), and in the shortcut's Properties > Compatibility force a
 Proton version. The music plays from the game directory's own DirectMusic.
 (Checked under Wine 9.0; the Proton steps are untested here.)
 
+The modern build plays with a controller: an Xbox-style (XInput) pad, which
+is also what Steam Input makes of the Steam Deck's controls and of most other
+pads. The sticks move and look, the triggers fire and zoom, and the menus
+follow the d-pad, A and B; Options > Controls > Controller sets the look
+speed and dead zones, and Customize controls binds the buttons like keys
+(`MODERN.md`, P7). So far it is tested with a simulated pad only.
+
 ## Contributing
 
 The remaining work is functions that are written but not yet byte-identical,

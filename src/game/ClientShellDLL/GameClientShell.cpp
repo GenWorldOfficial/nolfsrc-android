@@ -59,6 +59,10 @@
 // M-P5: gameplay fixes and features (quick switch, toggle zoom, shadows)
 #include "cshell/p5_gameplay.h"
 #endif
+#ifdef NOLFSRC_MODERN
+// M-P7: controller support
+#include "cshell/p7_pad.h"
+#endif
 
 #ifdef STRICT
 	WNDPROC g_pfnMainWndProc = NULL;
@@ -1709,6 +1713,9 @@ void CGameClientShell::Update()
 #ifdef NOLFSRC_MODERN
 	// M-P6-05: a rejoin scheduled by a timeout disconnect
 	P6_UpdateRejoin();
+
+	// M-P7: the controller's sticks, and its keys in the menus
+	P7Pad_Update(m_fFrameTime);
 #endif
 
 	// Update tint if applicable (always do this to make sure tinting
@@ -2727,6 +2734,9 @@ void CGameClientShell::CalculateCameraRotation()
 #ifdef NOLFSRC_MODERN
 	// M-P1-03: raw mouse look (the retail axis offsets with OldMouseLook 1)
 	P1Input_GetAxisOffsets(offsets);
+
+	// M-P7-03: and the controller's right stick
+	P7Pad_AddLook(offsets);
 #else
     g_pLTClient->GetAxisOffsets(offsets);
 #endif

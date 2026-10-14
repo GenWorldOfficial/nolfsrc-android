@@ -490,6 +490,8 @@ LITHTECH_SRC := lithtech.cpp ..\server\msgterm.cpp ..\server\sdkforce.cpp ..\ser
     ..\server\collection.cpp ..\server\fsstream.cpp ..\server\objbank.cpp ..\server\objtypes.cpp \
     ..\server\saveio.cpp ..\server\serverengine.cpp ..\server\streamsim.cpp ..\server\tcpdriver.cpp \
     ..\server\worldbsp.cpp ..\server\worldmodels.cpp ..\server\worldsim.cpp worldtree.cpp
+# The modern build's own engine code (MODERN.md): the ##gamepad device.
+LITHTECH_SRC += $(if $(MODERN),..\..\modern\engine\p7_gamepad.cpp)
 LITHTECH_NOPOOL_SRC := clientmusic.cpp
 LITHTECH_OD_SRC := ..\server\localdriver.cpp
 LITHTECH_GX_SRC := controlfile.cpp

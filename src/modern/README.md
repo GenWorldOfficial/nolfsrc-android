@@ -9,6 +9,7 @@ what has been done.
 |---|---|---|
 | `cshell/` | new game code for `CShell.dll`: every `.cpp` here is compiled into it (with `CShell.dll`'s own flags and include paths, without its precompiled header -- include `stdafx.h` yourself) | `build/build.sh cshell` |
 | `object/` | the same for `Object.lto` | `build/build.sh object` |
+| `engine/` | new engine code for `lithtech.exe` (the controller device): files named in `build/build.mk`'s `LITHTECH_SRC`, compiled with the engine's own flags | `build/build.mk` |
 | `cres/` | new strings for `CRes.dll`: every `.rc` here is compiled into it beside `ClientRes.rc`; put the IDs in a `.h` beside it | `build/build.sh cres` |
 | `data/` | game-data recipes, applied to the data from the retail game (`data/README.md`) | `build/variant.sh`, `tools/moddata.py` |
 | `render/` | the modern build's renderers the engine can load instead of `d3d.ren`: a renderer core over a device backend, `opengl.ren` on OpenGL (`render/README.md`); C++ compiled with `zig c++`, not VC6 | `build/ext.sh` |

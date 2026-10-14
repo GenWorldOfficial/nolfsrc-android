@@ -1,0 +1,22 @@
+// p7.rc -- strings of package P7 (MODERN.md), added to CRes.dll by the
+// modern build only. IDs in p7.h.
+
+#include "p7.h"
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_P7_CONTROLLER               "Controller"
+    IDS_P7_HELP_CONTROLLER          "Set up a gamepad: how fast it looks around, which way, and its dead zones."
+    IDS_P7_TITLE_CONTROLLER         "CONTROLLER"
+    IDS_P7_LOOK_SPEED               "Look speed"
+    IDS_P7_HELP_LOOK_SPEED          "How fast the right stick turns the view."
+    IDS_P7_INVERT_LOOK              "Invert look"
+    IDS_P7_HELP_INVERT_LOOK         "Push the right stick up to look down."
+    IDS_P7_LOOK_DEADZONE            "Look dead zone"
+    IDS_P7_HELP_LOOK_DEADZONE       "How far the right stick moves before the view turns."
+    IDS_P7_MOVE_DEADZONE            "Move dead zone"
+    IDS_P7_HELP_MOVE_DEADZONE       "How far the left stick moves before you move."
+    IDS_P7_RESTORE                  "Restore controller defaults"
+    IDS_P7_HELP_RESTORE             "Put the controller's buttons back as they were. The keyboard and mouse are left as they are."
+    IDS_P7_CONFIRM_RESTORE          "Restore the controller's default buttons?"
+END

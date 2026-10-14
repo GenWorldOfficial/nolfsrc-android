@@ -26,6 +26,10 @@
 #include "VarTrack.h"
 #include "VehicleMgr.h"
 #include "BankedList.h"
+#ifdef NOLFSRC_MODERN
+// M-P7-04: analog movement
+#include "cshell/p7_pad.h"
+#endif
 
 #define SPECTATOR_ACCELERATION			100000.0f
 #define MIN_ONGROUND_Y					-10000000.0f
@@ -501,6 +505,11 @@ void CMoveMgr::UpdateNormalControlFlags()
 	{
 		m_dwControlFlags |= BC_CFLG_STRAFE_LEFT;
 	}
+
+#ifdef NOLFSRC_MODERN
+	// M-P7-04: the controller's left stick: direction, and walk or run
+	P7Pad_MoveFlags(&m_dwControlFlags);
+#endif
 
 
 	if ( (m_dwControlFlags & BC_CFLG_FORWARD) ||
@@ -1252,6 +1261,31 @@ void CMoveMgr::UpdateNormalMotion()
 
 	if (!g_pGameClientShell->IsPlayerDead())
 	{
+#ifdef NOLFSRC_MODERN
+		// M-P7-04: the controller's left stick accelerates the way it
+		// points, at the full rate; its deflection is the speed
+		// (GetMaxVelMag).  Up and down in liquid are the buttons' still.
+		float fPadRight, fPadForward;
+		bool bPadMove = P7Pad_GetMove(&fPadRight, &fPadForward);
+
+		if (bPadMove)
+		{
+			float fPadLen = (float)sqrt(fPadRight * fPadRight + fPadForward * fPadForward);
+
+			vAccel += (vForward * (fPadForward / fPadLen * fMoveAccel));
+			vAccel += (vRight * (fPadRight / fPadLen * fMoveAccel));
+		}
+
+		if (!bPadMove && ((m_dwControlFlags & BC_CFLG_FORWARD) || (m_nMouseStrafeFlags & SF_FORWARD)))
+		{
+			vAccel += (vForward * fMoveAccel);
+		}
+
+		if (!bPadMove && ((m_dwControlFlags & BC_CFLG_REVERSE) || (m_nMouseStrafeFlags & SF_BACKWARD)))
+		{
+			vAccel -= (vForward * fMoveAccel);
+		}
+#else
 		if ((m_dwControlFlags & BC_CFLG_FORWARD) || (m_nMouseStrafeFlags & SF_FORWARD))
 		{
 			vAccel += (vForward * fMoveAccel);
@@ -1261,6 +1295,7 @@ void CMoveMgr::UpdateNormalMotion()
 		{
 			vAccel -= (vForward * fMoveAccel);
 		}
+#endif
 
 
 		// If we are in a container that supports free movement, see if we are
@@ -1289,6 +1324,17 @@ void CMoveMgr::UpdateNormalMotion()
 		}
 
 
+#ifdef NOLFSRC_MODERN
+		if (!bPadMove && ((m_dwControlFlags & BC_CFLG_STRAFE_LEFT) || (m_nMouseStrafeFlags & SF_LEFT)))
+		{
+			vAccel -= (vRight * fMoveAccel);
+		}
+
+		if (!bPadMove && ((m_dwControlFlags & BC_CFLG_STRAFE_RIGHT) || (m_nMouseStrafeFlags & SF_RIGHT)))
+		{
+			vAccel += (vRight * fMoveAccel);
+		}
+#else
 		if ((m_dwControlFlags & BC_CFLG_STRAFE_LEFT) || (m_nMouseStrafeFlags & SF_LEFT))
 		{
 			vAccel -= (vRight * fMoveAccel);
@@ -1298,6 +1344,7 @@ void CMoveMgr::UpdateNormalMotion()
 		{
 			vAccel += (vRight * fMoveAccel);
 		}
+#endif
 	}
 
 	// Reset the mouse strafe flags in case they are set
@@ -2420,6 +2467,11 @@ LTFLOAT CMoveMgr::GetMaxVelMag() const
 			{
 				fMaxVel = m_fWalkVel;
 			}
+
+#ifdef NOLFSRC_MODERN
+			// M-P7-04: the controller's left stick, part way, walks slower
+			fMaxVel *= P7Pad_SpeedScale();
+#endif
 		}
 
 		fMaxVel *= fMoveMultiplier;
