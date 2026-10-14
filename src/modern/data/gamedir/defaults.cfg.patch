@@ -1,15 +1,16 @@
 --- a/defaults.cfg
 +++ b/defaults.cfg
-@@ -52,7 +52,7 @@
+@@ -52,7 +52,8 @@
  "numconsolelines" "0"
  "EnvPanSpeed" "0.000500"
  "Sound16Bit" "1.000000"
 -"RenderDll" "d3d.ren"
 +"RenderDll" "d3d9.ren"
++"32BitTextures" "1"
  "MaxWorldPoliesToDraw" "50000"
  "MasterPaletteMode" "1.000000"
  "Gamma" "1.000000"
-@@ -166,6 +166,8 @@
+@@ -166,6 +167,8 @@
  AddAction DecLayout 76
  AddAction TeamMessage 77
  AddAction Inventory 78
@@ -18,7 +19,7 @@
  AddAction LeaveUnassigned 99
  AddAction Axis3 -3
  AddAction Axis2 -2
-@@ -218,14 +220,15 @@
+@@ -218,14 +221,15 @@
  rangebind "##keyboard" "##11" 0.000000 0.000000 "Weapon_0" 
  rangebind "##keyboard" "##12" 0.000000 0.000000 "IncLayout" 
  rangebind "##keyboard" "##13" 0.000000 0.000000 "DecLayout" 

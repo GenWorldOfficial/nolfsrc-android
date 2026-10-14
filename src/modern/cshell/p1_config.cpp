@@ -153,6 +153,13 @@ void P1Config_AfterInit()
 			P1Window_SetMode(P1_WINDOW_BORDERLESS);
 	}
 
+	if (fSeen < 1.4f)
+	{
+		// M-P1-24: 32-bit textures by default (Display options' texture
+		// depth); defaults.cfg says so to a new config, this to an old one.
+		WriteConsoleInt("32BitTextures", 1);
+	}
+
 	WriteConsoleFloat("ModPatchNum", P1_CONFIG_VERSION);
 	g_pLTClient->WriteConfigFile("autoexec.cfg");
 }
