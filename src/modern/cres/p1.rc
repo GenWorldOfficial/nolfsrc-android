@@ -9,8 +9,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_P1_WINDOWED             "Windowed"
-    IDS_P1_HELP_WINDOWED        "Play in a window instead of full screen. A window as large as the desktop is shown without a border."
+    IDS_P1_WINDOWMODE           "Window mode"
+    IDS_P1_HELP_WINDOWMODE      "Full screen, a framed window, or a borderless window that fills the desktop."
     IDS_P1_INTELFIX             "Intel graphics fix"
     IDS_P1_HELP_INTELFIX        "Turn on if the screen goes black under water or colour flashes never appear (some Intel graphics chips)."
     IDS_P1_LEGACYMOUSE          "Legacy mouse look"
@@ -31,4 +31,7 @@ BEGIN
     IDS_P1_ANTIALIAS_2X         "2x"
     IDS_P1_ANTIALIAS_4X         "4x"
     IDS_P1_ANTIALIAS_8X         "8x"
+    IDS_P1_WINDOW_FULLSCREEN    "Full screen"
+    IDS_P1_WINDOW_WINDOWED      "Window"
+    IDS_P1_WINDOW_BORDERLESS    "Borderless window"
 END

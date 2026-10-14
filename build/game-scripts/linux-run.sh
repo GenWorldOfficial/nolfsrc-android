@@ -4,11 +4,15 @@
 #   ./linux-run.sh [options] [engine args...]
 #
 # Options:
-#   --fullscreen          full screen (default: a window)
-#   --windowed            a window (the default)
-#   --res WxH             the window / screen mode to start in (default
-#                         640x480); the menus may still draw at 640x480 inside
-#                         it until a resolution is chosen in Options > Display
+#   --fullscreen          full screen
+#   --windowed            a window
+#   --res WxH             the window / screen mode to start in; the menus may
+#                         still draw at 640x480 inside it until a resolution
+#                         is chosen in Options > Display
+#                         Without these the game starts as it was last left
+#                         (Options > Display: its window mode and
+#                         resolution), and on the first run in a 640x480
+#                         window.
 #   --world <path>        go straight into a level, e.g. --world 'Worlds\T01S01'
 #   --help                this text
 # Anything else is handed to the engine unchanged (e.g. +DisableSound 1).
@@ -43,8 +47,8 @@
 set -e
 cd "$(dirname "$0")"
 
-WINDOWED=1
-RES=640x480
+WINDOWED=
+RES=
 WORLD=
 EXTRA=
 while [ $# -gt 0 ]; do
@@ -53,13 +57,20 @@ while [ $# -gt 0 ]; do
         --windowed)   WINDOWED=1 ;;
         --res)        RES="${2:?--res needs WxH}"; shift ;;
         --world)      WORLD="${2:?--world needs a world path}"; shift ;;
-        --help|-h)    sed -n '2,40p' "./${0##*/}" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        --help|-h)    sed -n '2,/^set -e$/{/^set -e$/d;p}' "./${0##*/}" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *)            EXTRA="$EXTRA $1" ;;
     esac
     shift
 done
-W="${RES%x*}"; H="${RES#*x}"
-case "$W$H" in *[!0-9]*|"") echo "linux-run.sh: --res wants WxH, e.g. 1024x768" >&2; exit 2 ;; esac
+# The first run: a 640x480 window, unless asked otherwise.
+if [ ! -f autoexec.cfg ]; then
+    WINDOWED="${WINDOWED:-1}"
+    RES="${RES:-640x480}"
+fi
+if [ -n "$RES" ]; then
+    W="${RES%x*}"; H="${RES#*x}"
+    case "$W$H" in *[!0-9]*|"") echo "linux-run.sh: --res wants WxH, e.g. 1024x768" >&2; exit 2 ;; esac
+fi
 
 WINEPREFIX="${WINEPREFIX:-$HOME/.wine-nolf}"
 WINEDEBUG="${WINEDEBUG:-fixme-all}"
@@ -74,8 +85,9 @@ mkdir -p Save
 # then our settings: later arguments override earlier ones.
 REZ=$(tr -d '\r' < nolfcmds.txt | tr ' ' '\n' | awk '$0=="-rez"{getline n; printf "-rez %s ", n}')
 {
-    printf '%s++screenwidth %s ++screenheight %s ++bitdepth 16 ++windowed %s +DisableMovies 1' \
-        "$REZ" "$W" "$H" "$WINDOWED"
+    printf '%s+DisableMovies 1' "$REZ"
+    [ -n "$RES" ] && printf ' ++screenwidth %s ++screenheight %s ++bitdepth 16' "$W" "$H"
+    [ -n "$WINDOWED" ] && printf ' ++windowed %s' "$WINDOWED"
     [ -n "$WORLD" ] && printf ' +runworld %s' "$WORLD"
     printf '%s\r\n' "$EXTRA"
 } > run-cmds.txt

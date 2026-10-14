@@ -142,6 +142,17 @@ void P1Config_AfterInit()
 		P7Pad_ApplyDefaultBindings();
 	}
 
+	if (fSeen < 1.3f)
+	{
+		// M-P1-22: a window as large as the desktop was borderless by
+		// itself; it is the window mode "borderless window" now.
+		int nDeskW, nDeskH;
+		P1Window_DesktopSize(&nDeskW, &nDeskH);
+		if (GetConsoleInt("Windowed", 0) == 1 &&
+			GetConsoleInt("screenwidth", 0) >= nDeskW && GetConsoleInt("screenheight", 0) >= nDeskH)
+			P1Window_SetMode(P1_WINDOW_BORDERLESS);
+	}
+
 	WriteConsoleFloat("ModPatchNum", P1_CONFIG_VERSION);
 	g_pLTClient->WriteConfigFile("autoexec.cfg");
 }

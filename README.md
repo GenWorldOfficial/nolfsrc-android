@@ -114,8 +114,8 @@ detail.
 (32-bit support needed):
 
 ```sh
-out/nolf-legacy-release/linux-run.sh                # windowed, 640x480
-out/nolf-legacy-release/linux-run.sh --res 1024x768
+out/nolf-legacy-release/linux-run.sh                # as last left; at first a 640x480 window
+out/nolf-legacy-release/linux-run.sh --res 1024x768 --fullscreen
 out/nolf-legacy-release/linux-run.sh --world 'Worlds\T01S01'
 ```
 

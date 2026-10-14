@@ -1716,6 +1716,9 @@ void CGameClientShell::Update()
 
 	// M-P7: the controller's sticks, and its keys in the menus
 	P7Pad_Update(m_fFrameTime);
+
+	// M-P1-22: a borderless window at the desktop's resolution
+	P1Window_Update();
 #endif
 
 	// Update tint if applicable (always do this to make sure tinting

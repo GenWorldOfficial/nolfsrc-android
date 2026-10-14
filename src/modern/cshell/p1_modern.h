@@ -27,7 +27,7 @@
 // The config version this build upgrades autoexec.cfg to (ModPatchNum,
 // M-P1-12).  Raise it, and add a step to P1Config_AfterInit, for every new
 // one-time change.
-#define P1_CONFIG_VERSION		1.2f
+#define P1_CONFIG_VERSION		1.3f
 
 // p1_config.cpp -- the console variables and the start-up steps.
 
@@ -54,9 +54,20 @@ void	P1Input_OnWindowMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 void	P1Input_OnWindowUnhooked();
 void	P1Input_OnFocus(bool bFocus);
 
-// p1_window.cpp -- M-P1-06 window placement.
+// p1_window.cpp -- M-P1-06 window placement, M-P1-22 window mode.
+
+enum
+{
+	P1_WINDOW_FULLSCREEN = 0,
+	P1_WINDOW_WINDOWED,
+	P1_WINDOW_BORDERLESS
+};
 
 void	P1Window_Apply();	// after a mode change, or when the engine may have moved the window
+void	P1Window_Update();	// every frame: a borderless window's mode
+int		P1Window_GetMode();				// P1_WINDOW_*, from Windowed and WindowMode
+void	P1Window_SetMode(int nMode);	// writes both (the mode must then be set again)
+void	P1Window_DesktopSize(int* pWidth, int* pHeight);
 
 // Client events (CGameClientShell::OnEvent), for all of the above.
 void	P1_OnClientEvent(uint32 dwEventID);

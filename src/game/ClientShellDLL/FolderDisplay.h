@@ -100,8 +100,9 @@ private:
 	CMoArray<FolderDisplayRenderer>	m_rendererArray;		// The array of renderers
 
 #ifdef NOLFSRC_MODERN
-	// M-P1-06: windowed mode
-	LTBOOL							m_bP1Windowed;
+	// M-P1-06, M-P1-22: the window mode (P1_WINDOW_*)
+	int								m_nP1WindowMode;
+	CCycleCtrl*						m_pP1WindowModeCtrl;
 	LTBOOL							m_bP1ForceModeSet;		// set the mode even if unchanged
 	// M-P1-10: Intel graphics fix
 	LTBOOL							m_bP1IntelFix;

@@ -11,7 +11,7 @@
 #include "GameSettings.h"
 extern CGameClientShell* g_pGameClientShell;
 #ifdef NOLFSRC_MODERN
-// M-P1-06, M-P1-10: windowed mode, Intel graphics fix
+// M-P1-06, M-P1-22, M-P1-10: the window mode, Intel graphics fix
 #include "cshell/p1_modern.h"
 #endif
 
@@ -86,8 +86,9 @@ CFolderDisplay::CFolderDisplay()
     m_pResolutionCtrl   = LTNULL;
 	m_pHardwareCursor	= LTNULL;
 #ifdef NOLFSRC_MODERN
-	// M-P1-06, M-P1-10: windowed mode, Intel graphics fix
-	m_bP1Windowed		= LTFALSE;
+	// M-P1-06, M-P1-22, M-P1-10: the window mode, Intel graphics fix
+	m_nP1WindowMode		= P1_WINDOW_FULLSCREEN;
+	m_pP1WindowModeCtrl	= LTNULL;
 	m_bP1ForceModeSet	= LTFALSE;
 	m_bP1IntelFix		= LTFALSE;
 #endif
@@ -138,10 +139,14 @@ LTBOOL CFolderDisplay::Build()
 	SetupResolutionCtrl();
 
 #ifdef NOLFSRC_MODERN
-	// M-P1-06: windowed mode
-	CToggleCtrl *pP1Windowed = AddToggle(IDS_P1_WINDOWED,IDS_P1_HELP_WINDOWED,175,&m_bP1Windowed);
-	pP1Windowed->SetOnString(IDS_ON);
-	pP1Windowed->SetOffString(IDS_OFF);
+	// M-P1-06, M-P1-22: the window mode: full screen, a window, or a
+	// borderless window (at the desktop's resolution, so the resolution
+	// list is greyed out for it)
+	m_pP1WindowModeCtrl = AddCycleItem(IDS_P1_WINDOWMODE,IDS_P1_HELP_WINDOWMODE,175,25,&m_nP1WindowMode);
+	m_pP1WindowModeCtrl->AddString(IDS_P1_WINDOW_FULLSCREEN);
+	m_pP1WindowModeCtrl->AddString(IDS_P1_WINDOW_WINDOWED);
+	m_pP1WindowModeCtrl->AddString(IDS_P1_WINDOW_BORDERLESS);
+	m_pP1WindowModeCtrl->NotifyOnChange(FOLDER_CMD_UPDATE,this);
 #endif
 	CToggleCtrl *pToggle = AddToggle(IDS_DISPLAY_TEXTURE,IDS_HELP_TEXTUREDEPTH,175,&m_bTexture32);
 	pToggle->SetOnString(IDS_DISPLAY_32BIT);
@@ -179,6 +184,16 @@ void CFolderDisplay::Escape()
 
 uint32 CFolderDisplay::OnCommand(uint32 dwCommand, uint32 dwParam1, uint32 dwParam2)
 {
+#ifdef NOLFSRC_MODERN
+	// M-P1-22: a borderless window is at the desktop's resolution
+	if (dwCommand == FOLDER_CMD_UPDATE)
+	{
+		UpdateData();
+		if (m_pResolutionCtrl)
+			m_pResolutionCtrl->Enable(m_nP1WindowMode != P1_WINDOW_BORDERLESS);
+		return 1;
+	}
+#endif
 	return CBaseFolder::OnCommand(dwCommand,dwParam1,dwParam2);
 };
 
@@ -402,6 +417,16 @@ LTBOOL CFolderDisplay::SetRenderer(int nRendererIndex, int nResolutionIndex)
 {
 	// Get the new renderer structure
 	RMode newMode=GetRendererModeStruct(nRendererIndex, nResolutionIndex);
+#ifdef NOLFSRC_MODERN
+	// M-P1-22: a borderless window is at the desktop's resolution
+	if (m_nP1WindowMode == P1_WINDOW_BORDERLESS)
+	{
+		int nDeskW, nDeskH;
+		P1Window_DesktopSize(&nDeskW, &nDeskH);
+		newMode.m_Width  = (uint32)nDeskW;
+		newMode.m_Height = (uint32)nDeskH;
+	}
+#endif
 
 	// If the current renderer is the same as the one we are changing to, then don't set the renderer!
 	RMode currentMode;
@@ -522,8 +547,9 @@ void CFolderDisplay::OnFocus(LTBOOL bFocus)
 		m_bHardwareCursor = (GetConsoleInt("HardwareCursor",0) > 0 && GetConsoleInt("DisableHardwareCursor",0) == 0);
 		m_pHardwareCursor->Enable(GetConsoleInt("DisableHardwareCursor",0) == 0);
 #ifdef NOLFSRC_MODERN
-		// M-P1-06, M-P1-10: windowed mode, Intel graphics fix
-		m_bP1Windowed = (GetConsoleInt("Windowed",0) == 1);
+		// M-P1-06, M-P1-22, M-P1-10: the window mode, Intel graphics fix
+		m_nP1WindowMode = P1Window_GetMode();
+		m_pResolutionCtrl->Enable(m_nP1WindowMode != P1_WINDOW_BORDERLESS);
 		m_bP1IntelFix = !P1Config_LightScale() || !P1Config_ScreenTinting();
 #endif
 
@@ -553,6 +579,40 @@ void CFolderDisplay::OnFocus(LTBOOL bFocus)
 				}
 			}
 		}
+#ifdef NOLFSRC_MODERN
+		// M-P1-22: a mode not in the list (16-bit, from the command line)
+		// left the first renderer selected, which leaving the folder then
+		// set; take the renderer in use, at the size in use if listed.
+		RMode p1Selected = GetRendererModeStruct(m_pRendererCtrl->GetSelIndex(), m_pResolutionCtrl->GetSelIndex());
+		if (!IsRendererEqual(&currentMode, &p1Selected))
+		{
+			for (n = 0; n < m_rendererArray.GetSize(); n++)
+			{
+				if (m_rendererArray[n].m_resolutionArray.GetSize() == 0)
+					continue;
+
+				RMode p1Mode = GetRendererModeStruct(n, 0);
+				if (_mbsicmp((const unsigned char*)p1Mode.m_RenderDLL, (const unsigned char*)currentMode.m_RenderDLL) != 0 ||
+					_mbsicmp((const unsigned char*)p1Mode.m_Description, (const unsigned char*)currentMode.m_Description) != 0)
+					continue;
+
+				m_pRendererCtrl->SetSelIndex(n);
+				SetupResolutionCtrl();
+
+				unsigned int i;
+				for (i = 0; i < m_rendererArray[n].m_resolutionArray.GetSize(); i++)
+				{
+					p1Mode = GetRendererModeStruct(n, i);
+					if (p1Mode.m_Width == currentMode.m_Width && p1Mode.m_Height == currentMode.m_Height)
+					{
+						m_pResolutionCtrl->SetSelIndex(i);
+						break;
+					}
+				}
+				break;
+			}
+		}
+#endif
 		m_bTexture32 = pSettings->GetBoolVar("32BitTextures");
 	
 
@@ -579,10 +639,11 @@ void CFolderDisplay::OnFocus(LTBOOL bFocus)
 				WriteConsoleInt("EnableScreenTinting",!m_bP1IntelFix);
 				g_pGameClientShell->GetLightScaleMgr()->Enable();
 			}
-			// M-P1-06: windowed mode takes effect by setting the mode again
-			if ((GetConsoleInt("Windowed",0) == 1) != (m_bP1Windowed ? true : false))
+			// M-P1-06, M-P1-22: the window mode takes effect by setting the
+			// mode again
+			if (P1Window_GetMode() != m_nP1WindowMode)
 			{
-				WriteConsoleInt("Windowed",m_bP1Windowed ? 1 : 0);
+				P1Window_SetMode(m_nP1WindowMode);
 				m_bP1ForceModeSet = LTTRUE;
 			}
 #endif

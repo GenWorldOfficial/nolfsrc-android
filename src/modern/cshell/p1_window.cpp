@@ -17,8 +17,15 @@
 //                                  having been windowed)
 //             windowed             a title bar and the mode's size as the
 //                                  client area, centred in the work area
-//             windowed at the      no frame at all, covering the screen
-//             desktop's size       ("borderless windowed")
+//             borderless window    no frame at all, covering the screen,
+//                                  at the desktop's own resolution
+//
+//           The window mode (Display options) is the engine's Windowed
+//           (0 full screen, 1 a window: what the renderers read) and our
+//           WindowMode (2: that window borderless).  A borderless window
+//           is always at the desktop's resolution: when the render mode is
+//           another (a command line's ++screenwidth, say), the mode is set
+//           to the desktop's on the next frame (P1Window_Update).
 //
 //           A window already right (the user may have moved it) is left
 //           where it is.
@@ -32,6 +39,7 @@
 #include "stdafx.h"
 #include "ClientUtilities.h"
 #include "GameClientShell.h"
+#include "InterfaceMgr.h"
 #include "cshell/p1_modern.h"
 
 extern HWND		g_hMainWnd;		// GameClientShell.cpp
@@ -57,6 +65,83 @@ namespace
 	Placement	s_ePlaced	= PLACED_NONE;
 	uint32		s_nWidth	= 0;		// the mode it was placed for
 	uint32		s_nHeight	= 0;
+	bool		s_bWantDesktop = false;	// borderless at another mode: set the desktop's
+	uint32		s_nTriedWidth	= 0;	// ... once for each mode it is at
+	uint32		s_nTriedHeight	= 0;
+}
+
+int P1Window_GetMode()
+{
+	if (GetConsoleInt("Windowed", 0) != 1)
+		return P1_WINDOW_FULLSCREEN;
+
+	return GetConsoleInt("WindowMode", P1_WINDOW_WINDOWED) == P1_WINDOW_BORDERLESS ?
+		P1_WINDOW_BORDERLESS : P1_WINDOW_WINDOWED;
+}
+
+void P1Window_SetMode(int nMode)
+{
+	WriteConsoleInt("Windowed", nMode != P1_WINDOW_FULLSCREEN ? 1 : 0);
+	WriteConsoleInt("WindowMode", nMode);
+}
+
+// The desktop's own resolution -- not the screen's, which in full screen
+// is the game's mode.
+void P1Window_DesktopSize(int* pWidth, int* pHeight)
+{
+	DEVMODE dm;
+	memset(&dm, 0, sizeof(dm));
+	dm.dmSize = sizeof(dm);
+
+	if (EnumDisplaySettings(NULL, ENUM_REGISTRY_SETTINGS, &dm) && dm.dmPelsWidth && dm.dmPelsHeight)
+	{
+		*pWidth  = (int)dm.dmPelsWidth;
+		*pHeight = (int)dm.dmPelsHeight;
+		return;
+	}
+
+	*pWidth  = GetSystemMetrics(SM_CXSCREEN);
+	*pHeight = GetSystemMetrics(SM_CYSCREEN);
+}
+
+// CGameClientShell::Update, every frame: a borderless window's mode.
+void P1Window_Update()
+{
+	if (!s_bWantDesktop)
+		return;
+
+	s_bWantDesktop = false;
+
+	RMode mode;
+	if (g_pLTClient->GetRenderMode(&mode) != LT_OK)
+		return;
+
+	int nDeskW, nDeskH;
+	P1Window_DesktopSize(&nDeskW, &nDeskH);
+
+	// once per mode, so a desktop mode the renderer refuses is not asked
+	// for every frame
+	if (mode.m_Width == s_nTriedWidth && mode.m_Height == s_nTriedHeight)
+		return;
+	s_nTriedWidth  = mode.m_Width;
+	s_nTriedHeight = mode.m_Height;
+
+	mode.m_Width  = (uint32)nDeskW;
+	mode.m_Height = (uint32)nDeskH;
+
+	// as Display options sets a mode (CFolderDisplay::SetRenderer)
+	g_pInterfaceMgr->SetSwitchingRenderModes(LTTRUE);
+	LTRESULT result = g_pLTClient->SetRenderMode(&mode);
+	g_pInterfaceMgr->SetSwitchingRenderModes(LTFALSE);
+	if (result != LT_OK)
+		return;
+	g_pInterfaceMgr->ScreenDimsChanged();
+
+	char szCmd[64];
+	sprintf(szCmd, "+screenwidth %d", nDeskW);
+	g_pLTClient->RunConsoleString(szCmd);
+	sprintf(szCmd, "+screenheight %d", nDeskH);
+	g_pLTClient->RunConsoleString(szCmd);
 }
 
 void P1Window_Apply()
@@ -72,7 +157,9 @@ void P1Window_Apply()
 	s_nWidth  = mode.m_Width;
 	s_nHeight = mode.m_Height;
 
-	if (GetConsoleInt("Windowed", 0) != 1)
+	int nMode = P1Window_GetMode();
+
+	if (nMode == P1_WINDOW_FULLSCREEN)
 	{
 		if (s_ePlaced == PLACED_FRAMED || s_ePlaced == PLACED_BORDERLESS)
 		{
@@ -91,14 +178,21 @@ void P1Window_Apply()
 	}
 
 	// Windowed: the display is at the desktop's own mode.
-	int nDeskW = GetSystemMetrics(SM_CXSCREEN);
-	int nDeskH = GetSystemMetrics(SM_CYSCREEN);
-	bool bBorderless = ((int)mode.m_Width >= nDeskW && (int)mode.m_Height >= nDeskH);
+	int nDeskW, nDeskH;
+	P1Window_DesktopSize(&nDeskW, &nDeskH);
+	bool bBorderless = (nMode == P1_WINDOW_BORDERLESS);
 	DWORD dwStyle = bBorderless ? kBorderlessStyle : kFramedStyle;
+
+	// A borderless window covers the desktop; its mode is the desktop's.
+	if (bBorderless && ((int)mode.m_Width != nDeskW || (int)mode.m_Height != nDeskH))
+		s_bWantDesktop = true;
 	Placement ePlace = bBorderless ? PLACED_BORDERLESS : PLACED_FRAMED;
 
 	RECT rcWant;
-	SetRect(&rcWant, 0, 0, mode.m_Width, mode.m_Height);
+	if (bBorderless)
+		SetRect(&rcWant, 0, 0, nDeskW, nDeskH);
+	else
+		SetRect(&rcWant, 0, 0, mode.m_Width, mode.m_Height);
 	AdjustWindowRect(&rcWant, dwStyle, FALSE);
 	int cx = rcWant.right - rcWant.left;
 	int cy = rcWant.bottom - rcWant.top;
