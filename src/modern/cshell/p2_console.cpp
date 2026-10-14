@@ -242,6 +242,43 @@ static void HelpFn(int argc, char** argv)
 	g_pLTClient->CPrint("Typing a console variable's name and a value sets it; \"Cheats\" lists the cheat codes.");
 }
 
+// GetPos: where the player is, as SetPos takes it.
+static void GetPosFn(int argc, char** argv)
+{
+	HOBJECT hPlayer = g_pGameClientShell->GetMoveMgr()->GetObject();
+	LTVector vPos;
+
+	if (!hPlayer)
+	{
+		g_pLTClient->CPrint("GetPos: no player");
+		return;
+	}
+
+	g_pLTClient->GetObjectPos(hPlayer, &vPos);
+	g_pLTClient->CPrint("Player at %.1f %.1f %.1f", vPos.x, vPos.y, vPos.z);
+	ModernLog("GetPos: %.1f %.1f %.1f", vPos.x, vPos.y, vPos.z);
+}
+
+// SetPos <x> <y> <z>: put the player there (single player: the client
+// moves its own object and the server follows), for testing a place
+// without playing to it; GetPos (or mppos) shows where one is.
+static void SetPosFn(int argc, char** argv)
+{
+	HOBJECT hPlayer = g_pGameClientShell->GetMoveMgr()->GetObject();
+
+	if (argc < 3 || !hPlayer || g_pGameClientShell->IsMultiplayerGame())
+	{
+		g_pLTClient->CPrint("SetPos <x> <y> <z>  (single player)");
+		return;
+	}
+
+	LTVector vPos((LTFLOAT)atof(argv[0]), (LTFLOAT)atof(argv[1]), (LTFLOAT)atof(argv[2]));
+	LTVector vZero(0.0f, 0.0f, 0.0f);
+	g_pLTClient->SetObjectPos(hPlayer, &vPos);
+	g_pPhysicsLT->SetVelocity(hPlayer, &vZero);
+	g_pLTClient->CPrint("Player at %.1f %.1f %.1f", vPos.x, vPos.y, vPos.z);
+}
+
 static void HistoryToLogFn(int argc, char** argv)
 {
 	int i, nFirst;
@@ -327,6 +364,8 @@ void P2Console_Init()
 	g_pLTClient->RegisterConsoleProgram("Help", HelpFn);
 	g_pLTClient->RegisterConsoleProgram("Cheats", P2Cheats_ListFn);
 	g_pLTClient->RegisterConsoleProgram("ConsoleHistoryToLog", HistoryToLogFn);
+	g_pLTClient->RegisterConsoleProgram("SetPos", SetPosFn);
+	g_pLTClient->RegisterConsoleProgram("GetPos", GetPosFn);
 
 	g_pLTClient->SetConsoleOutputFn(OnEngineConsoleLine, LTNULL);
 
@@ -345,6 +384,8 @@ void P2Console_Term()
 	g_pLTClient->UnregisterConsoleProgram("Help");
 	g_pLTClient->UnregisterConsoleProgram("Cheats");
 	g_pLTClient->UnregisterConsoleProgram("ConsoleHistoryToLog");
+	g_pLTClient->UnregisterConsoleProgram("SetPos");
+	g_pLTClient->UnregisterConsoleProgram("GetPos");
 
 	if (s_hBackdrop)
 	{
