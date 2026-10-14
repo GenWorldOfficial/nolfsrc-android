@@ -241,6 +241,8 @@ class CMoveMgr
 #ifdef NOLFSRC_MODERN
 	// M-P5-05: carried across frames the engine finds nothing underfoot
 	P5StandingOn	m_P5StandingOn;
+	// M-P1-23: how long since the head broke the surface (UpdateInLiquid)
+	LTFLOAT			m_fP1Surfaced;
 #endif
 };
 

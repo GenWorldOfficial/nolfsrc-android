@@ -256,6 +256,7 @@ void CMoveMgr::InitWorldData()
 #ifdef NOLFSRC_MODERN
 	// M-P5-05
 	P5_ResetStandingOn(m_P5StandingOn);
+	m_fP1Surfaced = 0.0f;
 #endif
 }
 
@@ -617,7 +618,22 @@ void CMoveMgr::UpdateInLiquid(CContainerInfo *pInfo)
 
 		if (bMoving)  // Turn off y acceleration and velocity
 		{
+#ifdef NOLFSRC_MODERN
+			// M-P1-23: the rise stopped two frames after the eye (the
+			// camera, a frame late) broke the surface: two 60ths of a
+			// second at 60 fps, so the player floated about 4 units high,
+			// enough for the head bob (which dips the eye the head test uses
+			// by up to 4.5) to stay above the water; at 240 fps it stopped a
+			// quarter as high, the bobbing eye kept going under, and jumping
+			// out of the water failed.  The rise lasts those two 60ths at any
+			// rate: at 60 fps it stops here at once, as it did.
+			LTFLOAT fP1Dt = g_pGameClientShell->GetFrameTime();
+			LTBOOL bP1Rising = (m_fP1Surfaced + 2.0f * fP1Dt < 2.0f / 60.0f - 0.0001f);
+			m_fP1Surfaced += fP1Dt;
+			if (!bP1Rising && (vVel.y > 0.0f || curAccel.y > 0.0f))
+#else
 			if (vVel.y > 0.0f || curAccel.y > 0.0f)
+#endif
 			{
 				vVel.y = 0.0f;
 				curAccel.y = 0.0f;
@@ -1189,6 +1205,9 @@ void CMoveMgr::UpdateNormalMotion()
 	if ((IsLiquid(m_eLastContainerCode) && !bHeadInLiquid) && !m_bOnGround)
 	{
         m_bSwimmingOnSurface = LTTRUE;
+#ifdef NOLFSRC_MODERN
+		m_fP1Surfaced = 0.0f;		// M-P1-23: see UpdateInLiquid
+#endif
 	}
 	else if (bHeadInLiquid)  // See if we went back under...
 	{
@@ -1387,6 +1406,20 @@ void CMoveMgr::UpdateNormalMotion()
 		if (bOkayToJump)
 		{
 			vel.y = fJumpVel;
+#ifdef NOLFSRC_MODERN
+			// M-P1-23: a jump out of the water also gets this frame's
+			// swim-up acceleration (vAccel.y, above), so the frame's
+			// length decided how high it went: at 60 fps 50 more units a
+			// second, at 240 fps 12, which was 11 units of height short of
+			// some ledges (M01S03's pool).  Give it a 60th of a second's
+			// worth at any rate faster than 60.
+			if (m_bBodyInLiquid && vAccel.y > 0.0f)
+			{
+				LTFLOAT fP1Dt = g_pGameClientShell->GetFrameTime();
+				if (fP1Dt < 1.0f / 60.0f)
+					vel.y += vAccel.y * (1.0f / 60.0f - fP1Dt);
+			}
+#endif
 
             m_bJumped            = LTTRUE;
             m_bSwimmingOnSurface = LTFALSE;
