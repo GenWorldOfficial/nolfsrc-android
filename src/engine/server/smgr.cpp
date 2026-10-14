@@ -1359,7 +1359,23 @@ LTBOOL CServerMgr::Update(long flags, float fTime)
 	// Everything below runs on accumulated server time.
 	fTime += m_Unknown6b8;
 	m_Unknown6d4 = fTime - m_Unknown6d8;
+#ifdef NOLFSRC_MODERN
+	// M-P1-23: a game tick takes at least 10 ms (the clamp below), and the
+	// client calls this every frame: above 100 frames a second the world
+	// ran faster than real time (3x at 300).  So a tick runs only once
+	// 10 ms have passed since the last one, measured from that tick; the
+	// packets and the network still go every call.  Time that runs
+	// backwards -- a new world re-bases it (m_Unknown6b8), leaving the last
+	// tick's time ahead -- ticks at once and starts afresh, as the clamp
+	// made of it; waiting for it stalled the new world for as long as the
+	// old one had run.
+	bool bP1Tick = m_Unknown198 != 0 || (flags & 1) || (m_ServerFlags & 1) ||
+		m_Unknown6d4 >= 0.01f || m_Unknown6d4 < 0.0f;
+	if (bP1Tick)
+		m_Unknown6d8 = fTime;
+#else
 	m_Unknown6d8 = fTime;
+#endif
 
 	m_NetMgr.Update("Server: ", fTime, 1);
 
@@ -1378,6 +1394,11 @@ LTBOOL CServerMgr::Update(long flags, float fTime)
 	{
 		if (!(flags & 1) && !(m_ServerFlags & 1))
 		{
+#ifdef NOLFSRC_MODERN
+		  // M-P1-23: see above
+		  if (bP1Tick)
+		  {
+#endif
 			// Fixed-step: run however many update ticks real time has banked.
 			if (g_UpdatesPerSec != m_UpdatesPerSec)
 			{
@@ -1440,6 +1461,9 @@ LTBOOL CServerMgr::Update(long flags, float fTime)
 
 			m_Unknown6c4 += nUpdates;
 			m_Unknown6c0 = m_Unknown6bc + (float)m_Unknown6c4 * fInv;
+#ifdef NOLFSRC_MODERN
+		  }
+#endif
 		}
 		else
 		{

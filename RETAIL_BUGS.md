@@ -39,6 +39,7 @@ in.
 * [`CSoundMgr::GetReverbProperties`: damping is guarded by the wrong flag](#csoundmgrgetreverbproperties-damping-is-guarded-by-the-wrong-flag)
 * [`CObjBase::InitFields` leaves `m_StandingLink` uninitialised](#cobjbaseinitfields-leaves-m_standinglink-uninitialised)
 * [Level particle systems stop emitting at high frame rates](#level-particle-systems-stop-emitting-at-high-frame-rates)
+* [Above 100 frames a second the game world runs fast](#above-100-frames-a-second-the-game-world-runs-fast)
 * [`at_Advance` divides by the last keyframe's time](#at_advance-divides-by-the-last-keyframes-time)
 * [Model shadows are switched off for good by the first cinematic](#model-shadows-are-switched-off-for-good-by-the-first-cinematic)
 * [`StopSecondary` and `StopMotif` test the wrong object when given a name](#stopsecondary-and-stopmotif-test-the-wrong-object-when-given-a-name)
@@ -90,6 +91,28 @@ count rounds down to 0 every frame, and the emitter never emits: at 100
 frames a second, every system slower than 100 particles a second goes
 dark. M06S03's ambient underwater particles were never there with a fast
 renderer.
+
+### Above 100 frames a second the game world runs fast
+`CServerMgr::Update` (lithtech.exe, server.dll) · `src/engine/server/smgr.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`, MODERN.md M-P1-23): a
+> tick runs only once 10 ms have passed since the last one.
+
+In single player the client runs the server once a frame, and each tick
+takes the real time since the previous call, clamped to between 10 and 200
+ms, as its step: `LTCLAMP(m_FrameTime, 0.01f, 0.2f)`. A frame shorter than
+10 ms still advances the world by 10 ms, so above 100 frames a second game
+time runs ahead of real time -- measured at 1.6 times at 159 frames a second
+-- and with it everything on the server: AI, doors, moving platforms, the
+cut-scenes' cameras and the timers that end their lines of dialogue. A
+machine of 2000 never got near it; a fast renderer today does.
+
+The animations are off at high frame rates too, the other way: client and
+server advance them by `(int)(frame time * 1000)` milliseconds and drop
+the rest, up to a millisecond a frame (`cs_UpdateAnimations`,
+`clientmgr2.cpp`, and the sprite updates in `csvis.cpp`;
+`sm_UpdateObjectTrackers`, `servermodel.cpp`), which at 300 frames a second
+is a sixth of the time.
 
 ### Snow ignores the size of its weather volume
 `CWeatherFX::CreateSnow` (CShell.dll) · `src/game/ClientShellDLL/WeatherFX.cpp`

@@ -829,10 +829,44 @@ extern "C" __declspec(dllimport) unsigned long __stdcall timeGetTime(void);
 // 0x004b4d28; its dynamic initialiser is 0x004895e0 -> 0x004895f0.
 static uint32 g_StartTime = timeGetTime();
 
+#ifdef NOLFSRC_MODERN
+// M-P1-23: the clock from the performance counter.  timeGetTime counts
+// whole milliseconds, so at 300 frames a second (3.3 ms) frames measured 3
+// or 4 ms in turn, and every frame-time user jittered with it.
+extern "C" __declspec(dllimport) int __stdcall QueryPerformanceCounter(__int64* pCount);
+extern "C" __declspec(dllimport) int __stdcall QueryPerformanceFrequency(__int64* pFreq);
+
+static __int64 g_P1Start;
+static __int64 g_P1Freq;		// 0: not asked yet, -1: no counter
+
+float time_GetTime()
+{
+	__int64 nNow;
+
+	if (!g_P1Freq)
+	{
+		if (QueryPerformanceFrequency(&g_P1Freq) && g_P1Freq > 0)
+		{
+			QueryPerformanceCounter(&nNow);
+			// the same zero as timeGetTime's below
+			g_P1Start = nNow - (__int64)(timeGetTime() - g_StartTime) * g_P1Freq / 1000;
+		}
+		else
+			g_P1Freq = -1;
+	}
+
+	if (g_P1Freq < 0)
+		return (float)(timeGetTime() - g_StartTime) * 0.001f;
+
+	QueryPerformanceCounter(&nNow);
+	return (float)((double)(nNow - g_P1Start) / (double)g_P1Freq);
+}
+#else
 float time_GetTime()
 {
 	return (float)(timeGetTime() - g_StartTime) * 0.001f;
 }
+#endif
 
 
 // ======================================================================= //

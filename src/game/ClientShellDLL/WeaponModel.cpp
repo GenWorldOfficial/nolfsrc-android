@@ -4384,6 +4384,16 @@ void CWeaponModel::UpdateMovementPerturb()
     LTFLOAT fYawDiff = (LTFLOAT)fabs(vPlayerRot.y - m_fLastYaw);
 	m_fLastPitch = vPlayerRot.x;
 	m_fLastYaw = vPlayerRot.y;
+#ifdef NOLFSRC_MODERN
+	// M-P1-23: the turn since the last frame, as the turn of a 60th of a
+	// second (what it was tuned at), so a faster frame rate does not aim
+	// steadier
+	if (fDelta > 0.001f)
+	{
+		fPitchDiff *= (1.0f / 60.0f) / fDelta;
+		fYawDiff *= (1.0f / 60.0f) / fDelta;
+	}
+#endif
     LTFLOAT fRot = g_vtPerturbRotationEffect.GetFloat() * (fPitchDiff + fYawDiff) / (2.0f + g_vtFastTurnRate.GetFloat() * fDelta);
 	if (fRot > 1.0f)
 		fRot = 1.0f;

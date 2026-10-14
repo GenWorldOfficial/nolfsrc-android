@@ -54,9 +54,11 @@ void P5_OnEngineInitialized()
 //
 // ----------------------------------------------------------------------- //
 
-// Frames the last surface is carried, at most; and how far the player may
-// have dropped meanwhile (UpdateOnGround counts more than 1 unit as a fall).
-static const int		kP5MaxStandingOnFrames	= 10;
+// How long the last surface is carried, at most -- ten frames at the 60
+// frames a second this was tuned at, a time since M-P1-23, so it is the
+// same at 300 -- and how far the player may have dropped meanwhile
+// (UpdateOnGround counts more than 1 unit as a fall).
+static const LTFLOAT	kfP5MaxStandingOnTime	= 10.0f / 60.0f;
 static const LTFLOAT	kfP5MaxStandingOnDrop	= 1.0f;
 
 void P5_ResetStandingOn(P5StandingOn & s)
@@ -64,7 +66,7 @@ void P5_ResetStandingOn(P5StandingOn & s)
 	memset(&s.m_Info, 0, sizeof(s.m_Info));
 	s.m_bValid	= LTFALSE;
 	s.m_fY		= 0.0f;
-	s.m_nFrames	= 0;
+	s.m_fCarried = 0.0f;
 }
 
 void P5_CarryStandingOn(P5StandingOn & s, CollisionInfo & Info, const LTVector & vPos, LTBOOL bAirborne)
@@ -76,18 +78,18 @@ void P5_CarryStandingOn(P5StandingOn & s, CollisionInfo & Info, const LTVector &
 		s.m_bValid	= IsMainWorld(Info.m_hObject);
 		s.m_Info	= Info;
 		s.m_fY		= vPos.y;
-		s.m_nFrames	= 0;
+		s.m_fCarried = 0.0f;
 		return;
 	}
 
-	if (!s.m_bValid || bAirborne || s.m_nFrames >= kP5MaxStandingOnFrames ||
+	if (!s.m_bValid || bAirborne || s.m_fCarried >= kfP5MaxStandingOnTime ||
 		s.m_fY - vPos.y > kfP5MaxStandingOnDrop)
 	{
 		s.m_bValid = LTFALSE;
 		return;
 	}
 
-	s.m_nFrames++;
+	s.m_fCarried += g_pGameClientShell->GetFrameTime();
 	Info = s.m_Info;
 }
 

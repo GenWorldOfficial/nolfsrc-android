@@ -17,7 +17,7 @@ struct P5StandingOn
 	CollisionInfo	m_Info;		// what GetStandingOn returned then
 	LTBOOL			m_bValid;	// m_Info is the main world
 	LTFLOAT			m_fY;		// the player's height then
-	int				m_nFrames;	// frames carried since
+	LTFLOAT			m_fCarried;	// seconds carried since (M-P1-23: not frames)
 };
 
 void P5_ResetStandingOn(P5StandingOn & s);

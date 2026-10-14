@@ -2,6 +2,9 @@
 #include "servermodel.h"
 #include "servermgr.h"
 #include "de_error.h"
+#ifdef NOLFSRC_MODERN
+#include "..\..\modern\engine\p1_frametime.h"   // M-P1-23
+#endif
 
 // sm_SetObjectChangeFlag now lives in servermodel.h.  It is not just this
 // TU's helper: the shipped /O2 build expands it into CLTServer::
@@ -283,7 +286,14 @@ inline void sm_UpdateObjectTrackers(CServerMgr* pMgr, LTObject* pObject)
 
 	if (pObject->m_ObjectType == OT_MODEL)
 	{
+#ifdef NOLFSRC_MODERN
+		// M-P1-23: the tick's fraction of a millisecond carried to the
+		// next tick (once per tick, whichever object asks first)
+		static P1TickMs s_P1Ms;
+		nMS = (uint32)P1_TickMs(&s_P1Ms, pMgr->m_FrameTime, pMgr->m_Time);
+#else
 		nMS = (uint32)(pMgr->m_FrameTime * 1000.0f);
+#endif
 
 		if (nMS > 0)
 		{

@@ -7,12 +7,18 @@
 //           M-P1-05  CWinUtil::GetTime from the performance counter
 //                    instead of GetTickCount (10-16 ms steps).
 //           M-P1-01  NOLF's movement, animation and sound timing were
-//                    tuned for about 60 fps; much faster, things go wrong
-//                    (and in multiplayer weapons fire faster), so each
-//                    client frame ends by waiting until 1/60 s has passed
-//                    since the previous one.  FramerateLock 0 turns it off
-//                    in single player; multiplayer always has it.  The
-//                    loading screen suspends it.
+//                    tuned for about 60 fps; much faster, things went
+//                    wrong, so each client frame ends by waiting until its
+//                    share of a second has passed since the previous one.
+//                    M-P1-23 put right what went wrong in single player
+//                    (the server's clock, the animations' milliseconds,
+//                    the engine clock, per-frame physics and effects), so
+//                    single player is held at 300 frames a second, for
+//                    high refresh rate screens; multiplayer, where weapons
+//                    fire faster at a higher frame rate, at 60.
+//                    FramerateLock 0 turns it off in single player;
+//                    multiplayer always has it.  The loading screen
+//                    suspends it.
 //           M-P1-02  The hosting client tells its own server not to limit
 //                    as well (they share one loop).
 //
@@ -27,7 +33,8 @@
 
 namespace
 {
-	const int		kFramesPerSecond	= 60;
+	const int		kFramesPerSecond	= 300;	// M-P1-23: single player
+	const int		kMultiplayerFPS		= 60;
 
 	bool			s_bInit				= false;
 	LARGE_INTEGER	s_liFreq;			// counts per second (0: no counter)
@@ -94,7 +101,7 @@ void P1Timing_EndFrame(bool bMultiplayer)
 		return;
 	}
 
-	LONGLONG nPeriod = s_liFreq.QuadPart / kFramesPerSecond;
+	LONGLONG nPeriod = s_liFreq.QuadPart / (bMultiplayer ? kMultiplayerFPS : kFramesPerSecond);
 	LONGLONG nTarget = s_liLastFrame.QuadPart + nPeriod;
 
 	while (liNow.QuadPart < nTarget)
@@ -105,7 +112,7 @@ void P1Timing_EndFrame(bool bMultiplayer)
 		QueryPerformanceCounter(&liNow);
 	}
 
-	// Keep the 60 Hz cadence when a frame was only a little late; after a
+	// Keep the cadence when a frame was only a little late; after a
 	// long frame (a hitch, a load), start counting from now.
 	if (liNow.QuadPart - nTarget > nPeriod)
 		s_liLastFrame = liNow;
