@@ -22,6 +22,17 @@ Actions also keeps it as an artifact for a while.
 No game files are included. Each archive has an installer script that copies
 the game's data from your own disc images and checks every file it writes.
 
+**Each release is the whole game, not a patch.** Unpack it into a new, empty
+directory, never over an earlier release or another installation of the
+game. The installer checks this first and stops if the directory holds
+anything the release does not: it lists every file of the release, and every
+file the installer writes, in `SHA256SUMS`. To keep your saved games, copy
+the old directory's `Save` folder into the new one.
+
+Once the game is installed, `sha256sum -c SHA256SUMS` in its directory checks
+every file of it (all but your settings, `autoexec.cfg` and `nolfcmds.txt`,
+which the game and the launcher rewrite).
+
 ## What you need
 
 - **The two discs of _The Operative: No One Lives Forever_, Game of the Year
@@ -59,7 +70,8 @@ the game's data from your own disc images and checks every file it writes.
 
    With no arguments it looks for the images in the game directory and the
    directory above it. You can run it again safely: files already in place
-   are checked and kept.
+   are checked and kept, and your saves, settings, logs and screenshots are
+   left alone.
 
 3. Play:
 
@@ -88,8 +100,8 @@ No winetricks or Protontricks are needed.
 
 ## Windows
 
-1. Unpack the archive (7-Zip and Windows 11's Explorer both open
-   `.tar.gz`).
+1. Unpack the archive into a new, empty folder (7-Zip and Windows 11's
+   Explorer both open `.tar.gz`).
 2. Drop both disc images onto `windows-install.bat`, or put them in the game
    folder and double-click it.
 3. Start `NOLF.exe` and click Launch.

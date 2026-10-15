@@ -14,9 +14,12 @@
 #
 # A .bin, .cue or .zip is first converted to a temporary .iso in this
 # directory (about 0.6 GB a disc, removed at the end; this needs python3).
-# The script checks each .iso's SHA-256, copies the game's data out of them
-# into this directory, and checks every file it writes; nothing else is
-# changed. It can be run again: a file already in place is checked and kept.
+# First the script checks that this directory is the release unpacked, and
+# nothing else: every file SHA256SUMS lists is here and unchanged, and no
+# file is here that the release does not have (check_dir; it refuses a
+# release copied over another installation). Then it checks each .iso's
+# SHA-256, copies the game's data out of them into this directory, and
+# checks every file it writes; nothing else is changed. It can be run again: a file already in place is checked and kept.
 # Then play with ./linux-run.sh (or ./linux-run-launcher.sh).
 #
 # It needs bash, dd, sha256sum, base64, head and stat (GNU coreutils; a
@@ -31,6 +34,62 @@ for t in dd sha256sum base64 head stat sed; do
 done
 
 data() { sed -n '/^__NOLF_INSTALL_DATA__$/,$p' "$SELF" | tail -n +2; }
+
+# This directory: the release unpacked, and nothing else? SHA256SUMS (the
+# archive's last file) lists every file the archive holds and every file
+# this script writes. Each of the archive's must be here as it was shipped,
+# and nothing may be here that is neither, nor what the game writes as it
+# runs (saves, logs, settings, screenshots) nor a disc image -- which is
+# what copying the release over another installation leaves.
+check_dir() {
+    local sums="$HERE/SHA256SUMS" sha rel n=0
+    local -A SUM WRITE
+    local -a bad=() extra=()
+    [ -f "$sums" ] || {
+        echo "linux-install.sh: SHA256SUMS is missing: run the script in the directory the release unpacked to" >&2
+        exit 1; }
+    while read -r sha rel; do SUM[$rel]=$sha; done < "$sums"
+    while read -r tag rel _; do [ "$tag" = F ] && WRITE[$rel]=1; done < <(data)
+    echo "checking this directory ..."
+    for rel in "${!SUM[@]}"; do
+        [ -n "${WRITE[$rel]:-}" ] && continue           # the script writes it
+        if [ ! -f "$HERE/$rel" ]; then bad+=("missing: $rel")
+        elif [ "$(sha256sum < "$HERE/$rel" | cut -d' ' -f1)" != "${SUM[$rel]}" ]; then
+            bad+=("changed: $rel")
+        fi
+    done
+    while IFS= read -r -d '' rel; do
+        rel=${rel#./}
+        [ -n "${SUM[$rel]:-}" ] || [ -n "${WRITE[$rel]:-}" ] && continue
+        shopt -s nocasematch
+        case "$rel" in
+        SHA256SUMS|autoexec.cfg|nolfcmds.txt|NetHost.txt|run-cmds.txt|AIReactionReset.txt) ;;
+        Save/*|cd/*|*.part|*/Thumbs.db|Thumbs.db|*/desktop.ini|desktop.ini|*/.DS_Store|.DS_Store) ;;
+        */*) extra+=("$rel") ;;
+        *.log|*.bmp|*.iso|*.bin|*.cue|*.zip) ;;          # top level only
+        *) extra+=("$rel") ;;
+        esac
+        shopt -u nocasematch
+    done < <(cd "$HERE" && find . \( -type f -o -type l \) -print0)
+    [ ${#bad[@]} -eq 0 ] && [ ${#extra[@]} -eq 0 ] && return 0
+    {
+        echo
+        echo "linux-install.sh: this directory is not just this release, unpacked:"
+        for rel in "${bad[@]}"; do echo "  $rel"; done
+        for rel in "${extra[@]}"; do
+            n=$((n + 1))
+            [ $n -le 20 ] && echo "  not part of it: $rel"
+        done
+        [ $n -le 20 ] || echo "  ... and $((n - 20)) more files not part of it"
+        echo
+        echo "The release is the whole game, not a patch: do not copy it over another"
+        echo "installation, or over an older release. Unpack it into a new, empty"
+        echo "directory and run linux-install.sh there. (Your saved games are in the"
+        echo "old directory's Save/: copy that folder across afterwards.)"
+    } >&2
+    exit 1
+}
+check_dir
 
 # The discs: their sizes and checksums, from the list.
 declare -A DSIZE DSHA DNAME DRAW DISC

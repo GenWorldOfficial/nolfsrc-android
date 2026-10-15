@@ -15,6 +15,10 @@ Supported images:
 
 ## Install
 
+**This is the whole game, not a patch.** Unpack it into a new, empty directory, not over an earlier release or another
+installation: the installer checks the directory against `SHA256SUMS` and stops if it holds anything else. Copy your old
+`Save` folder across to keep your saved games.
+
 The full guide, is [here](https://github.com/{{REPO}}/blob/{{TAG}}/docs/INSTALL.md).
 
 ### Windows

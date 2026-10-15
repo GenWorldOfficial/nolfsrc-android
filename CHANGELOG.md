@@ -31,6 +31,11 @@ Since the first public release:
 - **Shift+Esc opens the console**, whatever your keyboard layout. (M-P2-15)
 - **Frame-rate limit choices:** 60, 120, 144, 240 (the default) or none, in
   Interface options. (M-P1-25)
+- **The installers refuse a release copied over another installation.**
+  Each archive carries a `SHA256SUMS` of every file of the release and every
+  file the installer writes; `linux-install.sh` and `windows-install.bat`
+  check the directory against it first, and stop if a file is missing,
+  changed or not part of the release.
 - **Climbing out of water at high frame rates** works again (near the end of
   Morocco you could not get out). (M-P1-23)
 - **32-bit textures by default.** (M-P1-24)

@@ -13,7 +13,10 @@
 #                               discs, which its linux-install.sh /
 #                               windows-install.bat copy out of the player's
 #                               own disc images (tools/mkinstall.py): the one
-#                               to give to other people. It needs the images
+#                               to give to other people. Its SHA256SUMS lists
+#                               every file of the archive and every file the
+#                               scripts write; they refuse a directory that is
+#                               not the archive unpacked. It needs the images
 #                               in rez/isos/; without them it is skipped.
 #
 # NOLF_ARCHIVES (default "private public") says which to write; with
@@ -79,13 +82,34 @@ elif [ $rc != 0 ]; then
     exit $rc
 else
     sed "s|^|$NAME/|" "$PARENT/$STAGE/disc-files.txt" > "$PARENT/$STAGE/exclude.txt"
-    tar -C "$PARENT" -h -cf - \
+    tar -C "$PARENT" -h -cf "$PARENT/$STAGE/public.tar" \
         --exclude="$NAME/Save/*" --exclude="$NAME/nolfcmds.txt" --exclude="$NAME/NetHost.txt" \
         --exclude='*.log' --exclude=run-cmds.txt --exclude=cd --exclude='*.part' \
         --anchored --no-wildcards --exclude-from="$PARENT/$STAGE/exclude.txt" \
         --transform="s|^$STAGE/|$NAME/|" \
-        "$NAME" "$STAGE/nolfcmds.txt" "$STAGE/linux-install.sh" "$STAGE/windows-install.bat" |
-        gzip -6 > "$PUB.part"
+        "$NAME" "$STAGE/nolfcmds.txt" "$STAGE/linux-install.sh" "$STAGE/windows-install.bat"
+    # Last, SHA256SUMS: every file of the archive and every file the install
+    # scripts write, but the two the game rewrites (nolfcmds.txt, by the
+    # launcher, and autoexec.cfg). The scripts check the directory against it
+    # before they install, and `sha256sum -c SHA256SUMS` checks an install.
+    python3 - "$PARENT/$STAGE/public.tar" "$PARENT/$STAGE/disc-sums.txt" \
+        > "$PARENT/$STAGE/SHA256SUMS" <<'PY'
+import hashlib, sys, tarfile
+lines = []
+with tarfile.open(sys.argv[1]) as t:
+    for m in t:
+        rel = m.name.split("/", 1)[1] if "/" in m.name else ""
+        if m.isfile() and rel and rel != "nolfcmds.txt":
+            lines.append(f"{hashlib.sha256(t.extractfile(m).read()).hexdigest()}  {rel}")
+lines += open(sys.argv[2]).read().splitlines()
+names = [l[66:] for l in lines]
+if len(set(n.lower() for n in names)) != len(names):
+    sys.exit("package.sh: a file twice in SHA256SUMS")
+for l in sorted(lines, key=lambda l: l[66:].lower()):
+    sys.stdout.write(l + "\n")
+PY
+    tar -C "$PARENT" -rf "$PARENT/$STAGE/public.tar" --transform="s|^$STAGE/|$NAME/|" "$STAGE/SHA256SUMS"
+    gzip -6 < "$PARENT/$STAGE/public.tar" > "$PUB.part"
     mv "$PUB.part" "$PUB"
     echo "   $PUB: $(du -h "$PUB" | cut -f1) (unpacks to $NAME/; its data from the discs)"
 fi

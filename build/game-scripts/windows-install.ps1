@@ -3,7 +3,8 @@
 # own path and the disc images dropped on it). Windows PowerShell 5.1; ASCII
 # only, as it reads a .ps1 without a byte-order mark as the ANSI code page.
 #
-# What linux-install.sh does: find the two disc images (the arguments, or
+# What linux-install.sh does: check that the folder is the release unpacked
+# and nothing else (SHA256SUMS), find the two disc images (the arguments, or
 # the images in the game folder or the one above it; a redump .bin, .cue or
 # .zip converted to a temporary .iso first), check their sizes and SHA-256,
 # then write each file of the list at the end of the .bat from
@@ -49,6 +50,59 @@ $marker = '__NOLF_INSTALL' + '_DATA__'
 $at = $text.IndexOf("`n" + $marker)
 if ($at -lt 0) { Fail 'the file list is missing from the .bat' }
 $lines = $text.Substring($at + 1 + $marker.Length) -split "`r?`n" | Where-Object { $_ -ne '' }
+
+# This folder: the release unpacked, and nothing else? (linux-install.sh's
+# check_dir.) SHA256SUMS lists every file the archive holds and every file
+# this script writes. Each of the archive's must be here as it was shipped,
+# and nothing may be here that is neither, nor what the game writes as it
+# runs (saves, logs, settings, screenshots) nor a disc image. Names compare
+# without case, as Windows does.
+$sumsPath = Join-Path $here 'SHA256SUMS'
+if (-not (Test-Path -LiteralPath $sumsPath -PathType Leaf)) {
+    Fail 'SHA256SUMS is missing: run windows-install.bat in the folder the release unpacked to'
+}
+$sums = @{}
+foreach ($l in [IO.File]::ReadAllLines($sumsPath)) {
+    if ($l.Length -gt 66) { $sums[$l.Substring(66)] = $l.Substring(0, 64) }
+}
+$writes = @{}
+foreach ($l in $lines) {
+    if ($l.StartsWith('F ')) { $writes[$l.Split(' ')[1]] = $true }
+}
+Write-Host 'checking this folder ...'
+$bad = @()
+foreach ($rel in $sums.Keys) {
+    if ($writes.ContainsKey($rel)) { continue }          # this script writes it
+    $path = Join-Path $here ($rel.Replace('/', [IO.Path]::DirectorySeparatorChar))
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { $bad += "missing: $rel" }
+    elseif ((Get-Sha256 $path) -ne $sums[$rel]) { $bad += "changed: $rel" }
+}
+$extra = @()
+foreach ($f in Get-ChildItem -LiteralPath $here -Recurse -File -Force) {
+    $rel = $f.FullName.Substring($here.TrimEnd('\').Length + 1).Replace('\', '/')
+    if ($sums.ContainsKey($rel) -or $writes.ContainsKey($rel)) { continue }
+    $leaf = $f.Name
+    if (@('SHA256SUMS', 'autoexec.cfg', 'nolfcmds.txt', 'NetHost.txt', 'run-cmds.txt',
+          'AIReactionReset.txt') -contains $rel) { continue }
+    if ($rel -like 'Save/*' -or $rel -like 'cd/*' -or $rel -like '*.part') { continue }
+    if (@('Thumbs.db', 'desktop.ini', '.DS_Store') -contains $leaf) { continue }
+    if (-not $rel.Contains('/') -and
+        @('*.log', '*.bmp', '*.iso', '*.bin', '*.cue', '*.zip' | Where-Object { $rel -like $_ }).Count) { continue }
+    $extra += $rel
+}
+if ($bad.Count -or $extra.Count) {
+    Write-Host ''
+    Write-Host 'windows-install: this folder is not just this release, unpacked:' -ForegroundColor Red
+    foreach ($b in $bad) { Write-Host "  $b" }
+    foreach ($e in ($extra | Select-Object -First 20)) { Write-Host "  not part of it: $e" }
+    if ($extra.Count -gt 20) { Write-Host "  ... and $($extra.Count - 20) more files not part of it" }
+    Write-Host ''
+    Write-Host 'The release is the whole game, not a patch: do not copy it over another'
+    Write-Host 'installation, or over an older release. Unpack it into a new, empty'
+    Write-Host 'folder and run windows-install.bat there. (Your saved games are in the'
+    Write-Host 'old folder''s Save folder: copy it across afterwards.)'
+    exit 1
+}
 
 $discs = @{}
 foreach ($l in $lines) {
