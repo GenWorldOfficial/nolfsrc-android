@@ -1502,8 +1502,9 @@ BOOL CServerDlg::FillWorldList(CStringList* pList, const char* szDir, BOOL bFull
 // [0x406fb0]: the game type's levels, from the settings, into the list.
 // A level's item data says whether it is a custom one, outside the game's
 // Multi\AssaultMap and Multi\DeathMatch directories -- meant to, rather:
-// the test asks whether the name STARTS with either, which none does, so
-// every level is "custom" (RETAIL_BUGS.md).
+// the test asks whether the name STARTS with either (Find() == 0), which
+// none does, so no level is ever "custom", and every name loses its path.
+// Nothing reads the item data, so nothing shows it.
 BOOL CServerDlg::FillSelectedWorldList(CListCtrl* pList)
 {
 	CString sLevelFmt, sLevelKey, sLevel, sUpper;
@@ -1599,24 +1600,23 @@ BOOL CServerDlg::LoadResourceModule( )
 }
 
 // [0x407380]: the server options (Attributes\ServerOptions.txt, in the
-// .rez files): Option0, Option1, ... until one is missing.
-//
-// NEAR (ours 1447 bytes, the shipped 1581): everything is the shipped code but the last
-// return's cleanup, where VC6 calls the out-of-line ~CButeMgr (0x403c10)
-// instead of expanding it as the shipped code does on every path (an
-// inline-expansion limit; no source shape tried so far changes it).
+// .rez files): Option0, Option1, ... until one is missing. nLen and pData
+// are declared (and zeroed) up front: without that, VC6 stops expanding
+// ~CButeMgr inline one return early and calls it out of line (0x403c10).
 BOOL CServerDlg::LoadServerOptions( )
 {
 	ILTStream* pStream = NULL;
+	unsigned long nLen = 0;
+	char* pData = NULL;
 	CWaitCursor wc;
 	CButeMgr buteMgr;
 
 	if( m_pServerMgr->OpenFile( "Attributes\\ServerOptions.txt", &pStream ) != LT_OK || !pStream )
 		return FALSE;
 
-	unsigned long nLen = pStream->GetLen( );
+	nLen = pStream->GetLen( );
 
-	char* pData = new char[nLen];
+	pData = new char[nLen];
 	if( !pData )
 	{
 		pStream->Release( );
@@ -1713,12 +1713,8 @@ CString CServerDlg::LoadResString(UINT nStringID)
 // [0x407b30]: the weapons a player can start with (Attributes\Weapons.txt:
 // those in the player's weapon order, CanBeDefault), by their names in
 // CRes.dll, with their weapon order index (+ 20) as the item data.
-//
-// NEAR (ours 2141 bytes, the shipped 2041): same control flow and calls, but register
-// allocation differs: the shipped code keeps a zero in ebx for the whole
-// function (and the weapon counter in memory), ours gives ebx to the
-// counter, and its early returns repeat the last two destructor calls
-// that the shipped ones share.
+// dResult and bCanBeDefault keep a zero in ebx for the whole function (the
+// weapon counter then lives in memory), as in the shipped code.
 BOOL CServerDlg::FillWeaponList(CComboBox* pComboBox)
 {
 	CButeMgr buteMgr;
@@ -1728,7 +1724,8 @@ BOOL CServerDlg::FillWeaponList(CComboBox* pComboBox)
 	if( !m_hResModule )
 		return FALSE;
 
-	if( m_pServerMgr->OpenFile( "Attributes\\Weapons.txt", &pStream ) != LT_OK )
+	LTRESULT dResult = m_pServerMgr->OpenFile( "Attributes\\Weapons.txt", &pStream );
+	if( dResult != LT_OK )
 		return FALSE;
 
 	unsigned long nLen = pStream->GetLen( );
@@ -1764,7 +1761,7 @@ BOOL CServerDlg::FillWeaponList(CComboBox* pComboBox)
 			break;
 
 		pValue = ( void* )( i + 20 );
-		mapWeapons[sName] = pValue;
+		mapWeapons.SetAt( sName, pValue );
 	}
 
 	CString sTag, sDisplay;
@@ -1773,7 +1770,8 @@ BOOL CServerDlg::FillWeaponList(CComboBox* pComboBox)
 	sName = buteMgr.GetString( sTag, "Name" );
 	while( buteMgr.Success( ))
 	{
-		if( buteMgr.GetInt( sTag, "CanBeDefault", 0 ))
+		BOOL bCanBeDefault = buteMgr.GetInt( sTag, "CanBeDefault", 0 );
+		if( bCanBeDefault )
 		{
 			int nNameId = buteMgr.GetInt( sTag, "NameId" );
 			if( buteMgr.Success( ) && mapWeapons.Lookup( sName, pValue ))

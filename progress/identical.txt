@@ -4722,11 +4722,13 @@ NolfServ.exe	sub_406e00
 NolfServ.exe	sub_406e30
 NolfServ.exe	sub_406fb0
 NolfServ.exe	sub_407260
+NolfServ.exe	sub_407380
 NolfServ.exe	sub_4079b0
 NolfServ.exe	sub_4079e0
 NolfServ.exe	sub_407a30
 NolfServ.exe	sub_407a50
 NolfServ.exe	sub_407a70
+NolfServ.exe	sub_407b30
 NolfServ.exe	sub_408330
 NolfServ.exe	sub_408380
 NolfServ.exe	sub_4084e0
