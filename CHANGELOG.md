@@ -34,6 +34,8 @@ Since the first public release:
 - **Climbing out of water at high frame rates** works again (near the end of
   Morocco you could not get out). (M-P1-23)
 - **32-bit textures by default.** (M-P1-24)
+- **Water surfaces fill their pools** with `d3d9.ren` and `opengl.ren`; they
+  stopped half a wave cell short of every edge (the UNITY fountain).
 - **The Intel graphics fix** applies only with `d3d7.ren`, the one renderer
   it is needed for. (M-P1-10)
 - **`SetPos` and `GetPos`** console commands. (M-P2-14)

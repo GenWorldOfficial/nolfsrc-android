@@ -213,8 +213,17 @@ void mr_DrawPolyGrid(LTObject* pObj)
     // The colours go through d3d.ren's colour ramps, which Saturate doubles.
     float fRamp = cvi(CV_Saturate) ? 2.0f : 1.0f;
 
+    // The grid spans its scale times w by h, not w - 1 by h - 1: d3d.ren
+    // scales the cell axes by Scale.x / (w - 1) * w and Scale.z / (h - 1) * h
+    // (0x1005ad24). Without that, the water stops half a cell short of
+    // every edge of its pool.
     LTMatrix M;
     mr_ObjectMatrix(pObj, &M);
+    for (int r = 0; r < 3; r++)
+    {
+        M.m[r][0] *= w / (w - 1.0f);
+        M.m[r][2] *= h / (h - 1.0f);
+    }
     mr_MultMatrix(M);
     float fHalfW = (w - 1) * 0.5f, fHalfH = (h - 1) * 0.5f;
 
