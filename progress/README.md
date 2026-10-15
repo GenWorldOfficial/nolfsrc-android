@@ -142,7 +142,64 @@ and `--todo=<target>` (and `--attempted`) list them.
 
 This is the per-function measure. A whole binary is byte-perfect only once
 every function is identical *and* it links in the same order, with the same
-data and headers; that final, whole-file comparison is not made yet.
+data and headers; that final, whole-file comparison is not made yet. The
+data check (below) and the resource rows cover part of it: the text and the
+resources.
+
+## The data check: text outside the code
+
+The function comparison masks every address the linker writes, so it never
+reads the data those addresses point at; a wrong string, a missing literal,
+a duplicate one, another C runtime's tables or imports pass it unseen.
+`tools/datacheck.py` reads them. For each image (the engine images,
+`ltmsg.dll`, `sres.dll` and the game DLLs) it takes the text of every
+section that is neither code nor `.reloc` nor `.rsrc` (the resources are
+scored resource by resource, above), reads the import and export tables as
+what they are (`import KERNEL32.dll GetTickCount`, `export name server.DLL`),
+and compares ours with the retail image's as multisets of strings: a string
+the retail image holds more often than ours is a `retail` difference, one
+ours holds more often an `ours` one. A string is a NUL-terminated run of at
+least five printable bytes, mostly letters, starting 4-byte aligned (where
+the compiler puts a literal: what printable bytes precede it are the end of
+other data), with every relocated pointer's bytes taken out first.
+
+The differences that are known and meant are listed, each under its reason,
+in `progress/data-known.txt`: the GameSpy SDK our stand-in replaces (its
+query strings, master servers, Winsock and `GetTickCount` imports), the
+path Monolith's IDE compiled `Attachments.cpp` by (its `__FILE__`), the
+Debug-runtime `sres.dll` (all of its retail text, by a `*` entry), and text
+of code not reconstructed yet. The check is a ratchet like `identical.txt`:
+
+* `make progress` (`datacheck.py check`) **fails on a difference the list
+  does not have** -- a new one, or one that came back -- and reports the
+  listed ones as counts, per image;
+* `make progress-update` (`datacheck.py update`) **drops the entries that
+  no longer differ**, so a difference once fixed is held fixed;
+* entries are only added by hand, under a `# ` line giving the reason
+  (`datacheck.py show [image]` lists every difference, known or not).
+
+It reports, and fails, on text only. Other data-level differences are not
+checked: the order of each DLL's imports within its import table, the
+layout of `.data`, the headers and time stamps.
+
+### For later: building from Monolith's path
+
+One known difference is worth an experiment of its own. Monolith built the
+game DLLs in the Visual C++ IDE, which passes each file to the compiler by
+its full path, so `__FILE__` in `Object.lto` reads
+`G:\Nolf\NolfCode1.03\Source\Game\ObjectDLL\Attachments.cpp` where ours
+reads `.\Attachments.cpp` (`progress/data-known.txt`). A `#line` would only
+change the string; the build itself would differ, because VC6's output for
+these DLLs depends on the path a file is compiled by.
+
+The experiment: map a Wine drive `G:` to a directory holding the sources
+at `Nolf\NolfCode1.03\Source\...`, compile the game DLLs' files there by
+their full paths, as the IDE did, and compare. If it works, the
+`Attachments.cpp` entries leave `data-known.txt`. It may also move some
+of the game DLLs' near matches, so run `make progress` before and after
+and compare the near-match counts as well as the identical ones. Nothing
+has been tried yet.
+
 
 ## The test
 
@@ -159,8 +216,10 @@ purpose, could never pass this test.
 (`build/progress.sh check`) re-scores the current build and fails if:
 
 * a function listed in `identical.txt` is no longer identical,
-* a target's identical byte count went down, or
-* `README.md`'s table is not the one `summary.json` renders.
+* a target's identical byte count went down,
+* `README.md`'s table is not the one `summary.json` renders, or
+* the data check finds a text difference `data-known.txt` does not list
+  (below).
 
 Newly identical functions pass, with a reminder to record them:
 `make progress-update` rewrites `identical.txt`, `summary.json` and the
@@ -197,6 +256,7 @@ the libraries are skipped with a note; `make progress-update` needs them.
 |---|---|
 | `identical.txt` | every function verified identical (`target<TAB>function`): the baseline the test holds the build to. Written by `make progress-update` |
 | `summary.json` | per-target counts and bytes of the recorded run; the README table is rendered from it |
+| `data-known.txt` | the text in our images' data known to differ from the retail images', each entry under its reason: the data check's list (`tools/datacheck.py`). `make progress` fails on a difference not in it; `make progress-update` drops the entries that no longer differ |
 | `shipped-libs.sha256` | the source release's `.lib`s that are scored (paths relative to `libs/Release/`) |
 | `*-screen-exclude.csv` | per image (`lithtech`, `server`, `d3d`, `nolfserv`, and for the game DLLs `cshell`, `object`): enumerated addresses examined by hand. A reason that starts `NOT A FUNCTION` or `NOT GAME CODE` removes the row from the count (an operand byte, a jump target inside another function, padding); any other reason only marks the address as `attempted` (not in the game DLLs, where only the removal applies) |
 | `extent-splits.csv` | function starts the enumeration misses (a function hidden behind a thunk), with the evidence |

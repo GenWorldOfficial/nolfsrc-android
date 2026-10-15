@@ -20,6 +20,9 @@
 #   update  tools/progress.py, then tools/ratchet.py update: records the run
 #           in progress/ and rewrites README.md's table (ACCEPT_LOSSES=1 to
 #           record a run that lost functions)
+#   both    then tools/datacheck.py: the text in our images' data against the
+#           retail images'; fails on a difference progress/data-known.txt
+#           does not list (update also drops the entries no longer needed)
 set -e
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
@@ -44,8 +47,15 @@ done
 
 python3 tools/progress.py
 echo
+rc=0
 if [ "$mode" = check ]; then
-    python3 tools/ratchet.py check ${COMPLETE:+--complete} ${COVERED:+--covered}
+    python3 tools/ratchet.py check ${COMPLETE:+--complete} ${COVERED:+--covered} || rc=$?
 else
-    python3 tools/ratchet.py update ${ACCEPT_LOSSES:+--accept-losses}
+    python3 tools/ratchet.py update ${ACCEPT_LOSSES:+--accept-losses} || rc=$?
 fi
+# ... and the text in the images' data against the retail text, held to the
+# differences progress/data-known.txt lists (update: drops the ones that are
+# gone)
+echo
+python3 tools/datacheck.py "$mode" || rc=1
+exit $rc

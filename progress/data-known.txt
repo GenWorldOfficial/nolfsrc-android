@@ -1,0 +1,80 @@
+## The text in our images' data that is known to differ from the retail images'
+## (tools/datacheck.py, which `make progress` runs): <image> <TAB> <retail|ours>
+## <TAB> <string, unicode_escape'd>. A "# " line gives the reason for the
+## entries after it. `make progress` fails on any difference not listed here;
+## `make progress-update` drops entries that no longer differ. Add an entry
+## only with its reason.
+
+# GameSpy: the retail game DLLs link GameSpy's SDK (middleware, not scored); src/lithshared/gamespy/ stands in for it, with none of its query strings, master server names or Winsock imports
+CShell.dll	retail	\\basic\\
+CShell.dll	retail	\\final\\
+CShell.dll	retail	\\gamename\\%s\\gamever\\%s\\location\\0\\validate\\%s\\final\\\\queryid\\1.1\\
+CShell.dll	retail	\\info\\
+CShell.dll	retail	\\info\\\\rules\\
+CShell.dll	retail	\\list\\cmp\\gamename\\%s\\final\\
+CShell.dll	retail	\\list\\cmp\\gamename\\%s\\where\\%s\\final\\
+CShell.dll	retail	\\players\\
+CShell.dll	retail	\\rules\\
+CShell.dll	retail	\\secure\\
+CShell.dll	retail	\\status\\
+CShell.dll	retail	final
+CShell.dll	retail	import WSOCK32.dll #10
+CShell.dll	retail	import WSOCK32.dll #11
+CShell.dll	retail	import WSOCK32.dll #115
+CShell.dll	retail	import WSOCK32.dll #116
+CShell.dll	retail	import WSOCK32.dll #15
+CShell.dll	retail	import WSOCK32.dll #151
+CShell.dll	retail	import WSOCK32.dll #16
+CShell.dll	retail	import WSOCK32.dll #17
+CShell.dll	retail	import WSOCK32.dll #18
+CShell.dll	retail	import WSOCK32.dll #19
+CShell.dll	retail	import WSOCK32.dll #20
+CShell.dll	retail	import WSOCK32.dll #23
+CShell.dll	retail	import WSOCK32.dll #3
+CShell.dll	retail	import WSOCK32.dll #4
+CShell.dll	retail	import WSOCK32.dll #52
+CShell.dll	retail	import WSOCK32.dll #9
+CShell.dll	retail	master.gamespy.com
+CShell.dll	retail	queryid
+Object.lto	retail	Flushing response:\n
+Object.lto	retail	Sending response:\n
+Object.lto	retail	Starting a new response to %s on port# %lu\n
+Object.lto	retail	Unknown query token: %s\n
+Object.lto	retail	heartbeat
+Object.lto	retail	import KERNEL32.dll GetTickCount
+Object.lto	retail	master%i.gamespy.com
+Object.lto	retail	queryid
+Object.lto	retail	validate
+Object.lto	ours	\\queryid\\%i.%i
+
+# Monolith built the game DLLs in the IDE, which compiles each file by its full path: __FILE__ (in Attachments.cpp's one CPrint) is G:\Nolf\NolfCode1.03\Source\Game\ObjectDLL\Attachments.cpp there, .\Attachments.cpp here. Reproducing it needs the sources compiled from that path, which VC6's path-sensitive output for these DLLs makes a larger experiment (not attempted)
+Object.lto	retail	G:\\Nolf\\NolfCode1.03\\Source\\Game\\ObjectDLL\\Attachments.cpp
+Object.lto	ours	.\\Attachments.cpp
+
+# sres.dll: the retail one is a Debug build (the debug C runtime: libcmtd.lib, its asserts, heap checks and locale tables) of the same empty DLL; ours is a Release build
+sres.dll	retail	*
+
+# Data and literals of code not reconstructed yet: lithtech.exe's net trace tables (Net_G.tbl, Net_UG.tbl, which the retail server.dll carries too), and two literals of lithtech.exe's client files (the screenshot name, Bink's error tag) the retail server.dll also holds and ours does not
+lithtech.exe	retail	Net_G.tbl
+lithtech.exe	retail	Net_UG.tbl
+server.dll	retail	Net_G.tbl
+server.dll	retail	Net_UG.tbl
+server.dll	retail	Screenshot
+server.dll	retail	bm_SetInstanceHandle
+
+# The retail lithtech.exe linked dplayx.lib and called it from code /OPT:REF then discarded: the linker keeps the DLL's name. No function of ours calls DirectPlay
+lithtech.exe	retail	DPLAYX.dll
+
+# d3d.ren: console variable names and messages of renderer functions not reconstructed yet (26% of its code is identical)
+d3d.ren	retail	AmbientLight
+d3d.ren	retail	DirLight
+d3d.ren	retail	LT ERROR: %s returned %s (%s)
+d3d.ren	retail	ShadowLightDist
+d3d.ren	retail	ShadowProjectLength
+d3d.ren	retail	ShadowSizeX
+d3d.ren	retail	ShadowSizeY
+d3d.ren	retail	VisRadius
+
+# d3d.ren: the retail one links the C++ exception runtime (libcmt.lib's validate.obj and unhandld.obj, for __CxxFrameHandler), which an object of its compiled with C++ exceptions needs; nothing of ours does yet
+d3d.ren	retail	import KERNEL32.dll IsBadCodePtr
+d3d.ren	retail	import KERNEL32.dll SetUnhandledExceptionFilter

@@ -95,8 +95,11 @@ make test         # tools/playtest.sh with tools/playtest-basic.txt on
                   #   game is still running after the script on both
 make test TEST_LEVELS="M06S01"   # other levels
 make progress     # score the build against the retail binaries, function by
-                  #   function; fails if a function recorded as byte-identical
-                  #   in progress/identical.txt no longer is
+                  #   function (and resource by resource); fails if a function
+                  #   recorded as byte-identical in progress/identical.txt no
+                  #   longer is, or if the text in an image's data differs from
+                  #   the retail text in a way progress/data-known.txt does not
+                  #   list (tools/datacheck.py)
 make progress NOLF_SOURCE=<dir>  # the same, with the lithshared libraries
                   #   (<dir>: the NOLF Source Code v1.003 release)
 make progress-update NOLF_SOURCE=<dir>   # record the score in progress/ and
