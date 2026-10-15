@@ -22,11 +22,16 @@
 #include "VarTrack.h"
 #include "cshell/p5_gameplay.h"
 #include "cshell/p5_movement.h"
+#include "CMoveMgr.h"
+#include "VehicleMgr.h"
 
 extern CGameClientShell* g_pGameClientShell;
 
 // QuickSwitch (M-P5-12): next/previous weapon change the weapon at once.
 static VarTrack s_vtQuickSwitch;
+
+// CrouchToggle (M-P5-19): the Duck control toggles crouching.
+static VarTrack s_vtCrouchToggle;
 
 // How long the weapon chooser stays up after a quick switch.
 static const float kfQuickSwitchChooserTime = 2.5f;
@@ -38,6 +43,11 @@ void P5_OnEngineInitialized()
 	if (!s_vtQuickSwitch.IsInitted())
 	{
 		s_vtQuickSwitch.Init(g_pLTClient, "QuickSwitch", NULL, 0.0f);
+	}
+
+	if (!s_vtCrouchToggle.IsInitted())
+	{
+		s_vtCrouchToggle.Init(g_pLTClient, "CrouchToggle", NULL, 0.0f);
 	}
 
 	// M-P5-13: the engine only binds actions it knows. It writes the ones it
@@ -261,9 +271,79 @@ void P5_OnCinematicCameraOff()
 #endif
 }
 
+// M-P5-19: whether Duck toggles right now, as last told to the engine.
+static LTBOOL s_bCrouchToggled;
+
+static void P5_SetCrouchToggle(LTBOOL bToggle)
+{
+	s_bCrouchToggled = bToggle;
+	g_pLTClient->SetCommandToggle(COMMAND_ID_DUCK, bToggle);	// also stands up
+}
+
 void P5_OnWorldStarted()
 {
 #if P5_RESTORE_MODEL_SHADOWS
 	P5_SetModelShadowsFromSetting();
 #endif
+
+	// M-P5-19: every level starts standing
+	P5_SetCrouchToggle(s_bCrouchToggled);
+}
+
+void P5_UpdateCrouchToggle()
+{
+	CMoveMgr* pMove;
+	LTBOOL    bToggle;
+
+	if (!g_pGameClientShell || !s_vtCrouchToggle.IsInitted()) return;
+
+	pMove   = g_pGameClientShell->GetMoveMgr();
+	bToggle = s_vtCrouchToggle.GetFloat() != 0.0f && pMove &&
+	          !g_pGameClientShell->IsPlayerDead() &&
+	          !g_pGameClientShell->IsSpectatorMode() &&
+	          !pMove->IsFreeMovement() && !pMove->IsBodyInLiquid() &&
+	          !pMove->IsBodyOnLadder() &&
+	          !(pMove->GetVehicleMgr() && pMove->GetVehicleMgr()->IsVehiclePhysics());
+
+	if (bToggle != s_bCrouchToggled)
+		P5_SetCrouchToggle(bToggle);
+}
+
+// ----------------------------------------------------------------------- //
+//
+//	M-P5-18: the ammo each weapon was last used with
+//
+// ----------------------------------------------------------------------- //
+
+// Indexed by weapon id (a uint8, so every id fits); 0 is "none yet", any
+// other value the ammo id plus one.
+static uint8 s_aLastAmmo[256];
+
+void P5_RememberAmmo(uint8 nWeaponId, uint8 nAmmoId)
+{
+	if (nWeaponId == WMGR_INVALID_ID || nAmmoId == WMGR_INVALID_ID) return;
+
+	s_aLastAmmo[nWeaponId] = (uint8)(nAmmoId + 1);
+}
+
+int P5_RememberedAmmo(uint8 nWeaponId)
+{
+	CPlayerStats* pStats = g_pGameClientShell ? g_pGameClientShell->GetPlayerStats() : LTNULL;
+	WEAPON*       pWeapon = g_pWeaponMgr ? g_pWeaponMgr->GetWeapon(nWeaponId) : LTNULL;
+	int           nAmmoId, i;
+
+	if (!pStats || !pWeapon || !s_aLastAmmo[nWeaponId]) return WMGR_INVALID_ID;
+
+	nAmmoId = s_aLastAmmo[nWeaponId] - 1;
+
+	// Still one of the weapon's ammo types, and some of it left.
+	for (i = 0; i < pWeapon->nNumAmmoTypes; i++)
+	{
+		if (pWeapon->aAmmoTypes[i] == nAmmoId)
+		{
+			return (pStats->GetAmmoCount((uint8)nAmmoId) > 0) ? nAmmoId : WMGR_INVALID_ID;
+		}
+	}
+
+	return WMGR_INVALID_ID;
 }

@@ -1413,6 +1413,15 @@ void CPlayerStats::DrawPlayerStats(HSURFACE hScreen, int nLeft, int nTop, int nR
 		{
 			if (g_pInterfaceMgr->GetSunglassMode() == SUN_NONE)
 				DrawScope(hScreen,nLeft,nTop,nRight,nBottom);
+#ifdef NOLFSRC_MODERN
+			else
+			{
+				// M-P3-21: zoomed through the sunglasses the scope's mask
+				// still covers only the 4:3 area: black out the sides, as
+				// DrawScope does (M-P3-02)
+				P3_DrawSideBars(hScreen, SETRGB(0,0,0));
+			}
+#endif
 		} break;
 
 	case OVM_SCUBA:

@@ -42,4 +42,17 @@ int			P5_ToggleZoomCommand(int nZoomView);
 void		P5_OnCinematicCameraOff();
 void		P5_OnWorldStarted();
 
+// M-P5-18: the ammo each weapon was last used with. Remember it whenever
+// a weapon gets an ammo type; on a weapon change, the remembered one if the
+// player still has some, else WMGR_INVALID_ID (and the retail choice).
+// Kept for the session, not in saved games.
+void		P5_RememberAmmo(uint8 nWeaponId, uint8 nAmmoId);
+int			P5_RememberedAmmo(uint8 nWeaponId);
+
+// M-P5-19: crouch toggle. Every frame: with CrouchToggle on, the Duck
+// control toggles crouching instead of holding it (the engine's command
+// toggle), except where Duck does something else (swimming down, climbing
+// down a ladder, a vehicle's brake) or the player is dead.
+void		P5_UpdateCrouchToggle();
+
 #endif // __P5_GAMEPLAY_H__

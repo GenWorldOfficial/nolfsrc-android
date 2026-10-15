@@ -29,6 +29,9 @@
 #include "iltcustomdraw.h"
 #include "VarTrack.h"
 #include "CharacterFX.h"
+#ifdef NOLFSRC_MODERN
+#include "cshell/p5_gameplay.h"	// M-P5-18
+#endif
 
 extern CGameClientShell* g_pGameClientShell;
 extern LTBOOL g_bInfiniteAmmo;
@@ -238,6 +241,9 @@ LTBOOL CWeaponModel::Create(ILTClient* pClientDE, uint8 nWeaponId, uint8 nAmmoId
 	m_nAmmoId = nAmmoId;
 	m_pAmmo	= g_pWeaponMgr->GetAmmo(nAmmoId);
     if (!m_pAmmo) return LTFALSE;
+#ifdef NOLFSRC_MODERN
+	P5_RememberAmmo(m_nWeaponId, m_nAmmoId);	// M-P5-18
+#endif
 
 	// Important to update this before we access PlayerStats...
 
@@ -3463,7 +3469,15 @@ void CWeaponModel::DoWeaponChange(uint8 nWeaponId)
 	if (pStats->HaveWeapon(nWeaponId))
 	{
 		int nAmmoId = WMGR_INVALID_ID;
+#ifdef NOLFSRC_MODERN
+		// M-P5-18: the ammo the weapon was last used with, if there is
+		// any left; else the retail choice
+		nAmmoId = P5_RememberedAmmo(nWeaponId);
+		if (nAmmoId != WMGR_INVALID_ID ||
+			(GetBestAvailableAmmoType(nWeaponId, nAmmoId) && (nAmmoId != WMGR_INVALID_ID)))
+#else
 		if (GetBestAvailableAmmoType(nWeaponId, nAmmoId) && (nAmmoId != WMGR_INVALID_ID))
+#endif
 		{
 			g_pGameClientShell->ChangeWeapon(nWeaponId, nAmmoId, pStats->GetAmmoCount(nAmmoId));
 		}
@@ -3512,6 +3526,9 @@ void CWeaponModel::AutoSelectWeapon()
 
 		m_nAmmoId	= nAmmoId;
 		m_pAmmo		= g_pWeaponMgr->GetAmmo(m_nAmmoId);
+#ifdef NOLFSRC_MODERN
+		P5_RememberAmmo(m_nWeaponId, m_nAmmoId);	// M-P5-18
+#endif
 
 		// Reload our clip...
 
@@ -3792,6 +3809,9 @@ void CWeaponModel::ChangeAmmo(uint8 nNewAmmoId, LTBOOL bForce)
 	{
 		m_nAmmoId	= nNewAmmoId;
 		m_pAmmo		= g_pWeaponMgr->GetAmmo(m_nAmmoId);
+#ifdef NOLFSRC_MODERN
+		P5_RememberAmmo(m_nWeaponId, m_nAmmoId);	// M-P5-18
+#endif
 
 		// Make sure we reset the anis...
 

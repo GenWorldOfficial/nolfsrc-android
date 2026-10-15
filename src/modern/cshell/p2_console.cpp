@@ -598,7 +598,10 @@ LTBOOL P2Console_OnKeyDown(int nKey, int nRep)
 
 	if (!s_bVisible)
 	{
-		if (nKey == nConsoleKey && nKey > 0 && CanOpen())
+		// M-P2-15: Shift+Esc opens it too, whatever the keyboard layout
+		// puts where the console key is.
+		if (((nKey == nConsoleKey && nKey > 0) ||
+		     (nKey == VK_ESCAPE && (GetKeyState(VK_SHIFT) & 0x8000))) && CanOpen())
 		{
 			Open();
 			return LTTRUE;

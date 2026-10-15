@@ -1717,6 +1717,9 @@ void CGameClientShell::Update()
 	// M-P7: the controller's sticks, and its keys in the menus
 	P7Pad_Update(m_fFrameTime);
 
+	// M-P5-19: the crouch toggle, on or off for where the player is
+	P5_UpdateCrouchToggle();
+
 	// M-P1-22: a borderless window at the desktop's resolution
 	P1Window_Update();
 #endif

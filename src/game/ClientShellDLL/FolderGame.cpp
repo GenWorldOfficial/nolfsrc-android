@@ -10,7 +10,7 @@
 #include "GameClientShell.h"
 #include "GameSettings.h"
 #ifdef NOLFSRC_MODERN
-// M-P5-12: quick switch toggle strings
+// M-P5-12, M-P5-19: quick switch and crouch toggle strings
 #include "cres/p5.h"
 #endif
 
@@ -43,6 +43,8 @@ CFolderGame::CFolderGame()
 #ifdef NOLFSRC_MODERN
 	// M-P5-12
 	m_bQuickSwitch = LTFALSE;
+	// M-P5-19
+	m_bCrouchToggle = LTFALSE;
 #endif
 
 }
@@ -91,6 +93,13 @@ LTBOOL CFolderGame::Build()
 	CToggleCtrl* pToggle = AddToggle(IDS_ADVCONTROLS_RUNLOCK, IDS_HELP_RUNLOCK, kGap, &m_bAlwaysRun );
 	pToggle->SetOnString(IDS_YES);
 	pToggle->SetOffString(IDS_NO);
+
+#ifdef NOLFSRC_MODERN
+	// M-P5-19: crouch toggle
+	pToggle = AddToggle(IDS_P5_CROUCHTOGGLE, IDS_P5_HELP_CROUCHTOGGLE, kGap, &m_bCrouchToggle );
+	pToggle->SetOnString(IDS_YES);
+	pToggle->SetOffString(IDS_NO);
+#endif
 
 	// Add the Difficulty option
 	m_pDifficultyCtrl = AddCycleItem(IDS_DIFFICULTY,IDS_HELP_DIFFICULTY,kGap-25,25,&m_nDifficulty);
@@ -171,6 +180,8 @@ void CFolderGame::OnFocus(LTBOOL bFocus)
 #ifdef NOLFSRC_MODERN
 		// M-P5-12
 		m_bQuickSwitch = ( GetConsoleInt("QuickSwitch",0) > 0 );
+		// M-P5-19
+		m_bCrouchToggle = ( GetConsoleInt("CrouchToggle",0) > 0 );
 #endif
 
         UpdateData(LTFALSE);
@@ -195,6 +206,8 @@ void CFolderGame::OnFocus(LTBOOL bFocus)
 #ifdef NOLFSRC_MODERN
 		// M-P5-12
 		WriteConsoleInt("QuickSwitch",(int)m_bQuickSwitch);
+		// M-P5-19
+		WriteConsoleInt("CrouchToggle",(int)m_bCrouchToggle);
 #endif
 
 		g_pLTClient->WriteConfigFile("autoexec.cfg");

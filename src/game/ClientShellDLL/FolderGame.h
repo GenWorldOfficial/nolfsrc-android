@@ -41,6 +41,8 @@ protected:
 #ifdef NOLFSRC_MODERN
 	// M-P5-12
 	LTBOOL				m_bQuickSwitch;
+	// M-P5-19
+	LTBOOL				m_bCrouchToggle;
 #endif
 
 	CLTGUICycleCtrl		*m_pDifficultyCtrl;			// The difficulty control

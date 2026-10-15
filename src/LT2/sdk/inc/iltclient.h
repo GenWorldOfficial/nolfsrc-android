@@ -1133,6 +1133,13 @@
 		// registration order. nFlags bit 0: registered by the game
 		// (RegisterConsoleProgram) rather than built into the engine.
 		virtual LTRESULT EnumConsoleCommands(ConsoleCommandEnumFn pFn, void *pUser)=0;
+
+		// M-P5-19: bToggle TRUE makes the command's binding toggle it (on
+		// from one press to the next) instead of holding it; for the
+		// client and, through the input it sends, the server. Every call
+		// turns the command off, so calling it again with the same mode
+		// resets it.
+		virtual LTRESULT SetCommandToggle(int nCommand, LTBOOL bToggle)=0;
 #endif
 
 		// Determines if we werw lobby launched.

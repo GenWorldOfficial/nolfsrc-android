@@ -12,4 +12,8 @@
 #define IDS_P5_CONTROL_TOGGLE_ZOOM      31402
 #define IDS_P5_ACTIONSTRING_TOGGLE_ZOOM 31403
 
+// M-P5-19: crouch toggle (game options)
+#define IDS_P5_CROUCHTOGGLE             31404
+#define IDS_P5_HELP_CROUCHTOGGLE        31405
+
 #endif // __P5_STRINGS_H__

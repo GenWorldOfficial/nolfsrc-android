@@ -2116,13 +2116,13 @@ LTBOOL con_ICompare(char* p1, char* p2)
 //  The modern build's additions to ILTClient (NOLFSRC_MODERN only)
 // ======================================================================= //
 //
-// src/LT2/sdk/inc/iltclient.h declares these two as virtual methods appended
+// src/LT2/sdk/inc/iltclient.h declares these three as virtual methods appended
 // after EndQuery, the last retail slot, so every retail slot keeps its
 // place. lithtech.exe's ILTClient vtable is not compiled from a class but
 // assembled by tools/mkvtabobj.py from link/vtables.txt, whose
-// "%ifdef NOLFSRC_MODERN" block names the two members below as slots 113
-// and 114. They are plain (non-virtual) thiscall members of a class of their
-// own: `this` is the CLTClient object, which neither of them reads.
+// "%ifdef NOLFSRC_MODERN" block names the three members below as slots 113
+// to 115. They are plain (non-virtual) thiscall members of a class of their
+// own: `this` is the CLTClient object, which none of them reads.
 
 typedef void (*ModernConsoleCommandEnumFn)(void* pUser, const char* pName,
                                            uint32 nFlags);
@@ -2135,6 +2135,7 @@ class CLTClientModern
 public:
 	LTRESULT SetConsoleOutputFn(ModernConsoleOutputFn pFn, void* pUser);
 	LTRESULT EnumConsoleCommands(ModernConsoleCommandEnumFn pFn, void* pUser);
+	LTRESULT SetCommandToggle(int nCommand, LTBOOL bToggle);
 };
 
 // M-P0-02: one callback (NULL to remove it), handed every line the console
@@ -2171,5 +2172,46 @@ LTRESULT CLTClientModern::EnumConsoleCommands(ModernConsoleCommandEnumFn pFn, vo
 	}
 
 	return LT_OK;
+}
+
+// M-P5-19: commands whose binding toggles them.  A toggled command is on
+// from one press of its control to the next, instead of while the control
+// is held; the frame's input is changed before anything reads it, so the
+// game, a recorded demo and the server (retail or not) all see the
+// toggled state.  Only live input is changed: while the input is off (a
+// menu) every command reads off, as before, and the toggle is kept.
+static uint8 s_aCmdToggle[255];		// toggled, not held
+static uint8 s_aCmdHeld[255];		// its control, last frame
+static uint8 s_aCmdLatched[255];	// toggled on
+
+// Any call turns the command's latch off: a mode change, or a reset (the
+// game calls it again with the same mode).
+LTRESULT CLTClientModern::SetCommandToggle(int nCommand, LTBOOL bToggle)
+{
+	if (nCommand < 0 || nCommand >= 255)
+		return LT_INVALIDPARAMS;
+
+	s_aCmdToggle[nCommand]  = bToggle ? 1 : 0;
+	s_aCmdLatched[nCommand] = 0;
+
+	return LT_OK;
+}
+
+// demodtx.cpp's GatherInput, with a frame's live command states.
+void ModernApplyCommandToggles(uint8* pActions)
+{
+	int i;
+
+	for (i = 0; i < 255; i++)
+	{
+		if (!s_aCmdToggle[i])
+			continue;
+
+		if (pActions[i] && !s_aCmdHeld[i])
+			s_aCmdLatched[i] = !s_aCmdLatched[i];
+
+		s_aCmdHeld[i] = pActions[i] ? 1 : 0;
+		pActions[i]   = s_aCmdLatched[i];
+	}
 }
 #endif

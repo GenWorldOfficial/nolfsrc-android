@@ -390,6 +390,8 @@ vtable ??_7CLTClientQ404@@6B@ 0x004a14e0  # compiled with 2 slots
     # after the last retail slot; bodies in clientconsole.cpp
     ?SetConsoleOutputFn@CLTClientModern@@QAEKP6AXPAXKHPBD@Z0@Z
     ?EnumConsoleCommands@CLTClientModern@@QAEKP6AXPAXPBDK@Z0@Z
+    # M-P5-19: commands whose binding toggles them; body in clientconsole.cpp
+    ?SetCommandToggle@CLTClientModern@@QAEKHI@Z
 %endif
 vtable ??_7CLTServer@@6B@ 0x004a2ef4  # compiled with 122 slots
     ?StartHMessageWrite@CLTServerWriteView@@QAEPAVILTMessage@@XZ

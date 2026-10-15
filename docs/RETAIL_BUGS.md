@@ -435,6 +435,20 @@ creates a surface ten thousand icons wide, which every later weapon then
 uses (cleared, drawn into and blitted, mostly off the screen's left edge)
 until the HUD is rebuilt.
 
+### A popup only closes with Escape
+`CPopupText::OnKeyDown`, `CInterfaceMgr::OnCommandOn` (CShell.dll) · `src/game/ClientShellDLL/PopupText.cpp`, `InterfaceMgr.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`, M-P5-17): the key
+> bound to Activate and the right mouse button close a popup too
+> (`CInterfaceMgr::OnKeyDown`, `OnRButtonDown`).
+
+A popup, such as the text of a picked-up intelligence item, is meant to close
+with Activate as well as Escape: `OnCommandOn` closes it on
+`COMMAND_ID_ACTIVATE`, and `OnKeyDown` has the test for the Activate key
+commented out (`if (key == VK_ESCAPE)// || key == m_nKey)`). But showing a
+popup pauses the game, which turns the input off, so the Activate command
+never arrives, and Escape is the only way out.
+
 ### A server's join password is sent to anyone who asks
 `0x100f4bb0` (Object.lto) · `src/game/ObjectDLL/MyGameSpyMgr.cpp`;
 `0x1001cc90` (CShell.dll) · `src/game/ClientShellDLL/FolderJoin.cpp`

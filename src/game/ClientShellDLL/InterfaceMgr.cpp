@@ -2631,6 +2631,16 @@ LTBOOL CInterfaceMgr::OnKeyDown(int key, int rep)
 
 		case GS_POPUP :
 		{
+#ifdef NOLFSRC_MODERN
+			// M-P5-17: the Activate key closes a popup too, once the press
+			// that opened it is let go (g_bLockPopup)
+			if (m_PopupText.IsVisible() && !g_bLockPopup && key > 0 &&
+				key == GetCommandKey(COMMAND_ID_ACTIVATE))
+			{
+				m_PopupText.Clear();
+				return LTTRUE;
+			}
+#endif
 			if (m_PopupText.OnKeyDown(key, rep))
 			{
 				return LTTRUE;
@@ -4202,6 +4212,15 @@ void CInterfaceMgr::OnRButtonDown(int x, int y)
 			int relY = y - g_pInterfaceResMgr->GetYOffset();
 			m_FolderMgr.OnRButtonDown(relX,relY);
 		}	break;
+#ifdef NOLFSRC_MODERN
+	case GS_POPUP:
+		{
+			// M-P5-17: the right button (Activate by default) closes a
+			// popup, as Escape does
+			if (m_PopupText.IsVisible() && !g_bLockPopup)
+				m_PopupText.Clear();
+		}	break;
+#endif
 	case GS_SPLASHSCREEN:
 		{
 			// They pressed a button - end splash screen...
