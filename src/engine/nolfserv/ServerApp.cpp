@@ -17,6 +17,9 @@
 #include "ServerApp.h"
 #include "ServerDlg.h"
 #include "Resource.h"
+#ifdef NOLFSRC_DEBUG
+#include "nolfsrc_crash.h"     // debug build only: crash backtraces (src/nolfsrc/)
+#endif
 
 // Globals...
 
@@ -60,6 +63,11 @@ CServerApp* GetTheApp()
 
 BOOL CServerApp::InitInstance()
 {
+#ifdef NOLFSRC_DEBUG
+	// a backtrace in nolfsrc.log for any crash in the process: this program,
+	// server.dll, the game's server DLL
+	NOLFSRC_INSTALL_CRASH_HANDLER();
+#endif
 	AfxEnableControlContainer();
 
 	// Standard initialization

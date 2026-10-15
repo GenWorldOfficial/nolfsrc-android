@@ -27,6 +27,9 @@
 #include <stdio.h>
 #include <process.h>
 #include "mmsystem.h"
+#ifdef NOLFSRC_DEBUG
+#include "nolfsrc_debug.h"
+#endif
 
 #define MIN_SERVER_UPDATE 33 // At least 33 ms between server updates = cap at 30fps
 
@@ -575,6 +578,9 @@ void CServerDlg::WriteConsoleString(LPCTSTR pMsg, ...)
 	va_start(marker, pMsg);
 	_vsnprintf( str, sizeof( str ) - 1, pMsg, marker );
 	va_end(marker);
+#ifdef NOLFSRC_DEBUG
+	NOLFSRC_LOG(( "console: %s", str ));
+#endif
 
 	int len = strlen(str);
 	if (len > 0)

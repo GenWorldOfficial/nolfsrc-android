@@ -9,6 +9,9 @@
 #include "servermsg.h"
 #include "commonmodel.h"
 #include "servermodel.h"
+#ifdef NOLFSRC_DEBUG
+#include "nolfsrc_debug.h"
+#endif
 #include "commonphysics.h"
 #include "packet.h"
 #include "de_error.h"
@@ -2030,6 +2033,9 @@ int sm_ProcessPackets(CServerMgr* pMgr)
 			nResult = (*ppHandler)(pMgr, msg.m_pMsg, pClient);
 			if (nResult)
 			{
+#ifdef NOLFSRC_DEBUG
+				NOLFSRC_LOG(("packet %d: its handler failed (%d), the server stops", nPacketID, nResult));
+#endif
 				pMgr->m_NetMgr.EndGettingPackets();
 				return nResult;
 			}
@@ -5616,6 +5622,47 @@ int sub_1002a167(CServerMgr* pMgr, ServerMessage* pMsg, Client* pClient)
 
 	return 0;
 }
+
+#ifdef LT_SERVER_BUILD
+// 0x1002a193 / lithtech.exe 0x004694b0 — packet handler 5 (name by
+// address): the client data the game hands over when it connects (a uint16
+// length, then that many bytes), into a new buffer at Client+0x110 with
+// its length at +0x114, which OnClientEnterWorld passes the server shell;
+// then the flag word's 0x100 bit. CPacket::ReadType<uint16> is the call
+// to 0x1000ebd0 (lithtech.exe expands it), the copy servermsg.cpp's
+// ReadData (0x100260d9).
+//
+// Server-only: lithtech.exe's is lt2new1.cpp's sub_4694b0. Until it was
+// written, server.dll's link/aliases.rsp stood LTMatrix::operator* in for
+// it, so the first client to join a dedicated server (the one program that
+// runs server.dll, NolfServ.exe) sent this packet into a matrix multiply,
+// and the server stopped.
+// servermsg.h types ReadData's length uint32; the call here loads it as
+// sixteen bits (`mov (%esi),%cx`), as netmgr.cpp's view of the same function
+// does (link/aliases.rsp joins the two).
+class ServerMessageTypeView
+{
+public:
+	void ReadData(void* pData, uint16 nBytes);   // 0x100260d9
+};
+
+int sub_1002a193(CServerMgr* pMgr, ServerMessage* pMsg, Client* pClient)
+{
+	pClient->m_ClientDataLen = ((CPacket*)pMsg)->ReadType((uint16*)0);
+
+	if (pClient->m_ClientDataLen)
+	{
+		pClient->m_pClientData = new uint8[pClient->m_ClientDataLen];
+
+		((ServerMessageTypeView*)pMsg)->ReadData(pClient->m_pClientData,
+			(uint16)pClient->m_ClientDataLen);
+	}
+
+	pClient->m_ClientFlags |= 0x100;
+
+	return 0;
+}
+#endif
 
 
 // 0x1002a205 — after a flag change, put the object back in the containers
