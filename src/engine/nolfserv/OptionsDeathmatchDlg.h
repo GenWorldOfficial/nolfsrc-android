@@ -30,8 +30,8 @@ public:
 	CEdit		m_edFragLimit;		// 0x104  IDC_FRAGLIMIT
 	CEdit		m_edTimeLimit;		// 0x140  IDC_TIMELIMIT
 	CComboBox	m_cbEndCondition;	// 0x17c  IDC_ENDCONDITION
-	int			m_nFragLimit;		// 0x1b8  IDC_FRAGLIMIT
-	int			m_nTimeLimit;		// 0x1bc  IDC_TIMELIMIT
+	UINT		m_nFragLimit;		// 0x1b8  IDC_FRAGLIMIT
+	UINT		m_nTimeLimit;		// 0x1bc  IDC_TIMELIMIT
 	//}}AFX_DATA
 
 
@@ -41,15 +41,21 @@ public:
 	public:
 	virtual BOOL OnSetActive();
 	virtual BOOL OnKillActive();
+	virtual LRESULT OnWizardBack();
+	virtual LRESULT OnWizardNext();
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 	//}}AFX_VIRTUAL
 
 // Implementation
 protected:
+	BOOL	UpdateControls();
+	BOOL	SaveControls();
+
 	// Generated message map functions
 	//{{AFX_MSG(COptionsDeathmatchDlg)
 	virtual BOOL OnInitDialog();
+	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 

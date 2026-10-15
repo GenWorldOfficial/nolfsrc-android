@@ -30,9 +30,9 @@ public:
 	CSliderCtrl	m_sldIntelScore;	// 0x104  IDC_SLIDER4
 	CComboBox	m_cbEndCondition;	// 0x140  IDC_ENDCONDITION
 	BOOL		m_bFriendlyFire;	// 0x17c  IDC_FRIENDLYFIRE
-	int			m_nIntelScore;		// 0x180  IDC_INTELSCORE
-	int			m_nTimeLimit;		// 0x184  IDC_TIMELIMIT
-	int			m_nWinningScore;	// 0x188  IDC_WINNINGSCORE
+	UINT		m_nIntelScore;		// 0x180  IDC_INTELSCORE
+	UINT		m_nTimeLimit;		// 0x184  IDC_TIMELIMIT
+	UINT		m_nWinningScore;	// 0x188  IDC_WINNINGSCORE
 	BOOL		m_bFragScoring;		// 0x18c  IDC_FRAGSCORING
 	//}}AFX_DATA
 
@@ -43,15 +43,22 @@ public:
 	public:
 	virtual BOOL OnSetActive();
 	virtual BOOL OnKillActive();
+	virtual LRESULT OnWizardBack();
+	virtual LRESULT OnWizardNext();
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 	//}}AFX_VIRTUAL
 
 // Implementation
 protected:
+	BOOL	UpdateControls();
+	BOOL	SaveControls();
+
 	// Generated message map functions
 	//{{AFX_MSG(COptionsAssaultDlg)
 	virtual BOOL OnInitDialog();
+	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
+	afx_msg void OnCheck();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 

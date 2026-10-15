@@ -1,4 +1,4 @@
-// OptionsDlg.h : the wizard's "Options" page, for every game type (0x402ec0 - 0x40381f; 0x288 bytes)
+// OptionsDlg.h : the wizard's "Options" page, for every game type (0x402ec0 - 0x40382f; 0x288 bytes)
 //
 
 #if !defined(AFX_OPTIONSDLG_H__NOLFSERV__INCLUDED_)
@@ -36,7 +36,7 @@ public:
 	BOOL		m_bHitLocation;		// 0x26c  IDC_HITLOCATION
 	BOOL		m_bWeaponsStay;		// 0x270  IDC_WEAPONSSTAY
 	BOOL		m_bAudioTaunts;		// 0x274  IDC_AUDIOTAUNTS
-	int			m_nRespawnScale;	// 0x278  IDC_RESPAWNSCALE
+	UINT		m_nRespawnScale;	// 0x278  IDC_RESPAWNSCALE
 	int			m_nRunSpeed;		// 0x27c  IDC_RUNSPEED
 	int			m_nFallDamage;		// 0x280  IDC_FALLDAMAGE
 	int			m_nArmorHealth;		// 0x284  IDC_ARMORHEALTH
@@ -49,15 +49,21 @@ public:
 	public:
 	virtual BOOL OnSetActive();
 	virtual BOOL OnKillActive();
+	virtual LRESULT OnWizardNext();
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 	//}}AFX_VIRTUAL
 
 // Implementation
 protected:
+	BOOL	UpdateControls();
+	BOOL	SaveControls();
+
 	// Generated message map functions
 	//{{AFX_MSG(COptionsDlg)
 	virtual BOOL OnInitDialog();
+	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
+	afx_msg void OnCheck();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 

@@ -99,7 +99,7 @@ public:
 	ServerOption*		GetServerOption(const char* szVar);								// 0x4079e0
 	float				GetServerOptionDefault(const char* szVar);						// 0x407a30
 	float				GetServerSettingFloat(const char* szVar);						// 0x407a50
-	BOOL				InitSlider(const char* szVar, CSliderCtrl* pSlider);			// 0x408700
+	BOOL				InitSlider(CSliderCtrl* pSlider, const char* szVar);			// 0x408700
 
 	// The game's strings (CRes.dll)
 	CString				LoadResString(UINT nStringID);									// 0x407a70
