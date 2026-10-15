@@ -8,9 +8,17 @@ DLLs -- compiled from the source in this repository with the original
 2000-era compilers.
 
 <p align="center">
-  <img src="screenshots/screenshot01.png" alt="The main menu, running from this build" width="49%">
-  <img src="screenshots/screenshot02.png" alt="In game, running from this build" width="49%">
+  <img src="screenshots/01-main-menu.jpg" alt="The main menu" width="49%">
+  <img src="screenshots/02-unity-headquarters.jpg" alt="UNITY headquarters" width="49%">
+  <img src="screenshots/03-morocco-rooftops.jpg" alt="Misfortune in Morocco: the rooftops of Marrakech" width="49%">
+  <img src="screenshots/04-morocco-alley.jpg" alt="Misfortune in Morocco: a guard in an alley, with his shadow" width="49%">
+  <img src="screenshots/05-berlin-by-night.jpg" alt="Berlin by Night" width="49%">
+  <img src="screenshots/06-plane.jpg" alt="Unexpected Turbulence: on board the plane" width="49%">
+  <img src="screenshots/07-fireplace.jpg" alt="The Dive: a room with a fireplace" width="49%">
+  <img src="screenshots/08-alpine-village.jpg" alt="Alpine Intrigue: a village in the German Alps" width="49%">
 </p>
+
+<p align="center"><sub>The modern build at 1920x1080: the Direct3D 9 renderer with antialiasing, model shadows, 32-bit textures and 16x anisotropic filtering.</sub></p>
 
 The engine source in `src/engine/` is a reconstruction: Monolith never
 released it, so it was written to recompile to the retail machine code. The
