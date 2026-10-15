@@ -331,6 +331,94 @@
 //  itself, that spelling is the better one and this hand-written tail
 //  should be replaced by it.
 //
+//  ------------------------------------------------------------------- //
+//  SECOND PASS: from 10432 bytes / residue 122 / 156 diff blocks to
+//  10272 bytes / residue 37 / 68 blocks (shipped 10256).  Each item was
+//  measured with tools/fndiff.py and tools/census.py; the four identical
+//  functions of this file stayed identical throughout.
+//  ------------------------------------------------------------------- //
+//
+//  * THE NINE COUNTED LOOPS COUNT DOWN IN THE SOURCE.  icl 4.0 does not
+//    reverse a count-up loop by itself: `for (i = 0; i < n; i++)` with
+//    int32 gives `inc/cmp/jl`, with uint32 `inc/cmp/jb` (measured), never
+//    the shipped `dec ; jne`.  `for (n = N; n; n--)` (and w28's `while
+//    (n--)`) gives the shipped entry `test ; je` + tail `dec ; jne` for the
+//    two vertex loops (both nestings), the triangle row/column loops, the
+//    fan projection and the two vertex projections.  This alone was
+//    -176 bytes and residue 122 -> 59.  w28's `while (n--)` on the same
+//    nine loops is byte-neutral HERE but takes sub_1005a630 out of
+//    identity (measured), so the `for` form stays.
+//  * sub_10015320 RETURNS AN INTEGER HANDLE, declared `uint32` here.  As
+//    `void*` icl predicts the result non-null (guide 09) and sinks both
+//    the `bDetail = 0` arm and the Lnotexture block to the end; the
+//    shipped keeps both inline, i.e. tests an integer.
+//  * `nStage = bDetail ? 1 : 0` ONCE AFTER THE UNBIND JOIN: the shipped
+//    unbind block falls through into the ternary's zero arm (0x1005abe4).
+//  * `bNeedClip = !!(nClipMask & 0x3f)` is the `setne` at 0x1005ad16;
+//    `((x & 0x3f) != 0)` and `(x & 0x3f) ? 1 : 0` both give branches
+//    and a BYTE local.
+//  * g_f1008fe98 (1/255) IS THE LAST PUBLISHED SCALE: the literal pool
+//    0x100aa948..0x100aa984 reads 0.5 0.5 128 1 | 1 1 1 1 1 1 | 1/255 |
+//    1 1 | 0.5 0.5 -128, and our pool now reads the same sequence.  The
+//    six dead 1.0f are one per float DIVISION (six divisions in the
+//    block), the two live ones the literal `* 1.0f`.
+//  * THE BOUNDING SPHERE: `(float)sqrt(x*x + y*y + z*z) + 1.0f` -- the
+//    `+ 1.0f` is a float add (`fadds`, not `faddl`), so the sum is float,
+//    over an LTVector, with the two half extents `(float)W * 0.5f` and
+//    `(float)H * 0.5f` computed first in temporaries (the pool opens
+//    0.5 0.5 128 1.0).  That spelling gives the shipped stores and
+//    reloads of x, y, z (-0x874/-0x870/-0x86c) with no member call.
+//    `vDims.Mag()`, `MagSqr()` and a local `static inline` helper all
+//    come out as CALLS here while Mag() inlines in sub_1005a630 above:
+//    with the clipper removed (probe) MagSqr inlines, so the six inlined
+//    clip passes exhaust icl's per-routine inline budget first.
+//  * `++g_n1008be44` AFTER the pV/pEnd setup in each clip pass puts the
+//    counter in %ecx around the pEnd lea, as all six shipped sites have
+//    it (103 -> 71 blocks together with the half extents).
+//  * fU IS A FLOAT LITERAL STORED AS A DOUBLE in the shipped (`flds
+//    0x100aa98c ; fstpl -0xe8`, and `flds 1.0f ; faddl ; fstpl`); the
+//    pool has four float entries 0x100aa988..0x100aa994 and three more at
+//    0x100aaa10..0x100aaa18 for the signed copy.  `float fU` (block
+//    scoped, one per copy) reproduces all of that: residue 47 -> 40.
+//    CAUTION: in one intermediate state (an out-of-line MagSqr instance
+//    in the TU) the same change flipped sub_1005a630's x87 stack order at
+//    0x1005a8d2 (`fld %st(2) ; fmul %st(5)` -> `fld %st(4) ; fmul
+//    %st(3)`); it does not with the file as it is.  Re-measure the
+//    sibling after any change to the literal pool of this function.
+//  * REGISTER ALLOCATION FOLLOWED: once the texture block matched, icl
+//    put pObj in %ebx as the shipped does (it was %esi), which removed
+//    most of the rename-only diff blocks.
+//
+//  WHAT REMAINS (68 blocks, residue 37; mov -15, lea +10, dec -6):
+//  * the published-scales FPU block 0x1005abe6..0x1005ad8d.  The pool
+//    is the witness: our 0x88..0xc4 is value for value the shipped
+//    0x100aa948..0x100aa984, and every float DIVISION emits one dead
+//    1.0f, so the six 1.0f between the sphere's and 1/255 read
+//    D L D L D D -- two statements of [one division, `* 1.0f`] and then
+//    two bare divisions.  That is the per-stage scale in a temporary
+//    (`fScaleU = iw / d4 * ac * 1.0f`) and `g_f1008fe90 = fScaleU /
+//    (float)(W - 1) * (float)W` -- which also gives the shipped chain
+//    `fmuls ac ; fmuls 1.0f ; fdivp ; fmulp`.  Spelled as one expression
+//    the live slots were 2nd and 5th (D L D D L D).  What is left is the
+//    x87 schedule: the shipped converts W-1, W, H-1, H FIRST (for
+//    fe90/fe94), then the byte, then a second W-1/W pair for vScale.x,
+//    with fe88/fe8c in the middle; ours divides first.  Probes, all
+//    worse or neutral: the four conversions as float locals (residue 44
+//    / 73 blocks); `fInvWm1 = 1.0f / (float)(W - 1)` temporaries (size
+//    10256, residue 39 / 73, the `fmuls 1.0f` vanish); fe88/fe8c after
+//    fe90/fe94 (residue 40 / 67).
+//  * the six clip-pass `iPrev = n - 1` as `lea -1(%eax),%edx` where the
+//    shipped has `mov %edx,%ecx ; dec %edx` (n copied, then updated in
+//    place; pIn lands in %eax there and in %ecx here).  w28_100256d0
+//    gets the `dec` with this very spelling, so it is register context,
+//    not the statement.
+//  * bDetail kept in %esi across the second bind where ours spills it;
+//    nH loaded before the `+0x88 & 2` test where ours sinks it into both
+//    arms; the saver slots 8 bytes lower than shipped (-0x89c.. against
+//    -0x894..).  The `lea` surplus is mostly alignment pads
+//    (`lea 0x0(%edi,%eiz,1),%edi` 13 against 8) following from the
+//    block sizes, not a source shape.
+//
 // *********************************************************************** //
 
 #include "ltbasedefs.h"
@@ -576,7 +664,7 @@ extern "C" void  sub_1005a490(ObjPG5a960* pObj, uint32* pSrcBlend,
 extern "C" int32 sub_1005a410(Vec5a960* pPos, float fRadius,
                               LTPlane* pPlanes, uint32* pClipMask);
                                                                // 0x1005a410
-extern "C" void* sub_10015320(void* pTex, uint32 nStage, uint32 nFlag);
+extern "C" uint32 sub_10015320(void* pTex, uint32 nStage, uint32 nFlag);
                                                                // 0x10015320
 extern "C" void  sub_100232b0(uint32 nStage);                  // 0x100232b0
 extern "C" void  sub_100151b0(Vec5a960* pPos, Rot5a960* pRot,
@@ -980,12 +1068,12 @@ static inline int32 ClipPlaneNearA(uint32* pUnused, void** ppVertsArg, uint32* p
 	int32      i;
 	int32      iPrev;
 
-	++g_n1008be44;
-
 	nInside = 0;
 	pFlag   = anInside;
 	pV      = *ppVerts;
 	pEnd    = pV + *pnVerts;
+
+	++g_n1008be44;
 
 	for (; pV != pEnd; ++pV)
 	{
@@ -1049,12 +1137,12 @@ static inline int32 ClipPlaneLeftA(uint32* pUnused, void** ppVertsArg, uint32* p
 	int32      i;
 	int32      iPrev;
 
-	++g_n1008be44;
-
 	nInside = 0;
 	pFlag   = anInside;
 	pV      = *ppVerts;
 	pEnd    = pV + *pnVerts;
+
+	++g_n1008be44;
 
 	for (; pV != pEnd; ++pV)
 	{
@@ -1118,12 +1206,12 @@ static inline int32 ClipPlaneTopA(uint32* pUnused, void** ppVertsArg, uint32* pn
 	int32      i;
 	int32      iPrev;
 
-	++g_n1008be44;
-
 	nInside = 0;
 	pFlag   = anInside;
 	pV      = *ppVerts;
 	pEnd    = pV + *pnVerts;
+
+	++g_n1008be44;
 
 	for (; pV != pEnd; ++pV)
 	{
@@ -1187,12 +1275,12 @@ static inline int32 ClipPlaneRightA(uint32* pUnused, void** ppVertsArg, uint32* 
 	int32      i;
 	int32      iPrev;
 
-	++g_n1008be44;
-
 	nInside = 0;
 	pFlag   = anInside;
 	pV      = *ppVerts;
 	pEnd    = pV + *pnVerts;
+
+	++g_n1008be44;
 
 	for (; pV != pEnd; ++pV)
 	{
@@ -1256,12 +1344,12 @@ static inline int32 ClipPlaneBottomA(uint32* pUnused, void** ppVertsArg, uint32*
 	int32      i;
 	int32      iPrev;
 
-	++g_n1008be44;
-
 	nInside = 0;
 	pFlag   = anInside;
 	pV      = *ppVerts;
 	pEnd    = pV + *pnVerts;
+
+	++g_n1008be44;
 
 	for (; pV != pEnd; ++pV)
 	{
@@ -1325,12 +1413,12 @@ static inline int32 ClipPlaneFarA(uint32* pUnused, void** ppVertsArg, uint32* pn
 	int32      i;
 	int32      iPrev;
 
-	++g_n1008be44;
-
 	nInside = 0;
 	pFlag   = anInside;
 	pV      = *ppVerts;
 	pEnd    = pV + *pnVerts;
+
+	++g_n1008be44;
 
 	for (; pV != pEnd; ++pV)
 	{
@@ -1456,7 +1544,7 @@ void sub_1005a960(CtxPG5a960* pCtx, ObjPG5a960* pObj)
 	C1000adc0		sFogEnable;
 	C1000adc0		sFogColor;
 
-	Vec5a960		vDims;
+	LTVector		vDims;
 	Vec5a960		vScale;
 	Vec5a960		vOrigin;
 	Vec5a960		vRight;
@@ -1494,22 +1582,26 @@ void sub_1005a960(CtxPG5a960* pCtx, ObjPG5a960* pObj)
 	int32			bDetail;
 	int32			bNeedClip;
 	int32			nResult;
-	int32			nVerts;
-	int32			nVerts2;
+	uint32			nVerts;
+	uint32			nVerts2;
 	int32			nIndices;
-	int32			nTrisPerRow;
-	int32			nIdxPerRow;
-	int32			nH;
-	int32			i;
-	int32			x;
-	int32			y;
-	int32			t;
+	uint32			nTrisPerRow;
+	uint32			nIdxPerRow;
+	uint32			nH;
+	uint32			i;
+	uint32			x;
+	uint32			y;
+	uint32			t;
 
-	double			fRadius;
+	float			fRadius;
 	// float, not double: as a double it takes an 8-byte
 	// slot of its own and the frame is 0x9d0; as a float the frame is the
 	// shipped 0x9c0 exactly.
 	float			fV;
+	float			fHalfW;
+	float			fScaleU;
+	float			fScaleV;
+	float			fHalfH;
 	float			fPx;
 	float			fPy;
 	float			fPz;
@@ -1530,14 +1622,16 @@ void sub_1005a960(CtxPG5a960* pCtx, ObjPG5a960* pObj)
 	// -- 0x1005aa34: the bounding sphere.  Three half-extents into three
 	//    consecutive float slots, then sqrt + 1.0f.  icl expands sqrt() to
 	//    `fsqrt` (0x1005aabc), which is why there is no call here.
-	vDims.x = (float)pObj->m_nWidth1f0  * 0.5f * pObj->m_fDimXac;
+	fHalfW  = (float)pObj->m_nWidth1f0  * 0.5f;
+	fHalfH  = (float)pObj->m_nHeight1f4 * 0.5f;
+	vDims.x = fHalfW * pObj->m_fDimXac;
 	vDims.y = 128.0f * pObj->m_fDimYb0;
-	vDims.z = pObj->m_fDimZb4 * ((float)pObj->m_nHeight1f4 * 0.5f);
+	vDims.z = pObj->m_fDimZb4 * fHalfH;
 
-	fRadius = sqrt(vDims.x * vDims.x + vDims.y * vDims.y +
-	               vDims.z * vDims.z) + 1.0f;
+	fRadius = (float)sqrt(vDims.x * vDims.x + vDims.y * vDims.y +
+	                      vDims.z * vDims.z) + 1.0f;
 
-	if (!sub_1005a410(pObj->sub_100158b0(), (float)fRadius,
+	if (!sub_1005a410(pObj->sub_100158b0(), fRadius,
 	                  pCtx->m_aPlanes3d0, &nClipMask))
 		goto Lexit_a;
 
@@ -1545,8 +1639,6 @@ void sub_1005a960(CtxPG5a960* pCtx, ObjPG5a960* pObj)
 	//    Five null tests in one `&&` chain, then the detail texture at
 	//    stage 0; the grid's own texture then goes to stage 1 if that
 	//    worked and stage 0 if it did not.
-	nStage = 0;
-
 	if (!pObj->m_p1b0)
 		goto Lnotexture;
 
@@ -1562,42 +1654,41 @@ void sub_1005a960(CtxPG5a960* pCtx, ObjPG5a960* pObj)
 
 	if (g_p1008d950 && g_a1008e684[0] && pTex->m_p28 && pTex->m_n2c &&
 	    g_p1008fe68)
-		bDetail = (sub_10015320(pTex->m_p28, 0, 0) != LTNULL) ? 1 : 0;
+		bDetail = sub_10015320(pTex->m_p28, 0, 0) ? 1 : 0;
 	else
 		bDetail = 0;
 
-	if (sub_10015320(*pRef->m_pp08, bDetail ? 1 : 0, 0))
+	if (!sub_10015320(*pRef->m_pp08, bDetail ? 1 : 0, 0))
 	{
-		nStage = bDetail ? 1 : 0;
-		goto Lhavetexture;
+Lnotexture:
+		sub_100232b0(g_n1008d7d0);
+		bDetail = 0;
 	}
 
-Lnotexture:
-	sub_100232b0(g_n1008d7d0);
-	bDetail = 0;
-	nStage  = 0;
-
-Lhavetexture:
+	nStage = bDetail ? 1 : 0;
 
 	// -- 0x1005abe6: publish the five scales the vertex builder reads --- //
 	//    W and H convert through `mov ; movl $0 ; fildll`, i.e. UNSIGNED.
 	//    The two `* 1.0f` are literal `fmuls 0x100aa95c` / `0x100aa964`;
 	//    see the banner.
-	g_f1008fe98 = (float)pObj->m_nA97 * (1.0f / 255.0f);
-
 	g_f1008fe88 = g_a1008e664[nStage].m_fInvW00 * pObj->m_f1cc;
 	g_f1008fe8c = g_a1008e664[nStage].m_fInvH04 * pObj->m_f1d0;
 
-	g_f1008fe90 = g_a1008e664[nStage].m_fInvW00 / pObj->m_f1d4 *
-	              pObj->m_fDimXac * 1.0f /
-	              (float)(pObj->m_nWidth1f0 - 1) * (float)pObj->m_nWidth1f0;
-	g_f1008fe94 = g_a1008e664[nStage].m_fInvH04 / pObj->m_f1d8 *
-	              pObj->m_fDimZb4 * 1.0f /
-	              (float)(pObj->m_nHeight1f4 - 1) * (float)pObj->m_nHeight1f4;
+	fScaleU = g_a1008e664[nStage].m_fInvW00 / pObj->m_f1d4 *
+	          pObj->m_fDimXac * 1.0f;
+	fScaleV = g_a1008e664[nStage].m_fInvH04 / pObj->m_f1d8 *
+	          pObj->m_fDimZb4 * 1.0f;
+
+	g_f1008fe90 = fScaleU / (float)(pObj->m_nWidth1f0 - 1) *
+	              (float)pObj->m_nWidth1f0;
+	g_f1008fe94 = fScaleV / (float)(pObj->m_nHeight1f4 - 1) *
+	              (float)pObj->m_nHeight1f4;
+
+	g_f1008fe98 = (float)pObj->m_nA97 * (1.0f / 255.0f);
 
 	pObj->m_nFlags88 |= 0x40000000;
 
-	bNeedClip = ((nClipMask & 0x3f) != 0);
+	bNeedClip = !!(nClipMask & 0x3f);
 
 	// -- 0x1005ad24: cell index space -> world units ------------------- //
 	vScale.x = pObj->m_fDimXac / (float)(pObj->m_nWidth1f0  - 1) *
@@ -1648,17 +1739,17 @@ Lhavetexture:
 	if (pObj->m_nFlags88 & 0x2)
 	{
 		// 0x1005af4a: UNSIGNED height bytes (`movzbl`), 0x1005d170.
-		double fU;
+		float fU;
 
 		pRow = pObj->m_pData1a8;
 
-		for (y = 0; y < nH; y++)
+		for (y = nH; y; y--)
 		{
 			fU    = 0.0f;
 			vRow  = vCur;
 			pCell = pRow;
 
-			for (x = 0; x < (int32)pObj->m_nWidth1f0; x++)
+			for (x = pObj->m_nWidth1f0; x; x--)
 			{
 				sub_1005d170((W7Obj5d170*)pObj, (W7Vert5d170*)pVert, (float)fU, (float)fV, *pCell,
 				             (LTVec*)&vRow, (LTVec*)&vUp, bDetail);
@@ -1677,17 +1768,17 @@ Lhavetexture:
 	else
 	{
 		// 0x1005b0c3: SIGNED height bytes (`movsbl`), 0x1005d3e0.
-		double fU;
+		float fU;
 
 		pRowS = (int8*)pObj->m_pData1a8;
 
-		for (y = 0; y < nH; y++)
+		for (y = nH; y; y--)
 		{
 			fU     = 0.0f;
 			vRow   = vCur;
 			pCellS = pRowS;
 
-			for (x = 0; x < (int32)pObj->m_nWidth1f0; x++)
+			for (x = pObj->m_nWidth1f0; x; x--)
 			{
 				sub_1005d3e0((W7Obj5d170*)pObj, (W7Vert5d170*)pVert, (float)fU, (float)fV, *pCellS,
 				             (LTVec*)&vRow, (LTVec*)&vUp, bDetail);
@@ -1736,11 +1827,11 @@ Lhavetexture:
 		nIdxPerRow  = nTrisPerRow * 3;
 		pRowIdx     = pObj->m_pIndices1ac;
 
-		for (y = 0; y < (int32)pObj->m_nHeight1f4 - 1; y++)
+		for (y = pObj->m_nHeight1f4 - 1; y; y--)
 		{
 			pIdx = pRowIdx;
 
-			for (t = 0; t < nTrisPerRow; t++)
+			for (t = nTrisPerRow; t; t--)
 			{
 				// -- 0x1005b38d: trivial accept / reject, and a reduced
 				//    outcode mask for whatever is left.
@@ -1774,9 +1865,10 @@ Lhavetexture:
 Ldraw:
 					// -- 0x1005ca38: camera space -> screen, with the six
 					//    globals at 0x1008bb9c..0x1008bbb0.
-					for (i = 0; i < nVerts2; i++)
+					pV = pVerts2;
+
+					for (i = nVerts2; i; i--)
 					{
-						pV = &pVerts2[i];
 
 						pV->rhw = 1.0f / pV->z;
 
@@ -1786,6 +1878,8 @@ Ldraw:
 						         pV->z * g_f1008bba8) * pV->rhw;
 						pV->z = (pV->z * g_f1008bbac +
 						         g_f1008bbb0) * pV->rhw;
+
+						pV++;
 					}
 
 					// -- 0x1005cab7: 6 = D3DPT_TRIANGLEFAN, FVF 0x2c4 -- //
@@ -1806,9 +1900,10 @@ Lnexttri:
 
 		if (nIndices > 0)
 		{
-			for (i = 0; i < nVerts; i++)
+			pV = pVerts;
+
+			for (i = nVerts; i; i--)
 			{
-				pV = &pVerts[i];
 
 				fPw = 1.0f / (g_m1008ba1c.m[3][0] * pV->x +
 				              g_m1008ba1c.m[3][1] * pV->y +
@@ -1832,6 +1927,8 @@ Lnexttri:
 				pV->y   = fPy;
 				pV->z   = fPz;
 				pV->rhw = fPw;
+
+				pV++;
 			}
 
 			// -- 0x1005cc2b: 4 = D3DPT_TRIANGLELIST ------------------- //
@@ -1852,9 +1949,10 @@ Lnexttri:
 		// -------------------------------------------------------------- //
 		mFull = pCtx->m_m19c.sub_10015800(pCtx->m_m15c);
 
-		for (i = 0; i < nVerts; i++)
+		pV = pVerts;
+
+		for (i = nVerts; i; i--)
 		{
-			pV = &pVerts[i];
 
 			fPw = 1.0f / (mFull.m[3][0] * pV->x +
 			              mFull.m[3][1] * pV->y +
@@ -1878,6 +1976,8 @@ Lnexttri:
 			pV->y   = fPy;
 			pV->z   = fPz;
 			pV->rhw = fPw;
+
+			pV++;
 		}
 
 		// -- 0x1005ce2f ------------------------------------------------ //
