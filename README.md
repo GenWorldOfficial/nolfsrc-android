@@ -80,6 +80,7 @@ of each binary's code, by size, those functions make up.
 | `CShell.dll` | the game: client | 3,715 / 4,928 | 914,920 / 933,114 bytes | `███████████████████░` 98.0% | 0 | 0 |
 | `Object.lto` | the game: server objects | 4,886 / 6,919 | 1,240,057 / 1,261,040 bytes | `███████████████████░` 98.3% | 0 | 0 |
 | `CRes.dll` | the game's resources, not in the total | 411 / 411 resources | 704,745 / 704,745 bytes | `████████████████████` 100.0% | 0 | -- |
+| engine resources | the resources of `lithtech.exe`, `server.dll`, `d3d.ren`, `NOLF.exe`, `NolfServ.exe`, `ltmsg.dll`, `sres.dll`, not in the total | 98 / 98 resources | 493,430 / 493,430 bytes | `████████████████████` 100.0% | 0 | -- |
 | **All** | | **15,729 / 19,884** | **3,133,796 / 3,722,796 bytes** | `████████████████░░░░` **84.1%** | **2** | **32** |
 <!-- progress:end -->
 
@@ -87,8 +88,11 @@ Every function in that table is recorded in `progress/identical.txt`, and
 `make progress` re-scores the current build against the retail binaries and
 fails if any of them stops matching. See `progress/README.md` for how the
 scoring works and how to run it. The GameSpy library linked into the game
-DLLs is third-party middleware and is not scored, and neither are the
-resource-only `ltmsg.dll` and `sres.dll` yet.
+DLLs is third-party middleware and is not scored. Resources are scored
+resource by resource and kept out of the total, which counts code; the
+resource-only `ltmsg.dll` and `sres.dll` (an empty `DllMain` with no
+resources at all, which its row checks ours keeps so) are scored that way
+only.
 
 ## Build
 

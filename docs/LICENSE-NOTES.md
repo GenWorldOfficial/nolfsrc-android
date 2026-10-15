@@ -30,11 +30,12 @@ fetches from archive.org (`rez/README.md`).
 | `binkw32.dll` | Bink Video, RAD Game Tools | `out/nolf-legacy-release/` |
 | the launcher's bitmap, palette, music, icon and cursors | Monolith, from the retail `NOLF.exe`'s resources | `src/engine/launcher/res/` (gitignored), compiled into our `NOLF.exe` |
 | the dedicated server's two icons and its setup wizard's bitmap | Monolith, from the retail `NolfServ.exe`'s resources | `src/engine/nolfserv/res/` (gitignored), compiled into our `NolfServ.exe` |
+| the engine's icon and its console font (a PCX image) | Monolith, from the retail `lithtech.exe`'s resources | `src/engine/lithtech/res/` (gitignored), compiled into our `lithtech.exe` |
 | the Game of the Year strings and credits | Monolith, from the retail GOTY `CRES.dll`'s resources | `src/game/ClientRes/goty/` (gitignored), compiled into our `CRes.dll` |
 
 `make progress` also extracts the retail `lithtech.exe`, `server.dll`,
-`d3d.ren`, `NOLF.exe` and `NolfServ.exe`, and the Game of the Year `CShell.dll`, `Object.lto`
-and `CRes.dll` (from `NOLFGOTY.REZ`), into `out/reference/`, to compare our
+`d3d.ren`, `NOLF.exe`, `NolfServ.exe` and `ltmsg.dll`, and the Game of the Year `CShell.dll`, `Object.lto`
+and `CRes.dll` (from `NOLFGOTY.REZ`), and `sres.dll` (from `NOLF2.REZ`), into `out/reference/`, to compare our
 build against; they are never run and never go into the game directory.
 
 The retail game DLLs inside the `.rez` archives are overwritten with zeros

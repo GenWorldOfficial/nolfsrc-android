@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Extract the retail engine images -- lithtech.exe, server.dll, d3d.ren,
-# NOLF.exe, NolfServ.exe, ltmsg.dll -- and the Game of the Year game DLLs -- CShell.dll,
-# Object.lto, CRes.dll, out of NOLFGOTY.REZ -- from the installed retail game
+# NOLF.exe, NolfServ.exe, ltmsg.dll -- the Game of the Year game DLLs -- CShell.dll,
+# Object.lto, CRes.dll, out of NOLFGOTY.REZ -- and sres.dll, out of NOLF2.REZ --
+# from the installed retail game
 # (build/retail.sh) into
 # out/reference/, with their function
 # and vtable tables (<stem>-functions.csv, <stem>-vtables.csv), for the checks that

@@ -499,14 +499,17 @@ $(foreach s,$(SERVER_SRC) $(SERVER_OS_SRC),$(eval $(call compile,$(SERVER)/Relea
 SERVER_OBJ := $(sort $(patsubst %.cpp,$(SERVER)/Release/%.obj,$(SERVER_SRC) $(SERVER_OS_SRC)))
 $(eval $(call tool,$(SERVER)/link/aliases.obj,$(SERVER)/link/aliases.rsp,python3 tools/mkaliasobj.py $(SERVER)/link/aliases.rsp $(SERVER)/link/aliases.obj))
 $(eval $(call tool,$(SERVER)/link/vtables.obj,$(SERVER)/link/vtables.txt,python3 tools/mkvtabobj.py $(SERVER)/link/vtables.txt $(SERVER)/link/vtables.obj))
-$(eval $(call tool,$(SERVER)/Release/server.dll,$(SERVER)/link/vtables.obj $(SERVER)/link/aliases.obj $(SERVER_OBJ) $(call lslib,RezMgr) $(call lslib,StdLith) $(call lslib,Lith) | wine-plain,\
+# its resources: the version block and one string (server.rc)
+$(eval $(call tool,$(SERVER)/Release/server.res,$(SERVER)/server.rc | wine-plain,\
+    cd $(SERVER) && $(ENV) $(WINE) $(RC) $(NOLFSRC_RCFLAGS) /l 0x409 /d NDEBUG /foRelease/server.res server.rc))
+$(eval $(call tool,$(SERVER)/Release/server.dll,$(SERVER)/link/vtables.obj $(SERVER)/link/aliases.obj $(SERVER_OBJ) $(SERVER)/Release/server.res $(call lslib,RezMgr) $(call lslib,StdLith) $(call lslib,Lith) | wine-plain,\
     cd $(SERVER) && { $(ENV) $(WINE) $(LINK) $(NOLFSRC_LDFLAGS) /nologo /dll /machine:I386 /out:Release/server.dll /map:Release/server.map \
-    /export:CreateServer /export:DeleteServer link/vtables.obj link/aliases.obj $(SERVER_OBJ:$(SERVER)/%=%) \
+    /export:CreateServer /export:DeleteServer link/vtables.obj link/aliases.obj $(SERVER_OBJ:$(SERVER)/%=%) Release/server.res \
     $(call q,..\..\lithshared\out\RezMgr.lib ..\..\lithshared\out\StdLith.lib ..\..\lithshared\out\Lith.lib) \
     libcmt.lib kernel32.lib user32.lib winmm.lib ole32.lib wsock32.lib > Release/server-link.txt 2>&1 || true; }))
 report_$(SERVER)/Release/server.dll := $(SERVER)/Release/server-link.txt
 .PHONY: server server-objs
-server-objs: $(SERVER_OBJ) $(REZ_OBJ:%=$(SERVER)/Release/%.obj)
+server-objs: $(SERVER_OBJ) $(REZ_OBJ:%=$(SERVER)/Release/%.obj) $(SERVER)/Release/server.res
 server: server-objs $(SERVER)/Release/server.dll
 
 # lithtech.exe: cl 8447 /O2. clientmusic.cpp is /O2 without string pooling
@@ -556,16 +559,20 @@ LITHTECH_OBJ := $(sort $(foreach s,$(LITHTECH_ALL),$(call c_obj,$(s),$(LITHTECH)
 $(eval $(call tool,$(LITHTECH)/link/aliases.obj,$(LITHTECH)/link/aliases.rsp,python3 tools/mkaliasobj.py $(LITHTECH)/link/aliases.rsp $(LITHTECH)/link/aliases.obj))
 $(eval $(call tool,$(LITHTECH)/link/vtables.obj,$(LITHTECH)/link/vtables.txt,\
     python3 tools/mkvtabobj.py $(if $(MODERN),--define NOLFSRC_MODERN) $(LITHTECH)/link/vtables.txt $(LITHTECH)/link/vtables.obj))
-$(eval $(call tool,$(LITHTECH)/Release/lithtech.exe,$(LITHTECH)/link/vtables.obj $(LITHTECH)/link/aliases.obj $(LITHTECH_OBJ) \
+# its resources (lithtech.rc): the icon and the console font, read out of the
+# retail lithtech.exe into res/ (build/all.sh, step 2b), MFC's from afxres.rc
+$(eval $(call tool,$(LITHTECH)/Release/lithtech.res,$(LITHTECH)/lithtech.rc $(wildcard $(LITHTECH)/res/*) | wine-plain,\
+    cd $(LITHTECH) && $(ENV) $(WINE) $(RC) $(NOLFSRC_RCFLAGS) /l 0x409 /d NDEBUG /foRelease/lithtech.res lithtech.rc))
+$(eval $(call tool,$(LITHTECH)/Release/lithtech.exe,$(LITHTECH)/link/vtables.obj $(LITHTECH)/link/aliases.obj $(LITHTECH_OBJ) $(LITHTECH)/Release/lithtech.res \
     $(call lslib,RezMgr) $(call lslib,StdLith) $(call lslib,Lith) $(LITHTECH)/link/mss32dec.lib $(LAUNCHER)/Release/mss32.lib | wine-plain,\
     cd $(LITHTECH) && { $(ENV) $(WINE) $(LINK) $(NOLFSRC_LDFLAGS) /nologo /subsystem:windows /machine:I386 \
-    /out:Release/lithtech.exe /map:Release/lithtech.map link/vtables.obj link/aliases.obj $(LITHTECH_OBJ:$(LITHTECH)/%=%) \
+    /out:Release/lithtech.exe /map:Release/lithtech.map link/vtables.obj link/aliases.obj $(LITHTECH_OBJ:$(LITHTECH)/%=%) Release/lithtech.res \
     $(call q,..\..\lithshared\out\RezMgr.lib ..\..\lithshared\out\StdLith.lib ..\..\lithshared\out\Lith.lib link\mss32dec.lib ..\launcher\Release\mss32.lib) \
     libcmt.lib kernel32.lib user32.lib gdi32.lib winmm.lib ole32.lib wsock32.lib dinput.lib dxguid.lib uuid.lib \
     > Release/lithtech-link.txt 2>&1 || true; }))
 report_$(LITHTECH)/Release/lithtech.exe := $(LITHTECH)/Release/lithtech-link.txt
 .PHONY: lithtech lithtech-objs
-lithtech-objs: $(LITHTECH_OBJ) $(REZ_OBJ:%=$(LITHTECH)/Release/%.obj)
+lithtech-objs: $(LITHTECH_OBJ) $(REZ_OBJ:%=$(LITHTECH)/Release/%.obj) $(LITHTECH)/Release/lithtech.res
 lithtech: lithtech-objs $(LITHTECH)/Release/lithtech.exe
 
 # d3d.ren: Intel C/C++ 4.0, with per-file flag groups. Files not in any
@@ -611,14 +618,17 @@ D3D_OBJ := $(sort $(D3D_SRC:%.cpp=$(D3D)/Release/%.obj))
 $(eval $(call tool,$(D3D)/link/aliases.obj,$(D3D)/link/aliases.rsp,python3 tools/mkaliasobj.py $(D3D)/link/aliases.rsp $(D3D)/link/aliases.obj))
 $(eval $(call tool,$(D3D)/link/d3dviews.obj,$(D3D)/link/d3dviews.txt,python3 tools/mkviewobj.py $(D3D)/link/d3dviews.txt $(D3D)/link/d3dviews.obj))
 $(eval $(call tool,$(D3D)/link/ddraw7.lib,,python3 tools/mkimplib.py $(D3D)/link/ddraw7.lib DDRAW.dll _DirectDrawCreateEx@16))
-$(eval $(call tool,$(D3D)/Release/d3d.ren,$(D3D)/link/aliases.obj $(D3D)/link/d3dviews.obj $(D3D)/link/ddraw7.lib $(D3D_OBJ) $(call lslib,StdLith) | wine-plain,\
+# its one resource, the renderer's name (d3d.rc)
+$(eval $(call tool,$(D3D)/Release/d3d.res,$(D3D)/d3d.rc | wine-plain,\
+    cd $(D3D) && $(ENV) $(WINE) $(RC) $(NOLFSRC_RCFLAGS) /l 0x409 /d NDEBUG /foRelease/d3d.res d3d.rc))
+$(eval $(call tool,$(D3D)/Release/d3d.ren,$(D3D)/link/aliases.obj $(D3D)/link/d3dviews.obj $(D3D)/link/ddraw7.lib $(D3D_OBJ) $(D3D)/Release/d3d.res $(call lslib,StdLith) | wine-plain,\
     cd $(D3D) && { $(ENV_D3DLINK) $(WINE) $(LINK) $(NOLFSRC_LDFLAGS) /nologo /dll /machine:I386 \
     /out:Release/d3d.ren /map:Release/d3d.map /export:RenderDLLSetup /export:GetSupportedModes /export:FreeModeList \
-    link/aliases.obj link/d3dviews.obj $(D3D_OBJ:$(D3D)/%=%) $(call q,..\..\lithshared\out\StdLith.lib) \
+    link/aliases.obj link/d3dviews.obj $(D3D_OBJ:$(D3D)/%=%) Release/d3d.res $(call q,..\..\lithshared\out\StdLith.lib) \
     libcmt.lib kernel32.lib user32.lib winmm.lib ddraw.lib link/ddraw7.lib dxguid.lib > Release/d3d-link.txt 2>&1 || true; }))
 report_$(D3D)/Release/d3d.ren := $(D3D)/Release/d3d-link.txt
 .PHONY: d3d d3d-objs
-d3d-objs: $(D3D_OBJ)
+d3d-objs: $(D3D_OBJ) $(D3D)/Release/d3d.res
 d3d: $(D3D)/Release/d3d.ren
 
 .PHONY: engine all

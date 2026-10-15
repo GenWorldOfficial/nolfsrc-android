@@ -30,7 +30,7 @@ case "$mode" in
 esac
 
 # the images, and the tables build/reference.sh derives from them
-for f in lithtech.exe server.dll d3d.ren NOLF.exe NolfServ.exe ltmsg.dll \
+for f in lithtech.exe server.dll d3d.ren NOLF.exe NolfServ.exe ltmsg.dll sres.dll \
          CShell.dll Object.lto CRes.dll \
          server-functions.csv lithtech-functions.csv d3d-functions.csv \
          NOLF-functions.csv NolfServ-functions.csv CShell-functions.csv Object-functions.csv \

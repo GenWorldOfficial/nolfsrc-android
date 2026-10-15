@@ -28,6 +28,7 @@ produced for it:
 | `StdLith`, `CryptMgr`, `RegMgr`, `MFCStub`, `ButeMgrNoMFC`, `ltguimgr_LT2`, `LithFontMgr_LT2` | Monolith's prebuilt `.lib`s from the NOLF Source Code v1.003 release (`NOLF_SOURCE`) | `src/lithshared/out/*.lib` |
 | `CShell.dll`, `Object.lto` | the Game of the Year copies in disc 1's `NOLFGOTY.REZ` (the ones the GOTY install runs), extracted into `out/reference/` | `src/game/*/Final_Release/*.obj` (plus the lithshared libraries each links) |
 | `CRes.dll` | the same archive's `CRES.dll` | `src/game/ClientRes/Release/CRes.dll`, resource by resource |
+| `<image>:rsrc` (`lithtech.exe`, `server.dll`, `d3d.ren`, `NOLF.exe`, `NolfServ.exe`, `ltmsg.dll`, `sres.dll`) | the retail images' resources (`sres.dll`'s out of `NOLF2.REZ`, the only copy) | the resources of our images, resource by resource |
 
 The discs hold three generations of the game DLLs (`NOLF2.REZ`: the
 original release, `nolfu003.rez`: the 1.003 update, `NOLFGOTY.REZ`: Game of
@@ -39,8 +40,20 @@ the Year). Monolith's source release builds the Game of the Year ones:
 entry -- so each of its resources (string tables, dialogs, bitmaps, text) is
 a row, sized by its data, `identical` when our bytes are the retail bytes.
 
-The README lists it after `Object.lto`, marked as not in the total, which
-counts code only.
+The engine images' resources are scored the same way, each image's as a
+target of its own beside its code (`lithtech.exe:rsrc`, ...; `ltmsg.dll`,
+resources around an empty `DllMain`, only this way, and `sres.dll`, which has
+no resources, as one empty row, `rsrc:(none)`, identical while ours has none
+either): version blocks, dialogs,
+string tables, icons, the console font, the MFC resources an AppWizard
+application carried. Their text is `.rc` source (`lithtech.rc`,
+`server/server.rc`, `d3d/d3d.rc`, ...); their art is read out of the retail
+images at build time (`docs/BUILDING.md`, step 2b).
+
+The README lists `CRes.dll` after `Object.lto`, and the engine's resources
+as one row after it, marked as not in the total, which counts code only.
+Their rows are held like functions: `identical.txt` lists every identical
+resource (`lithtech.exe:rsrc<TAB>rsrc:<type>/<name>/<language>`).
 
 The lithshared libraries a game DLL links are scored twice: on their own
 (above), and again inside the DLL, where they are placed like the game's own

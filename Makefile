@@ -134,7 +134,7 @@ clean:
 	rm -rf out
 	rm -rf src/engine/*/Release src/lithshared/*/Release src/lithshared/*/Debug src/lithshared/out \
 	  src/game/*/Release src/game/*/Final_Release src/game/*/Debug \
-	  src/engine/launcher/res src/engine/nolfserv/res src/game/ClientRes/goty
+	  src/engine/launcher/res src/engine/nolfserv/res src/engine/lithtech/res src/game/ClientRes/goty
 	rm -f src/engine/*/link/aliases.obj src/engine/*/link/vtables.obj \
 	  src/engine/*/link/ddraw7.lib src/engine/*/link/mss32dec.lib \
 	  src/engine/d3d/link/d3dviews.obj src/engine/*/link/*.cmd src/engine/nolfserv/link/server.lib
