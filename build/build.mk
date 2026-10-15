@@ -449,6 +449,10 @@ NOLFSERV_CL := /nologo /MT /W3 /GR /GX /O2 /I ..\..\LT2\sdk\inc /I ..\..\LT2\lit
     /D NDEBUG /D WIN32 /D _WINDOWS /D NO_PRAGMA_LIBS /D _NOLFSERV /c
 NOLFSERV_SRC := CustomDlg.cpp ..\launcher\dlgcustom.cpp ..\..\game\Shared\NetDefs.cpp OptionsAssaultDlg.cpp OptionsDeathmatchDlg.cpp OptionsDlg.cpp \
     ServerApp.cpp ServerDlg.cpp SessionDlg.cpp StdAfx.cpp WizardDlg.cpp WorldsDlg.cpp
+# The modern build's own server code (MODERN.md, P6), and src/modern/ on the
+# include path
+NOLFSERV_SRC += $(if $(MODERN),..\..\modern\nolfserv\p6_server.cpp)
+NOLFSERV_CL += $(MODERN_INCS)
 NOLFSERV_OBJ := $(foreach s,$(NOLFSERV_SRC),$(call c_obj,$(s),$(NOLFSERV)/Release))
 $(eval $(call compile,$(NOLFSERV)/Release/StdAfx.obj,$(NOLFSERV),StdAfx.cpp,$(ENV),$(CL),\
     $(NOLFSERV_CL) /Ycstdafx.h /FpRelease/NolfServ.pch /FoRelease/,wine-plain))

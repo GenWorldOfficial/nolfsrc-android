@@ -7,9 +7,12 @@
 // ----------------------------------------------------------------------- //
 //
 // Compiled once into each game DLL, by cshell/p2_log.cpp and
-// object/p2_log.cpp: the two copies share nothing but the file and the
+// object/p2_log.cpp, and into the dedicated server, NolfServ.exe
+// (nolfserv/p6_server.cpp): the copies share nothing but the file and the
 // process, so "first line of this run" is a process-wide flag kept in an
-// environment variable both see.
+// environment variable all of them see. Another process-wide variable can
+// name another file: the dedicated server sets it (M-P6-11), so that its
+// log and that of a game on the same machine do not empty each other.
 
 #include <windows.h>
 #include <stdio.h>
@@ -18,11 +21,13 @@
 #include "cshell/p2_log.h"
 
 #define MODERN_LOG_STARTED_VAR "NOLFSRC_MODERN_LOG_STARTED"
+#define MODERN_LOG_FILE_VAR    "NOLFSRC_MODERN_LOG_FILE"
 
 void ModernLog(const char* pFormat, ...)
 {
 	char    szLine[1024];
 	char    szFlag[4];
+	char    szFile[MAX_PATH];
 	va_list ap;
 	FILE*   pFile;
 	int     nLen;
@@ -46,7 +51,13 @@ void ModernLog(const char* pFormat, ...)
 		SetEnvironmentVariable(MODERN_LOG_STARTED_VAR, "1");
 	}
 
-	pFile = fopen(MODERN_LOG_FILE, bFirst ? "w" : "a");
+	if (!GetEnvironmentVariable(MODERN_LOG_FILE_VAR, szFile, sizeof(szFile)) ||
+	    strlen(szFile) >= sizeof(szFile))
+	{
+		strcpy(szFile, MODERN_LOG_FILE);
+	}
+
+	pFile = fopen(szFile, bFirst ? "w" : "a");
 	if (!pFile) return;
 
 	if (bFirst)

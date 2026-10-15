@@ -64,6 +64,12 @@ in.
 * [`wm_ResetGeometry`: wrong block centres, unguarded divisions, and a missing null check](#wm_resetgeometry-wrong-block-centres-unguarded-divisions-and-a-missing-null-check)
 * [`ServerMessage::WriteData` clips the count, then grows the buffer anyway](#servermessagewritedata-clips-the-count-then-grows-the-buffer-anyway)
 * [A server's join password is sent to anyone who asks](#a-servers-join-password-is-sent-to-anyone-who-asks)
+* [The dedicated server's console prints text as a format](#the-dedicated-servers-console-prints-text-as-a-format)
+* [The dedicated server's console line can lose its terminator](#the-dedicated-servers-console-line-can-lose-its-terminator)
+* [The dedicated server fills the game's option table unbounded](#the-dedicated-server-fills-the-games-option-table-unbounded)
+* [`-nowiz` is not seen as the last argument](#-nowiz-is-not-seen-as-the-last-argument)
+* [`-NetLevel` and `-NetCALevel` set settings nothing reads](#-netlevel-and--netcalevel-set-settings-nothing-reads)
+* [The server's setup wizard never closes its find handle](#the-servers-setup-wizard-never-closes-its-find-handle)
 
 Every entry names the retail address it was read from, the binary, and the
 file that reproduces it. An entry is listed only once its function is
@@ -473,6 +479,36 @@ A real check needs the server to see the password, which the 1.003
 handshake does not carry. The fix adds it after the three values every
 client sends, which a retail server never reads.
 
+### `-nowiz` is not seen as the last argument
+`0x00408380` (NolfServ.exe) · `src/engine/nolfserv/ServerDlg.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`, M-P6-12):
+> `CServerDlg::ParseCommandLine` reads `-nowiz` wherever it is, and only
+> the options that take a value need one after them. The release build
+> keeps the retail parser.
+
+`NolfServ.exe -nowiz` is the obvious way to start the dedicated server
+without its setup wizard, from the settings saved in `NetHost.txt`, and it
+does not work: the parser stops as soon as the argument it looks at is the
+last one, because it takes every option to have a value after it,
+`-nowiz` included. `-nowiz` only counts with another argument behind it
+(`-nowiz -NetPort 27888`, or `-nowiz` twice).
+
+### `-NetLevel` and `-NetCALevel` set settings nothing reads
+`0x00449550` (NolfServ.exe, the option table) · `src/engine/nolfserv/ServerDlg.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`, M-P6-12):
+> each `-NetLevel <world>` (or `-NetCALevel`) adds a world to the game
+> type's list (`NetLevel0`, `NetLevel1`, ... and `NetNumLevels`), the first
+> one replacing the saved list. The release build keeps the retail table.
+
+The command line can set any of the server's 27 settings as `-<setting>
+<value>`, and the table includes `-NetLevel` and `-NetCALevel`. They write
+the settings `NetLevel` and `NetCALevel`, which nothing reads: the levels
+are `NetLevel0`, `NetLevel1`, ... (and `NetCALevel0`, ...), counted by
+`NetNumLevels` (`NetCANumLevels`). The level list can only be set by the
+wizard, or by editing `NetHost.txt`.
+
 ---
 
 ## Crashes and corruption: checks that are missing
@@ -748,6 +784,48 @@ array (`SO_MAX_STRINGS`), and the string ID found there is loaded and
 shown. Any server, or anything answering the browser's query, can make the
 browser read past the array.
 
+### The dedicated server's console prints text as a format
+`0x00404cc0` (NolfServ.exe), called from `0x00405300` and `0x00406090` · `src/engine/nolfserv/ServerDlg.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`, M-P6-14):
+> `CServerDlg::UpdateUI` and `OnConsoleSend` pass their text with a `"%s"`
+> format. The release build keeps the retail calls.
+
+`CServerDlg::WriteConsoleString` is printf-style, and its two callers with
+text from outside pass that text as the format: `UpdateUI`, every line of
+the engine's and the game's console output (which carries player names),
+and `OnConsoleSend`, the command the operator typed. A `%` in a line is read
+as a conversion: `%s` and `%n` in a player's name read and write through
+whatever the stack holds. (The same flaw as the game's own,
+[Player names and chat are used as printf format strings](#player-names-and-chat-are-used-as-printf-format-strings),
+on the dedicated server's side.)
+
+### The dedicated server's console line can lose its terminator
+`0x00404cc0` (NolfServ.exe) · `src/engine/nolfserv/ServerDlg.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`, M-P6-14):
+> the formatted line is cut to 497 characters, terminated, before the line
+> end is added. The release build keeps the retail buffer handling.
+
+`WriteConsoleString` formats into a 500-byte buffer with `_vsnprintf(str,
+499, ...)`, which leaves the buffer without a terminating zero when the
+text is 499 characters or more; the `strlen` that follows then runs past
+it, and the `strcat` of `"\r\n"` writes past the buffer's end for a line
+of 498 characters or more.
+
+### The dedicated server fills the game's option table unbounded
+`0x00404902` (NolfServ.exe, in `CServerDlg::DoHost`) · `src/engine/nolfserv/ServerDlg.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`, M-P6-14):
+> `DoHost` stops at the table's 20 entries. The release build keeps the
+> retail loop.
+
+`DoHost` copies one value per server option of
+`Attributes\ServerOptions.txt` into the `NetGame` it hands the game,
+whose `m_fOptions` has room for `MAX_GAME_OPTIONS` (20), with no check. The
+retail file has 17 options; a modified one with more than 20 overwrites
+the level count and the levels that follow the table.
+
 ---
 
 ## Leaks
@@ -796,6 +874,17 @@ The callback exists to free a dependency record, using the manager it is
 handed. It reads the global manager pointer (`0x10058bf0`) instead, and when
 that is null the whole body is skipped, so the eight-byte record is lost.
 (`se_LoadChildModel` stores the manager in the record, and nothing reads it.)
+
+### The server's setup wizard never closes its find handle
+`0x00409870` (NolfServ.exe, `CWizardDlg::CWizardDlg`) · `src/engine/nolfserv/WizardDlg.cpp`
+
+> **✅ FIXED in the modern build** (`NOLFSRC_MODERN`, M-P6-14):
+> the search is closed once it has answered. The release build keeps the
+> leak.
+
+To decide whether to show its customization page, the wizard looks for a
+`.rez` file in the `Custom` folder with `_findfirst`, and never calls
+`_findclose` on the handle it gets back.
 
 ---
 

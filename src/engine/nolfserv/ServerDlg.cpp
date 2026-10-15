@@ -27,6 +27,9 @@
 #include <stdio.h>
 #include <process.h>
 #include "mmsystem.h"
+#ifdef NOLFSRC_MODERN
+#include "nolfserv/p6_server.h"	// M-P6-11, M-P6-12, M-P6-13 (src/modern/nolfserv/)
+#endif
 #ifdef NOLFSRC_DEBUG
 #include "nolfsrc_debug.h"
 #endif
@@ -485,6 +488,12 @@ BOOL CServerDlg::DoHost( )
 		ServerOption* pOption = m_lstServerOptions.GetNext( pos );
 		if( !pOption )
 			return FALSE;
+#ifdef NOLFSRC_MODERN
+		// NetGame has room for MAX_GAME_OPTIONS (a ServerOptions.txt with
+		// more wrote past it, over the levels)
+		if( nOption >= MAX_GAME_OPTIONS )
+			break;
+#endif
 
 		netGame.m_fOptions[nOption++] = GetServerSettingFloat( pOption->szVariable );
 	}
@@ -578,6 +587,13 @@ void CServerDlg::WriteConsoleString(LPCTSTR pMsg, ...)
 	va_start(marker, pMsg);
 	_vsnprintf( str, sizeof( str ) - 1, pMsg, marker );
 	va_end(marker);
+#ifdef NOLFSRC_MODERN
+	// a line of 499 characters or more comes back unterminated
+	str[sizeof( str ) - 3] = '\0';	// and room for the "\r\n" below
+
+	// M-P6-11: the console, in the modern log too
+	P6_LogConsole( str );
+#endif
 #ifdef NOLFSRC_DEBUG
 	NOLFSRC_LOG(( "console: %s", str ));
 #endif
@@ -921,7 +937,13 @@ void CServerDlg::UpdateUI()
 	pos = lstShellMsgs.GetHeadPosition( );
 	while( pos )
 	{
+#ifdef NOLFSRC_MODERN
+		// the shell's console lines are text: a '%' in one (a player's
+		// name, say) is not a conversion
+		WriteConsoleString( "%s", ( LPCTSTR )lstShellMsgs.GetNext( pos ));
+#else
 		WriteConsoleString( lstShellMsgs.GetNext( pos ));
+#endif
 	}
 
 	// Send data to dialog.
@@ -964,7 +986,13 @@ void CServerDlg::OnShellMessage( char *pMsg, uint32 nLen )
 			// space, and a longer word overruns the buffer.)
 			char szMsg[1024];
 
+#ifdef NOLFSRC_MODERN
+			// the rest of the message, at most the buffer
+			msg >> ws;
+			msg.getline( szMsg, sizeof( szMsg ));
+#else
 			msg >> szMsg;
+#endif
 			m_lstShellMsgs_Shell.AddTail( szMsg );
 			break;
 		}
@@ -1115,7 +1143,11 @@ void CServerDlg::OnConsoleSend()
 		return;
 
 	// Update the UI with string.
+#ifdef NOLFSRC_MODERN
+	WriteConsoleString( "%s", sCmd );	// text, not a format
+#else
 	WriteConsoleString(sCmd);
+#endif
 
 	// Clear out the string from the control.
 	SetDlgItemText(IDC_CONSOLE_COMMAND, "");
@@ -1817,6 +1849,11 @@ static CmdLineOption g_aCmdLineOptions[] =		// 0x449550
 	{ "-NetCANumLevels",		TRUE },
 	{ "-NetLevel",				FALSE },
 	{ "-NetCALevel",			FALSE },
+#ifdef NOLFSRC_MODERN
+	// M-P6-13: the master server the game reports to (the modern game
+	// DLL reads it from NetHost.txt; MODERN.md M-P6-02)
+	{ "-MasterServer",			FALSE },
+#endif
 };
 
 #define NUM_CMDLINE_OPTIONS		(int)(sizeof(g_aCmdLineOptions) / sizeof(g_aCmdLineOptions[0]))
@@ -1831,9 +1868,36 @@ BOOL CServerDlg::ParseCommandLine( BOOL* pbWizard )
 	BOOL bFound = FALSE;
 
 	*pbWizard = TRUE;
+#ifdef NOLFSRC_MODERN
+	// M-P6-12: -NetLevel / -NetCALevel each add a level, in order
+	int nLevels = 0, nCALevels = 0;
+#endif
 
 	for( int nArg = 1; nArg < __argc; nArg++ )
 	{
+#ifdef NOLFSRC_MODERN
+		// -nowiz has no value: it counts wherever it is, the last
+		// argument too
+		sArg = __argv[nArg];
+
+		if( !stricmp( sArg, "-nowiz" ))
+		{
+			bFound = TRUE;
+			*pbWizard = FALSE;
+			continue;
+		}
+
+		// every other option has one
+		if( nArg + 1 >= __argc )
+			break;
+
+		if( P6_LevelOption( this, sArg, __argv[nArg + 1], nLevels, nCALevels ))
+		{
+			bFound = TRUE;
+			nArg++;
+			continue;
+		}
+#else
 		// Make sure there's another argument after this one.
 		if( nArg + 1 >= __argc )
 			break;
@@ -1846,6 +1910,7 @@ BOOL CServerDlg::ParseCommandLine( BOOL* pbWizard )
 			*pbWizard = FALSE;
 			continue;
 		}
+#endif
 
 		int nOption;
 		for( nOption = 0; nOption < NUM_CMDLINE_OPTIONS; nOption++ )
@@ -1933,6 +1998,11 @@ void CServerDlg::OnShowWindow(BOOL bShow, UINT nStatus)
 		PostMessage( WM_COMMAND, IDCANCEL );
 		return;
 	}
+#ifdef NOLFSRC_MODERN
+
+	// M-P6-13: where the game is listed
+	P6_ShowMasterServer( this );
+#endif
 
 	// Update our controls.
 	UpdateData( FALSE );

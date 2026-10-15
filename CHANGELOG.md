@@ -12,6 +12,12 @@ covers each change in detail, under its item number (M-P1-01 and so on).
 
 Since the first public release:
 
+- **The dedicated server, `NolfServ.exe`**, is built from source and in the
+  game directory of every build; `linux-server.sh` runs it with Wine,
+  without a display if need be ([`docs/INSTALL.md`](docs/INSTALL.md), "A
+  dedicated server"). In the modern build it logs to `modern-server.log`,
+  starts unattended from its command line, shows its master server, and has
+  four retail bugs fixed. (M-P6-11 to M-P6-14)
 - **Crouch toggle.** Game options > "Toggle crouch": one press of Duck
   crouches, the next stands. It works with the keyboard, mouse and
   controller, and in multiplayer. (M-P5-19)
@@ -156,6 +162,16 @@ Since the first public release:
   (M-P6-05, M-P6-06)
 - The server list shows compatible servers by default. (M-P6-03)
 - The modern build plays with retail 1.003 players and servers. (M-P6-04)
+- **The dedicated server** (`NolfServ.exe`, `linux-server.sh`):
+  - logs its console to `modern-server.log`; (M-P6-11)
+  - starts without its setup wizard with `-nowiz` wherever that is on the
+    command line, and takes the level list as `-NetLevel <world>` (or
+    `-NetCALevel`) once per world; (M-P6-12)
+  - says which master server it reports to, set with `-MasterServer`;
+    (M-P6-13)
+  - no longer prints console text as a format (a `%` in a player's name),
+    overruns its console buffer on a long line, writes past the game's
+    option table, or leaks a find handle. (M-P6-14)
 
 ### Launcher and installation
 
