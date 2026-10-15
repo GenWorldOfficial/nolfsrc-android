@@ -2,8 +2,10 @@
 // server DLL talks back through, CGameServerAppHandler.
 //
 // Reconstructed from the retail NolfServ.exe (ServerDlg.cpp:
-// 0x403990 - 0x408d7f). Member offsets are the retail ones (CServerDlg is
-// 0x2c64 bytes; its constructor is at 0x403a30).
+// 0x403990 - 0x408d1f). Member offsets are the retail ones (CServerDlg is
+// 0x2c64 bytes; its constructor is at 0x403a30). The layout is the one
+// AvP2's AVP2Serv (a descendant of this server, in Monolith's AvP2 source
+// release) still has, less its splash screen and image list member.
 //
 
 #if !defined(AFX_SERVERDLG_H__NOLFSERV__INCLUDED_)
@@ -17,8 +19,49 @@
 #include "resource.h"
 #include "ltbasedefs.h"
 #include "server_interface.h"
+#include <strstrea.h>
 #include "NetDefs.h"
 #include "ButeMgr.h"
+
+
+/////////////////////////////////////////////////////////////////////////////
+// CPlayerInfo: one player, as the game's server shell reports it
+// (SERVERAPP_ADDCLIENT / SHELLUPDATE). 0x2c bytes.
+
+struct CPlayerInfo
+{
+	CPlayerInfo( )
+	{
+		m_nClientId = -1;
+		m_szPlayerHandle[0] = '\0';
+		m_nFrags = 0;
+		m_timeOnServer.GetCurrentTime( );	// sic: the result is dropped
+	}
+
+	CPlayerInfo( const CPlayerInfo &playerInfo )
+	{
+		CopyData( playerInfo );
+	}
+
+	CPlayerInfo &operator=( const CPlayerInfo &playerInfo )
+	{
+		CopyData( playerInfo );
+		return *this;
+	}
+
+	void CopyData( const CPlayerInfo &playerInfo )
+	{
+		m_nClientId = playerInfo.m_nClientId;
+		strcpy( m_szPlayerHandle, playerInfo.m_szPlayerHandle );
+		m_nFrags = playerInfo.m_nFrags;
+		m_timeOnServer = playerInfo.m_timeOnServer;
+	}
+
+	int			m_nClientId;			// 0x00
+	char		m_szPlayerHandle[30];	// 0x04
+	int			m_nFrags;				// 0x24
+	CTime		m_timeOnServer;			// 0x28
+};
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -29,10 +72,10 @@
 class CGameServerAppHandler : public ServerAppHandler
 {
 public:
-	LTRESULT ShellMessageFn(char* pInfo, uint32 nLen);		// 0x4039a0
-	LTRESULT ConsoleOutputFn(char* pMsg);					// 0x4039c0
-	LTRESULT OutOfMemory();									// 0x4039e0
-	LTRESULT ProcessPacket(char* pData, uint32 dataLen, uint8 senderAddr[4], uint16 senderPort);	// 0x403a00
+	LTRESULT ShellMessageFn(char* pInfo, uint32 nLen);
+	LTRESULT ConsoleOutputFn(char* pMsg);
+	LTRESULT OutOfMemory();
+	LTRESULT ProcessPacket(char* pData, uint32 dataLen, uint8 senderAddr[4], uint16 senderPort);
 };
 
 
@@ -43,28 +86,30 @@ class CServerDlg : public CDialog
 {
 // Construction
 public:
-	CServerDlg(CWnd* pParent = NULL);	// standard constructor (0x403a30)
-	~CServerDlg();						// 0x403e90
+	CServerDlg(CWnd* pParent = NULL);	// standard constructor
+	~CServerDlg();
 
 // Dialog Data
 	//{{AFX_DATA(CServerDlg)
 	enum { IDD = IDD_GAMESERVER };
-	CButton		m_PlayerBoot;			// 0x05c  IDC_PLAYER_BOOT
-	CListCtrl	m_Players;				// 0x098  IDC_PLAYERS
-	CListCtrl	m_Levels;				// 0x0d4  IDC_LEVELS
-	CEdit		m_edConsole;			// 0x110  IDC_CONSOLE_WINDOW
-	CString		m_sServerName;			// 0x14c  IDC_SERVER_NAME
-	CString		m_sServerTime;			// 0x150  IDC_SERVER_TIME
-	CString		m_sTimeInLevel;			// 0x154  IDC_TIMEINLEVEL
-	DWORD		m_nPeakPlayers;			// 0x158  IDC_PEAKPLAYERS
-	DWORD		m_nTotalPlayers;		// 0x15c  IDC_TOTALPLAYERS
-	DWORD		m_nAveragePing;			// 0x160  IDC_AVERAGEPING
-	DWORD		m_nGamePlayers;			// 0x164  IDC_GAME_PLAYERS
+	CButton		m_PlayerBoot;			// 0x05c
+	CListCtrl	m_Players;				// 0x098
+	CListCtrl	m_Levels;				// 0x0d4
+	CEdit		m_edConsole;			// 0x110
+	CString		m_sServerName;			// 0x14c
+	CString		m_sServerTime;			// 0x150
+	CString		m_sTimeInLevel;			// 0x154
+	DWORD		m_nPeakPlayers;			// 0x158
+	DWORD		m_nTotalPlayers;		// 0x15c
+	DWORD		m_nAveragePing;			// 0x160
+	DWORD		m_nGamePlayers;			// 0x164
 	//}}AFX_DATA
 
 // Overrides
 	// ClassWizard generated virtual function overrides
 	//{{AFX_VIRTUAL(CServerDlg)
+	public:
+	virtual BOOL DestroyWindow();
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 	//}}AFX_VIRTUAL
@@ -79,6 +124,7 @@ protected:
 	afx_msg void OnCommandsNextLevel();
 	afx_msg void OnCommandsSelectLevel();
 	afx_msg void OnPlayersBoot();
+	virtual void OnCancel();
 	afx_msg void OnDestroy();
 	afx_msg void OnTimer(UINT nIDEvent);
 	afx_msg void OnDblclkLevels(NMHDR* pNMHDR, LRESULT* pResult);
@@ -87,58 +133,126 @@ protected:
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 
+
+	// Member functions...
+
 public:
-	// The settings: NetHost.txt's "Host" tag, kept in m_ButeMgr. Used by
-	// the wizard's pages as well as the dialog.
-	CString				GetSettingString(const char* szVar, const char* szDefault);	// 0x406c80
-	float				GetSettingFloat(const char* szVar, float fDefault);				// 0x406d40
-	void				SetSettingString(const char* szVar, const char* szValue);		// 0x406d80
-	void				SetSettingFloat(const char* szVar, float fValue);				// 0x406e00
 
-	// The server options (Attributes\ServerOptions.txt, m_lstServerOptions)
-	ServerOption*		GetServerOption(const char* szVar);								// 0x4079e0
-	float				GetServerOptionDefault(const char* szVar);						// 0x407a30
-	float				GetServerSettingFloat(const char* szVar);						// 0x407a50
-	BOOL				InitSlider(CSliderCtrl* pSlider, const char* szVar);			// 0x408700
+	BOOL				IsLoaded() { return( m_pServerMgr != NULL ); }
+	BOOL				IsRunning() { return( m_pServerMgr != NULL && m_hThread != NULL ); }
 
-	// The game's strings (CRes.dll)
-	CString				LoadResString(UINT nStringID);									// 0x407a70
+	void				WriteConsoleString(LPCTSTR pMsg, ...);
+	void				WriteConsoleString(int nStringID);
 
-	// Lists the wizard's pages fill
-	BOOL				FillWorldList(CStringList* pList, const char* szDir, BOOL bFullPath);	// 0x406e30
-	BOOL				FillSelectedWorldList(CListCtrl* pList);						// 0x406fb0
-	BOOL				FillWeaponList(CComboBox* pComboBox);							// 0x407b30
+	CRITICAL_SECTION*	GetCS() {return &m_CS;}
 
 	ServerInterface*	GetServerMgr() { return m_pServerMgr; }
 
+	// Messages handlers from the shell.  Called within the shell's thread.
+	void				OnShellMessage(char* pMsg, uint32 nLen);
+	void				OnShellConsoleOutput(char* pMsg);
+	void				OnShellFatalError(int nStringId);
+	void				OnShellProcessNetPacket(char* sData, DWORD nLen, BYTE senderAddr[4], DWORD senderPort);
 
-	// Member variables (offsets in the retail object). The block between
-	// 0x204 and 0x1b84 is not decoded yet.
-public:
-	DWORD				m_dw168[6];				// 0x168
-	DWORD				m_dw180;				// 0x180
-	DWORD				m_dw184;				// 0x184
-	DWORD				m_dw188[4];				// 0x188
-	DWORD				m_dw198;				// 0x198
-	DWORD				m_dw19c;				// 0x19c
-	int					m_nCurLevel;			// 0x1a0
-	CStringList			m_lstShellMsgs;			// 0x1a4
-	DWORD				m_dw1c0[4];				// 0x1c0
-	CMapWordToPtr		m_mapPlayerInfo;		// 0x1d0
-	CString				m_s1ec;					// 0x1ec
-	BOOL				m_b1f0;					// 0x1f0
-	ServerInterface*	m_pServerMgr;			// 0x1f4
+	// The settings: NetHost.txt's "Host" tag, kept in m_ButeMgr. Used by
+	// the wizard's pages as well as the dialog.
+	CString				GetSettingString(const char* szVar, const char* szDefault);
+	float				GetSettingFloat(const char* szVar, float fDefault);
+	void				SetSettingString(const char* szVar, const char* szValue);
+	void				SetSettingFloat(const char* szVar, float fValue);
+
+	// The lists the wizard's pages fill
+	BOOL				FillWorldList(CStringList* pList, const char* szDir, BOOL bFullPath);
+	BOOL				FillSelectedWorldList(CListCtrl* pList);
+
+	// The server options (Attributes\ServerOptions.txt, m_lstServerOptions)
+	ServerOption*		GetServerOption(const char* szVar);
+	float				GetServerOptionDefault(const char* szVar);
+	float				GetServerSettingFloat(const char* szVar);
+
+	// The game's strings (CRes.dll)
+	CString				LoadResString(UINT nStringID);
+
+	BOOL				FillWeaponList(CComboBox* pComboBox);
+	BOOL				InitSlider(CSliderCtrl* pSlider, const char* szVar);
+
+private:
+
+	static void			ThreadUpdate( void *pParam );
+
+	// Update function called by thread.
+	void				ServerUpdate();
+
+	// Message handlers from the shell.  Called within the shell's thread.
+	void				OnShellAddClient( istrstream &msg );
+	void				OnShellRemoveClient( istrstream &msg );
+	void				OnShellUpdate( istrstream &msg );
+	void				OnShellPreLoadWorld( istrstream &msg );
+	void				OnShellPostLoadWorld( istrstream &msg );
+
+	BOOL				SetService( );
+	BOOL				DoHost( );
+	BOOL				ConfirmStop( );
+	void				UpdateUI();
+
+	BOOL				AddResources( );
+	BOOL				LoadResourceModule( );
+	BOOL				LoadServerOptions( );
+	BOOL				LoadServer( );
+	BOOL				RunServer( );
+	BOOL				StopServer( );
+	BOOL				SelectLevel( int nLevelIndex );
+
+	CString				FormatTime( CTimeSpan &timeSpan );
+
+	// Parses the command line's -nowiz and -Net<setting> <value> options.
+	BOOL				ParseCommandLine( BOOL* pbWizard );
+
+
+	// Member variables...
+
+private:
+	CRITICAL_SECTION	m_CS;					// 0x168  So we don't switch levels and update at the same time.
+	BOOL				m_bCSInitted;			// 0x180
+
+	BOOL				m_bFirstShow;			// 0x184
+
+	CTime				m_serverStartTime;		// 0x188
+	CTimeSpan			m_serverRunTime;		// 0x18c
+	CTime				m_levelStartTime;		// 0x190
+	CTimeSpan			m_levelRunTime;			// 0x194
+	HANDLE				m_hThread;				// 0x198
+
+	int					m_nCurLevel;			// 0x19c
+
+	// These parameters are directly updated by the server thread.
+	int					m_nCurLevel_Shell;		// 0x1a0
+	CStringList			m_lstShellMsgs_Shell;	// 0x1a4
+	BOOL				m_bStopServer_Shell;	// 0x1c0
+	BOOL				m_bPlayerUpdate_Shell;	// 0x1c4
+	BOOL				m_bChangingLevels_Shell;	// 0x1c8
+	BOOL				m_bChangedLevel_Shell;	// 0x1cc
+	CMapWordToPtr		m_mapPlayerInfo_Shell;	// 0x1d0
+
+	CString				m_sFullTcpIpAddress;	// 0x1ec
+	BOOL				m_bConfirmExit;			// 0x1f0
+
+	ServerInterface *	m_pServerMgr;			// 0x1f4
 	CGameServerAppHandler m_AppHandler;			// 0x1f8
-	HINSTANCE			m_hResModule;			// 0x1fc  CRes.dll, for LoadResString
-	CString				m_s200;					// 0x200
-	BYTE				m_aUndecoded[0x1b84 - 0x204];	// 0x204
+
+	HINSTANCE			m_hResModule;			// 0x1fc  a temporary copy of CRes.dll
+	CString				m_sResModuleFile;		// 0x200  ... and its file name
+
+	NetGame				m_NetGame;				// 0x204  never used
+
 	CTypedPtrList<CPtrList, ServerOption*> m_lstServerOptions;	// 0x1b84
 	CButeMgr			m_ButeMgr;				// 0x1ba0  NetHost.txt
+
+	// Event which signals that the server should stop
 	HANDLE				m_hStopEvent;			// 0x2c60
 };
 
-// The one dialog (0x4597bc), set by its constructor.
-extern CServerDlg* g_pDialog;
+extern CServerDlg *g_pDialog;
 
 
 //{{AFX_INSERT_LOCATION}}
