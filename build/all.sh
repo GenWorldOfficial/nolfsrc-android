@@ -102,11 +102,17 @@ mkdir -p "$OUT/Save" "$OUT/custom"
 # nolfcmds.txt: the command file linux-run.sh starts the engine with (and the
 # launcher rewrites), build/nolfcmds.sh.
 bash build/nolfcmds.sh "${NOLF_MIDDLEWARE:-retail}" > "$OUT/nolfcmds.txt"
+# startup.txt: the rez stack NolfServ.exe, the dedicated server, loads (the
+# retail one's names, then custom/ -- our game DLLs -- last, as nolfcmds.txt
+# has it for the engine). `resources` copies the retail file again whenever
+# this one differs in size, so the line is added afresh each time.
+grep -qi '^Rez[0-9]* *= *"custom"' "$OUT/startup.txt" || printf 'Rez9 = "custom"\r\n' >> "$OUT/startup.txt"
 # linux-run.sh / linux-run-launcher.sh: start the game with the host's Wine, directly or
-# through our NOLF.exe (build/game-scripts/; usage in their headers).
+# through our NOLF.exe; linux-server.sh: a dedicated server, NolfServ.exe
+# (build/game-scripts/; usage in their headers).
 rm -f "$OUT/run.sh" "$OUT/run-launcher.sh"   # their names before the linux- prefix
-cp build/game-scripts/linux-run.sh build/game-scripts/linux-run-launcher.sh "$OUT/"
-chmod +x "$OUT/linux-run.sh" "$OUT/linux-run-launcher.sh"
+cp build/game-scripts/linux-run.sh build/game-scripts/linux-run-launcher.sh build/game-scripts/linux-server.sh "$OUT/"
+chmod +x "$OUT/linux-run.sh" "$OUT/linux-run-launcher.sh" "$OUT/linux-server.sh"
 
 if [ "${NOLF_MIDDLEWARE:-retail}" = open ]; then
     step "2. open runtime: OpenMiles, our Bink player on FFmpeg and our renderers (build/ext.sh)"
@@ -127,7 +133,8 @@ python3 tools/retailextract.py goty "$RETAIL" src/game/ClientRes/goty
 step "3. compile: libraries, game DLLs, engine (build/compile.sh: build/build.mk, ${NOLFSRC_JOBS:-$(nproc)} jobs)"
 GAME_CONFIG=final bash build/compile.sh all
 for f in src/engine/ltmsg/Release/ltmsg.dll src/engine/sres/Release/sres.dll \
-         src/engine/launcher/Release/NOLF.exe src/engine/server/Release/server.dll \
+         src/engine/launcher/Release/NOLF.exe src/engine/nolfserv/Release/NolfServ.exe \
+         src/engine/server/Release/server.dll \
          src/engine/lithtech/Release/lithtech.exe src/engine/d3d/Release/d3d.ren \
          src/game/ClientRes/Release/CRes.dll src/game/ClientShellDLL/Final_Release/CShell.dll \
          src/game/ObjectDLL/Final_Release/Object.lto; do
@@ -151,6 +158,7 @@ case "${NOLFSRC_CFLAGS:-}" in
     *)                install_built src/engine/d3d/Release/d3d.ren d3d.ren ;;
 esac
 install_built src/engine/launcher/Release/NOLF.exe       NOLF.exe
+install_built src/engine/nolfserv/Release/NolfServ.exe   NolfServ.exe
 install_built src/engine/ltmsg/Release/ltmsg.dll         ltmsg.dll
 # the game DLLs and sres.dll go in the custom/ rez directory, which overrides
 # the (zeroed) copies inside the archives

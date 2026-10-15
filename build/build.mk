@@ -618,7 +618,7 @@ d3d-objs: $(D3D_OBJ)
 d3d: $(D3D)/Release/d3d.ren
 
 .PHONY: engine all
-engine: ltmsg sres launcher server lithtech d3d
+engine: ltmsg sres launcher nolfserv server lithtech d3d
 .PHONY: ltmsg sres
 ltmsg: $(E)/ltmsg/Release/ltmsg.dll
 sres: $(E)/sres/Release/sres.dll

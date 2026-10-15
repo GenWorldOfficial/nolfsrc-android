@@ -25,7 +25,8 @@
 #
 # Links are stored as the files they point to (-h). Each archive is a fresh
 # install, whatever has been played in the directory: no saves (an empty
-# Save/), no logs, autoexec.cfg as the shipped defaults.cfg, nolfcmds.txt as
+# Save/), no logs, no dedicated-server settings (NetHost.txt, which
+# NolfServ.exe writes), autoexec.cfg as the shipped defaults.cfg, nolfcmds.txt as
 # the build writes it (build/nolfcmds.sh; the launcher rewrites the
 # directory's copy), and none of the per-machine state linux-run.sh /
 # linux-run-launcher.sh create. Each is written beside and renamed into
@@ -54,6 +55,7 @@ rm -f "$PARENT/$NAME.tar" "$PARENT/$NAME.tar.gz"
 if [[ $ARCHIVES == *" private "* ]]; then
     tar -C "$PARENT" -h -cf - \
         --exclude="$NAME/Save/*" --exclude="$NAME/autoexec.cfg" --exclude="$NAME/nolfcmds.txt" \
+        --exclude="$NAME/NetHost.txt" \
         --exclude='*.log' --exclude=run-cmds.txt --exclude=cd --exclude='*.part' \
         --transform="s|^$STAGE/|$NAME/|" \
         "$NAME" "$STAGE/autoexec.cfg" "$STAGE/nolfcmds.txt" |
@@ -78,7 +80,7 @@ elif [ $rc != 0 ]; then
 else
     sed "s|^|$NAME/|" "$PARENT/$STAGE/disc-files.txt" > "$PARENT/$STAGE/exclude.txt"
     tar -C "$PARENT" -h -cf - \
-        --exclude="$NAME/Save/*" --exclude="$NAME/nolfcmds.txt" \
+        --exclude="$NAME/Save/*" --exclude="$NAME/nolfcmds.txt" --exclude="$NAME/NetHost.txt" \
         --exclude='*.log' --exclude=run-cmds.txt --exclude=cd --exclude='*.part' \
         --anchored --no-wildcards --exclude-from="$PARENT/$STAGE/exclude.txt" \
         --transform="s|^$STAGE/|$NAME/|" \
