@@ -105,7 +105,7 @@ public:
 	CString				LoadResString(UINT nStringID);									// 0x407a70
 
 	// Lists the wizard's pages fill
-	BOOL				FillWorldList(CListCtrl* pList, char* szDir, BOOL bFullPath);	// 0x406e30
+	BOOL				FillWorldList(CStringList* pList, const char* szDir, BOOL bFullPath);	// 0x406e30
 	BOOL				FillSelectedWorldList(CListCtrl* pList);						// 0x406fb0
 	BOOL				FillWeaponList(CComboBox* pComboBox);							// 0x407b30
 
