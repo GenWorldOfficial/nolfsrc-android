@@ -110,6 +110,13 @@ detail.
 
 ## Play
 
+To play a release download, see [`docs/INSTALL.md`](docs/INSTALL.md). What
+the modern build changes is listed in [`CHANGELOG.md`](CHANGELOG.md); its
+console commands, cheats and settings are in
+[`docs/CONSOLE.md`](docs/CONSOLE.md) and
+[`docs/VARIABLES.md`](docs/VARIABLES.md). The rest of this section is about
+playing your own build.
+
 `out/nolf-legacy-release/` is a complete game directory. On a Linux machine with Wine
 (32-bit support needed):
 
@@ -190,6 +197,42 @@ retail machine code to the compiler quirks that decide the last few bytes;
 `make progress` (after `make`) shows where things stand and catches a change
 that breaks a function that matched before.
 
+## Credits
+
+This project builds on the work of others:
+
+- **Monolith Productions**, for _No One Lives Forever_ and for releasing its
+  source code (v1.003, 2001), which `src/game/` and `src/LT2/` are, and the
+  _No One Lives Forever 2_ source release, from which much of
+  `src/lithshared/` is adapted.
+- **NOLF Modernizer** by HeyThereCoffeee (haekb):
+  <https://github.com/haekb/nolf1-modernizer>. Most of the modern build's
+  fixes and features were found and designed there; `docs/MODERN.md` names
+  the Modernizer change behind each one.
+- **ChthonVII's Modernizer fork**: <https://github.com/ChthonVII/nolf1-modernizer>.
+  It gathers the crouch toggle and Daniel Gibson's fixes, and sorts out what
+  the different "Patch 4" releases contain.
+- **Daniel Gibson**, for the fixes in
+  <https://github.com/haekb/nolf1-modernizer/pull/55>: Shift+Esc for the
+  console, closing popups with Activate, each weapon keeping its ammo, and
+  the sunglasses' zoom on wide screens.
+- **The author of the "crouch toggle" Modernizer** on Mod DB, for the crouch
+  toggle.
+- **OpenMiles** (<https://github.com/maci0/openmiles>), the open
+  reimplementation of the Miles Sound System that the modern build uses in
+  place of Miles, with the miniaudio and TinySoundFont libraries it vendors.
+- **FFmpeg** (<https://ffmpeg.org>), on which the modern build's Bink player
+  is built; **zlib**; and **Capstone**, which the tools use to read the
+  retail machine code.
+- **Wine**, **Proton** and **DXVK**, which run the game on Linux and the
+  Steam Deck, and **OpenSpy** (<https://openspy.net>), whose master server
+  replaces GameSpy's.
+- **redump.org**, for the verified disc images the installers check
+  against.
+
+The modern build reimplements the Modernizer's changes rather than copying
+its code (`docs/MODERN.md`, "Rules for this work").
+
 ## Layout
 
 | Path | What |
@@ -198,7 +241,7 @@ that breaks a function that matched before.
 | `src/lithshared/` | the LithTech shared static libraries the engine and game link |
 | `src/game/` | Monolith's NOLF Source Code v1.003 (client, server and resource DLLs) |
 | `src/LT2/` | the LithTech SDK and shared-library headers from the same release |
-| `docs/` | the documentation: building, the modern build's changes, retail bugs, licences |
+| `docs/` | the documentation: installing, building, the modern build's changes, the console, retail bugs, licences |
 | `build/` | the build scripts (`all.sh` is the whole build) |
 | `tools/` | the build's helpers, the playtest, and the tools for reading the retail code and comparing ours with it (a submodule, [nolffan/tools](https://github.com/nolffan/tools), meant for any reconstruction like this one) |
 | `tools/guides/` | how to reconstruct a function so it compiles to the retail bytes: start here to contribute; `14-progress.md` is the scoreboard |

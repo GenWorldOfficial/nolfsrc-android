@@ -78,8 +78,10 @@ fixes a retail bug, add or update the entry in `RETAIL_BUGS.md`.
 
 ## New console / config variables
 
-All are created with `VarTrack` (so they are console variables and are saved
-in `autoexec.cfg`), client-side unless noted.
+All are created with `VarTrack`, so they are console variables, client-side
+unless noted. Creating one does not save it: `autoexec.cfg` keeps those an
+options folder writes (with the `+` that marks a variable to save), and any
+typed as `+Name value`; see `VARIABLES.md`.
 
 | Variable | Type | Default | Meaning | Item |
 |---|---|---|---|---|
