@@ -56,6 +56,77 @@
 //      toolchain-wide change).  With (int32) casts for the ambient the
 //      frame is 0x970 (8 short); big61a30.cpp's text is kept because it
 //      is the one that holds the shipped 0x978 and so the pairing.
+//    * LATER, with the clipper as the six static inline plane bodies
+//      below: RoundF IS inlined at every one of 0x10061a30's 33 sites
+//      (the thirty lerp bytes and the three ambient terms, 0x10062bf9..
+//      0x10062c69) -- the earlier "stays a call" verdict does not hold
+//      for this text.  Measured on 0x10061a30 (tools/census.py,
+//      tools/fndiff.py, ship 11280 B / 2719 instructions):
+//          (uint8)(int32) casts, /O2 /Qip   12256 B / 3302, residue 1217,
+//                                            242 blocks, frame 0x978; the
+//                                            33 sites each the 12-instruction
+//                                            shld/neg/or/jge truncation
+//          the same, /O2 /Qip /Qrcd           9056 B / 2302, residue 675:
+//                                            39 fistpll, 0 fistpl
+//          RoundF at the 33, /O2 /Qip         9824 B / 2437, residue 506,
+//                                            146 blocks, frame 0x940:
+//                                            fistpl 33 = shipped, and the
+//                                            six plain casts (nX/nY/nZ and
+//                                            the three LTCLAMPs) the shld
+//                                            idiom = shipped (6)
+//          RoundF, /Os /Qip                  10102 B / 2347, residue 774
+//                                            (0x10060010 6351, 0x1005f7d0
+//                                            448: both worse)
+//          RoundF, /O2 /Qip /G5               9927 B / 2634, residue 675
+//      and icl's inlining knobs, passed through as
+//      /Qoption,c,-mIPOPT_inline_max_total_stats=100000,
+//      -mIPOPT_inline_max_stats=100000 and -mIPOPT_inline_limit=100000
+//      (the names are in mcpcom.exe; the driver itself emits
+//      -mIPOPT_inline_limit=0 for /Qip_no_inlining), each give the same
+//      9824-byte body: nothing was left un-inlined for them to inline.
+//      The RoundF text is the one kept: every conversion is now the
+//      shipped idiom, the call sequence is unchanged (29/29, the four
+//      indirect block-placement rows), 0x10060010 and 0x1005f7d0 are
+//      byte-for-byte what they were, and the body stays within the 15%
+//      the near pairing allows (9824/11280 = 0.871).  What remains is
+//      the ship keeping 163 more `mov`, 59 `fstps` and 43 `flds` --
+//      values held in frame slots (the missing 0x38 of frame) where
+//      icl keeps ours in registers, and the ship's cold arms sunk where
+//      ours are inline -- not the conversions.
+//    * A LEAD, measured but not closed: the shipped front half loads
+//      EVERY literal as a float (`flds 0x100aad5c` 2.0, `fsubs 0x100aad54`
+//      2.0, `fsubs 0x100aad48` 10.0, `fsubrs 0x100aad44` 500.0 ...) and
+//      computes the fade's `500 - 10` and `2.0 - 0.1` at run time
+//      (0x10061f6b..0x10061fa9: `fsubs 10 ; flds 10 ; fsubrs 500 ;
+//      fdivrp`, then `flds 2.0 ; fsubs 0.1 ; fmulp ; fadds 0.1`), where
+//      ours, with fZ/fFade/fTexW... declared double, folds both and
+//      multiplies by 1/490 (`fmull` 0.00204, `fmull` 1.9, `faddl` 0.1)
+//      and holds 2.0/7.0/0.01/1.0/-20.0 as DOUBLE pool entries (26 `fmull`
+//      against the shipped 4, 23 `fmuls` short).  The shipped locals are
+//      still doubles (`fldl -0x78(%ebp)` is fZ), so this is the literal's
+//      type, not the local's: fFade as a float changes nothing (same 9824
+//      bytes), /Op and /Qprec make everything worse (13088 / 10320 bytes,
+//      0x10060010 8048 / 7040), so it is a source shape.  The shipped
+//      pool runs 2.0, 0.1, 500, 10, 0.01, 2.0, 2.0, 2.0, 2.0 (0x100aad3c..
+//      0x100aad5c), i.e. the fade's four literals are emitted BEFORE
+//      fMinZ's 0.01f and the four 2.0f of the uv inset, in the order
+//      (2.0 - 0.1) then (500 - 10): the fade was written earlier in the
+//      source than its use here (an inline helper or a macro defined
+//      above the function) with `(2.0f - 0.1f)` before `(500.0f -
+//      10.0f)`.  The literal pool is the statement-order witness
+//      (guide 11).  Two spellings of that were then measured and are NOT
+//      it: a `static inline float Fade61a30(float fZ)` defined above the
+//      function with the literals inside it (the pool entries become
+//      floats, residue 506 -> 494, but icl still folds: `fmuls` 1/490,
+//      `fmuls` 1.9), and the same helper taking (double z, float near,
+//      float far, float min, float max) called with (fZ, 10.0f, 500.0f,
+//      0.1f, 2.0f) -- the pool order read as right-to-left argument
+//      evaluation -- which icl propagates and folds just the same
+//      (9808 bytes, residue 507, `fmull` 1/490 again).  icl 4.0 at
+//      /O2 folds a literal subtraction in float and in double context,
+//      before and after inlining; the shipped divisor was therefore not
+//      two literals to its compiler, and the kept text is the plain
+//      statement.
 //
 //  PURPOSE:  One function -- 0x10060010, 6,688 bytes (0x1a20), so the
 //            claimed extent 0x10060010..0x10061a30 is exactly right; see
@@ -2056,29 +2127,34 @@ Ltest:
 //  THREE THINGS THIS FILE CANNOT REPRODUCE, all stated up front.
 //  ------------------------------------------------------------------- //
 //
-//  0. MEASURED: byte identity is out of reach for now.  At /O2
-//     (the build) the body is 12263 bytes against 11280, 11133 differing;
-//     under /O2 /Qrcd it is 9069 bytes, 8015 differing -- the fast
-//     conversion emits one 64-bit `fistpll` per site where the shipped
-//     code has `fstps; flds; fistpl`, a known gap (no flag or cast spelling
-//     reproduces it).
-//     /Qrcd is NOT adopted for this file: 9069 is more than 15% short of
-//     11280, which would drop the row from near to attempted
-//     for no identical gain.  Note 1's "/QIfist" is
-//     that same option: icl 4.0 parses /QIfist as /QIf and ignores it.
+//  0. MEASURED: byte identity is out of reach for now.  At /O2 /Qip
+//     (the build) the body is 9824 bytes against 11280 (see the
+//     MEASUREMENTS at the top of the file for the history: the earlier
+//     (uint8)(int32) text was 12263, and /O2 /Qrcd on it 9069 with one
+//     64-bit `fistpll` per site).  /Qrcd is not the answer and is not
+//     used: the shipped `fstps; flds; fistpl` is an inlined RoundF (note
+//     1), which this text now reproduces at all 33 sites.
 //
-//  1. THE SHIPPED TU WAS BUILT WITH /QIfist.  Every float->byte conversion
-//     in the clipper and in the light-grid colour is
+//  1. THE SHIPPED CONVERSIONS ARE AN INLINED `__asm fld f ; fistp n`.
+//     Every float->byte conversion in the clipper and the three
+//     light-grid ambient terms is
 //         fstps <float slot> ; flds <float slot> ; fistpl <int slot>
-//     -- a bare `fistp` in the CURRENT rounding mode with no fnstcw/fldcw
-//     dance and no helper call.  d3dbatchd.cpp already recorded this for
-//     0x10015190 (a Round() helper) and for 0x10023380, which is the very
-//     function inlined here (see 3).  Under plain /O2 or /Os a `(uint8)f`
-//     cast emits the control-word dance instead, so those ~35 sites will
-//     differ in bytes.  They contain NO calls, so the acceptance test is
-//     blind to them; a third build variant with /QIfist is the way to close
-//     them.  Nothing is guessed here -- the arithmetic is read off the
-//     bytes, only the cast's expansion differs.
+//     -- the float argument spilled to ITS OWN 8-byte slot (-0x938,
+//     -0x930, ... one per inlined call), reloaded by the asm's `fld f`,
+//     and a bare `fistp` in the CURRENT rounding mode with no fnstcw/fldcw
+//     dance and no helper call.  That is RoundF (defined above
+//     0x1005f7d0) inlined, exactly as d3dbatchd.cpp recorded for
+//     0x10015190 (a Round() helper) and for 0x10023380, the lerp inlined
+//     here (see 3).  Six conversions are NOT RoundF in the shipped bytes
+//     and are plain casts here too: the light-grid cell nX/nY/nZ
+//     (0x100620ca/0x10062158/0x100621e6) and the three LTCLAMP colour
+//     terms (0x10062991/0x10062a1e/0x10062aa9), each the twelve-
+//     instruction shld/neg/or/jge truncation; both sides carry six.
+//     An earlier text had every site as a (uint8)(int32) cast because
+//     RoundF was then measured as staying a call in this body; with the
+//     clipper as the six static inline plane bodies it inlines
+//     everywhere, 33 `fistpl` for the shipped 33.  (/QIfist is not an
+//     icl 4.0 option: it parses as /QIf and is ignored.)
 //
 //  2. 0x10060010 IS A REGISTER-ABI CALLEE (icl /Qip).  At 0x10061b64 it is
 //     entered with %eax = arg0, %edx = arg1, %ecx = arg2, ST(0) = arg3 and
@@ -2264,10 +2340,12 @@ Ltest:
 //    shipped-only and three ours-only calls that are precisely
 //    0x1006459d, 0x100645d3 and 0x10064615, that is this and nothing else.
 //
-//  * `(uint8)(int32)expr` rather than `(uint8)expr` at all eleven float->byte
-//    sites.  The shipped code converts into a 32-BIT slot and then takes its
-//    low byte (`fistpl -0x614(%ebp) ; mov -0x614(%ebp),%dl`), which is what
-//    the doubled cast says; it also keeps the conversion off any helper.
+//  * `(uint8)RoundF(expr)` at the eight float->byte sites (the five lerp
+//    bytes and the three ambient terms): the shipped code converts into a
+//    32-BIT slot and takes its low byte (`fistpl -0x614(%ebp) ;
+//    mov -0x614(%ebp),%dl`), which is the inlined asm helper's `n` (note 1
+//    above).  The three LTCLAMP colour terms stay `(uint8)(int32)` casts:
+//    the shipped code truncates those with the shld idiom, not a fistp.
 //    big19d64.obj is the control -- it holds `_floor` and no `__ftol`, so
 //    integer casts of floats and doubles are inline in this build.
 //
@@ -2290,11 +2368,11 @@ inline void sub_10023380(Vert61a30* a, Vert61a30* b, Vert61a30* dst, float t)
 	dst->tu = (b->tu - a->tu) * t + a->tu;
 	dst->tv = (b->tv - a->tv) * t + a->tv;
 
-	dst->m_Diffuse10.m_b[2]  = (uint8)(int32)((b->m_Diffuse10.m_b[2]  - a->m_Diffuse10.m_b[2])  * t + a->m_Diffuse10.m_b[2]);
-	dst->m_Diffuse10.m_b[1]  = (uint8)(int32)((b->m_Diffuse10.m_b[1]  - a->m_Diffuse10.m_b[1])  * t + a->m_Diffuse10.m_b[1]);
-	dst->m_Diffuse10.m_b[0]  = (uint8)(int32)((b->m_Diffuse10.m_b[0]  - a->m_Diffuse10.m_b[0])  * t + a->m_Diffuse10.m_b[0]);
-	dst->m_Diffuse10.m_b[3]  = (uint8)(int32)((b->m_Diffuse10.m_b[3]  - a->m_Diffuse10.m_b[3])  * t + a->m_Diffuse10.m_b[3]);
-	dst->m_Specular14.m_b[3] = (uint8)(int32)((b->m_Specular14.m_b[3] - a->m_Specular14.m_b[3]) * t + a->m_Specular14.m_b[3]);
+	dst->m_Diffuse10.m_b[2]  = (uint8)RoundF((b->m_Diffuse10.m_b[2]  - a->m_Diffuse10.m_b[2])  * t + a->m_Diffuse10.m_b[2]);
+	dst->m_Diffuse10.m_b[1]  = (uint8)RoundF((b->m_Diffuse10.m_b[1]  - a->m_Diffuse10.m_b[1])  * t + a->m_Diffuse10.m_b[1]);
+	dst->m_Diffuse10.m_b[0]  = (uint8)RoundF((b->m_Diffuse10.m_b[0]  - a->m_Diffuse10.m_b[0])  * t + a->m_Diffuse10.m_b[0]);
+	dst->m_Diffuse10.m_b[3]  = (uint8)RoundF((b->m_Diffuse10.m_b[3]  - a->m_Diffuse10.m_b[3])  * t + a->m_Diffuse10.m_b[3]);
+	dst->m_Specular14.m_b[3] = (uint8)RoundF((b->m_Specular14.m_b[3] - a->m_Specular14.m_b[3]) * t + a->m_Specular14.m_b[3]);
 }
 
 
@@ -2679,9 +2757,9 @@ void sub_10061a30(Ctx61a30* pCtx, Obj61a30* pObj)
 		fW10 += fW4 * fGX;
 		fW11 += fW5 * fGX;
 
-		nAmbR = (uint8)(int32)(fW6 * fInvZ + fW9  * fGZ);
-		nAmbG = (uint8)(int32)(fW7 * fInvZ + fW10 * fGZ);
-		nAmbB = (uint8)(int32)(fW8 * fInvZ + fW11 * fGZ);
+		nAmbR = (uint8)RoundF(fW6 * fInvZ + fW9  * fGZ);
+		nAmbG = (uint8)RoundF(fW7 * fInvZ + fW10 * fGZ);
+		nAmbB = (uint8)RoundF(fW8 * fInvZ + fW11 * fGZ);
 
 		// -- 0x10062ad9 -- d3dr3d.cpp's dynamic-light accumulator.
 		sub_1001e210(pObj, &vDynamic);
