@@ -381,8 +381,8 @@ game: cres cshell object
 #
 # Each link reads committed link inputs in src/engine/<target>/link/: an
 # alias list (aliases.rsp, turned into an object of weak externals by
-# tools/mkaliasobj.py), for lithtech.exe the stand-in vtables (vtables.txt,
-# tools/mkvtabobj.py), for d3d.ren the data views (d3dviews.txt,
+# tools/mkaliasobj.py), for lithtech.exe and server.dll the stand-in vtables
+# (vtables.txt, tools/mkvtabobj.py), for d3d.ren the data views (d3dviews.txt,
 # tools/mkviewobj.py). Import libraries for Miles and DirectDraw are
 # generated from their export lists. Each link's report is
 # src/engine/<target>/Release/<target>-link.txt; a link that leaves no
@@ -494,9 +494,10 @@ $(foreach s,$(SERVER_SRC) $(SERVER_OS_SRC),$(eval $(call compile,$(SERVER)/Relea
     /nologo $(call server_flags,$(s)),wine-plain)))
 SERVER_OBJ := $(sort $(patsubst %.cpp,$(SERVER)/Release/%.obj,$(SERVER_SRC) $(SERVER_OS_SRC)))
 $(eval $(call tool,$(SERVER)/link/aliases.obj,$(SERVER)/link/aliases.rsp,python3 tools/mkaliasobj.py $(SERVER)/link/aliases.rsp $(SERVER)/link/aliases.obj))
-$(eval $(call tool,$(SERVER)/Release/server.dll,$(SERVER)/link/aliases.obj $(SERVER_OBJ) $(call lslib,RezMgr) $(call lslib,StdLith) $(call lslib,Lith) | wine-plain,\
+$(eval $(call tool,$(SERVER)/link/vtables.obj,$(SERVER)/link/vtables.txt,python3 tools/mkvtabobj.py $(SERVER)/link/vtables.txt $(SERVER)/link/vtables.obj))
+$(eval $(call tool,$(SERVER)/Release/server.dll,$(SERVER)/link/vtables.obj $(SERVER)/link/aliases.obj $(SERVER_OBJ) $(call lslib,RezMgr) $(call lslib,StdLith) $(call lslib,Lith) | wine-plain,\
     cd $(SERVER) && { $(ENV) $(WINE) $(LINK) $(NOLFSRC_LDFLAGS) /nologo /dll /machine:I386 /out:Release/server.dll /map:Release/server.map \
-    /export:CreateServer /export:DeleteServer link/aliases.obj $(SERVER_OBJ:$(SERVER)/%=%) \
+    /export:CreateServer /export:DeleteServer link/vtables.obj link/aliases.obj $(SERVER_OBJ:$(SERVER)/%=%) \
     $(call q,..\..\lithshared\out\RezMgr.lib ..\..\lithshared\out\StdLith.lib ..\..\lithshared\out\Lith.lib) \
     libcmt.lib kernel32.lib user32.lib winmm.lib ole32.lib wsock32.lib > Release/server-link.txt 2>&1 || true; }))
 report_$(SERVER)/Release/server.dll := $(SERVER)/Release/server-link.txt

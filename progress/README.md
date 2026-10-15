@@ -24,7 +24,7 @@ produced for it:
 
 | Target | Compared against | Our side |
 |---|---|---|
-| `lithtech.exe`, `server.dll`, `d3d.ren`, `NOLF.exe` | the retail images, extracted from disc 2 into `out/reference/` | `src/engine/*/Release/*.obj` (plus the lithshared libraries each links) |
+| `lithtech.exe`, `server.dll`, `d3d.ren`, `NOLF.exe`, `NolfServ.exe` | the retail images, extracted from disc 2 into `out/reference/` | `src/engine/*/Release/*.obj` (plus the lithshared libraries each links; `NolfServ.exe`'s ButeMgr is the MFC flavour, which the source release has no prebuilt copy of and is scored only here) |
 | `StdLith`, `CryptMgr`, `RegMgr`, `MFCStub`, `ButeMgrNoMFC`, `ltguimgr_LT2`, `LithFontMgr_LT2` | Monolith's prebuilt `.lib`s from the NOLF Source Code v1.003 release (`NOLF_SOURCE`) | `src/lithshared/out/*.lib` |
 | `CShell.dll`, `Object.lto` | the Game of the Year copies in disc 1's `NOLFGOTY.REZ` (the ones the GOTY install runs), extracted into `out/reference/` | `src/game/*/Final_Release/*.obj` (plus the lithshared libraries each links) |
 | `CRes.dll` | the same archive's `CRES.dll` | `src/game/ClientRes/Release/CRes.dll`, resource by resource |
@@ -185,7 +185,7 @@ the libraries are skipped with a note; `make progress-update` needs them.
 | `identical.txt` | every function verified identical (`target<TAB>function`): the baseline the test holds the build to. Written by `make progress-update` |
 | `summary.json` | per-target counts and bytes of the recorded run; the README table is rendered from it |
 | `shipped-libs.sha256` | the source release's `.lib`s that are scored (paths relative to `libs/Release/`) |
-| `*-screen-exclude.csv` | per image (`lithtech`, `server`, `d3d`, and for the game DLLs `cshell`, `object`): enumerated addresses examined by hand. A reason that starts `NOT A FUNCTION` or `NOT GAME CODE` removes the row from the count (an operand byte, a jump target inside another function, padding); any other reason only marks the address as `attempted` (not in the game DLLs, where only the removal applies) |
+| `*-screen-exclude.csv` | per image (`lithtech`, `server`, `d3d`, `nolfserv`, and for the game DLLs `cshell`, `object`): enumerated addresses examined by hand. A reason that starts `NOT A FUNCTION` or `NOT GAME CODE` removes the row from the count (an operand byte, a jump target inside another function, padding); any other reason only marks the address as `attempted` (not in the game DLLs, where only the removal applies) |
 | `extent-splits.csv` | function starts the enumeration misses (a function hidden behind a thunk), with the evidence |
 | `lithtech-decoded-map.csv` | `lithtech.exe` addresses a function of ours has been mapped to, marking them `attempted` |
 | `*-enum-suspect.csv` | per image: enumerated rows judged wrong (`addr,severity,reason`); `bogus` rows are not functions, and `tools/uncovered.py`, `decoded.py` and `d3dwork.py` leave them off their worklists. Not read by the scoring |

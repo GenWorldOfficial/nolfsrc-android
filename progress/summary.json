@@ -162,6 +162,29 @@
       "unwritten": 0,
       "unwritten_bytes": 0
     },
+    "NolfServ.exe": {
+      "attempted": 101,
+      "bytes_identical": 24946,
+      "bytes_total": 59309,
+      "crt": 2566,
+      "crt_bytes": 174980,
+      "driver": 0,
+      "driver_bytes": 0,
+      "funcs": 377,
+      "identical": 137,
+      "middleware": 0,
+      "middleware_bytes": 0,
+      "near": 0,
+      "small": 46,
+      "started": true,
+      "todo": 93,
+      "unlinked": 0,
+      "unlinked_bytes": 0,
+      "unplaced": 2,
+      "unplaced_bytes": 233,
+      "unwritten": 194,
+      "unwritten_bytes": 34003
+    },
     "Object.lto": {
       "attempted": 0,
       "bytes_identical": 1239233,
@@ -341,24 +364,24 @@
       "todo": 0,
       "unlinked": 376,
       "unlinked_bytes": 12304,
-      "unplaced": 4,
-      "unplaced_bytes": 4,
+      "unplaced": 5,
+      "unplaced_bytes": 5,
       "unwritten": 0,
       "unwritten_bytes": 0
     }
   },
   "total": {
-    "attempted": 0,
-    "bytes_identical": 3074370,
-    "bytes_total": 3663618,
-    "funcs": 19528,
-    "identical": 15402,
+    "attempted": 101,
+    "bytes_identical": 3099316,
+    "bytes_total": 3722927,
+    "funcs": 19905,
+    "identical": 15539,
     "near": 348,
-    "small": 3778,
-    "todo": 0,
-    "unplaced": 31,
-    "unplaced_bytes": 1344,
-    "unwritten": 0,
-    "unwritten_bytes": 0
+    "small": 3824,
+    "todo": 93,
+    "unplaced": 34,
+    "unplaced_bytes": 1578,
+    "unwritten": 194,
+    "unwritten_bytes": 34003
   }
 }
