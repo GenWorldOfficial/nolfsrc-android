@@ -479,8 +479,8 @@
       "todo": 0,
       "unlinked": 376,
       "unlinked_bytes": 12304,
-      "unplaced": 5,
-      "unplaced_bytes": 5,
+      "unplaced": 6,
+      "unplaced_bytes": 8,
       "unwritten": 0,
       "unwritten_bytes": 0
     },
@@ -540,8 +540,8 @@
     "near": 347,
     "small": 3806,
     "todo": 2,
-    "unplaced": 32,
-    "unplaced_bytes": 1345,
+    "unplaced": 33,
+    "unplaced_bytes": 1348,
     "unwritten": 2,
     "unwritten_bytes": 291
   }

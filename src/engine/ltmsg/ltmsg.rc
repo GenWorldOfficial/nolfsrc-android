@@ -83,13 +83,6 @@ BEGIN
     13				"Missing world file %1!s!."
     14				"Unable to restore object (class %1!s!)."
     15				"Server error: %1!s!."
-    16				"Error loading render DLL %1!s!."
-    17				"Error copying file %1!s!."
-END
-
-STRINGTABLE DISCARDABLE
-BEGIN
-    42				"Unable to create server shell."
 END
 
 STRINGTABLE DISCARDABLE
@@ -108,4 +101,18 @@ BEGIN
     93				"Missing class: %1!s!."
     94				"Unable to initialize network driver %1!s!."
     95				"Network protocol version mismatch - your version: %1!d!, server's version: %2!d!."
+END
+
+// The string blocks go into the image in the order the original script
+// first named them -- 1-15, 64-79, 80-95, 32-47, 16-31 -- which the retail
+// resource section keeps.
+STRINGTABLE DISCARDABLE
+BEGIN
+    42				"Unable to create server shell."
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    16				"Error loading render DLL %1!s!."
+    17				"Error copying file %1!s!."
 END

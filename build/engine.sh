@@ -86,9 +86,9 @@ test_load() {
 case "${1:-}" in
     ltmsg)    nolfsrc_make ltmsg
               if [ "${2:-}" = verify ]; then
-                  # resources around an empty DllMain: the resources are
-                  # compared payload for payload, the code as a whole (both
-                  # relocation-normalised)
+                  # resources and the C runtime (with its own default
+                  # DllMain): the resources are compared payload for
+                  # payload, the code as a whole (both relocation-normalised)
                   python3 tools/bindiff.py src/engine/ltmsg/Release/ltmsg.dll "$(ref ltmsg.dll)"
                   python3 tools/rsrcdiff.py src/engine/ltmsg/Release/ltmsg.dll "$(ref ltmsg.dll)"
               fi ;;

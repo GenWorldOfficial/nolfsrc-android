@@ -42,7 +42,7 @@ a row, sized by its data, `identical` when our bytes are the retail bytes.
 
 The engine images' resources are scored the same way, each image's as a
 target of its own beside its code (`lithtech.exe:rsrc`, ...; `ltmsg.dll`,
-resources around an empty `DllMain`, only this way, and `sres.dll`, which has
+resources and the C runtime, only this way, and `sres.dll`, which has
 no resources, as one empty row, `rsrc:(none)`, identical while ours has none
 either): version blocks, dialogs,
 string tables, icons, the console font, the MFC resources an AppWizard

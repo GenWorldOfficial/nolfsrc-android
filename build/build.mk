@@ -122,8 +122,14 @@ V8168_W := $(call wz,$(TC)/msvc-6.00-8168)
 ENV      := $(call wine_env,wz,$(PFX_PLAIN),$(call inc_vc,wz),$(call lib_vc,wz))
 ENV_ICL  := $(call wine_env,wz,$(PFX_PLAIN),$(ICL_W)\INCLUDE;$(V8168_W)\INCLUDE;$(call wz,$(ROOT)/src/nolfsrc),$(ICL_W)\LIB;$(V8168_W)\LIB)
 ENV_GAME := $(call wine_env,ws,$(PFX_DRIVES),$(call inc_vc,ws),$(call lib_vc,ws))
-# d3d.ren links against Intel's libraries first
-ENV_D3DLINK := $(call wine_env,wz,$(PFX_PLAIN),$(call inc_vc,wz),$(ICL_W)\LIB;$(call lib_vc,wz))
+# The engine images link the C runtime of Visual C++ 6.0 SP3 (msvc-6.00-8447:
+# libcmt.lib's objects are cl 8168's, as the retail images' Rich headers
+# count them), not SP6's, which adds the heap selection (__MSVCRT_HEAP_SELECT)
+# the retail images lack; d3d.ren links against Intel's libraries first.
+ENG_CRT ?= 8447
+ENG_LIB_W := $(call wz,$(TC)/msvc-6.00-$(ENG_CRT))\LIB
+ENV_ENGLINK := $(call wine_env,wz,$(PFX_PLAIN),$(call inc_vc,wz),$(ENG_LIB_W);$(call lib_vc,wz))
+ENV_D3DLINK := $(call wine_env,wz,$(PFX_PLAIN),$(call inc_vc,wz),$(ICL_W)\LIB;$(ENG_LIB_W);$(call lib_vc,wz))
 
 # The prefixes: made the first time, then only checked. Every tool run waits
 # for its prefix (an order-only prerequisite, so it causes no rebuild). Intel
@@ -282,6 +288,11 @@ endif
 GAME_CL := /nologo /MT /W3 /GX /O2 /c
 MODERN_INCS := $(if $(MODERN),/I ..\..\modern)
 MODERN_LIBS := $(if $(MODERN),winmm.lib)
+# The old iostream library (libcimt.lib) the game DLLs and NolfServ.exe link
+# is Visual C++ 6.0's first release's, as in the retail images (cl 8168
+# objects in their Rich headers): the one SP6 ships was rebuilt, and adds
+# an RTTI-carrying __InitLock class the retail images do not have.
+LIBCIMT_RTM := msvc-6.00-8168\LIB\libcimt.lib
 WINLIBS := $(strip kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib $(MODERN_LIBS))
 dsp = $(shell python3 tools/dsp2files.py $(1) Release cpp)
 
@@ -331,6 +342,7 @@ $(call tool,$(1)/$(GOUT)/$(2),$$(GOBJ_$(1)) $(foreach l,$(4),$(call lslib,$(l)))
       echo '/out:"$(GOUT)/$(2)" /map:"$(GOUT)/$(basename $(2)).map"'; \
       $$(foreach o,$$(GOBJ_$(1)),echo '"$$(subst /,\,$$(patsubst $(1)/%,%,$$(o)))"';) \
       $(foreach l,$(4),echo '"$(call glib,$(l))"';) \
+      echo '/nodefaultlib:libcimt.lib "t:\$(LIBCIMT_RTM)"'; \
       echo '$(WINLIBS)'; } > $(GOUT)/link.rsp && \
     $(ENV_GAME) $(WINE) $(LINK) $(NOLFSRC_LDFLAGS) '@$(GOUT)/link.rsp')
 endef
@@ -394,12 +406,18 @@ E := src/engine
 # build's <target>-link.txt): the shared tool rule prints its count of
 # unresolved externals, and its errors if no binary came out.
 
-# ltmsg.dll: resources around an empty DllMain
-$(eval $(call compile,$(E)/ltmsg/Release/ltmsg.obj,$(E)/ltmsg,ltmsg.cpp,$(ENV),$(CL),$(ENG_CL) /FoRelease/,wine-plain))
+# ltmsg.dll: resources and the C runtime's DLL startup, around the C
+# runtime's own default DllMain. Built, as the retail one was (its Rich
+# header), entirely with Visual C++ 6.0 as first released (msvc-6.00-8168):
+# its compiler, its libcmt.lib, and its linker, whose cvtres.exe (5.00.1720)
+# turns the resources into an object.
+V8168 := $(TC)/msvc-6.00-8168
+ENV_LTMSG := WINEPREFIX=$(PFX_PLAIN) WINEPATH='$(V8168_W)\BIN' LIB='$(V8168_W)\LIB' INCLUDE='$(V8168_W)\INCLUDE'
+$(eval $(call compile,$(E)/ltmsg/Release/ltmsg.obj,$(E)/ltmsg,ltmsg.cpp,$(ENV_LTMSG),$(V8168)/BIN/cl.exe,$(ENG_CL) /FoRelease/,wine-plain))
 $(eval $(call tool,$(E)/ltmsg/Release/ltmsg.res,$(E)/ltmsg/ltmsg.rc | wine-plain,\
     cd $(E)/ltmsg && $(ENV) $(WINE) $(RC) $(NOLFSRC_RCFLAGS) /l 0x409 /d NDEBUG /foRelease/ltmsg.res ltmsg.rc))
 $(eval $(call tool,$(E)/ltmsg/Release/ltmsg.dll,$(E)/ltmsg/Release/ltmsg.obj $(E)/ltmsg/Release/ltmsg.res | wine-plain,\
-    cd $(E)/ltmsg && $(ENV) $(WINE) $(LINK) $(NOLFSRC_LDFLAGS) /nologo /subsystem:windows /dll /machine:I386 \
+    cd $(E)/ltmsg && $(ENV_LTMSG) $(WINE) $(V8168)/BIN/link.exe $(NOLFSRC_LDFLAGS) /nologo /subsystem:windows /dll /machine:I386 \
     /out:Release/ltmsg.dll /map:Release/ltmsg.map Release/ltmsg.obj Release/ltmsg.res kernel32.lib))
 
 # sres.dll
@@ -466,8 +484,8 @@ $(eval $(call tool,$(NOLFSERV)/Release/NolfServ.exe,$(NOLFSERV_OBJ) $(NOLFSERV)/
     $(call lslib,CryptMgr) $(call lslib,RegMgr) $(call lslib,ButeMgr) | wine-plain,\
     cd $(NOLFSERV) && $(ENV) $(WINE) $(LINK) $(NOLFSRC_LDFLAGS) /nologo /subsystem:windows /machine:I386 \
     /out:Release/NolfServ.exe /map:Release/NolfServ.map $(NOLFSERV_OBJ:$(NOLFSERV)/%=%) Release/nolfserv.res \
-    $(call q,link\server.lib ..\..\lithshared\out\CryptMgr.lib ..\..\lithshared\out\RegMgr.lib ..\..\lithshared\out\ButeMgr.lib) \
-    winmm.lib))
+    winmm.lib $(call q,link\server.lib ..\..\lithshared\out\CryptMgr.lib ..\..\lithshared\out\RegMgr.lib ..\..\lithshared\out\ButeMgr.lib) \
+    /nodefaultlib:libcimt.lib $(call q,$(call wz,$(TC))\$(LIBCIMT_RTM)) winmm.lib))
 .PHONY: nolfserv nolfserv-objs
 nolfserv-objs: $(NOLFSERV_OBJ) $(NOLFSERV)/Release/nolfserv.res
 nolfserv: $(NOLFSERV)/Release/NolfServ.exe
@@ -481,7 +499,8 @@ $(1)/Release/$(2).obj: src/lithshared/rezmgr/Release/$(2).obj
 endef
 $(foreach d,$(E)/server $(E)/lithtech,$(foreach o,$(REZ_OBJ),$(eval $(call rezcopy,$(d),$(o)))))
 
-# server.dll: cl 8447 /O1, no /GX; localdriver.cpp /Os without /Og
+# server.dll: cl 8447 /O1, no /GX; localdriver.cpp /Os without /Og (and
+# /Gf, string pooling, which /O1 implies)
 SERVER := $(E)/server
 SERVER_CL := /MT /W3 /O1 /D WIN32 /D NDEBUG /D _WINDOWS /D LT_SERVER_TIMERS /D LT_SERVER_BUILD /D NO_PRAGMA_LIBS /I ..\..\LT2\sdk\inc /I . /c /FoRelease/
 SERVER_SRC := server.cpp servermgr.cpp servermsg.cpp netmgr.cpp servermath.cpp commonphysics.cpp commonmodel.cpp \
@@ -493,28 +512,30 @@ SERVER_SRC := server.cpp servermgr.cpp servermsg.cpp netmgr.cpp servermath.cpp c
     savrest.cpp shade.cpp smgrnew.cpp modelnew.cpp objmover.cpp smgrmisc.cpp svnew.cpp svlast.cpp \
     svtiny.cpp worldtree.cpp
 SERVER_OS_SRC := localdriver.cpp
-server_flags = $(if $(filter $(1),$(SERVER_OS_SRC)),$(subst /O1,/Os /Ob1,$(SERVER_CL)),$(SERVER_CL))
+server_flags = $(if $(filter $(1),$(SERVER_OS_SRC)),$(subst /O1,/Os /Ob1 /Gf,$(SERVER_CL)),$(SERVER_CL))
 $(foreach s,$(SERVER_SRC) $(SERVER_OS_SRC),$(eval $(call compile,$(SERVER)/Release/$(s:.cpp=.obj),$(SERVER),$(s),$(ENV),$(CL8447),\
     /nologo $(call server_flags,$(s)),wine-plain)))
 SERVER_OBJ := $(sort $(patsubst %.cpp,$(SERVER)/Release/%.obj,$(SERVER_SRC) $(SERVER_OS_SRC)))
 $(eval $(call tool,$(SERVER)/link/aliases.obj,$(SERVER)/link/aliases.rsp,python3 tools/mkaliasobj.py $(SERVER)/link/aliases.rsp $(SERVER)/link/aliases.obj))
 $(eval $(call tool,$(SERVER)/link/vtables.obj,$(SERVER)/link/vtables.txt,python3 tools/mkvtabobj.py $(SERVER)/link/vtables.txt $(SERVER)/link/vtables.obj))
-# its resources: the version block and one string (server.rc)
+# its resources: the version block and one string (server.rc). link/server.def
+# only names the DLL "server.DLL" in its export table, as the retail one does.
 $(eval $(call tool,$(SERVER)/Release/server.res,$(SERVER)/server.rc | wine-plain,\
     cd $(SERVER) && $(ENV) $(WINE) $(RC) $(NOLFSRC_RCFLAGS) /l 0x409 /d NDEBUG /foRelease/server.res server.rc))
-$(eval $(call tool,$(SERVER)/Release/server.dll,$(SERVER)/link/vtables.obj $(SERVER)/link/aliases.obj $(SERVER_OBJ) $(SERVER)/Release/server.res $(call lslib,RezMgr) $(call lslib,StdLith) $(call lslib,Lith) | wine-plain,\
-    cd $(SERVER) && { $(ENV) $(WINE) $(LINK) $(NOLFSRC_LDFLAGS) /nologo /dll /machine:I386 /out:Release/server.dll /map:Release/server.map \
-    /export:CreateServer /export:DeleteServer link/vtables.obj link/aliases.obj $(SERVER_OBJ:$(SERVER)/%=%) Release/server.res \
+$(eval $(call tool,$(SERVER)/Release/server.dll,$(SERVER)/link/vtables.obj $(SERVER)/link/aliases.obj $(SERVER_OBJ) $(SERVER)/Release/server.res $(SERVER)/link/server.def $(call lslib,RezMgr) $(call lslib,StdLith) $(call lslib,Lith) | wine-plain,\
+    cd $(SERVER) && { $(ENV_ENGLINK) $(WINE) $(LINK) $(NOLFSRC_LDFLAGS) /nologo /dll /machine:I386 /out:Release/server.dll /map:Release/server.map \
+    '/def:link\server.def' /export:CreateServer /export:DeleteServer link/vtables.obj link/aliases.obj $(SERVER_OBJ:$(SERVER)/%=%) Release/server.res \
     $(call q,..\..\lithshared\out\RezMgr.lib ..\..\lithshared\out\StdLith.lib ..\..\lithshared\out\Lith.lib) \
-    libcmt.lib kernel32.lib user32.lib winmm.lib ole32.lib wsock32.lib > Release/server-link.txt 2>&1 || true; }))
+    winmm.lib libcmt.lib kernel32.lib user32.lib ole32.lib wsock32.lib > Release/server-link.txt 2>&1 || true; }))
 report_$(SERVER)/Release/server.dll := $(SERVER)/Release/server-link.txt
 .PHONY: server server-objs
 server-objs: $(SERVER_OBJ) $(REZ_OBJ:%=$(SERVER)/Release/%.obj) $(SERVER)/Release/server.res
 server: server-objs $(SERVER)/Release/server.dll
 
-# lithtech.exe: cl 8447 /O2. clientmusic.cpp is /O2 without string pooling
-# (/GF), the copy of server's localdriver.cpp is unoptimised (/Od, with
-# intrinsics and inline expansion), and controlfile.cpp is built with C++
+# lithtech.exe: cl 8447 /O2. The copy of server's localdriver.cpp is
+# unoptimised (/Od, with intrinsics and inline expansion) but pools its
+# strings (/Gf, which /O1 and /O2 imply in VC6: each literal once, in .data,
+# shared with every other object's), and controlfile.cpp is built with C++
 # exceptions (/GX).
 LITHTECH := $(E)/lithtech
 LITHTECH_CL := /MT /W3 /O2 /D WIN32 /D NDEBUG /D _WINDOWS /D NO_PRAGMA_LIBS /I ..\..\LT2\sdk\inc /I ..\server /I . /c /FoRelease/
@@ -540,17 +561,15 @@ LITHTECH_SRC := lithtech.cpp ..\server\msgterm.cpp ..\server\sdkforce.cpp ..\ser
     ..\server\counter.cpp ..\server\dalloc.cpp ..\server\modelanim.cpp ..\server\basestream.cpp \
     ..\server\collection.cpp ..\server\fsstream.cpp ..\server\objbank.cpp ..\server\objtypes.cpp \
     ..\server\saveio.cpp ..\server\serverengine.cpp ..\server\streamsim.cpp ..\server\tcpdriver.cpp \
-    ..\server\worldbsp.cpp ..\server\worldmodels.cpp ..\server\worldsim.cpp worldtree.cpp
+    ..\server\worldbsp.cpp ..\server\worldmodels.cpp ..\server\worldsim.cpp worldtree.cpp clientmusic.cpp
 # The modern build's own engine code (MODERN.md): the ##gamepad device.
 LITHTECH_SRC += $(if $(MODERN),..\..\modern\engine\p7_gamepad.cpp)
-LITHTECH_NOPOOL_SRC := clientmusic.cpp
 LITHTECH_OD_SRC := ..\server\localdriver.cpp
 LITHTECH_GX_SRC := controlfile.cpp
 lithtech_flags = $(subst /O2,$(strip \
-    $(if $(filter $(1),$(LITHTECH_NOPOOL_SRC)),/Ot /Og /Oy /Ob1 /Oi /Gs /Gy,\
-    $(if $(filter $(1),$(LITHTECH_OD_SRC)),/Od /Oi /Ob1,\
-    $(if $(filter $(1),$(LITHTECH_GX_SRC)),/GX /O2,/O2)))),$(LITHTECH_CL))
-LITHTECH_ALL := $(LITHTECH_SRC) $(LITHTECH_NOPOOL_SRC) $(LITHTECH_OD_SRC) $(LITHTECH_GX_SRC)
+    $(if $(filter $(1),$(LITHTECH_OD_SRC)),/Od /Oi /Ob1 /Gf,\
+    $(if $(filter $(1),$(LITHTECH_GX_SRC)),/GX /O2,/O2))),$(LITHTECH_CL))
+LITHTECH_ALL := $(LITHTECH_SRC) $(LITHTECH_OD_SRC) $(LITHTECH_GX_SRC)
 $(foreach s,$(LITHTECH_ALL),$(eval $(call compile,$(call c_obj,$(s),$(LITHTECH)/Release),$(LITHTECH),$(s),$(ENV),$(CL8447),\
     /nologo $(call lithtech_flags,$(s)),wine-plain)))
 LITHTECH_OBJ := $(sort $(foreach s,$(LITHTECH_ALL),$(call c_obj,$(s),$(LITHTECH)/Release)))
@@ -565,10 +584,11 @@ $(eval $(call tool,$(LITHTECH)/Release/lithtech.res,$(LITHTECH)/lithtech.rc $(wi
     cd $(LITHTECH) && $(ENV) $(WINE) $(RC) $(NOLFSRC_RCFLAGS) /l 0x409 /d NDEBUG /foRelease/lithtech.res lithtech.rc))
 $(eval $(call tool,$(LITHTECH)/Release/lithtech.exe,$(LITHTECH)/link/vtables.obj $(LITHTECH)/link/aliases.obj $(LITHTECH_OBJ) $(LITHTECH)/Release/lithtech.res \
     $(call lslib,RezMgr) $(call lslib,StdLith) $(call lslib,Lith) $(LITHTECH)/link/mss32dec.lib $(LAUNCHER)/Release/mss32.lib | wine-plain,\
-    cd $(LITHTECH) && { $(ENV) $(WINE) $(LINK) $(NOLFSRC_LDFLAGS) /nologo /subsystem:windows /machine:I386 \
+    cd $(LITHTECH) && { $(ENV_ENGLINK) $(WINE) $(LINK) $(NOLFSRC_LDFLAGS) /nologo /subsystem:windows /machine:I386 \
     /out:Release/lithtech.exe /map:Release/lithtech.map link/vtables.obj link/aliases.obj $(LITHTECH_OBJ:$(LITHTECH)/%=%) Release/lithtech.res \
-    $(call q,..\..\lithshared\out\RezMgr.lib ..\..\lithshared\out\StdLith.lib ..\..\lithshared\out\Lith.lib link\mss32dec.lib ..\launcher\Release\mss32.lib) \
-    libcmt.lib kernel32.lib user32.lib gdi32.lib winmm.lib ole32.lib wsock32.lib dinput.lib dxguid.lib uuid.lib \
+    $(call q,..\..\lithshared\out\RezMgr.lib ..\..\lithshared\out\StdLith.lib ..\..\lithshared\out\Lith.lib) \
+    winmm.lib dinput.lib dxguid.lib libcmt.lib kernel32.lib user32.lib gdi32.lib ole32.lib uuid.lib \
+    $(call q,link\mss32dec.lib ..\launcher\Release\mss32.lib) wsock32.lib \
     > Release/lithtech-link.txt 2>&1 || true; }))
 report_$(LITHTECH)/Release/lithtech.exe := $(LITHTECH)/Release/lithtech-link.txt
 .PHONY: lithtech lithtech-objs
@@ -625,7 +645,7 @@ $(eval $(call tool,$(D3D)/Release/d3d.ren,$(D3D)/link/aliases.obj $(D3D)/link/d3
     cd $(D3D) && { $(ENV_D3DLINK) $(WINE) $(LINK) $(NOLFSRC_LDFLAGS) /nologo /dll /machine:I386 \
     /out:Release/d3d.ren /map:Release/d3d.map /export:RenderDLLSetup /export:GetSupportedModes /export:FreeModeList \
     link/aliases.obj link/d3dviews.obj $(D3D_OBJ:$(D3D)/%=%) Release/d3d.res $(call q,..\..\lithshared\out\StdLith.lib) \
-    libcmt.lib kernel32.lib user32.lib winmm.lib ddraw.lib link/ddraw7.lib dxguid.lib > Release/d3d-link.txt 2>&1 || true; }))
+    ddraw.lib link/ddraw7.lib winmm.lib libmmt.lib libcmt.lib kernel32.lib user32.lib dxguid.lib > Release/d3d-link.txt 2>&1 || true; }))
 report_$(D3D)/Release/d3d.ren := $(D3D)/Release/d3d-link.txt
 .PHONY: d3d d3d-objs
 d3d-objs: $(D3D_OBJ) $(D3D)/Release/d3d.res
