@@ -18,7 +18,7 @@ game code in `src/game/` is Monolith's own NOLF Source Code v1.003 release,
 which predates the Game of the Year Edition: the GOTY changes to it,
 reconstructed from the retail GOTY game DLLs, are made in place and marked
 `GOTY:`, and the modern build's changes sit inside `#ifdef NOLFSRC_MODERN`
-blocks. See `LICENSE-NOTES.md` for what is whose.
+blocks. See [`docs/LICENSE-NOTES.md`](docs/LICENSE-NOTES.md) for what is whose.
 
 This project, and its modern build in particular, is not made or supported by
 Monolith Productions.
@@ -44,7 +44,7 @@ for Miles, and our own Bink player on FFmpeg.
 3. **Fix the bugs found during reverse engineering.** Rebuilding the engine
    to the exact bytes means reproducing its original bugs as well; once the
    byte-exact version is preserved, the fixes can go on top of it. The bugs
-   found so far are listed in [`RETAIL_BUGS.md`](RETAIL_BUGS.md). Fixes go
+   found so far are listed in [`docs/RETAIL_BUGS.md`](docs/RETAIL_BUGS.md). Fixes go
    behind the `NOLFSRC_MODERN` define and are built by `make modern`, so the
    release build keeps matching the retail one.
 4. **Move the renderer from Direct3D 7 to Vulkan**, for native play on every
@@ -101,11 +101,11 @@ make test       # optional: plays two levels under Xvfb with scripted input
 make debug      # optional: the same game with symbols and debug logging,
                 #    in out/nolf-legacy-debug/
 make modern     # optional: the game with the retail bugs fixed, in
-                #    out/nolf-modern-release/ (both: BUILDING.md, "Variant builds")
+                #    out/nolf-modern-release/ (both: docs/BUILDING.md, "Variant builds")
 make progress   # optional: how much of it matches the retail binaries
 ```
 
-`make help` lists the other targets. `BUILDING.md` explains the build in
+`make help` lists the other targets. [`docs/BUILDING.md`](docs/BUILDING.md) explains the build in
 detail.
 
 ## Play
@@ -180,7 +180,7 @@ is also what Steam Input makes of the Steam Deck's controls and of most other
 pads. The sticks move and look, the triggers fire and zoom, and the menus
 follow the d-pad, A and B; Options > Controls > Controller sets the look
 speed and dead zones, and Customize controls binds the buttons like keys
-(`MODERN.md`, P7). So far it is tested with a simulated pad only.
+([`docs/MODERN.md`](docs/MODERN.md), P7). So far it is tested with a simulated pad only.
 
 ## Contributing
 
@@ -198,6 +198,7 @@ that breaks a function that matched before.
 | `src/lithshared/` | the LithTech shared static libraries the engine and game link |
 | `src/game/` | Monolith's NOLF Source Code v1.003 (client, server and resource DLLs) |
 | `src/LT2/` | the LithTech SDK and shared-library headers from the same release |
+| `docs/` | the documentation: building, the modern build's changes, retail bugs, licences |
 | `build/` | the build scripts (`all.sh` is the whole build) |
 | `tools/` | the build's helpers, the playtest, and the tools for reading the retail code and comparing ours with it (a submodule, [nolffan/tools](https://github.com/nolffan/tools), meant for any reconstruction like this one) |
 | `tools/guides/` | how to reconstruct a function so it compiles to the retail bytes: start here to contribute; `14-progress.md` is the scoreboard |
