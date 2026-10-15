@@ -183,6 +183,14 @@ void sub_1000ef60(void* pA, Struct1000ef60* pB)
 //  0x10015770 and 0x100158c0 where the address puts it, with the callee
 //  0x10014ab0 defined in the same TU: the `add $0x0,%esp` stays every time.
 //
+//  Not a compiler revision either: this file compiled with icl 4.5 (build
+//  00015, toolchains/icl-4.5) keeps the `add $0x0,%esp` byte for byte AND
+//  loses eight of the file's nine matches (1 of 10 against 9 of 10); icl
+//  5.0.1 (build 010525Z) passes the arguments with stores instead of pushes
+//  (`mov %ecx,(%esp)`, `mov %ebp,0x4(%esp)`) and matches nothing of the
+//  file. Both measured with d3dlow.obj's own recorded command, only the
+//  compiler directory swapped.
+//
 //  (Older cl-era note:) the ONLY thing cl got wrong was the alignment pair
 //  `sub $0x8,%esp` before the two pushes, unwound by `add $0x10,%esp`.
 //
