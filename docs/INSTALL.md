@@ -6,12 +6,18 @@ a running game. To build the game from source instead, see
 
 ## What to download
 
-Each release has these archives:
+Each release has these archives, named for its version (`v0.0.3-alpha`, for
+example):
 
 | Archive | What it is |
 |---|---|
-| `nolf-modern-release-public.tar.gz` | **The one you want.** The game built from source with the modern build's fixes and features. |
-| `nolf-legacy-release-public.tar.gz` | The game built exactly as it shipped in 2001, bugs included. Kept for archive purposes. |
+| `nolfsrc-<version>.tar.gz` | **The one you want.** The game built from source with the modern build's fixes and features. |
+| `nolfsrc-debug-<version>.tar.gz` | The same with debug information. If the game crashes, it writes a backtrace to `nolfsrc.log`. |
+
+The legacy build, the game built exactly as it shipped in 2001, bugs
+included, is kept for archive purposes and is not attached to releases. To
+get it, build it ([`BUILDING.md`](BUILDING.md)); each build on GitHub
+Actions also keeps it as an artifact for a while.
 
 No game files are included. Each archive has an installer script that copies
 the game's data from your own disc images and checks every file it writes.
@@ -38,9 +44,12 @@ the game's data from your own disc images and checks every file it writes.
 1. Unpack the archive:
 
    ```sh
-   tar xzf nolf-modern-release-public.tar.gz
-   cd nolf-modern-release
+   tar xzf nolfsrc-v0.0.3-alpha.tar.gz    # the version you downloaded
+   cd nolfsrc-v0.0.3-alpha
    ```
+
+   Each archive unpacks to a directory of its own name
+   (`nolfsrc-debug-v0.0.3-alpha` for the debug one).
 
 2. Install the game data from your disc images, in either order:
 
