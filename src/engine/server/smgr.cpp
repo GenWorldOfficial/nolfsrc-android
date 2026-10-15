@@ -8066,7 +8066,7 @@ void sm_TermModels(CServerMgr* pMgr)
 	{
 		Model* pModel = (Model*)dhash_GetData(dhash_GetNext(&hIter));
 
-		dsi_ServerError("Warning!  Server unable to unload model %s due to reference count.",
+		dsi_ServerError("Warning!  Server unable to unload model %s due to reference count!",
 			pModel->GetFilename());
 	}
 }

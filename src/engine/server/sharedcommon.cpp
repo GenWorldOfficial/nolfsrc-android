@@ -8,6 +8,15 @@
 #include "iltmodel.h"
 #include "de_error.h"
 
+// The name an argument error reports: server.dll's copy of these functions
+// says "ILTCommon::...", lithtech.exe's "CommonLT::..." (the retail images'
+// strings: the two were built from different revisions of this file).
+#ifdef LT_SERVER_BUILD
+#define COMMON_ERROR_NAME(fn)	"ILTCommon::" fn
+#else
+#define COMMON_ERROR_NAME(fn)	"CommonLT::" fn
+#endif
+
 // 0x004347a0 (lithtech.exe) / 0x1001214c (server.dll) -- the constructor,
 // the first function of the file: the vptr, then m_pMath cleared.  Called
 // out of line by CLTServer's constructor on its +0x234 member (commonphysics
@@ -53,7 +62,7 @@ LTRESULT SharedCommonLT::SetObjectFlags(HOBJECT hObj, const ObjFlagType flagType
 LTRESULT SharedCommonLT::GetObjectType(HOBJECT hObj, uint32* type)
 {
 	if (!hObj)
-		RETURN_ERROR(2, "ILTCommon::GetObjectType", LT_INVALIDPARAMS);
+		RETURN_ERROR(2, COMMON_ERROR_NAME("GetObjectType"), LT_INVALIDPARAMS);
 
 	*type = hObj->m_ObjectType;
 	return LT_OK;

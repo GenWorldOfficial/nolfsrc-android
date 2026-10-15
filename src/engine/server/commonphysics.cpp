@@ -11,6 +11,15 @@
 #include "servermodel.h"
 #include "serverlightanim.h"
 
+// The name an argument error reports: server.dll's copy of these functions
+// says "ILTCommon::...", lithtech.exe's "CommonLT::..." (the retail images'
+// strings: the two were built from different revisions of this file).
+#ifdef LT_SERVER_BUILD
+#define COMMON_ERROR_NAME(fn)	"ILTCommon::" fn
+#else
+#define COMMON_ERROR_NAME(fn)	"CommonLT::" fn
+#endif
+
 LTRESULT CommonPhysicsLT::GetFrictionCoefficient(HOBJECT hObj, float& coeff)
 {
 	if (!hObj)
@@ -61,7 +70,7 @@ LTRESULT CommonPhysicsLT::GetVelocity(HOBJECT hObj, LTVector* pVel)
 LTRESULT CommonPhysicsLT::GetAcceleration(HOBJECT hObj, LTVector* pAccel)
 {
 	if (!hObj || !pAccel)
-		RETURN_ERROR(2, "ILTCommon::GetAcceleration", LT_INVALIDPARAMS);
+		RETURN_ERROR(2, COMMON_ERROR_NAME("GetAcceleration"), LT_INVALIDPARAMS);
 
 	*pAccel = hObj->m_Acceleration;
 	return LT_OK;
@@ -70,7 +79,7 @@ LTRESULT CommonPhysicsLT::GetAcceleration(HOBJECT hObj, LTVector* pAccel)
 LTRESULT CommonPhysicsLT::GetObjectMass(HOBJECT hObj, float& mass)
 {
 	if (!hObj)
-		RETURN_ERROR(2, "ILTCommon::GetObjectMass", LT_INVALIDPARAMS);
+		RETURN_ERROR(2, COMMON_ERROR_NAME("GetObjectMass"), LT_INVALIDPARAMS);
 
 	mass = hObj->m_Mass;
 	return LT_OK;
@@ -79,7 +88,7 @@ LTRESULT CommonPhysicsLT::GetObjectMass(HOBJECT hObj, float& mass)
 LTRESULT CommonPhysicsLT::SetObjectMass(HOBJECT hObj, float mass)
 {
 	if (!hObj)
-		RETURN_ERROR(2, "ILTCommon::GetObjectMass", LT_INVALIDPARAMS);
+		RETURN_ERROR(2, COMMON_ERROR_NAME("GetObjectMass"), LT_INVALIDPARAMS);
 
 	hObj->m_Mass = mass;
 	return LT_OK;

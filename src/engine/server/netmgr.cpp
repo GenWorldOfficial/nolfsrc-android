@@ -2909,7 +2909,7 @@ LTBOOL CNetMgrSendView::SendPacketData(ServerMessage* pMsg, NetConnection* pConn
 		return LTTRUE;
 	}
 	{
-		CNetMgr::DebugPrint(pConn, 5, "Sent packet %d to connection %p (packet ID %d (%d), length %d)",
+		CNetMgr::DebugPrint(pConn, 5, "Sent packet %d to connection %p (packet ID %d (%d), length %d).",
 			((NetConnectionResetView*)pConn)->m_nSent, pConn,
 			pMsg->m_pData[0] & 0x3f, pMsg->m_pData[0], pMsg->m_Unknown34);
 

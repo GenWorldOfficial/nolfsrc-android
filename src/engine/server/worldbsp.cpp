@@ -1978,7 +1978,7 @@ LTBOOL CWorldSimple::Load(CWorldBsp* pParent, ILTStream* pStream, uint32 nIndex)
 
 	if (!fs_GetTableName(pParent->m_Name, nIndex, m_Name, sizeof(m_Name)))
 	{
-		dsi_ServerError("** Terrain %s's name is too long, can't hold TerrainSections");
+		dsi_ServerError("** Terrain %s's name is too long, can't hold TerrainSections.");
 		return LTFALSE;                      // 0x1000a8f5 -> 0x1000aa45
 	}
 
