@@ -78,9 +78,9 @@ of each binary's code, by size, those functions make up.
 | `NolfServ.exe` | the dedicated server | 325 / 355 | 58,531 / 59,107 bytes | `███████████████████░` 99.0% | 2 | 0 |
 | lithshared | the shared libraries | 807 / 812 | 96,039 / 98,226 bytes | `███████████████████░` 97.7% | 0 | 0 |
 | `CShell.dll` | the game: client | 3,715 / 4,928 | 914,920 / 933,114 bytes | `███████████████████░` 98.0% | 0 | 0 |
-| `Object.lto` | the game: server objects | 4,885 / 6,919 | 1,239,233 / 1,261,040 bytes | `███████████████████░` 98.2% | 0 | 0 |
+| `Object.lto` | the game: server objects | 4,886 / 6,919 | 1,240,057 / 1,261,040 bytes | `███████████████████░` 98.3% | 0 | 0 |
 | `CRes.dll` | the game's resources, not in the total | 411 / 411 resources | 704,745 / 704,745 bytes | `████████████████████` 100.0% | 0 | -- |
-| **All** | | **15,728 / 19,884** | **3,132,972 / 3,722,796 bytes** | `████████████████░░░░` **84.1%** | **2** | **32** |
+| **All** | | **15,729 / 19,884** | **3,133,796 / 3,722,796 bytes** | `████████████████░░░░` **84.1%** | **2** | **32** |
 <!-- progress:end -->
 
 Every function in that table is recorded in `progress/identical.txt`, and

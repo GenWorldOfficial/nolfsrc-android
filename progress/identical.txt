@@ -5353,6 +5353,7 @@ Object.lto	sub_1001c900
 Object.lto	sub_1001c950
 Object.lto	sub_1001c9a0
 Object.lto	sub_1001c9d0
+Object.lto	sub_1001c9f0
 Object.lto	sub_1001cd30
 Object.lto	sub_1001cdf0
 Object.lto	sub_1001ceb0

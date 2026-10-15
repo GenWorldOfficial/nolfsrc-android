@@ -853,6 +853,15 @@ void CAIHuman::HandleDamage(const DamageStruct& damage)
 		if ( !IsAlert() && (damage.fDamage > 100.0f) )
 		{
 			m_fLastPainVolume = 0.1f;
+
+			// GOTY: reconstructed from the Game of the Year Object.lto
+			// (0x1001ca51): one AI, named DoorGuard_NKHak, cannot be
+			// knocked out from behind
+			if ( 0 == _stricmp(g_pLTServer->GetObjectName(m_hObject), "DoorGuard_NKHak") )
+			{
+				return;
+			}
+
 			m_damage.SetHitPoints(0.0f);
 			m_damage.HandleDestruction(damage.hDamager);
 			return;

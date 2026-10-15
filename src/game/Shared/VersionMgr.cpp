@@ -19,8 +19,11 @@
 static const char* s_szVersion		= "";
 static const char* s_szBuild		= "Demo Build 7";
 #else
-static const char* s_szVersion		= "v1.003";
-static const char* s_szBuild		= "Build 410";
+// GOTY: the Game of the Year CShell.dll and Object.lto say "v1.004" and
+// "Build 415" (the strings beside "German"/"Language" in both); the v1.003
+// source release says "v1.003", "Build 410"
+static const char* s_szVersion		= "v1.004";
+static const char* s_szBuild		= "Build 415";
 #endif 
 static const uint32 s_nSaveVersion  = 4;
 
