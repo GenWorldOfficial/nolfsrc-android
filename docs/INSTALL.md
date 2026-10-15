@@ -137,9 +137,56 @@ If you get stuck in the level geometry, `mpclip` lets you fly out.
 | `autoexec.cfg` | Your settings and key bindings, rewritten when the game exits. Delete it to start from the defaults (`defaults.cfg`). |
 | `Save/` | Saved games. |
 | `modern.log` | The modern build's log, emptied each run. Attach it when you report a problem. |
+| `NetHost.txt`, `modern-server.log` | The dedicated server's settings, and its log in the modern build (below). |
 
 ## Multiplayer
 
 The internet server list uses the OpenSpy master server
 (`master.openspy.net`) in place of GameSpy's, which is gone. The modern build
 plays with retail 1.003 players and servers.
+
+## A dedicated server
+
+The game directory also has the game's stand-alone server, `NolfServ.exe`:
+a server with no player of its own, that keeps hosting deathmatch or
+H.A.R.M. vs UNITY games for others to join. Players join it from the
+Multiplayer menu (on the internet list, or over a LAN), or start the game
+with `+connect <address>:27888`.
+
+- **Windows:** start `NolfServ.exe`. Its setup wizard asks for the
+  session's name, the game type, the number of players, the port, the
+  options and the worlds; Finish starts the server.
+- **Linux:** `./linux-server.sh`. The first time it shows the same wizard;
+  after that it starts straight away with the saved settings. Without a
+  display (a server machine, a container) it runs under `xvfb-run`, a
+  virtual display, which then needs to be installed (`xvfb`); the wizard
+  then cannot be shown, so start it once on a desktop, or give the settings
+  on the command line.
+
+The settings are kept in `NetHost.txt` in the game directory. Each can also
+be given on the command line as `-<setting> <value>`: `-NetSessionName`,
+`-NetPort` (default 27888), `-NetMaxPlayers` (up to 16), `-NetGameType` (2
+deathmatch, 1 H.A.R.M. vs UNITY), `-NetUsePassword` and `-NetPassword`, and
+the game's options (`-NetEndFrags`, `-NetEndTime`, `-NetRunSpeed`, ...).
+`-nowiz` starts without the wizard. For example:
+
+```sh
+./linux-server.sh -NetSessionName "My server" -NetMaxPlayers 8
+```
+
+The modern build adds to that:
+
+- `-NetLevel <world>`, once per world, sets the deathmatch level list
+  (`-NetCALevel` for H.A.R.M. vs UNITY), for example `-NetLevel
+  'Worlds\Multi\DeathMatch\001THEPAD_DM'`;
+- `-MasterServer <host>` names the master server the game is listed on
+  (default `master.openspy.net`; `none` lists it nowhere), which the
+  server's console shows when it starts;
+- everything the console shows also goes to `modern-server.log`.
+
+The server answers on UDP port 27888 (or the `-NetPort` you give it): let
+it through the firewall for players on other machines. It runs until Stop
+Server is clicked (or the process is ended).
+
+In the legacy build, `-nowiz` is only read when another argument follows
+it (a bug of the original server, which `linux-server.sh` works around).

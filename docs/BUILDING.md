@@ -47,10 +47,10 @@ parts of it by hand.
 |---|---|---|
 | 1. resources | game data from the retail game: the four `.rez` archives, configs, text, movies -- with the retail game DLLs inside the archives overwritten with zeros | `out/nolf-legacy-release/` |
 | 2. third-party runtime | Miles Sound System (`mss32.dll` and its `.flt` / `.m3d` / `.asi` / `.as6` providers) and Bink (`binkw32.dll`) from the retail game: licensed middleware with no source, which the engine imports | `out/nolf-legacy-release/` |
-| 2b. launcher art | the splash bitmap, palette, music, icon and cursors `launcher.rc` compiles into `NOLF.exe`, read out of the retail `NOLF.exe`'s resources | `src/engine/launcher/res/` |
+| 2b. launcher and server art | the splash bitmap, palette, music, icon and cursors `launcher.rc` compiles into `NOLF.exe`, read out of the retail `NOLF.exe`'s resources; the icons and wizard bitmap `nolfserv.rc` compiles into `NolfServ.exe`, out of the retail `NolfServ.exe`'s | `src/engine/launcher/res/`, `src/engine/nolfserv/res/` |
 | 2c. Game of the Year text | the strings of the Game of the Year content (the "Rest and Relaxation" mission) and the GOTY credits, which Monolith's v1.003 source of `CRes.dll` lacks, read out of the retail GOTY `CRES.dll` (in `NOLFGOTY.REZ`); compiled into our `CRes.dll` beside `ClientRes.rc`, so its resources are the retail ones | `src/game/ClientRes/goty/` |
-| 3. compile | `build/compile.sh`: every compile and link, by `build/build.mk` (below) -- the lithshared libraries (`RegMgr` twice, as Monolith built it for each game DLL: the Release build for `NOLF.exe` and `Object.lto`, the Debug build, `RegMgr_Debug.lib`, for `CShell.dll`, which the Game of the Year `CShell.dll` linked); the game DLLs `CRes.dll`, `CShell.dll`, `Object.lto`; the engine, `ltmsg.dll`, `sres.dll`, `NOLF.exe`, `server.dll`, `lithtech.exe`, `d3d.ren` | `src/lithshared/out/*.lib`, `src/game/*/Release`, `Final_Release`, `src/engine/*/Release` |
-| 4. assemble | the built binaries into the game directory; the game DLLs and `sres.dll` go in `custom/`, the rez directory the engine searches last | `out/nolf-legacy-release/` |
+| 3. compile | `build/compile.sh`: every compile and link, by `build/build.mk` (below) -- the lithshared libraries (`RegMgr` twice, as Monolith built it for each game DLL: the Release build for `NOLF.exe` and `Object.lto`, the Debug build, `RegMgr_Debug.lib`, for `CShell.dll`, which the Game of the Year `CShell.dll` linked; and `ButeMgr` twice, without MFC for the game DLLs and with it for `NolfServ.exe`); the game DLLs `CRes.dll`, `CShell.dll`, `Object.lto`; the engine, `ltmsg.dll`, `sres.dll`, `NOLF.exe` (the launcher), `NolfServ.exe` (the dedicated server), `server.dll`, `lithtech.exe`, `d3d.ren` | `src/lithshared/out/*.lib`, `src/game/*/Release`, `Final_Release`, `src/engine/*/Release` |
+| 4. assemble | the built binaries into the game directory; the game DLLs and `sres.dll` go in `custom/`, the rez directory the engine searches last (and that `startup.txt`, the rez list of the dedicated server `NolfServ.exe`, gets as its last entry) | `out/nolf-legacy-release/` |
 | 5. audit | every PE file in `out/nolf-legacy-release/` listed with its origin (`out/nolf-legacy-release/MANIFEST.txt`); the build fails if one is unaccounted for, or if a `.rez` archive still holds one | |
 | 6. package | `out/nolf-legacy-release/` as a compressed tar, whole (`-private`), and without the disc data plus the scripts that install it from the player's disc images (`-public`; `build/package.sh`, `tools/mkinstall.py`) | `out/nolf-legacy-release-private.tar.gz`, `out/nolf-legacy-release-public.tar.gz` |
 
@@ -110,6 +110,16 @@ make distclean    # clean, and remove the docker image
 `wine.log`, `script.log`, the screenshots in `shots/` and a contact sheet
 `shots.png`.
 
+The dedicated server has a test of its own, `tools/servertest.sh` (in
+`make shell`): it starts the game directory's `NolfServ.exe` unattended
+under Xvfb, hosting a deathmatch, checks it hosts and stops cleanly, and
+with `SERVERTEST_CLIENT=1` has the game join it; the run, its screenshots
+and logs are in `out/play/<game directory>-server/`:
+
+```sh
+SERVERTEST_CLIENT=1 tools/servertest.sh out/nolf-legacy-release 60
+```
+
 `make progress` scores what the last `make` built (it compiles nothing), so
 run `make` first; the retail images it compares against are extracted from
 the retail game into `out/reference/` the first time. `progress/README.md` describes
@@ -132,7 +142,10 @@ build/reference.sh                    # the retail images, into out/reference/
 build/engine.sh server verify         # compile, then match every function
                                       #   against the retail server.dll
 build/engine.sh server-one smgr.cpp PlaySound   # recompile one file, match it
+build/engine.sh nolfserv verify       # the dedicated server's objects, matched
+build/engine.sh nolfserv-one ServerDlg.cpp OnTimer   # (likewise one file)
 tools/playtest.sh out/nolf-legacy-release 'Worlds\M01S01' 60   # idle for 60 s on a level
+tools/servertest.sh out/nolf-legacy-release 60  # host with NolfServ.exe for 60 s
 ```
 
 All of them build through `build/build.mk`, which has every compiler and

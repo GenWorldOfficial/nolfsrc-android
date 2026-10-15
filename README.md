@@ -3,8 +3,8 @@
 Source code and a build for **The Operative: No One Lives Forever** (Game of
 the Year Edition, PC, 2000/2001): every executable and DLL of the game --
 the LithTech engine (`lithtech.exe`, `server.dll`, the Direct3D renderer
-`d3d.ren`), the `NOLF.exe` launcher, `ltmsg.dll`, `sres.dll` and the three game
-DLLs -- compiled from the source in this repository with the original
+`d3d.ren`), the `NOLF.exe` launcher, the `NolfServ.exe` dedicated server,
+`ltmsg.dll`, `sres.dll` and the three game DLLs -- compiled from the source in this repository with the original
 2000-era compilers.
 
 <p align="center">
@@ -139,8 +139,9 @@ To play elsewhere, copy `out/nolf-legacy-release-private.tar.gz` (one file), unp
 and run `nolf-legacy-release/linux-run.sh`. Every variant is packaged the same way:
 `out/nolf-legacy-debug-private.tar.gz`, `out/nolf-modern-release-private.tar.gz` and
 `out/nolf-modern-debug-private.tar.gz`. `nolf-legacy-release/linux-run-launcher.sh` starts the game through the
-`NOLF.exe` launcher instead. Both scripts document their options in their
-headers. Sound needs Wine's audio to work on that machine.
+`NOLF.exe` launcher instead, and `nolf-legacy-release/linux-server.sh` runs a
+dedicated server (`NolfServ.exe`; without a display it runs under
+`xvfb-run`). The scripts document their options in their headers. Sound needs Wine's audio to work on that machine.
 
 The `-private` archives hold the retail game's data (1.1 GB of it), so they
 are for your own machines and for others developing on the build. To give
@@ -246,7 +247,7 @@ its code (`docs/MODERN.md`, "Rules for this work").
 
 | Path | What |
 |---|---|
-| `src/engine/` | the engine, launcher and resource DLLs (reconstructed source) |
+| `src/engine/` | the engine, launcher, dedicated server and resource DLLs (reconstructed source) |
 | `src/lithshared/` | the LithTech shared static libraries the engine and game link |
 | `src/game/` | Monolith's NOLF Source Code v1.003 (client, server and resource DLLs) |
 | `src/LT2/` | the LithTech SDK and shared-library headers from the same release |
