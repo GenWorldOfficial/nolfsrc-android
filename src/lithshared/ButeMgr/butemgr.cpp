@@ -703,7 +703,7 @@ void CButeMgr::AuxTabItemsSave(const char* sz, CSymTabItem* pItem, void* p)
 		{
 			CString s = *pItem->data.s;
 			s.Replace("\"", "\"\"");
-			*pSaveData << '"' << s.GetBuffer() << '"';
+			*pSaveData << '"' << (LPCSTR)s << '"';
 			break;
 		}
 	case RectType:

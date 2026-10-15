@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Build the engine binaries from src/engine/: ltmsg.dll, sres.dll, NOLF.exe
-# (the launcher), server.dll, lithtech.exe and d3d.ren, one at a time, and
+# (the launcher), NolfServ.exe (the stand-alone server), server.dll,
+# lithtech.exe and d3d.ren, one at a time, and
 # check them. (build/all.sh builds everything at once, with build/compile.sh.)
 # `server`, `lithtech` and `d3d` compile a target's objects, and each *-link
 # target (`launcher link` for NOLF.exe) links the whole image.
@@ -62,7 +63,7 @@ match() {
 # file (whatever build/build.mk's flags for it are) and match only its object
 one() {
     local t="$1" tu="${2:?usage: engine.sh $1-one <tu.cpp> [symbol-filter]}" img="$3" obj
-    obj="src/engine/$t/Release/${tu%.cpp}.obj"
+    obj="src/engine/$t/Release/$(basename "${tu//\\//}" .cpp).obj"
     # a failed compile under Wine can exit 0 and leave the old object in
     # place, so a broken edit would measure as no change
     rm -f "$obj"
@@ -106,6 +107,16 @@ case "${1:-}" in
                               src/lithshared/out/RegMgr.lib ;;
                   *)      nolfsrc_make launcher-objs ;;
               esac ;;
+    nolfserv) case "${2:-}" in
+                  link)   nolfsrc_make nolfserv ;;
+                  # every NolfServ.exe function of ours, matched in the
+                  # retail image (the libraries it links included)
+                  verify) nolfsrc_make nolfserv-objs
+                          match "$(ref NolfServ.exe)" src/engine/nolfserv/Release/*.obj \
+                              src/lithshared/out/CryptMgr.lib src/lithshared/out/RegMgr.lib \
+                              src/lithshared/out/ButeMgr.lib ;;
+                  *)      nolfsrc_make nolfserv-objs ;;
+              esac ;;
     server|lithtech|d3d)
               nolfsrc_make "$1-objs"
               if [ "${2:-}" = verify ]; then
@@ -120,6 +131,8 @@ case "${1:-}" in
     server-one)   one server "${2:-}" server.dll "${3:-}" ;;
     lithtech-one) one lithtech "${2:-}" lithtech.exe "${3:-}" ;;
     d3d-one)      one d3d "${2:-}" d3d.ren "${3:-}" ;;
+    #   build/engine.sh nolfserv-one ServerDlg.cpp OnTimer
+    nolfserv-one) one nolfserv "${2:-}" NolfServ.exe "${3:-}" ;;
     server-link|lithtech-link|d3d-link)
               t="${1%-link}"
               nolfsrc_make "$t" || exit 1
@@ -134,8 +147,8 @@ case "${1:-}" in
                       d3d)    test_load d3dtest src/engine/d3d/Release/d3d.ren d3dloadtest.c ;;
                   esac
               fi ;;
-    *) echo "usage: $0 ltmsg [verify] | sres | launcher [link|verify]"
+    *) echo "usage: $0 ltmsg [verify] | sres | launcher [link|verify] | nolfserv [link|verify]"
        echo "       $0 server|lithtech|d3d [verify]"
        echo "       $0 server-link [test] | lithtech-link | d3d-link [test]"
-       echo "       $0 server-one|lithtech-one|d3d-one <file.cpp> [symbol]"; exit 1 ;;
+       echo "       $0 server-one|lithtech-one|d3d-one|nolfserv-one <file.cpp> [symbol]"; exit 1 ;;
 esac

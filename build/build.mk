@@ -15,8 +15,9 @@
 #   make -f build/build.mk -j<N> [target...]
 #
 # Targets: all (the default); libs; cres cshell object (game); ltmsg sres
-# launcher server lithtech d3d (engine); <x>-objs for a binary's objects
-# without the link (server, lithtech, d3d, launcher); any single object.
+# launcher nolfserv server lithtech d3d (engine); <x>-objs for a binary's
+# objects without the link (server, lithtech, d3d, launcher, nolfserv); any
+# single object.
 #
 # Every command line is the one the original build scripts ran, flag for
 # flag, one source per compile instead of a batch per directory: the
@@ -27,6 +28,7 @@
 #   CRes, CShell, Object    cl 12.00 (toolchains/msvc-6.00-9782), /O2, with a
 #                           precompiled header, from fixed Wine drives (below)
 #   ltmsg, sres, launcher   cl 12.00, /O2
+#   NolfServ.exe            cl 12.00, /O2 /GR, MFC, precompiled header
 #   server.dll              cl 12.00.8447 /O1; localdriver.cpp /Os
 #   lithtech.exe            cl 12.00.8447 /O2; a few files with their own flags
 #   d3d.ren                 Intel C/C++ 4.0 (toolchains/icl-4.0), per-file
@@ -228,6 +230,16 @@ $(eval $(call tool,$(LOUT)/ButeMgrNoMFC.lib,$$(LSOBJ_ztools) $$(LSOBJ_ButeMgr) |
 pre_$(LOUT)/ButeMgrNoMFC.lib = $(call prune,src/lithshared/ztools/Release,$(LSOBJ_ztools))
 LIBS += $(LOUT)/ButeMgrNoMFC.lib
 
+# ButeMgr: the same parser built against MFC (statically linked, as the
+# MFC applications that link it are): butemgr.cpp without _NOMFC, with the
+# same zTools objects. NolfServ.exe links it. (The source release ships no
+# prebuilt copy of this flavour, so it is scored inside NolfServ.exe only.)
+$(eval $(call compile,src/lithshared/ButeMgr/Release/mfc/butemgr.obj,src/lithshared/ButeMgr,butemgr.cpp,$(ENV),$(CL8447),\
+    $(LIB_CFLAGS) /I $(LT2LS)\butemgr /I $(LT2LS)\incs /I $(LT2LS)\lith /I $(LT2LS)\cryptmgr /I . /FoRelease/mfc/,wine-plain))
+$(eval $(call tool,$(LOUT)/ButeMgr.lib,src/lithshared/ButeMgr/Release/mfc/butemgr.obj $$(LSOBJ_ztools) | wine-plain,\
+    cd src/lithshared && $(ENV) $(WINE) $(LIBEXE) /nologo '/out:out\ButeMgr.lib' 'ButeMgr\Release\mfc\butemgr.obj' 'ztools\Release\*.obj'))
+LIBS += $(LOUT)/ButeMgr.lib
+
 # GameSpyMgr / GameSpyClientMgr: our replacements for the GameSpy middleware
 $(eval $(call lsobjs,gamespy,/I $(LT2LS)\incs /I $(LT2LS)\mfcstub /I .,GameSpyMgr.cpp GameSpyClientMgr.cpp))
 $(foreach l,GameSpyMgr GameSpyClientMgr,$(eval $(call tool,$(LOUT)/$(l).lib,src/lithshared/gamespy/Release/$(l).obj | wine-plain,\
@@ -424,6 +436,37 @@ $(eval $(call tool,$(LAUNCHER)/Release/NOLF.exe,$(LAUNCHER_SRC:%.cpp=$(LAUNCHER)
 .PHONY: launcher launcher-objs
 launcher-objs: $(LAUNCHER_SRC:%.cpp=$(LAUNCHER)/Release/%.obj) $(LAUNCHER)/Release/launcher.res
 launcher: $(LAUNCHER)/Release/NOLF.exe
+
+# NolfServ.exe, the dedicated server: an MFC dialog application (MFC linked
+# statically, RTTI on, a precompiled header, as AppWizard set it up), its
+# own sources in link order, the launcher's dlgcustom.cpp (through
+# CustomDlg.cpp) and the game's NetDefs.cpp. It links server.dll by ordinal
+# (link/server.def), and the RegMgr, CryptMgr and ButeMgr (MFC) libraries.
+# Its icons and wizard bitmap (res/) are read out of the retail NolfServ.exe
+# by build/all.sh.
+NOLFSERV := $(E)/nolfserv
+NOLFSERV_CL := /nologo /MT /W3 /GR /GX /O2 /I ..\..\LT2\sdk\inc /I ..\..\LT2\lithshared\incs /I ..\..\game\Shared \
+    /D NDEBUG /D WIN32 /D _WINDOWS /D NO_PRAGMA_LIBS /D _NOLFSERV /c
+NOLFSERV_SRC := CustomDlg.cpp ..\launcher\dlgcustom.cpp ..\..\game\Shared\NetDefs.cpp OptionsAssaultDlg.cpp OptionsDeathmatchDlg.cpp OptionsDlg.cpp \
+    ServerApp.cpp ServerDlg.cpp SessionDlg.cpp StdAfx.cpp WizardDlg.cpp WorldsDlg.cpp
+NOLFSERV_OBJ := $(foreach s,$(NOLFSERV_SRC),$(call c_obj,$(s),$(NOLFSERV)/Release))
+$(eval $(call compile,$(NOLFSERV)/Release/StdAfx.obj,$(NOLFSERV),StdAfx.cpp,$(ENV),$(CL),\
+    $(NOLFSERV_CL) /Ycstdafx.h /FpRelease/NolfServ.pch /FoRelease/,wine-plain))
+$(foreach s,$(filter-out StdAfx.cpp,$(NOLFSERV_SRC)),$(eval $(call compile,$(call c_obj,$(s),$(NOLFSERV)/Release),$(NOLFSERV),$(s),$(ENV),$(CL),\
+    $(NOLFSERV_CL) /Yustdafx.h /FpRelease/NolfServ.pch /FoRelease/,wine-plain))$(eval $(call c_obj,$(s),$(NOLFSERV)/Release): $(NOLFSERV)/Release/StdAfx.obj))
+$(eval $(call tool,$(NOLFSERV)/Release/nolfserv.res,$(NOLFSERV)/nolfserv.rc $(NOLFSERV)/resource.h $(wildcard $(NOLFSERV)/res/*) | wine-plain,\
+    cd $(NOLFSERV) && $(ENV) $(WINE) $(RC) $(NOLFSRC_RCFLAGS) /l 0x409 /d NDEBUG /foRelease/nolfserv.res nolfserv.rc))
+$(eval $(call tool,$(NOLFSERV)/link/server.lib,$(NOLFSERV)/link/server.def | wine-plain,\
+    cd $(NOLFSERV) && $(ENV) $(WINE) $(LIBEXE) /nologo /machine:i386 '/def:link\server.def' '/out:link\server.lib' >/dev/null))
+$(eval $(call tool,$(NOLFSERV)/Release/NolfServ.exe,$(NOLFSERV_OBJ) $(NOLFSERV)/Release/nolfserv.res $(NOLFSERV)/link/server.lib \
+    $(call lslib,CryptMgr) $(call lslib,RegMgr) $(call lslib,ButeMgr) | wine-plain,\
+    cd $(NOLFSERV) && $(ENV) $(WINE) $(LINK) $(NOLFSRC_LDFLAGS) /nologo /subsystem:windows /machine:I386 \
+    /out:Release/NolfServ.exe /map:Release/NolfServ.map $(NOLFSERV_OBJ:$(NOLFSERV)/%=%) Release/nolfserv.res \
+    $(call q,link\server.lib ..\..\lithshared\out\CryptMgr.lib ..\..\lithshared\out\RegMgr.lib ..\..\lithshared\out\ButeMgr.lib) \
+    winmm.lib))
+.PHONY: nolfserv nolfserv-objs
+nolfserv-objs: $(NOLFSERV_OBJ) $(NOLFSERV)/Release/nolfserv.res
+nolfserv: $(NOLFSERV)/Release/NolfServ.exe
 
 # RezMgr's objects, copied beside server.dll's and lithtech.exe's: the
 # links take the library, the per-object checks (engine.sh verify) these.

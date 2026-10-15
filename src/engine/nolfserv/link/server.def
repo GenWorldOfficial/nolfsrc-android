@@ -1,0 +1,4 @@
+LIBRARY server.DLL
+EXPORTS
+	CreateServer @1 NONAME
+	DeleteServer @2 NONAME

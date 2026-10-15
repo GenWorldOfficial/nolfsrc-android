@@ -35,8 +35,11 @@
 #   2b. launcher art      the splash bitmap, palette, music, icon and cursors
 #                         that launcher.rc compiles into NOLF.exe, read out of
 #                         the retail NOLF.exe's resource section
-#                         into src/engine/launcher/res/ (data, not code; the
-#                         retail image is parsed, never copied or run).
+#                         into src/engine/launcher/res/, and the icons and
+#                         wizard bitmap nolfserv.rc compiles into NolfServ.exe,
+#                         from the retail NolfServ.exe into
+#                         src/engine/nolfserv/res/ (data, not code; the
+#                         retail images are parsed, never copied or run).
 #   3. compile            every binary, by build/build.mk, all at once (one
 #                         job per CPU; NOLFSRC_JOBS=<n> to change it) and only
 #                         what changed since the last build (`make clean`
@@ -63,7 +66,8 @@
 # Every other input is a committed source file (including the committed link
 # inputs src/engine/*/link/*, src/engine/d3d/d3ddata.cpp and
 # src/engine/launcher/libs/mss32.def). No step uses retail code: step 2b reads
-# only the launcher's art out of the retail NOLF.exe's resources.
+# only the launcher's and the server's art out of the retail NOLF.exe's and
+# NolfServ.exe's resources.
 set -e
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
@@ -113,8 +117,9 @@ else
     python3 tools/retailextract.py thirdparty "$RETAIL" "$OUT"
 fi
 
-step "2b. launcher art: resources of the retail NOLF.exe in $RETAIL -> src/engine/launcher/res/"
+step "2b. launcher and server art: resources of the retail NOLF.exe and NolfServ.exe in $RETAIL -> src/engine/{launcher,nolfserv}/res/"
 python3 tools/retailextract.py launcherres "$RETAIL" src/engine/launcher/res
+python3 tools/retailextract.py nolfservres "$RETAIL" src/engine/nolfserv/res
 
 step "2c. Game of the Year text: the retail CRES.dll in $RETAIL -> src/game/ClientRes/goty/"
 python3 tools/retailextract.py goty "$RETAIL" src/game/ClientRes/goty

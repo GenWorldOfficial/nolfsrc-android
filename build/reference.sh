@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Extract the retail engine images -- lithtech.exe, server.dll, d3d.ren,
-# NOLF.exe, ltmsg.dll -- and the Game of the Year game DLLs -- CShell.dll,
+# NOLF.exe, NolfServ.exe, ltmsg.dll -- and the Game of the Year game DLLs -- CShell.dll,
 # Object.lto, CRes.dll, out of NOLFGOTY.REZ -- from the installed retail game
 # (build/retail.sh) into
 # out/reference/, with their function
@@ -22,7 +22,7 @@ python3 tools/retailextract.py reference "$(retail_dir)" out/reference
 # it. The reconstruction tools read these (fndiff.py's sizes, tagmap.py,
 # uncovered.py, ...); like the images, they are derived, never committed.
 for pair in server:server.dll lithtech:lithtech.exe d3d:d3d.ren NOLF:NOLF.exe \
-            CShell:CShell.dll Object:Object.lto; do
+            NolfServ:NolfServ.exe CShell:CShell.dll Object:Object.lto; do
     python3 tools/enumfuncs.py "out/reference/${pair#*:}" \
         --csv "out/reference/${pair%%:*}-functions.csv" | tail -1
 done

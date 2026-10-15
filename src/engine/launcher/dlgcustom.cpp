@@ -8,12 +8,21 @@
 //
 //				Shipped NOLF.exe v1.003: 0x4013e0 - 0x401e01.
 //
+//				NolfServ.exe, the stand-alone server, compiles this file
+//				too (_NOLFSERV), for its wizard's customization page
+//				(src/engine/nolfserv/CustomDlg.cpp, which owns the
+//				globals there): every function but the dialog proc, with
+//				the server's buttons, its own registry values, and a
+//				CRegMgr object in place of the launcher's pointer.
+//				Retail NolfServ.exe: 0x4015a0 - 0x401ccf.
+//
 // *********************************************************************** //
 
 #include "stdafx.h"
 #include "direct.h"
 #include "io.h"
 #include "regmgr.h"
+#ifndef _NOLFSERV
 #include "launcher.h"
 
 
@@ -21,6 +30,23 @@
 
 CStringList	g_lstRezFiles;			// 0x4168
 int			g_bSaveRezFiles;		// 0x4184
+
+#define REZKEY_SAVE			"Save Rez Files"
+#define REZKEY_FILES		"Rez Files"
+#else
+// The server's globals (CustomDlg.cpp), its buttons (IDC_ADD, IDC_REMOVE)
+// and its registry values. Its registry is an object, not a pointer, and
+// the launcher's checks of the pointer are not in its copy.
+extern CStringList	g_lstRezFiles;
+extern int			g_bSaveRezFiles;
+extern CRegMgr		g_RegMgr;
+#define g_pRegMgr			(&g_RegMgr)
+
+#define REZBTN_ADD			1052
+#define REZBTN_REMOVE		1034
+#define REZKEY_SAVE			"Save Rez Files (Server)"
+#define REZKEY_FILES		"Rez Files (Server)"
+#endif
 
 
 // Prototypes...
@@ -37,6 +63,7 @@ int		SaveRezList(HWND hList);
 void	SaveRezFiles(HWND hWnd);
 
 
+#ifndef _NOLFSERV
 // *********************************************************************** //
 //
 //	ROUTINE:	CustomizeDlgProc()   [0x401420]
@@ -128,6 +155,7 @@ RemoveRez:
 
 	return FALSE;
 }
+#endif
 
 
 // *********************************************************************** //
@@ -368,11 +396,23 @@ void UpdateRezButtons(HWND hWnd)
 	if (!hWnd)
 		return;
 
+#ifndef _NOLFSERV
 	EnableWindow(GetDlgItem(hWnd, 1037),
 		CanAddRez(GetDlgItem(hWnd, 1039), GetDlgItem(hWnd, 1040)));
 
 	EnableWindow(GetDlgItem(hWnd, 1038),
 		CanRemoveRez(GetDlgItem(hWnd, 1039), GetDlgItem(hWnd, 1040)));
+#else
+	// The server's copy finds the answer, then the button: the button's
+	// GetDlgItem() comes after CanAddRez() / CanRemoveRez() (0x4019b0).
+	BOOL bEnable = CanAddRez(GetDlgItem(hWnd, 1039), GetDlgItem(hWnd, 1040));
+	HWND hButton = GetDlgItem(hWnd, REZBTN_ADD);
+	EnableWindow(hButton, bEnable);
+
+	bEnable = CanRemoveRez(GetDlgItem(hWnd, 1039), GetDlgItem(hWnd, 1040));
+	hButton = GetDlgItem(hWnd, REZBTN_REMOVE);
+	EnableWindow(hButton, bEnable);
+#endif
 }
 
 
@@ -421,11 +461,13 @@ int SaveRezList(HWND hList)
 
 void SaveRezFiles(HWND hWnd)
 {
+#ifndef _NOLFSERV
 	if (!g_pRegMgr)
 		return;
+#endif
 
 	int bSave = (IsDlgButtonChecked(hWnd, 1043) == BST_CHECKED);
-	g_pRegMgr->Set("Save Rez Files", bSave);
+	g_pRegMgr->Set(REZKEY_SAVE, bSave);
 
 	if (!bSave)
 		return;
@@ -446,7 +488,7 @@ void SaveRezFiles(HWND hWnd)
 		}
 	}
 
-	g_pRegMgr->Set("Rez Files", sRezFiles);
+	g_pRegMgr->Set(REZKEY_FILES, sRezFiles);
 }
 
 
@@ -460,12 +502,14 @@ void SaveRezFiles(HWND hWnd)
 
 void LoadRezFiles()
 {
+#ifndef _NOLFSERV
 	if (!g_pRegMgr)
 		return;
+#endif
 
 	g_lstRezFiles.RemoveAll();
 
-	if (!g_pRegMgr->Get("Save Rez Files", 0))
+	if (!g_pRegMgr->Get(REZKEY_SAVE, 0))
 	{
 		g_bSaveRezFiles = 0;
 		return;
@@ -478,7 +522,7 @@ void LoadRezFiles()
 	char sRezFiles[2048];
 	sRezFiles[0] = '\0';
 
-	g_pRegMgr->Get("Rez Files", sRezFiles, nSize, NULL);
+	g_pRegMgr->Get(REZKEY_FILES, sRezFiles, nSize, NULL);
 
 	if (strlen(sRezFiles) == 0)
 		return;
