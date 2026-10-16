@@ -42,6 +42,9 @@ Since the first public release:
   file the installer writes; `linux-install.sh` and `windows-install.bat`
   check the directory against it first, and stop if a file is missing,
   changed or not part of the release.
+- **The intro movies keep their shape** on wide screens, with black bars,
+  instead of being stretched; the Sierra logo, a 2:1 movie, is no longer
+  squeezed on a 4:3 screen either. (M-P1-27)
 - **Ultra texture detail.** Performance > Display > Texture resolution has
   an Ultra preset above High, which puts every slider at its top: the 357
   textures that High draws at half size (character heads, skyboxes, some
@@ -83,6 +86,7 @@ Since the first public release:
   (M-P1-09)
 - **32-bit textures** by default. (M-P1-24)
 - **Ultra texture detail**, every texture at its full size. (M-P1-26)
+- **Movies keep their shape**, with black bars, on any screen. (M-P1-27)
 - **Intel graphics fix** for a black screen underwater and missing screen
   tints with `d3d7.ren`. (M-P1-10)
 - **Menus and the HUD at any resolution.** The menus keep their 4:3 layout,

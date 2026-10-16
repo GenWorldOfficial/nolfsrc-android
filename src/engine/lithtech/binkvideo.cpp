@@ -1625,6 +1625,55 @@ LTRESULT BinkVideoInstK::UpdateOnScreen()
 		destRect.right = g_RenderStructK.m_Width;
 		destRect.bottom = g_RenderStructK.m_Height;
 
+#ifdef NOLFSRC_MODERN
+		// M-P1-27: the movie keeps its shape -- the largest rectangle of
+		// its proportions that fits the screen, centred. Retail stretched
+		// it over the whole screen, so on a wide one the 4:3 intro movies
+		// came out wide.
+		if (m_pBink->Width && m_pBink->Height)
+		{
+			int nW = g_RenderStructK.m_Width;
+			int nH = g_RenderStructK.m_Height;
+
+			if ((__int64)nW * m_pBink->Height > (__int64)nH * m_pBink->Width)
+			{
+				int nFit = (int)((__int64)nH * m_pBink->Width / m_pBink->Height);
+				destRect.left = (nW - nFit) / 2;
+				destRect.right = destRect.left + nFit;
+			}
+			else
+			{
+				int nFit = (int)((__int64)nW * m_pBink->Height / m_pBink->Width);
+				destRect.top = (nH - nFit) / 2;
+				destRect.bottom = destRect.top + nFit;
+			}
+
+			// The margins black on every frame: nothing else draws there
+			// while a movie plays, so a skipped movie of another shape
+			// stayed visible beside the next one.
+			if (destRect.left > 0 || destRect.top > 0)
+			{
+				DDBLTFXK bltfx;
+				RECT     bars[2];
+
+				memset(&bltfx, 0, sizeof(bltfx));
+				bltfx.dwSize = sizeof(bltfx);       // fill colour 0: black
+				if (destRect.left > 0)
+				{
+					SetRect(&bars[0], 0, 0, destRect.left, nH);
+					SetRect(&bars[1], destRect.right, 0, nW, nH);
+				}
+				else
+				{
+					SetRect(&bars[0], 0, 0, nW, destRect.top);
+					SetRect(&bars[1], 0, destRect.bottom, nW, nH);
+				}
+				pBackBuffer->Blt(&bars[0], LTNULL, LTNULL, K_DDBLT_COLORFILL | K_DDBLT_WAIT, &bltfx);
+				pBackBuffer->Blt(&bars[1], LTNULL, LTNULL, K_DDBLT_COLORFILL | K_DDBLT_WAIT, &bltfx);
+			}
+		}
+#endif
+
 		pBackBuffer->Blt(&destRect, m_pSurface, &srcRect, K_DDBLT_WAIT, LTNULL);
 	}
 	else
