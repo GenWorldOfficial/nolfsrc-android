@@ -33,5 +33,6 @@
 #define IDS_P1_FPS_120				31026
 #define IDS_P1_FPS_144				31027
 #define IDS_P1_FPS_240				31028
+#define IDS_P1_TEX_ULTRA			31029
 
 #endif // __P1_CRES_H__

@@ -95,6 +95,7 @@ the modern build.
 | `Bilinear`, `Trilinear`, `Anisotropic` | 1, 0, 0 | Texture filtering. Advanced display options: "Texture filtering". |
 | `MipmapOffset` | 0 | Skips the most detailed mip levels; higher is blurrier. |
 | `MaxTextureSize` | 16384 | The largest texture side kept. |
+| `GroupOffset1` ... `GroupOffset6` | 0 | Mip levels dropped from the world, weapon, character, prop, effect and sky textures; added to each texture file's own offset (0 or 1), and below 0 the result is 0. Texture resolution's sliders (slider 3 - offset); Low/Medium/High/Ultra set them. |
 | `DetailTextures` | 1 | Detail textures on the world. Advanced display options. |
 | `LightMap` | 1 | Lightmaps on the world. |
 | `DynamicLight` | 1 | Dynamic lights. |

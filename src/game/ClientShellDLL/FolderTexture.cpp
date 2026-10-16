@@ -10,6 +10,15 @@
 #include "GameClientShell.h"
 #include "GameSettings.h"
 extern CGameClientShell* g_pGameClientShell;
+#ifdef NOLFSRC_MODERN
+// M-P1-26: a fourth preset, Ultra
+#include "cshell/p1_modern.h"
+#define TEX_LEVELS			4
+#define TEX_POTENTIAL		{LTTRUE,LTTRUE,LTTRUE,LTTRUE}
+#else
+#define TEX_LEVELS			3
+#define TEX_POTENTIAL		{LTTRUE,LTTRUE,LTTRUE}
+#endif
 
 namespace
 {
@@ -20,6 +29,21 @@ namespace
 
 	int nInitVal[6];
 
+#ifdef NOLFSRC_MODERN
+	// M-P1-26: Ultra puts every slider at its top, an offset of -2. It
+	// cancels the 1 that some textures' own files add (357 of them, among
+	// them the character heads and the skyboxes), which High leaves at half
+	// size; no file adds more.
+	int kDefaultValues[6][TEX_LEVELS] =
+	{
+		{1,0,0,-2},
+		{1,1,0,-2},
+		{1,1,0,-2},
+		{1,1,0,-2},
+		{2,1,0,-2},
+		{2,1,0,-2},
+	};
+#else
 	int kDefaultValues[6][3] =
 	{
 		{1,0,0},
@@ -29,6 +53,7 @@ namespace
 		{2,1,0},
 		{2,1,0},
 	};
+#endif
 }
 
 
@@ -77,6 +102,9 @@ LTBOOL CFolderTexture::Build()
 	m_pOverallCtrl->AddString(IDS_LOW);
 	m_pOverallCtrl->AddString(IDS_MEDIUM);
 	m_pOverallCtrl->AddString(IDS_HIGH);
+#ifdef NOLFSRC_MODERN
+	m_pOverallCtrl->AddString(IDS_P1_TEX_ULTRA);
+#endif
 	m_pOverallCtrl->AddString(IDS_CUSTOMIZED);
 
 	m_pSlider[0]=AddSlider(IDS_TEXTURE_WORLD, IDS_HELP_TEXTURE_WORLD, kTotalWidth, kSliderWidth, &m_nSliderVal[0]);
@@ -118,7 +146,7 @@ void CFolderTexture::OnFocus(LTBOOL bFocus)
 	
 	if (bFocus)
 	{
-		LTBOOL bPotential[3] = {LTTRUE,LTTRUE,LTTRUE};
+		LTBOOL bPotential[TEX_LEVELS] = TEX_POTENTIAL;
 		for (int i = 0; i < 6; i++)
 		{
 			char szKey[16];
@@ -126,7 +154,7 @@ void CFolderTexture::OnFocus(LTBOOL bFocus)
 			int offset = GetConsoleInt(szKey,0);
 			m_nSliderVal[i] = 3 - offset;
 			nInitVal[i] = m_nSliderVal[i];
-			for (int j = 0; j < 3; j++)
+			for (int j = 0; j < TEX_LEVELS; j++)
 			{
 				if (offset != kDefaultValues[i][j])
 					bPotential[j] = LTFALSE;
@@ -134,7 +162,7 @@ void CFolderTexture::OnFocus(LTBOOL bFocus)
 		}
 
 		m_nOverall = 0;
-		while (m_nOverall < 3 && !bPotential[m_nOverall])
+		while (m_nOverall < TEX_LEVELS && !bPotential[m_nOverall])
 			m_nOverall++;
 
 		UpdateData(LTFALSE);
@@ -180,7 +208,7 @@ LTBOOL CFolderTexture::OnLeft()
 		int detailLevel = m_pOverallCtrl->GetSelIndex();
 		--detailLevel;
 		if (detailLevel < 0)
-			detailLevel = 2;
+			detailLevel = TEX_LEVELS - 1;
 		m_pOverallCtrl->SetSelIndex(detailLevel);
 		SetSliders(detailLevel);
         return LTTRUE;
@@ -205,7 +233,7 @@ LTBOOL CFolderTexture::OnRight()
 	{
 		int detailLevel = m_pOverallCtrl->GetSelIndex();
 		++detailLevel;
-		if (detailLevel > 2)
+		if (detailLevel > TEX_LEVELS - 1)
 			detailLevel = 0;
 		m_pOverallCtrl->SetSelIndex(detailLevel);
 		SetSliders(detailLevel);
@@ -227,7 +255,7 @@ LTBOOL CFolderTexture::OnRight()
 
 void CFolderTexture::SetSliders(int nLevel)
 {
-	if (nLevel < 0 || nLevel >= 3) return;
+	if (nLevel < 0 || nLevel >= TEX_LEVELS) return;
 	for (int i = 0; i < 6; i++)
 	{
 		m_nSliderVal[i] = 3-kDefaultValues[i][nLevel];
@@ -238,18 +266,18 @@ void CFolderTexture::SetSliders(int nLevel)
 
 void CFolderTexture::CheckOverall()
 {
-	LTBOOL bPotential[3] = {LTTRUE,LTTRUE,LTTRUE};
+	LTBOOL bPotential[TEX_LEVELS] = TEX_POTENTIAL;
 	for (int i = 0; i < 6; i++)
 	{
 		int offset = 3 - m_nSliderVal[i];
-		for (int j = 0; j < 3; j++)
+		for (int j = 0; j < TEX_LEVELS; j++)
 		{
 			if (offset != kDefaultValues[i][j])
 				bPotential[j] = LTFALSE;
 		}
 	}
 	m_nOverall = 0;
-	while (m_nOverall < 3 && !bPotential[m_nOverall])
+	while (m_nOverall < TEX_LEVELS && !bPotential[m_nOverall])
 		m_nOverall++;
 
 	UpdateData(LTFALSE);

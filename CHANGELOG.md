@@ -42,6 +42,10 @@ Since the first public release:
   file the installer writes; `linux-install.sh` and `windows-install.bat`
   check the directory against it first, and stop if a file is missing,
   changed or not part of the release.
+- **Ultra texture detail.** Performance > Display > Texture resolution has
+  an Ultra preset above High, which puts every slider at its top: the 357
+  textures that High draws at half size (character heads, skyboxes, some
+  props) are drawn at full size. (M-P1-26)
 - **The Friday and Christmas main menus' Cate moves again, in her own
   outfits**: the casual and winter Cates are the NOLF Modernizer's menu
   models, not the in-game ones, which stood still. (M-P3-11)
@@ -78,6 +82,7 @@ Since the first public release:
 - **Texture filtering:** none, bilinear, trilinear, or 2x to 16x anisotropic.
   (M-P1-09)
 - **32-bit textures** by default. (M-P1-24)
+- **Ultra texture detail**, every texture at its full size. (M-P1-26)
 - **Intel graphics fix** for a black screen underwater and missing screen
   tints with `d3d7.ren`. (M-P1-10)
 - **Menus and the HUD at any resolution.** The menus keep their 4:3 layout,
