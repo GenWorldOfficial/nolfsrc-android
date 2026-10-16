@@ -1025,10 +1025,36 @@ LTBOOL input_Init(InputMgr* pMgr, void* pClient)
 		P7Pad_GetInstance(&instance);
 		di_CreateDeviceCallback(&instance, LTNULL);
 	}
-#endif
 
+	// M-P7-09: the keyboard and the mouse are the only other devices, each
+	// described by its own GetDeviceInfo, not EnumDevices. That walks every
+	// HID device on the machine looking for joysticks, which are left out
+	// above, and on some Windows 11 PCs it crashes doing so (an access
+	// violation in RtlAllocateHeap, inside dinput.dll, before the window
+	// opens).
+	{
+		static const GUID* s_pGuids[] = { &GUID_SysKeyboard, &GUID_SysMouse };
+		int i;
+
+		for (i = 0; i < 2; i++)
+		{
+			LPDIRECTINPUTDEVICEA pDev = LTNULL;
+			DIDEVICEINSTANCEA    instance;
+
+			if (g_pDirectInput->CreateDevice(*s_pGuids[i], &pDev, LTNULL) != DI_OK || !pDev)
+				continue;
+
+			memset(&instance, 0, sizeof(instance));
+			instance.dwSize = sizeof(instance);
+			if (pDev->GetDeviceInfo(&instance) == DI_OK)
+				di_CreateDeviceCallback(&instance, LTNULL);
+			pDev->Release();
+		}
+	}
+#else
 	g_pDirectInput->EnumDevices(0, di_CreateDeviceCallback, LTNULL,
 	                            DIEDFL_ATTACHEDONLY);
+#endif
 
 	return LTTRUE;
 }

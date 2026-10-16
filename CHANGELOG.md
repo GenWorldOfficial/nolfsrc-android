@@ -42,6 +42,9 @@ Since the first public release:
   file the installer writes; `linux-install.sh` and `windows-install.bat`
   check the directory against it first, and stop if a file is missing,
   changed or not part of the release.
+- **DirectInput no longer enumerates every device at startup**: only the
+  keyboard and mouse are opened, as the controller is read through XInput.
+  A Windows 11 startup crash was inside that enumeration. (M-P7-09)
 - **Climbing out of water at high frame rates** works again (near the end of
   Morocco you could not get out). (M-P1-23)
 - **32-bit textures by default.** (M-P1-24)
@@ -129,7 +132,8 @@ Since the first public release:
   zones in Options > Controls > Controller. (M-P7-03, M-P7-04, M-P7-06)
 - The menus follow the d-pad, A and B; Start opens the menu; A skips
   cutscenes. (M-P7-05)
-- DirectInput joysticks are no longer used.
+- DirectInput joysticks are no longer used, and DirectInput no longer
+  enumerates the machine's devices at startup (M-P7-09).
 
 ### Console and cheats
 
