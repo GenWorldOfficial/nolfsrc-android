@@ -154,9 +154,11 @@ void P3_DrawSideBars(HSURFACE hDest, HLTCOLOR hColor)
 	g_pLTClient->FillRect(hDest, &rect, hColor);
 }
 
+// Black, not the layout's shade colour (M-P3-22): the margins are beside
+// the page, not part of it.
 void P3_DrawMenuSideBars(HSURFACE hDest)
 {
-	P3_DrawSideBars(hDest, g_pLayoutMgr->GetShadeColor());
+	P3_DrawSideBars(hDest, SETRGB(0,0,0));
 }
 
 // ---------------------------------------------------------------------------

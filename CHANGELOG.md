@@ -42,6 +42,9 @@ Since the first public release:
   file the installer writes; `linux-install.sh` and `windows-install.bat`
   check the directory against it first, and stop if a file is missing,
   changed or not part of the release.
+- **Black side bars beside the menus** on wide screens, instead of the
+  menus' green: the main menu and the other menu pages, the splash, pause,
+  failure and loading screens. (M-P3-22)
 - **The intro movies keep their shape** on wide screens, with black bars,
   instead of being stretched; the Sierra logo, a 2:1 movie, is no longer
   squeezed on a 4:3 screen either. (M-P1-27)
@@ -90,11 +93,11 @@ Since the first public release:
 - **Intel graphics fix** for a black screen underwater and missing screen
   tints with `d3d7.ren`. (M-P1-10)
 - **Menus and the HUD at any resolution.** The menus keep their 4:3 layout,
-  centred, with bars at the sides. The HUD scales with the screen (Interface
-  options: HUD size). This covers the splash, loading and failure screens,
-  the multiplayer menus, the password dialog, the space-suit helmet, the
-  weapon and ammo chooser (which now also shows the previous and next
-  weapons), and the main menu's version text. (P3)
+  centred, with black bars at the sides (M-P3-22). The HUD scales with the
+  screen (Interface options: HUD size). This covers the splash, loading and
+  failure screens, the multiplayer menus, the password dialog, the space-suit
+  helmet, the weapon and ammo chooser (which now also shows the previous and
+  next weapons), and the main menu's version text. (P3)
 - **Cinematics** can be limited to 4:3 with side bars. (M-P3-08)
 - **Model shadows** are no longer switched off for good by the first
   cinematic or a loaded game. (M-P5-14)

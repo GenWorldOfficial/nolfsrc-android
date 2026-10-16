@@ -510,6 +510,10 @@ LTBOOL CLoadingScreen::Update()
 
 	if (xo > 0)
 	{
+#ifdef NOLFSRC_MODERN
+		// M-P3-22: the side margins black, as the menus'
+		hShadeColor = SETRGB(0,0,0);
+#endif
 		rect.left = 0;
 		rect.right = xo;
 		rect.top = yo;

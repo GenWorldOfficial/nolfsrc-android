@@ -271,7 +271,7 @@ LTBOOL CBaseFolder::Render(HSURFACE hDestSurf)
 
 #ifdef NOLFSRC_MODERN
 	// M-P3-01/M-P3-02: the shade and bar bands scaled with the page, the
-	// side margins between them shaded
+	// side margins between them black (M-P3-22)
 	{
 		int nWidth = (int)g_pInterfaceResMgr->GetScreenWidth();
 		int nHeight = (int)g_pInterfaceResMgr->GetScreenHeight();
@@ -291,9 +291,9 @@ LTBOOL CBaseFolder::Render(HSURFACE hDestSurf)
 		if (xo > 0)
 		{
 			band.Init(0, nTop + nBar, xo, nHeight - nBottom - nBar);
-			g_pLTClient->FillRect(hDestSurf, &band, m_hShadeColor);
+			g_pLTClient->FillRect(hDestSurf, &band, SETRGB(0,0,0));
 			band.Init(nWidth - xo, nTop + nBar, nWidth, nHeight - nBottom - nBar);
-			g_pLTClient->FillRect(hDestSurf, &band, m_hShadeColor);
+			g_pLTClient->FillRect(hDestSurf, &band, SETRGB(0,0,0));
 		}
 	}
 #else
