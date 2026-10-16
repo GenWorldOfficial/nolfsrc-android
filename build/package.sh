@@ -29,10 +29,11 @@
 # Links are stored as the files they point to (-h). Each archive is a fresh
 # install, whatever has been played in the directory: no saves (an empty
 # Save/), no logs, no dedicated-server settings (NetHost.txt, which
-# NolfServ.exe writes), autoexec.cfg as the shipped defaults.cfg, nolfcmds.txt as
-# the build writes it (build/nolfcmds.sh; the launcher rewrites the
-# directory's copy), and none of the per-machine state linux-run.sh /
-# linux-run-launcher.sh create. Each is written beside and renamed into
+# NolfServ.exe writes), autoexec.cfg as the shipped defaults.cfg, no
+# nolfcmds.txt (the launcher writes it on every Launch, before the engine
+# reads it; the game directory's copy is for tools/playtest.sh), and none of
+# the per-machine state linux-run.sh creates (cd/; run-cmds.txt, which the
+# script before it wrote). Each is written beside and renamed into
 # place, so a failed run never leaves a truncated one; the <name>.tar.gz and
 # plain .tar older builds made are removed.
 set -e
@@ -50,9 +51,6 @@ rm -rf "$PARENT/$STAGE"
 mkdir -p "$PARENT/$STAGE"
 trap 'rm -rf "$PARENT/$STAGE"' EXIT
 cp "$OUT/defaults.cfg" "$PARENT/$STAGE/autoexec.cfg"
-MIDDLEWARE=retail
-grep -q '^EXT .*	binkw32\.dll$' "$OUT/MANIFEST.txt" 2>/dev/null && MIDDLEWARE=open
-bash "$HERE/nolfcmds.sh" $MIDDLEWARE > "$PARENT/$STAGE/nolfcmds.txt"
 
 rm -f "$PARENT/$NAME.tar" "$PARENT/$NAME.tar.gz"
 if [[ $ARCHIVES == *" private "* ]]; then
@@ -61,7 +59,7 @@ if [[ $ARCHIVES == *" private "* ]]; then
         --exclude="$NAME/NetHost.txt" \
         --exclude='*.log' --exclude=run-cmds.txt --exclude=cd --exclude='*.part' \
         --transform="s|^$STAGE/|$NAME/|" \
-        "$NAME" "$STAGE/autoexec.cfg" "$STAGE/nolfcmds.txt" |
+        "$NAME" "$STAGE/autoexec.cfg" |
         gzip -6 > "$PKG.part"
     mv "$PKG.part" "$PKG"
     echo "   $PKG: $(du -h "$PKG" | cut -f1) (unpacks to $NAME/)"
@@ -87,11 +85,11 @@ else
         --exclude='*.log' --exclude=run-cmds.txt --exclude=cd --exclude='*.part' \
         --anchored --no-wildcards --exclude-from="$PARENT/$STAGE/exclude.txt" \
         --transform="s|^$STAGE/|$NAME/|" \
-        "$NAME" "$STAGE/nolfcmds.txt" "$STAGE/linux-install.sh" "$STAGE/windows-install.bat"
+        "$NAME" "$STAGE/linux-install.sh" "$STAGE/windows-install.bat"
     # Last, SHA256SUMS: every file of the archive and every file the install
-    # scripts write, but the two the game rewrites (nolfcmds.txt, by the
-    # launcher, and autoexec.cfg). The scripts check the directory against it
-    # before they install, and `sha256sum -c SHA256SUMS` checks an install.
+    # scripts write, but autoexec.cfg, which the game rewrites. The scripts
+    # check the directory against it before they install, and
+    # `sha256sum -c SHA256SUMS` checks an install.
     python3 - "$PARENT/$STAGE/public.tar" "$PARENT/$STAGE/disc-sums.txt" \
         > "$PARENT/$STAGE/SHA256SUMS" <<'PY'
 import hashlib, sys, tarfile
@@ -99,7 +97,7 @@ lines = []
 with tarfile.open(sys.argv[1]) as t:
     for m in t:
         rel = m.name.split("/", 1)[1] if "/" in m.name else ""
-        if m.isfile() and rel and rel != "nolfcmds.txt":
+        if m.isfile() and rel:
             lines.append(f"{hashlib.sha256(t.extractfile(m).read()).hexdigest()}  {rel}")
 lines += open(sys.argv[2]).read().splitlines()
 names = [l[66:] for l in lines]

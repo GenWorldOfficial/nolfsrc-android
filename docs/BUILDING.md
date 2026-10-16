@@ -189,7 +189,7 @@ what changed takes to rebuild. Each is packaged like the release game, as
 (`out/nolf-modern-release-private.tar.gz`, ...); `NOLF_ARCHIVES=public
 make ...` writes only the public one, and fails rather than skip it without
 the disc images. Play them as the release game, from the directory the
-table gives: `out/nolf-modern-release/linux-run.sh`, or
+table gives: `out/nolf-modern-release/linux-run.sh` (the launcher), or
 `tools/playtest.sh out/nolf-modern-release 'Worlds\T01S01'`.
 
 The GitHub Actions workflow `.github/workflows/public-archives.yml` builds
@@ -373,7 +373,7 @@ The playtest runs the game in `out/play/<name>/`, so a playtest's
   binaries do not.)
 * The game DLLs are the `Final_Release` configuration (`_REZFILE`, `_FINAL`),
   which reading data from `.rez` archives requires.
-* `out/nolf-legacy-release/nolfcmds.txt` is the command file `linux-run.sh` and the playtest
-  start the engine with: the rez stack of the retail GOTY install with
+* `out/nolf-legacy-release/nolfcmds.txt` is the command file the playtest starts the
+  engine with (`linux-run.sh`'s launcher writes its own): the rez stack of the retail GOTY install with
   `custom/` last, a 640x480 window, and the intro movies off (they stall
   under some Wine setups).

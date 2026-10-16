@@ -134,16 +134,17 @@ playing your own build.
 (32-bit support needed):
 
 ```sh
-out/nolf-legacy-release/linux-run.sh                # as last left; at first a 640x480 window
-out/nolf-legacy-release/linux-run.sh --res 1024x768 --fullscreen
-out/nolf-legacy-release/linux-run.sh --world 'Worlds\T01S01'
+out/nolf-legacy-release/linux-run.sh                # the launcher, NOLF.exe: click Launch
 ```
+
+The game always starts through its launcher, as the retail game does. To go
+straight into a level when testing a build, use `tools/playtest.sh`
+(`make test` and `make shell`; its header has the options).
 
 To play elsewhere, copy `out/nolf-legacy-release-private.tar.gz` (one file), unpack it
 and run `nolf-legacy-release/linux-run.sh`. Every variant is packaged the same way:
 `out/nolf-legacy-debug-private.tar.gz`, `out/nolf-modern-release-private.tar.gz` and
-`out/nolf-modern-debug-private.tar.gz`. `nolf-legacy-release/linux-run-launcher.sh` starts the game through the
-`NOLF.exe` launcher instead, and `nolf-legacy-release/linux-server.sh` runs a
+`out/nolf-modern-debug-private.tar.gz`. `nolf-legacy-release/linux-server.sh` runs a
 dedicated server (`NolfServ.exe`; without a display it runs under
 `xvfb-run`). The scripts document their options in their headers. Sound needs Wine's audio to work on that machine.
 

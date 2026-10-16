@@ -20,7 +20,7 @@
 # release copied over another installation). Then it checks each .iso's
 # SHA-256, copies the game's data out of them into this directory, and
 # checks every file it writes; nothing else is changed. It can be run again: a file already in place is checked and kept.
-# Then play with ./linux-run.sh (or ./linux-run-launcher.sh).
+# Then play with ./linux-run.sh.
 #
 # It needs bash, dd, sha256sum, base64, head and stat (GNU coreutils; a
 # Steam Deck has them). The list of files, at the end of this script, says

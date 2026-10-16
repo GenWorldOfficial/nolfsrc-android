@@ -1,95 +1,110 @@
 #!/bin/sh
-# linux-run.sh -- start No One Lives Forever (built from source) with Wine.
+# linux-run.sh -- start No One Lives Forever (built from source) with Wine,
+# through its launcher, NOLF.exe (ours, built from src/engine/launcher), the
+# way the retail game starts.
 #
-#   ./linux-run.sh [options] [engine args...]
+#   ./linux-run.sh [launcher args...]
 #
-# Options:
-#   --fullscreen          full screen
-#   --windowed            a window
-#   --res WxH             the window / screen mode to start in; the menus may
-#                         still draw at 640x480 inside it until a resolution
-#                         is chosen in Options > Display
-#                         Without these the game starts as it was last left
-#                         (Options > Display: its window mode and
-#                         resolution), and on the first run in a 640x480
-#                         window.
-#   --world <path>        go straight into a level, e.g. --world 'Worlds\T01S01'
-#   --help                this text
-# Anything else is handed to the engine unchanged (e.g. +DisableSound 1).
+# Click "Launch" (the first time, you may pick a performance setting first).
+# The launcher writes nolfcmds.txt and starts lithtech.exe itself; Display
+# and Advanced there set the renderer, the resolution and the engine's
+# options. Arguments are handed to the launcher, which passes them on to the
+# engine, e.g.
+#   ./linux-run.sh ++windowed 1          a window, whatever Display says
+#   ./linux-run.sh +DisableSound 1       no sound
+#   ./linux-run.sh --help                this text
+#
+# The modern build starts as it was last left (Options > Display: full
+# screen, a window or a borderless window, and its resolution); a fresh
+# install starts full screen, at a resolution that fits the desktop.
+# The release build always starts in a 640x480 window: its renderer's full
+# screen fails under many Wine setups ("Couldn't set D3D Emulation mode").
 #
 # Environment:
 #   WINEPREFIX   the Wine prefix to use (default: $HOME/.wine-nolf, created on
 #                first run, so your own prefix is left alone)
 #   WINE         the wine binary (default: wine)
+#   WINESERVER   the wineserver binary (default: wineserver)
 #   WINEDEBUG    Wine's log channels (default: fixme-all, which silences
 #                DirectMusic's chatter)
 #
-# This does what the retail NOLF.exe launcher does: it starts
-# `lithtech.exe -cmdfile <command file>` from the game directory. The command
-# file (run-cmds.txt, rewritten every run) is nolfcmds.txt's rez stack plus
-# the options above. On the first run autoexec.cfg -- the game's settings,
-# rewritten on every exit -- starts as a copy of defaults.cfg.
+# The launcher expects what the retail installer left behind, and this script
+# sets that up inside its Wine prefix:
+#   * a CD-ROM drive holding \DATA\NOLF.REZ -- its disc check. Drive N: is
+#     mapped to the cd/ directory beside this script, which holds
+#     DATA/NOLF.REZ as a link to nolf.rez. Not in the modern build, whose
+#     launcher has no disc check (MODERN.md M-P1-15).
+#   * the installer's registry values under HKLM\Software\Monolith
+#     Productions\No One Lives Forever\1.0: the extra rez archives the
+#     launcher adds to the command line (the update, then the GOTY content
+#     and -- ours -- the custom/ directory holding the game DLLs built from
+#     source), and movies off (on in the modern build, whose own Bink
+#     player plays them).
+# On the first run autoexec.cfg -- the game's settings, rewritten on every
+# exit -- starts as a copy of defaults.cfg.
 #
-# Sound: the game uses the Miles Sound System (mss32.dll, the one third-party
-# DLL here besides Bink's binkw32.dll) through DirectSound, so it needs
-# Wine's audio working on this machine (winecfg > Audio); +DisableSound 1
-# runs without it. The music is DirectMusic, which Wine only partly
-# implements: its own cannot load the music's styles. The modern build has
-# Microsoft's DirectMusic in this directory (ms_*.dll and
-# lithtech.exe.manifest) and needs nothing more. For the release build there
-# is no music until Microsoft's DirectMusic is installed in the prefix (not
-# winetricks' `directmusic`, which also replaces Wine's DirectSound, and the
-# sound effects repeat):
+# Sound: the game uses the Miles Sound System (mss32.dll) through
+# DirectSound, so it needs Wine's audio working on this machine (winecfg >
+# Audio). The music is DirectMusic, which Wine only partly implements: its
+# own cannot load the music's styles. The modern build has Microsoft's
+# DirectMusic in this directory (ms_*.dll and lithtech.exe.manifest) and
+# needs nothing more. For the release build there is no music until
+# Microsoft's DirectMusic is installed in the prefix (not winetricks'
+# `directmusic`, which also replaces Wine's DirectSound, and the sound
+# effects repeat):
 #   WINEPREFIX=~/.wine-nolf winetricks dmband dmcompos dmime dmloader \
 #       dmscript dmstyle dmsynth dmusic dmusic32 dswave gmdls
-# The intro movies are off (+DisableMovies 1 in nolfcmds.txt) because they
-# stall under some Wine setups.
 set -e
 cd "$(dirname "$0")"
-
-WINDOWED=
-RES=
-WORLD=
-EXTRA=
-while [ $# -gt 0 ]; do
-    case "$1" in
-        --fullscreen) WINDOWED=0 ;;
-        --windowed)   WINDOWED=1 ;;
-        --res)        RES="${2:?--res needs WxH}"; shift ;;
-        --world)      WORLD="${2:?--world needs a world path}"; shift ;;
-        --help|-h)    sed -n '2,/^set -e$/{/^set -e$/d;p}' "./${0##*/}" | sed 's/^# \{0,1\}//'; exit 0 ;;
-        *)            EXTRA="$EXTRA $1" ;;
-    esac
-    shift
-done
-# The first run: a 640x480 window, unless asked otherwise.
-if [ ! -f autoexec.cfg ]; then
-    WINDOWED="${WINDOWED:-1}"
-    RES="${RES:-640x480}"
-fi
-if [ -n "$RES" ]; then
-    W="${RES%x*}"; H="${RES#*x}"
-    case "$W$H" in *[!0-9]*|"") echo "linux-run.sh: --res wants WxH, e.g. 1024x768" >&2; exit 2 ;; esac
-fi
-
+case "${1:-}" in
+--help|-h) sed -n '2,/^set -e$/{/^set -e$/d;p}' "./${0##*/}" | sed 's/^# \{0,1\}//'; exit 0 ;;
+esac
+HERE="$(pwd)"
 WINEPREFIX="${WINEPREFIX:-$HOME/.wine-nolf}"
 WINEDEBUG="${WINEDEBUG:-fixme-all}"
 export WINEPREFIX WINEDEBUG
 WINE="${WINE:-wine}"
 command -v "$WINE" >/dev/null 2>&1 || { echo "linux-run.sh: '$WINE' not found -- install Wine (32-bit support needed)" >&2; exit 1; }
 
+# The modern build: its own Bink player (MANIFEST.txt lists it as EXT).
+MODERN=0
+grep -q '^EXT .*	binkw32\.dll$' MANIFEST.txt 2>/dev/null && MODERN=1
+
 [ -f autoexec.cfg ] || cp defaults.cfg autoexec.cfg
 mkdir -p Save
 
-# The rez stack from nolfcmds.txt (its -rez arguments; build/all.sh wrote it),
-# then our settings: later arguments override earlier ones.
-REZ=$(tr -d '\r' < nolfcmds.txt | tr ' ' '\n' | awk '$0=="-rez"{getline n; printf "-rez %s ", n}')
-{
-    printf '%s+DisableMovies 1' "$REZ"
-    [ -n "$RES" ] && printf ' ++screenwidth %s ++screenheight %s ++bitdepth 16' "$W" "$H"
-    [ -n "$WINDOWED" ] && printf ' ++windowed %s' "$WINDOWED"
-    [ -n "$WORLD" ] && printf ' +runworld %s' "$WORLD"
-    printf '%s\r\n' "$EXTRA"
-} > run-cmds.txt
+# a prefix to set up: make it now if it does not exist yet
+[ -d "$WINEPREFIX/dosdevices" ] || "$WINE" wineboot -i >/dev/null 2>&1 || true
+if [ $MODERN = 0 ]; then
+    mkdir -p cd/DATA
+    ln -sf ../../nolf.rez cd/DATA/NOLF.REZ
+    ln -sfn "$HERE/cd" "$WINEPREFIX/dosdevices/n:"
+fi
 
-exec "$WINE" lithtech.exe -cmdfile run-cmds.txt
+KEY='HKLM\Software\Monolith Productions\No One Lives Forever\1.0'
+# Both registry views: in a 64-bit prefix `wine reg` writes the 64-bit one,
+# while NOLF.exe, a 32-bit program, reads HKLM\Software through the 32-bit
+# one (Wow6432Node) -- written only there, it would find no update or GOTY
+# archives and leave nolfu003.rez and nolfgoty.rez off the command line.
+# (A 32-bit prefix has one view; the /reg:64 write then fails, harmlessly.)
+reg() { "$WINE" reg add "$@" /reg:32 /f >/dev/null 2>&1
+        "$WINE" reg add "$@" /reg:64 /f >/dev/null 2>&1 || true; }
+# The movies: off with RAD's binkw32.dll, which misrenders or stalls under
+# many Wine setups; on with the modern build's own player. The release
+# build's window: see the header.
+MOVIES_OFF=1
+MODE="++windowed 1 ++screenwidth 640 ++screenheight 480 ++bitdepth 16"
+if [ $MODERN = 1 ]; then
+    MOVIES_OFF=0
+    MODE=""
+fi
+[ $MODERN = 1 ] || reg 'HKLM\Software\Wine\Drives' /v 'n:' /t REG_SZ /d cdrom
+reg "$KEY" /v 'Update Command Line'  /t REG_SZ /d '-rez nolfu003.rez'
+reg "$KEY" /v 'Content Command Line' /t REG_SZ /d '-rez nolfgoty.rez -rez custom'
+reg "$KEY" /v 'Disable Movies'       /t REG_DWORD /d $MOVIES_OFF
+# Wine reads the drive types when its server starts: restart it, or the
+# first run after this setup still finds no CD-ROM.
+"${WINESERVER:-wineserver}" -k >/dev/null 2>&1 || true
+sleep 1
+
+exec "$WINE" NOLF.exe $MODE "$@"

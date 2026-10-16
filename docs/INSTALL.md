@@ -30,8 +30,8 @@ file the installer writes, in `SHA256SUMS`. To keep your saved games, copy
 the old directory's `Save` folder into the new one.
 
 Once the game is installed, `sha256sum -c SHA256SUMS` in its directory checks
-every file of it (all but your settings, `autoexec.cfg` and `nolfcmds.txt`,
-which the game and the launcher rewrite).
+every file of it (all but your settings, `autoexec.cfg`, which the game
+rewrites).
 
 ## What you need
 
@@ -76,14 +76,17 @@ which the game and the launcher rewrite).
 3. Play:
 
    ```sh
-   ./linux-run.sh                           # as last left; at first a 640x480 window
-   ./linux-run.sh --res 1920x1080 --fullscreen
+   ./linux-run.sh
    ```
 
-   `./linux-run.sh --help` lists the options. The game uses its own Wine
-   prefix, `~/.wine-nolf`, which is created on the first run, so your own
-   prefix is left alone. `./linux-run-launcher.sh` starts the game through
-   the original launcher instead.
+   This opens the game's launcher: click Launch. The first time, it asks
+   for a performance setting first. The launcher's Display and Advanced
+   buttons set the renderer, the resolution and the engine's options.
+
+   The game uses its own Wine prefix, `~/.wine-nolf`, which is created on
+   the first run, so your own prefix is left alone. Arguments go to the
+   game: `./linux-run.sh ++windowed 1` starts it in a window whatever
+   Options > Display says. `./linux-run.sh --help` says more.
 
 Sound needs Wine's audio to work on your machine (`winecfg`, Audio tab). The
 music needs nothing extra: the game directory has its own DirectMusic.
@@ -112,9 +115,11 @@ wrong, please report it.
 
 ## First start
 
-- **Screen.** The game starts in a 640x480 window. Choose the resolution and
-  window mode in Options > Display. Window mode can be Full screen, Window or
-  Borderless window. Wide screens are supported.
+- **Screen.** The game starts full screen, at a resolution that fits your
+  screen. Choose the resolution and window mode in Options > Display (or the
+  launcher's Display button). Window mode can be Full screen, Window or
+  Borderless window, and the game starts as you last left it. Wide screens
+  are supported.
 - **Renderer.** The default renderer is `d3d9.ren` (Direct3D 9). If you see
   rendering problems, pick `opengl.ren` or `d3d7.ren` (the original DirectX 7
   renderer) in Options > Display. On Intel integrated graphics with

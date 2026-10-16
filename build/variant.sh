@@ -9,7 +9,7 @@
 #
 # (on the host the make targets run this in the build container; inside
 # `make shell` run it directly). Play the result exactly like out/nolf-legacy-release/:
-# out/<name>/linux-run.sh, or tools/playtest.sh out/<name> ...
+# out/<name>/linux-run.sh (the launcher), or tools/playtest.sh out/<name> ...
 #
 #   debug    NOLFSRC_DEBUG and symbols, for finding out why something goes
 #            wrong. Compile + /Z7 /Oy- /D NOLFSRC_DEBUG (debug information,

@@ -102,20 +102,23 @@ python3 tools/retailextract.py resources "$RETAIL" "$OUT"
 # exit); a rebuild keeps the player's.
 [ -f "$OUT/autoexec.cfg" ] || cp "$OUT/defaults.cfg" "$OUT/autoexec.cfg"
 mkdir -p "$OUT/Save" "$OUT/custom"
-# nolfcmds.txt: the command file linux-run.sh starts the engine with (and the
-# launcher rewrites), build/nolfcmds.sh.
+# nolfcmds.txt: the command file the engine starts with, as a fresh build
+# writes it (the launcher rewrites it; tools/playtest.sh uses it),
+# build/nolfcmds.sh.
 bash build/nolfcmds.sh "${NOLF_MIDDLEWARE:-retail}" > "$OUT/nolfcmds.txt"
 # startup.txt: the rez stack NolfServ.exe, the dedicated server, loads (the
 # retail one's names, then custom/ -- our game DLLs -- last, as nolfcmds.txt
 # has it for the engine). `resources` copies the retail file again whenever
 # this one differs in size, so the line is added afresh each time.
 grep -qi '^Rez[0-9]* *= *"custom"' "$OUT/startup.txt" || printf 'Rez9 = "custom"\r\n' >> "$OUT/startup.txt"
-# linux-run.sh / linux-run-launcher.sh: start the game with the host's Wine, directly or
-# through our NOLF.exe; linux-server.sh: a dedicated server, NolfServ.exe
-# (build/game-scripts/; usage in their headers).
+# linux-run.sh: start the game with the host's Wine, through our NOLF.exe;
+# linux-server.sh: a dedicated server, NolfServ.exe (build/game-scripts/;
+# usage in their headers).
 rm -f "$OUT/run.sh" "$OUT/run-launcher.sh"   # their names before the linux- prefix
-cp build/game-scripts/linux-run.sh build/game-scripts/linux-run-launcher.sh build/game-scripts/linux-server.sh "$OUT/"
-chmod +x "$OUT/linux-run.sh" "$OUT/linux-run-launcher.sh" "$OUT/linux-server.sh"
+rm -f "$OUT/linux-run-launcher.sh"           # linux-run.sh's name before it replaced
+                                             # the launcher-less script
+cp build/game-scripts/linux-run.sh build/game-scripts/linux-server.sh "$OUT/"
+chmod +x "$OUT/linux-run.sh" "$OUT/linux-server.sh"
 
 if [ "${NOLF_MIDDLEWARE:-retail}" = open ]; then
     step "2. open runtime: OpenMiles, our Bink player on FFmpeg and our renderers (build/ext.sh)"

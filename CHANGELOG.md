@@ -31,6 +31,12 @@ Since the first public release:
 - **Shift+Esc opens the console**, whatever your keyboard layout. (M-P2-15)
 - **Frame-rate limit choices:** 60, 120, 144, 240 (the default) or none, in
   Interface options. (M-P1-25)
+- **One way to start the game on Linux: `linux-run.sh` opens the launcher**,
+  `NOLF.exe`, as the game starts on Windows and Steam. It replaces both the
+  old `linux-run.sh`, which skipped the launcher, and `linux-run-launcher.sh`.
+  It no longer forces a window: the game starts as Options > Display last
+  left it (`./linux-run.sh ++windowed 1` still forces one). The archives no
+  longer carry a `nolfcmds.txt`: the launcher writes its own on every Launch.
 - **The installers refuse a release copied over another installation.**
   Each archive carries a `SHA256SUMS` of every file of the release and every
   file the installer writes; `linux-install.sh` and `windows-install.bat`
