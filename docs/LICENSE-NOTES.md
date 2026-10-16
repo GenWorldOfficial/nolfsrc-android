@@ -16,6 +16,7 @@ This file says which is which; it is not legal advice and grants nothing.
 | `ext/openmiles` (submodule) | **OpenMiles**, a clean-room reimplementation of the Miles Sound System, upstream at github.com/maci0/openmiles; vendors miniaudio and TinySoundFont | GPL-3.0-only (its vendored libraries: MIT, MIT-0, zlib); see its `LICENSE` and `deps/README.md` |
 | `ext/patches/openmiles/` | our fixes to OpenMiles, applied by `build/ext.sh` | GPL-3.0-only, as the code they change |
 | `ext/ffmpeg` (submodule) | **FFmpeg**, upstream at github.com/FFmpeg/FFmpeg | LGPL-2.1-or-later as the modern build configures it (no GPL or non-free parts enabled); see its `LICENSE.md` |
+| `ext/nolf1-modernizer` (submodule) | **NOLF Modernizer** by HeyThereCoffeee (haekb), upstream at github.com/haekb/nolf1-modernizer. The modern build uses two of its files, the seasonal main menus' Cate models (`ASSETS/CHARS/MODELS/INTHERO_CASUAL.abc`, `INTHERO_WINTER.abc`, linked from `src/modern/data/files/`), which the modern build's archives carry; none of its code | no licence of its own: its readme says it remains under Monolith's end-user licence for the v1.003 source release, as `src/game/` |
 
 ## Not in this repository, taken from the retail game at build time
 

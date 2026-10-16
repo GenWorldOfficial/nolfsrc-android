@@ -103,7 +103,9 @@ You need Linux with Docker and the submodules:
    see `toolchains/README.md`); `rez/` fetches and installs the retail game
    (see `rez/README.md`); `tools/` is the build's helpers and the
    reconstruction tools and guides; `ext/openmiles` and `ext/ffmpeg` are the
-   modern build's open-source middleware (about 130 MB).
+   modern build's open-source middleware (about 130 MB), and
+   `ext/nolf1-modernizer` the NOLF Modernizer, two of whose models the
+   modern build uses (about 60 MB).
 2. Run
 
 ```sh
@@ -223,7 +225,8 @@ This project builds on the work of others:
 - **NOLF Modernizer** by HeyThereCoffeee (haekb):
   <https://github.com/haekb/nolf1-modernizer>. Most of the modern build's
   fixes and features were found and designed there; `docs/MODERN.md` names
-  the Modernizer change behind each one.
+  the Modernizer change behind each one. The seasonal main menus' Cate
+  models are its own, used as they are.
 - **ChthonVII's Modernizer fork**: <https://github.com/ChthonVII/nolf1-modernizer>.
   It gathers the crouch toggle and Daniel Gibson's fixes, and sorts out what
   the different "Patch 4" releases contain.
@@ -246,7 +249,8 @@ This project builds on the work of others:
   against.
 
 The modern build reimplements the Modernizer's changes rather than copying
-its code (`docs/MODERN.md`, "Rules for this work").
+its code (`docs/MODERN.md`, "Rules for this work"); of its assets, it uses
+the two seasonal menu models.
 
 ## Layout
 
@@ -264,5 +268,5 @@ its code (`docs/MODERN.md`, "Rules for this work").
 | `docker/` | the build image (Ubuntu 24.04 + Wine) |
 | `toolchains/` | the compilers (a submodule) |
 | `rez/` | the retail game the build takes its data from: fetches the disc images and installs the game from them (a submodule) |
-| `ext/` | upstream open-source projects the modern build uses, one submodule each: `openmiles/` (OpenMiles, for Miles) and `ffmpeg/` (FFmpeg, for Bink); built by `build/ext.sh`, with our fixes from `ext/patches/` |
+| `ext/` | upstream open-source projects the modern build uses, one submodule each: `openmiles/` (OpenMiles, for Miles) and `ffmpeg/` (FFmpeg, for Bink), built by `build/ext.sh` with our fixes from `ext/patches/`; and `nolf1-modernizer/` (the NOLF Modernizer, for two menu models) |
 | `out/` | everything the build produces |

@@ -103,6 +103,7 @@ check-ext:
 	@for d in ext/openmiles ext/ffmpeg; do \
 	  [ -f $$d/LICENSE ] || [ -f $$d/LICENSE.md ] || { echo "error: $$d is empty -- the modern build's middleware is the ext/ submodules: run git submodule update --init" >&2; exit 1; }; \
 	done
+	@[ -f ext/nolf1-modernizer/ASSETS/CHARS/MODELS/INTHERO_CASUAL.abc ] || { echo "error: ext/nolf1-modernizer is empty -- the modern build takes two menu models from the NOLF Modernizer, the ext/ submodule: run git submodule update --init" >&2; exit 1; }
 
 check-toolchain:
 	@for f in $(TOOLCHAIN_FILES); do \

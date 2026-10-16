@@ -14,3 +14,7 @@
 [submodule "tools"]
 	path = tools
 	url = git@github.com:nolffan/tools.git
+[submodule "ext/nolf1-modernizer"]
+	path = ext/nolf1-modernizer
+	url = git@github.com:haekb/nolf1-modernizer.git
+	shallow = true

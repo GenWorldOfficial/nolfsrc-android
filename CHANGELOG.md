@@ -42,6 +42,9 @@ Since the first public release:
   file the installer writes; `linux-install.sh` and `windows-install.bat`
   check the directory against it first, and stop if a file is missing,
   changed or not part of the release.
+- **The Friday and Christmas main menus' Cate moves again, in her own
+  outfits**: the casual and winter Cates are the NOLF Modernizer's menu
+  models, not the in-game ones, which stood still. (M-P3-11)
 - **DirectInput no longer enumerates every device at startup**: only the
   keyboard and mouse are opened, as the controller is read through XInput.
   A Windows 11 startup crash was inside that enumeration. (M-P7-09)
