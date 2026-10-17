@@ -12,7 +12,7 @@
 #   out/<name>-public.tar.gz    the same without anything that came from the
 #                               discs, which its linux-install.sh /
 #                               windows-install.bat copy out of the player's
-#                               own disc images (tools/mkinstall.py): the one
+#                               own disc images (build/mkinstall.py): the one
 #                               to give to other people. Its SHA256SUMS lists
 #                               every file of the archive and every file the
 #                               scripts write; they refuse a directory that is
@@ -31,7 +31,7 @@
 # Save/), no logs, no dedicated-server settings (NetHost.txt, which
 # NolfServ.exe writes), autoexec.cfg as the shipped defaults.cfg, no
 # nolfcmds.txt (the launcher writes it on every Launch, before the engine
-# reads it; the game directory's copy is for tools/playtest.sh), and none of
+# reads it; the game directory's copy is for build/playtest.sh), and none of
 # the per-machine state linux-run.sh creates (cd/; run-cmds.txt, which the
 # script before it wrote). Each is written beside and renamed into
 # place, so a failed run never leaves a truncated one; the <name>.tar.gz and
@@ -69,7 +69,7 @@ fi
 # The public archive: the scripts beside the rest, the disc files left out.
 PUB="$PARENT/$NAME-public.tar.gz"
 rc=0
-python3 "$HERE/../tools/mkinstall.py" "$OUT" "$PARENT/$STAGE" || rc=$?
+python3 "$HERE/mkinstall.py" "$OUT" "$PARENT/$STAGE" || rc=$?
 if [ $rc = 3 ] && [ -n "${NOLF_ARCHIVES:-}" ]; then
     echo "   $PUB: no disc images, but NOLF_ARCHIVES asks for it" >&2
     exit 1

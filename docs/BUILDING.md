@@ -52,7 +52,7 @@ parts of it by hand.
 | 3. compile | `build/compile.sh`: every compile and link, by `build/build.mk` (below) -- the lithshared libraries (`RegMgr` twice, as Monolith built it for each game DLL: the Release build for `NOLF.exe` and `Object.lto`, the Debug build, `RegMgr_Debug.lib`, for `CShell.dll`, which the Game of the Year `CShell.dll` linked; and `ButeMgr` twice, without MFC for the game DLLs and with it for `NolfServ.exe`); the game DLLs `CRes.dll`, `CShell.dll`, `Object.lto`; the engine, `ltmsg.dll`, `sres.dll`, `NOLF.exe` (the launcher), `NolfServ.exe` (the dedicated server), `server.dll`, `lithtech.exe`, `d3d.ren` | `src/lithshared/out/*.lib`, `src/game/*/Release`, `Final_Release`, `src/engine/*/Release` |
 | 4. assemble | the built binaries into the game directory; the game DLLs and `sres.dll` go in `custom/`, the rez directory the engine searches last (and that `startup.txt`, the rez list of the dedicated server `NolfServ.exe`, gets as its last entry) | `out/nolf-legacy-release/` |
 | 5. audit | every PE file in `out/nolf-legacy-release/` listed with its origin (`out/nolf-legacy-release/MANIFEST.txt`); the build fails if one is unaccounted for, or if a `.rez` archive still holds one | |
-| 6. package | `out/nolf-legacy-release/` as a compressed tar, whole (`-private`), and without the disc data plus the scripts that install it from the player's disc images and a `SHA256SUMS` of every file, which they check the directory against first (`-public`; `build/package.sh`, `tools/mkinstall.py`) | `out/nolf-legacy-release-private.tar.gz`, `out/nolf-legacy-release-public.tar.gz` |
+| 6. package | `out/nolf-legacy-release/` as a compressed tar, whole (`-private`), and without the disc data plus the scripts that install it from the player's disc images and a `SHA256SUMS` of every file, which they check the directory against first (`-public`; `build/package.sh`, `build/mkinstall.py`) | `out/nolf-legacy-release-private.tar.gz`, `out/nolf-legacy-release-public.tar.gz` |
 
 Every binary in `out/nolf-legacy-release/` is built from this repository except the 35
 Miles and Bink files of step 2; the audit prints them all. The steps are
@@ -90,7 +90,7 @@ below) and one for everything else.
 ## Other targets
 
 ```sh
-make test         # tools/playtest.sh with tools/playtest-basic.txt on
+make test         # build/playtest.sh with tools/playtest-basic.txt on
                   #   Worlds\T01S01 and Worlds\M03S01, under Xvfb; passes if the
                   #   game is still running after the script on both
 make test TEST_LEVELS="M06S01"   # other levels
@@ -147,7 +147,7 @@ build/engine.sh server verify         # compile, then match every function
 build/engine.sh server-one smgr.cpp PlaySound   # recompile one file, match it
 build/engine.sh nolfserv verify       # the dedicated server's objects, matched
 build/engine.sh nolfserv-one ServerDlg.cpp OnTimer   # (likewise one file)
-tools/playtest.sh out/nolf-legacy-release 'Worlds\M01S01' 60   # idle for 60 s on a level
+build/playtest.sh out/nolf-legacy-release 'Worlds\M01S01' 60   # idle for 60 s on a level
 tools/servertest.sh out/nolf-legacy-release 60  # host with NolfServ.exe for 60 s
 ```
 
@@ -190,7 +190,7 @@ what changed takes to rebuild. Each is packaged like the release game, as
 make ...` writes only the public one, and fails rather than skip it without
 the disc images. Play them as the release game, from the directory the
 table gives: `out/nolf-modern-release/linux-run.sh` (the launcher), or
-`tools/playtest.sh out/nolf-modern-release 'Worlds\T01S01'`.
+`build/playtest.sh out/nolf-modern-release 'Worlds\T01S01'`.
 
 The GitHub Actions workflow `.github/workflows/public-archives.yml` builds
 the release game and all three variants that way on every push to `master`

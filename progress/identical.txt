@@ -4911,6 +4911,7 @@ NolfServ.exe	sub_40f720
 NolfServ.exe	sub_40f790
 NolfServ.exe	sub_40fa30
 NolfServ.exe	sub_40fb80
+NolfServ.exe	sub_40fc70
 NolfServ.exe	sub_40fc80
 NolfServ.exe	sub_40fcd0
 NolfServ.exe	sub_40fd30
@@ -16238,4 +16239,3 @@ server.dll	sub_1004bd60
 server.dll	sub_1004bd90
 server.dll:rsrc	rsrc:16/1/1033
 server.dll:rsrc	rsrc:6/7/1033
-sres.dll:rsrc	rsrc:(none)

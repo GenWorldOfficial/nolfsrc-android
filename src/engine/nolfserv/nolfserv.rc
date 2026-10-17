@@ -2,7 +2,7 @@
 // NolfServ.exe (Game of the Year Edition; FileVersion 1,0,0,2): the server
 // dialog, the setup wizard's pages, the string table and the version.
 // The icons and the wizard's bitmap are read out of the retail image into
-// res/ at build time (tools/retailextract.py nolfservres); the rest of its
+// res/ at build time (build/retailextract.py nolfservres); the rest of its
 // binary resources are MFC's, from the toolchain's afxres.rc, as in any
 // statically linked MFC application of its day.
 

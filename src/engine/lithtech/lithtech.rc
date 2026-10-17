@@ -5,7 +5,7 @@
 // font and the unlock dialog of the engine's licensing days, which nothing
 // in NOLF's engine shows any more.
 // The icon and the font are read out of the retail image into res/ at build
-// time (tools/retailextract.py lithtechres); the rest of the binary resources
+// time (build/retailextract.py lithtechres); the rest of the binary resources
 // are MFC's, from the toolchain's afxres.rc.
 
 #include "afxres.h"

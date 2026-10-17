@@ -24,7 +24,7 @@
 #
 # It needs bash, dd, sha256sum, base64, head and stat (GNU coreutils; a
 # Steam Deck has them). The list of files, at the end of this script, says
-# for each one which bytes of which disc it is made of (tools/mkinstall.py).
+# for each one which bytes of which disc it is made of (build/mkinstall.py).
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SELF="$HERE/$(basename "${BASH_SOURCE[0]}")"

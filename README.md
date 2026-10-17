@@ -71,17 +71,23 @@ of each binary's code, by size, those functions make up.
 
 | Binary | | Byte-identical functions | Byte-identical code | | Unwritten | Unplaced |
 |---|---|--:|--:|---|--:|--:|
-| `lithtech.exe` | the engine | 3,042 / 3,432 | 442,993 / 571,030 bytes | `███████████████░░░░░` 77.5% | 0 | 12 |
-| `server.dll` | the server | 2,032 / 2,273 | 213,012 / 249,693 bytes | `█████████████████░░░` 85.3% | 0 | 6 |
-| `d3d.ren` | the Direct3D renderer | 750 / 944 | 134,188 / 515,553 bytes | `█████░░░░░░░░░░░░░░░` 26.0% | 0 | 15 |
+| `lithtech.exe` | the engine | 3,042 / 3,432 | 442,993 / 571,030 bytes | `███████████████░░░░░` 77.5% | 0 | 10 |
+| `server.dll` | the server | 2,032 / 2,273 | 213,012 / 249,693 bytes | `█████████████████░░░` 85.3% | 0 | 3 |
+| `d3d.ren` | the Direct3D renderer | 750 / 944 | 134,188 / 515,162 bytes | `█████░░░░░░░░░░░░░░░` 26.0% | 0 | 15 |
 | `NOLF.exe` | the launcher | 172 / 221 | 34,056 / 35,033 bytes | `███████████████████░` 97.2% | 0 | 0 |
-| `NolfServ.exe` | the dedicated server | 325 / 355 | 58,531 / 59,107 bytes | `███████████████████░` 99.0% | 2 | 0 |
-| lithshared | the shared libraries | 807 / 812 | 96,039 / 98,226 bytes | `███████████████████░` 97.7% | 0 | 0 |
+| `NolfServ.exe` | the dedicated server | 326 / 356 | 58,536 / 59,112 bytes | `███████████████████░` 99.0% | 0 | 0 |
 | `CShell.dll` | the game: client | 3,715 / 4,928 | 914,920 / 933,114 bytes | `███████████████████░` 98.0% | 0 | 0 |
 | `Object.lto` | the game: server objects | 4,886 / 6,919 | 1,240,057 / 1,261,040 bytes | `███████████████████░` 98.3% | 0 | 0 |
+| libraries | the shared libraries | 807 / 812 | 96,039 / 98,226 bytes | `███████████████████░` 97.7% | 0 | 0 |
 | `CRes.dll` | the game's resources, not in the total | 411 / 411 resources | 704,745 / 704,745 bytes | `████████████████████` 100.0% | 0 | -- |
-| engine resources | the resources of `lithtech.exe`, `server.dll`, `d3d.ren`, `NOLF.exe`, `NolfServ.exe`, `ltmsg.dll`, `sres.dll`, not in the total | 98 / 98 resources | 493,430 / 493,430 bytes | `████████████████████` 100.0% | 0 | -- |
-| **All** | | **15,729 / 19,884** | **3,133,796 / 3,722,796 bytes** | `████████████████░░░░` **84.1%** | **2** | **33** |
+| `lithtech.exe:rsrc` | the engine's resources, not in the total | 25 / 25 resources | 22,896 / 22,896 bytes | `████████████████████` 100.0% | 0 | -- |
+| `server.dll:rsrc` | the server's resources, not in the total | 2 / 2 resources | 760 / 760 bytes | `████████████████████` 100.0% | 0 | -- |
+| `d3d.ren:rsrc` | the renderer's resources, not in the total | 1 / 1 resources | 84 / 84 bytes | `████████████████████` 100.0% | 0 | -- |
+| `NOLF.exe:rsrc` | the launcher's resources, not in the total | 22 / 22 resources | 417,462 / 417,462 bytes | `████████████████████` 100.0% | 0 | -- |
+| `NolfServ.exe:rsrc` | the dedicated server's resources, not in the total | 39 / 39 resources | 48,906 / 48,906 bytes | `████████████████████` 100.0% | 0 | -- |
+| `ltmsg.dll:rsrc` | the engine's messages, not in the total | 8 / 8 resources | 3,322 / 3,322 bytes | `████████████████████` 100.0% | 0 | -- |
+| `sres.dll:rsrc` | the server's resource DLL, not in the total | no resources | -- | -- | -- | -- |
+| **All** | | **15,730 / 19,885** | **3,133,801 / 3,722,410 bytes** | `████████████████░░░░` **84.1%** | **0** | **28** |
 <!-- progress:end -->
 
 Every function in that table is recorded in `progress/identical.txt`, and
@@ -140,7 +146,7 @@ out/nolf-legacy-release/linux-run.sh                # the launcher, NOLF.exe: cl
 ```
 
 The game always starts through its launcher, as the retail game does. To go
-straight into a level when testing a build, use `tools/playtest.sh`
+straight into a level when testing a build, use `build/playtest.sh`
 (`make test` and `make shell`; its header has the options).
 
 To play elsewhere, copy `out/nolf-legacy-release-private.tar.gz` (one file), unpack it
@@ -170,7 +176,7 @@ On Windows, drop both images onto `windows-install.bat` (or put them in the
 game folder and double-click it), then start `NOLF.exe`. Either script finds
 the images in the game directory or the one above it by itself, and can be
 run again: a file already in place is checked and kept. The public archive
-is made only if `rez/isos/` has the two `.iso` images (`tools/mkinstall.py`).
+is made only if `rez/isos/` has the two `.iso` images (`build/mkinstall.py`).
 
 Music needs more in the release build: it is DirectMusic, which Wine
 implements only in part. Its own DirectMusic cannot load the music's styles,

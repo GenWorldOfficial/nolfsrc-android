@@ -20,7 +20,7 @@
 //           "<buttons> <lx> <ly> <rx> <ry> <lt> <rt>" in XInput's units
 //           (XINPUT_GAMEPAD's wButtons; thumbs -32768..32767 with Y up
 //           positive; triggers 0..255), re-read every 15 ms; no file (or
-//           an unreadable one) is no pad.  tools/playtest.sh's `pad`
+//           an unreadable one) is no pad.  build/playtest.sh's `pad`
 //           command writes it.
 //
 //           Modern build only (NOLFSRC_MODERN).

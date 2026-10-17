@@ -2,7 +2,7 @@
 # the .tar.gz itself, not a zip around it):
 # out/nolf-{legacy,modern}-{release,debug}-public.tar.gz (build/package.sh),
 # the game directory without anything from the discs, with the scripts that
-# install that from the player's own disc images (tools/mkinstall.py). The
+# install that from the player's own disc images (build/mkinstall.py). The
 # -private archives, which hold the retail data, are not made here. The
 # release build is also checked for byte regressions (make progress).
 #

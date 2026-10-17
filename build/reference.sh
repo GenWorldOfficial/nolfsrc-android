@@ -16,14 +16,15 @@
 set -e
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 source build/retail.sh
-python3 tools/retailextract.py reference "$(retail_dir)" out/reference
+python3 build/retailextract.py reference "$(retail_dir)" out/reference
 
-# The function table of each image (tools/enumfuncs.py --csv): addr, size,
+# The function table of each image (tools/enumfuncs.py --csv), named by the
+# image's stem in progress/targets.py (tools/tgt.py): addr, size,
 # how the start was found, and the name an error-tag literal or export gives
 # it. The reconstruction tools read these (fndiff.py's sizes, tagmap.py,
 # uncovered.py, ...); like the images, they are derived, never committed.
-for pair in server:server.dll lithtech:lithtech.exe d3d:d3d.ren NOLF:NOLF.exe \
-            NolfServ:NolfServ.exe CShell:CShell.dll Object:Object.lto; do
+for pair in server:server.dll lithtech:lithtech.exe d3d:d3d.ren nolf:NOLF.exe \
+            nolfserv:NolfServ.exe cshell:CShell.dll object:Object.lto; do
     python3 tools/enumfuncs.py "out/reference/${pair#*:}" \
         --csv "out/reference/${pair%%:*}-functions.csv" | tail -1
 done

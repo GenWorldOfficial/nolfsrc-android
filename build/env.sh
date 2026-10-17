@@ -16,6 +16,8 @@ fi
 WINE=wine
 WINESERVER=wineserver
 
+source "$REPO/build/project.sh"
+
 export WINEDEBUG=-all
 export WINEDLLOVERRIDES="mscoree,mshtml="
 

@@ -115,7 +115,7 @@ test: check-tools image
 	@rc=0; for w in $(TEST_LEVELS); do \
 	  echo "== playtest: Worlds\\$$w (tools/playtest-basic.txt)"; \
 	  $(DOCKER_RUN) env PLAYTEST_SCRIPT=tools/playtest-basic.txt PLAYTEST_NAME=test-$$w \
-	    bash tools/playtest.sh out/nolf-legacy-release "Worlds\\$$w" || rc=1; \
+	    bash build/playtest.sh out/nolf-legacy-release "Worlds\\$$w" || rc=1; \
 	done; \
 	if [ $$rc = 0 ]; then echo "== make test: every level ALIVE (shots in out/play/test-*/)"; \
 	else echo "== make test: FAILED (see out/play/test-*/result.txt, wine.log)"; fi; exit $$rc

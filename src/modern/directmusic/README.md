@@ -11,7 +11,7 @@ M-P4-12).
 
 ## How
 
-* **The DLLs.** `build/all.sh` step 2 (`tools/retailextract.py openruntime`)
+* **The DLLs.** `build/all.sh` step 2 (`build/retailextract.py openruntime`)
   copies Microsoft's nine DirectMusic DLLs from
   `toolchains/directmusic-5.3.1.904/` (where they come from:
   `toolchains/README.md`; checked against `SHA256SUMS` there) into the game

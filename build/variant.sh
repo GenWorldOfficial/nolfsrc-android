@@ -9,7 +9,7 @@
 #
 # (on the host the make targets run this in the build container; inside
 # `make shell` run it directly). Play the result exactly like out/nolf-legacy-release/:
-# out/<name>/linux-run.sh (the launcher), or tools/playtest.sh out/<name> ...
+# out/<name>/linux-run.sh (the launcher), or build/playtest.sh out/<name> ...
 #
 #   debug    NOLFSRC_DEBUG and symbols, for finding out why something goes
 #            wrong. Compile + /Z7 /Oy- /D NOLFSRC_DEBUG (debug information,
@@ -84,6 +84,7 @@ fi
 TREE="$REPO/out/build-$VARIANT"
 echo "== $VARIANT tree: src/ build/ tools/ -> out/build-$VARIANT/ (sources only; its outputs kept)"
 mkdir -p "$TREE"
+source "$REPO/build/project.sh"
 python3 tools/releasesrc.py mirror "$REPO/src" "$TREE/src"
 rm -rf "$TREE/build" "$TREE/tools"
 tar -C "$REPO" -cf - --exclude='__pycache__' build tools | tar -C "$TREE" -xf -

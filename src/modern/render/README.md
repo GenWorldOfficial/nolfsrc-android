@@ -31,7 +31,7 @@ them as "LithTech OpenGL Renderer" and "LithTech Direct3D 9 Renderer". A
 playtest:
 
     printf '"RenderDll" "opengl.ren"\n"CardDesc" "OpenGL"\n' > out/gl.cfg
-    PLAYTEST_CFG=out/gl.cfg tools/playtest.sh out/nolf-modern-release -
+    PLAYTEST_CFG=out/gl.cfg build/playtest.sh out/nolf-modern-release -
 
 Console variables it reads besides the engine's own (the names and defaults
 `d3d.ren` and the Mac renderer share): `Bilinear`, `Trilinear`,

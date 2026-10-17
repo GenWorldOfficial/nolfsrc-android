@@ -7,7 +7,7 @@
 #                            and checks the retail game, runs this in a
 #                            container)
 #   build/all.sh            (inside the build container, e.g. `make shell`)
-#   make test               (then: play it -- tools/playtest.sh on out/nolf-legacy-release/)
+#   make test               (then: play it -- build/playtest.sh on out/nolf-legacy-release/)
 #
 # Needs: the toolchain (toolchains/, see toolchains/README.md), Wine (the build
 # container has it), and the retail Game of the Year Edition (Europe) as the
@@ -97,13 +97,13 @@ need() {  # need <file> <what> [log]: a build output must exist
 }
 
 step "1. resources: game data from $RETAIL -> $OUT"
-python3 tools/retailextract.py resources "$RETAIL" "$OUT"
+python3 build/retailextract.py resources "$RETAIL" "$OUT"
 # autoexec.cfg starts as the shipped defaults (the engine rewrites it on
 # exit); a rebuild keeps the player's.
 [ -f "$OUT/autoexec.cfg" ] || cp "$OUT/defaults.cfg" "$OUT/autoexec.cfg"
 mkdir -p "$OUT/Save" "$OUT/custom"
 # nolfcmds.txt: the command file the engine starts with, as a fresh build
-# writes it (the launcher rewrites it; tools/playtest.sh uses it),
+# writes it (the launcher rewrites it; build/playtest.sh uses it),
 # build/nolfcmds.sh.
 bash build/nolfcmds.sh "${NOLF_MIDDLEWARE:-retail}" > "$OUT/nolfcmds.txt"
 # startup.txt: the rez stack NolfServ.exe, the dedicated server, loads (the
@@ -123,19 +123,19 @@ chmod +x "$OUT/linux-run.sh" "$OUT/linux-server.sh"
 if [ "${NOLF_MIDDLEWARE:-retail}" = open ]; then
     step "2. open runtime: OpenMiles, our Bink player on FFmpeg and our renderers (build/ext.sh)"
     bash build/ext.sh
-    python3 tools/retailextract.py openruntime "${NOLF_EXT_OUT:-out/ext}" "$OUT"
+    python3 build/retailextract.py openruntime "${NOLF_EXT_OUT:-out/ext}" "$OUT"
 else
     step "2. THIRD-PARTY RUNTIME: Miles + Bink from $RETAIL (the only binaries not built here)"
-    python3 tools/retailextract.py thirdparty "$RETAIL" "$OUT"
+    python3 build/retailextract.py thirdparty "$RETAIL" "$OUT"
 fi
 
 step "2b. launcher, server and engine art: resources of the retail NOLF.exe, NolfServ.exe and lithtech.exe in $RETAIL -> src/engine/{launcher,nolfserv,lithtech}/res/"
-python3 tools/retailextract.py launcherres "$RETAIL" src/engine/launcher/res
-python3 tools/retailextract.py nolfservres "$RETAIL" src/engine/nolfserv/res
-python3 tools/retailextract.py lithtechres "$RETAIL" src/engine/lithtech/res
+python3 build/retailextract.py launcherres "$RETAIL" src/engine/launcher/res
+python3 build/retailextract.py nolfservres "$RETAIL" src/engine/nolfserv/res
+python3 build/retailextract.py lithtechres "$RETAIL" src/engine/lithtech/res
 
 step "2c. Game of the Year text: the retail CRES.dll in $RETAIL -> src/game/ClientRes/goty/"
-python3 tools/retailextract.py goty "$RETAIL" src/game/ClientRes/goty
+python3 build/retailextract.py goty "$RETAIL" src/game/ClientRes/goty
 
 step "3. compile: libraries, game DLLs, engine (build/compile.sh: build/build.mk, ${NOLFSRC_JOBS:-$(nproc)} jobs)"
 GAME_CONFIG=final bash build/compile.sh all
@@ -175,7 +175,7 @@ install_built src/game/ObjectDLL/Final_Release/Object.lto    custom/object.lto
 install_built src/engine/sres/Release/sres.dll           custom/sres.dll
 
 step "5. audit: every PE file in $OUT"
-python3 tools/retailextract.py audit "$OUT"
+python3 build/retailextract.py audit "$OUT"
 
 # (NOLF_PACKAGE=0 skips it: build/variant.sh packages its game directory
 # itself, once the variant's data and symbols are in)

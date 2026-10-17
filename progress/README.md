@@ -20,7 +20,10 @@ with the same tools -- see
 ## What is scored
 
 Every function of each retail binary is compared with what our build
-produced for it:
+produced for it. The binaries, where each one's own code is and what of
+ours it is compared with are `targets.py` in this directory, with the
+evidence for every address (the shared `tools/progress.py` knows no binary
+by name):
 
 | Target | Compared against | Our side |
 |---|---|---|
@@ -43,15 +46,15 @@ a row, sized by its data, `identical` when our bytes are the retail bytes.
 The engine images' resources are scored the same way, each image's as a
 target of its own beside its code (`lithtech.exe:rsrc`, ...; `ltmsg.dll`,
 resources and the C runtime, only this way, and `sres.dll`, which has
-no resources, as one empty row, `rsrc:(none)`, identical while ours has none
-either): version blocks, dialogs,
+no resources, as a row that says so): version blocks, dialogs,
 string tables, icons, the console font, the MFC resources an AppWizard
 application carried. Their text is `.rc` source (`lithtech.rc`,
 `server/server.rc`, `d3d/d3d.rc`, ...); their art is read out of the retail
 images at build time (`docs/BUILDING.md`, step 2b).
 
-The README lists `CRes.dll` after `Object.lto`, and the engine's resources
-as one row after it, marked as not in the total, which counts code only.
+The README lists `CRes.dll` after `Object.lto`, and each image's resources
+as a row of its own after it, marked as not in the total, which counts code
+only.
 Their rows are held like functions: `identical.txt` lists every identical
 resource (`lithtech.exe:rsrc<TAB>rsrc:<type>/<name>/<language>`).
 
@@ -80,7 +83,7 @@ Each retail function gets one status (`out/progress/functions.csv`):
 | `attempted` | no match, but the address is cited in `src/` or recorded in the CSVs here |
 | `todo` | nothing of ours corresponds to it yet |
 | `crt` | the statically linked C runtime / MFC: listed, not counted |
-| `middleware` | third-party code linked among Monolith's (the GameSpy library in `CShell.dll` and `Object.lto`, `MIDDLEWARE` in `tools/progress.py`): listed, not counted. `src/lithshared/gamespy/` stands in for it and is not meant to match |
+| `middleware` | third-party code linked among Monolith's (the GameSpy library in `CShell.dll` and `Object.lto`, `middleware` in `targets.py`): listed, not counted. `src/lithshared/gamespy/` stands in for it and is not meant to match |
 
 Three more statuses are for functions of OURS, not shipped ones, so none of
 them is counted in the denominator:
@@ -254,6 +257,7 @@ the libraries are skipped with a note; `make progress-update` needs them.
 
 | File | What |
 |---|---|
+| `targets.py` | the binaries scored: each one's retail image and our build of it, its objects and libraries, its own code's address ranges (`app`; the C runtime above them is listed, not counted), third-party code inside them (`middleware`), and the rest the shared tools need to know about NOLF1 (`tools/progress.py`'s header has every key) |
 | `identical.txt` | every function verified identical (`target<TAB>function`): the baseline the test holds the build to. Written by `make progress-update` |
 | `summary.json` | per-target counts and bytes of the recorded run; the README table is rendered from it |
 | `data-known.txt` | the text in our images' data known to differ from the retail images', each entry under its reason: the data check's list (`tools/datacheck.py`). `make progress` fails on a difference not in it; `make progress-update` drops the entries that no longer differ |

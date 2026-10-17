@@ -36,7 +36,7 @@ esac
 for f in lithtech.exe server.dll d3d.ren NOLF.exe NolfServ.exe ltmsg.dll sres.dll \
          CShell.dll Object.lto CRes.dll \
          server-functions.csv lithtech-functions.csv d3d-functions.csv \
-         NOLF-functions.csv NolfServ-functions.csv CShell-functions.csv Object-functions.csv \
+         nolf-functions.csv nolfserv-functions.csv cshell-functions.csv object-functions.csv \
          server-vtables.csv lithtech-vtables.csv d3d-vtables.csv; do
     if [ ! -f "out/reference/$f" ]; then
         echo "== retail images -> out/reference/ (for scoring only)"
