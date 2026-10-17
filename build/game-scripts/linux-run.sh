@@ -24,7 +24,9 @@
 #   WINEPREFIX   the Wine prefix to use (default: $HOME/.wine-nolf, created on
 #                first run, so your own prefix is left alone)
 #   WINE         the wine binary (default: wine)
-#   WINESERVER   the wineserver binary (default: wineserver)
+#   WINESERVER   the wineserver binary (default: wineserver; the release
+#                build restarts it once, the first time it sets up its
+#                CD-ROM drive)
 #   WINEDEBUG    Wine's log channels (default: fixme-all, which silences
 #                DirectMusic's chatter)
 #
@@ -98,13 +100,18 @@ if [ $MODERN = 1 ]; then
     MOVIES_OFF=0
     MODE=""
 fi
-[ $MODERN = 1 ] || reg 'HKLM\Software\Wine\Drives' /v 'n:' /t REG_SZ /d cdrom
 reg "$KEY" /v 'Update Command Line'  /t REG_SZ /d '-rez nolfu003.rez'
 reg "$KEY" /v 'Content Command Line' /t REG_SZ /d '-rez nolfgoty.rez -rez custom'
 reg "$KEY" /v 'Disable Movies'       /t REG_DWORD /d $MOVIES_OFF
-# Wine reads the drive types when its server starts: restart it, or the
-# first run after this setup still finds no CD-ROM.
-"${WINESERVER:-wineserver}" -k >/dev/null 2>&1 || true
-sleep 1
+# The release build's CD-ROM drive (n:, see above). Wine reads the drive
+# types when its server starts, so the first time the drive is set the
+# server is restarted, or that run would still find no CD-ROM. Only then:
+# a restart ends every program in the prefix, a dedicated server started
+# with linux-server.sh among them.
+if [ $MODERN = 0 ] && ! "$WINE" reg query 'HKLM\Software\Wine\Drives' /v 'n:' 2>/dev/null | grep -qi cdrom; then
+    reg 'HKLM\Software\Wine\Drives' /v 'n:' /t REG_SZ /d cdrom
+    "${WINESERVER:-wineserver}" -k >/dev/null 2>&1 || true
+    sleep 1
+fi
 
 exec "$WINE" NOLF.exe $MODE "$@"
