@@ -222,6 +222,10 @@ protected:
     virtual LTBOOL   OnDown();
     virtual LTBOOL   OnLeft();
     virtual LTBOOL   OnRight();
+#ifdef NOLFSRC_MODERN
+    // M-P7-05: left and right between the fixed controls of a row
+    LTBOOL          StepFixedRow(int nDir);
+#endif
     virtual LTBOOL   OnEnter();
     virtual LTBOOL   OnPageUp();
     virtual LTBOOL   OnPageDown();

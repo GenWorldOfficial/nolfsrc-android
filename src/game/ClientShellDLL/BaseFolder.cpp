@@ -647,6 +647,10 @@ LTBOOL CBaseFolder::OnLeft()
 	CLTGUICtrl* pCtrl = GetSelectedControl();
 	if (pCtrl)
 		handled = pCtrl->OnLeft();
+#ifdef NOLFSRC_MODERN
+	if (!handled && StepFixedRow(-1))
+		return LTTRUE;
+#endif
 	if (handled)
 		g_pInterfaceMgr->RequestInterfaceSound(IS_SELECT);
 	return handled;
@@ -661,10 +665,64 @@ LTBOOL CBaseFolder::OnRight()
 	CLTGUICtrl* pCtrl = GetSelectedControl();
 	if (pCtrl)
 		handled = pCtrl->OnRight();
+#ifdef NOLFSRC_MODERN
+	if (!handled && StepFixedRow(1))
+		return LTTRUE;
+#endif
 	if (handled)
 		g_pInterfaceMgr->RequestInterfaceSound(IS_SELECT);
 	return handled;
 }
+
+#ifdef NOLFSRC_MODERN
+// M-P7-05: a page's fixed controls -- Back, Continue, a folder's own Start
+// mission or Skip outfitting -- sit side by side along its bottom, but only
+// Up and Down moved between them, through the whole page. Left (nDir -1)
+// and Right (1) now step from a selected fixed control to the nearest
+// selectable one that way on about the same row (within 40 page units up
+// or down; Back, Main and Continue count as one row wherever the layout
+// puts them -- Main is 46 above Continue on the mission status page after
+// a mission): the smallest step across first, then the closest row. False
+// when the selection is not a fixed control or there is none that way.
+LTBOOL CBaseFolder::StepFixedRow(int nDir)
+{
+	CLTGUICtrl* pSel = GetSelectedControl();
+	CLTGUICtrl* pBest = LTNULL;
+	int         nBestX = 0, nBestY = 0;
+	unsigned    i;
+
+	if (!pSel || m_fixedControlArray.FindElement(pSel) >= m_fixedControlArray.GetSize())
+		return LTFALSE;
+
+	LTIntPt sel = pSel->GetPos();
+	for (i = 0; i < m_fixedControlArray.GetSize(); i++)
+	{
+		CLTGUICtrl* pCtrl = m_fixedControlArray[i];
+		if (pCtrl == pSel || !pCtrl->IsEnabled() ||
+			m_skipControlArray.FindElement(pCtrl) < m_skipControlArray.GetSize())
+			continue;
+
+		LTIntPt pos = pCtrl->GetPos();
+		int nX = (pos.x - sel.x) * nDir;
+		int nY = abs(pos.y - sel.y);
+		LTBOOL bNav = (pSel == m_pBack || pSel == m_pMain || pSel == m_pContinue) &&
+					  (pCtrl == m_pBack || pCtrl == m_pMain || pCtrl == m_pContinue);
+		if (nX <= 0 || (nY > 40 && !bNav))
+			continue;
+		if (!pBest || nX < nBestX || (nX == nBestX && nY < nBestY))
+		{
+			pBest  = pCtrl;
+			nBestX = nX;
+			nBestY = nY;
+		}
+	}
+	if (!pBest)
+		return LTFALSE;
+
+	SetSelection(GetIndex(pBest));
+	return LTTRUE;
+}
+#endif
 
 /******************************************************************/
 
