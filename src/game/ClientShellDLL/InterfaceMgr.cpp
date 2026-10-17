@@ -755,6 +755,18 @@ LTBOOL CInterfaceMgr::Update()
 			{
 				g_bLockPopup = LTFALSE;
 			}
+#ifdef NOLFSRC_MODERN
+			// M-P5-17: Activate closes the popup, on whatever it is bound
+			// to (a controller's button too, which sends no key), once the
+			// press that opened it is let go. OnCommandOn's own close never
+			// runs: the popup pauses the game (M-P3-15), which stops the
+			// commands, while their state is still read here.
+			else if (!g_bLockPopup && m_PopupText.IsVisible() &&
+					 g_pLTClient->IsCommandOn(COMMAND_ID_ACTIVATE))
+			{
+				m_PopupText.Clear();
+			}
+#endif
 
 			UpdatePopupState();
             bHandled = LTFALSE;  // Allow further processing

@@ -12,6 +12,9 @@ covers each change in detail, under its item number (M-P1-01 and so on).
 
 Since the first public release:
 
+- **X on a controller closes a popup** (the text of a picked-up item), as
+  the key bound to Activate does: X is the controller's Activate. (M-P5-17,
+  issue #28)
 - **The briefing room's Union Jack the right way round.** Every UNITY HQ
   level maps the flag mirrored, so it showed inverted; the modern build
   installs the texture mirrored, which turns it back. (M-P4-13, issue #26)
