@@ -143,7 +143,12 @@ fi
 # The engine takes the world from the command file, not from arguments after
 # -cmdfile: write a per-run copy with +runworld appended.
 rm -f "$RUN/nolfcmds.txt"
-CMDS="$(tr -d '\r\n' < "$GAME/nolfcmds.txt")"
+# (the command line as the build writes it, build/nolfcmds.sh -- not the game
+# directory's copy, which the launcher rewrites in its own form when the game
+# is played, with its window title and without the screen mode)
+MIDDLEWARE=retail
+grep -q '^EXT .*	binkw32\.dll$' "$GAME/MANIFEST.txt" 2>/dev/null && MIDDLEWARE=open
+CMDS="$(bash "$REPO/build/nolfcmds.sh" $MIDDLEWARE | tr -d '\r\n')"
 SCREEN=1024x768
 if [ -n "${PLAYTEST_RES:-}" ]; then
     RW=${PLAYTEST_RES%x*}; RH=${PLAYTEST_RES#*x}
