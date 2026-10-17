@@ -2948,6 +2948,7 @@ static inline LTBOOL ClipAll299a8(uint32 nClip, RVert299a8** ppVerts,
 {
 	RVert299a8*  pIn;
 	RVert299a8*  pOut;
+	RVert299a8*  pOutStart;
 	int32        nIn;
 
 	if (g_n1008d7a0)
@@ -2960,7 +2961,7 @@ static inline LTBOOL ClipAll299a8(uint32 nClip, RVert299a8** ppVerts,
 
 	nIn  = *pnVerts;
 	pIn  = *ppVerts;
-	pOut = g_p1008b87c;
+	pOut = pOutStart = g_p1008b87c;
 
 	if (nClip & 0x01)
 		if (!ClipNear299a8(&pIn, &nIn, &pOut))
