@@ -5,8 +5,7 @@
 | `nolfsrc-{{TAG}}.tar.gz` | **This is what you want**; the retail game with bug fixes and new features. |
 | `nolfsrc-debug-{{TAG}}.tar.gz` | The same build with debug information. For bug reporting. |
 
-**No game data is included.** A platform specific installer is included that copies the game's data from your own images
-of the two discs of the EU GOTY Edition.
+**No game data is included.** A platform specific installer is included that copies the game's data from your own images of the two discs of the EU GOTY Edition.
 
 Supported images:
 
@@ -15,9 +14,7 @@ Supported images:
 
 ## Install
 
-**This is the whole game, not a patch.** Unpack it into a new, empty directory, not over an earlier release or another
-installation: the installer checks the directory against `SHA256SUMS` and stops if it holds anything else. Copy your old
-`Save` folder across to keep your saved games.
+**This is the whole game, not a patch.** Unpack it into a new, empty directory, not over an earlier release or another installation: the installer checks the directory against `SHA256SUMS` and stops if it holds anything else. Copy your old `Save` folder across to keep your saved games.
 
 The full guide, is [here](https://github.com/{{REPO}}/blob/{{TAG}}/docs/INSTALL.md).
 
@@ -52,6 +49,4 @@ Every change since the retail game is in [`CHANGELOG.md`](https://github.com/{{R
 
 ## Testing
 
-The game is a 32-bit Windows program. It is tested on Linux with Wine and Proton; Windows has had less testing. Please
-report problems in the [issues](https://github.com/{{REPO}}/issues), with the `modern.log` from the game directory
-attached.
+The game is a 32-bit Windows program. It is tested on Linux with Wine and Proton; Windows has had less testing. Please report problems in the [issues](https://github.com/{{REPO}}/issues), with the `modern.log` from the game directory attached.
