@@ -1,0 +1,4 @@
+M-P4-13: the Union Jack of the UNITY HQ briefing room, mirrored left to
+right. Every world that shows it (T01S02, T02S01 .. T10S01, M15S02) maps it
+mirrored (its surfaces' P vector points along -x on a wall facing -z), so
+the retail flag shows inverted; mirrored here, it shows the right way round.

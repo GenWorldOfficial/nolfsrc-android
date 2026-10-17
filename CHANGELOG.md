@@ -12,6 +12,9 @@ covers each change in detail, under its item number (M-P1-01 and so on).
 
 Since the first public release:
 
+- **The briefing room's Union Jack the right way round.** Every UNITY HQ
+  level maps the flag mirrored, so it showed inverted; the modern build
+  installs the texture mirrored, which turns it back. (M-P4-13, issue #26)
 - **The dedicated server, `NolfServ.exe`**, is built from source and in the
   game directory of every build; `linux-server.sh` runs it with Wine,
   without a display if need be ([`docs/INSTALL.md`](docs/INSTALL.md), "A
