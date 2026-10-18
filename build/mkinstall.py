@@ -10,7 +10,7 @@ A game directory holds the retail game's data as well as what we built: the
 four .rez archives, the movies, the text and config files of the play disc,
 the retail Miles and Bink files (legacy builds) and the modern build's data
 edits made from them (custom/, M-files of src/modern/data/). The public
-archive (build/package.sh) leaves all of that out, and two scripts put it
+archive (build/package.sh) leaves all of that out, and three scripts put it
 back from the player's own copies of the two discs -- the Game of the Year
 Edition (Europe), as .iso images or as redump's .bin/.cue (or its .zip),
 which the scripts convert to the .iso first:
@@ -18,6 +18,9 @@ which the scripts convert to the .iso first:
   linux-install.sh       bash, dd, sha256sum, base64 (coreutils)
   windows-install.bat    cmd running the PowerShell it carries (5.1, as every
                          Windows 10 and 11 has)
+  mac-install.command    the Perl every Mac has, with its own modules (for
+                         CrossOver or another Wine: the .bat needs PowerShell,
+                         which Wine does not have)
 
 Neither reads the ISO 9660 filesystem. A disc is recognised by its size and
 SHA-256 (those of the .iso: a .bin is converted, then checked), and then
@@ -32,11 +35,13 @@ byte ranges, worked out here against the images --
 
 -- and the file's size and SHA-256, which the script checks before it moves
 the file into place. So the result is the game directory as built, byte for
-byte. The list goes at the end of each script, after a marker line; the
-scripts' code is build/game-scripts/linux-install.sh and windows-install.ps1
-(the .bat's header is written here).
+byte. The list goes at the end of each script, after a marker line (in the
+Perl one, after its __END__); the scripts' code is
+build/game-scripts/linux-install.sh, windows-install.ps1 (the .bat's header
+is written here) and mac-install.command.
 
 Writes <outdir>/linux-install.sh, <outdir>/windows-install.bat,
+<outdir>/mac-install.command,
 <outdir>/disc-files.txt, the game directory's paths the scripts write (the
 archive leaves them out), and <outdir>/disc-sums.txt, the SHA-256 of each of
 those but autoexec.cfg, which the engine rewrites (build/package.sh puts them
@@ -327,6 +332,13 @@ def main():
     with open(os.path.join(outdir, "linux-install.sh"), "w", newline="\n") as f:
         f.write(body + MARKER + "\n" + "\n".join(data) + "\n")
     os.chmod(os.path.join(outdir, "linux-install.sh"), 0o755)
+
+    perl = open(os.path.join(SCRIPTS, "mac-install.command")).read()
+    if not perl.endswith("\n__END__\n"):
+        sys.exit("mkinstall: mac-install.command must end with __END__ (the list follows it)")
+    with open(os.path.join(outdir, "mac-install.command"), "w", newline="\n") as f:
+        f.write(perl + MARKER + "\n" + "\n".join(data) + "\n")
+    os.chmod(os.path.join(outdir, "mac-install.command"), 0o755)
 
     ps = open(os.path.join(SCRIPTS, "windows-install.ps1")).read()
     if not ps.isascii() or "#__NOLF_PS__" in ps or MARKER in ps:

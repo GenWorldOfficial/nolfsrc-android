@@ -60,6 +60,8 @@ rewrites).
 - **On Linux:** Wine with 32-bit support, or Proton (Steam), and `python3`
   if your images are `.bin` or `.zip`.
 - **On Windows:** nothing else. The game is a 32-bit Windows program.
+- **On a Mac:** CrossOver, or another Wine for macOS, to run it. The
+  installer needs nothing more: it is a Perl script, and every Mac has Perl.
 
 ## Linux
 
@@ -123,6 +125,35 @@ No winetricks or Protontricks are needed.
 Windows support has had less testing than Linux. The programs are not
 signed, so SmartScreen may warn before the first start. If something goes
 wrong, please report it.
+
+## Mac (CrossOver)
+
+The game is a Windows program, so on a Mac it runs in CrossOver (or another
+Wine). Its data is installed in macOS itself, with `mac-install.command`.
+
+1. Unpack the archive into a folder of its own: double-click it in Finder.
+2. Put both disc images into the game folder, then double-click
+   `mac-install.command`. It runs in a Terminal window and says when it is
+   done.
+
+   macOS may refuse to open it, as it was downloaded and is not signed. Then
+   allow it in System Settings > Privacy & Security ("Open Anyway"), or run
+   it in Terminal, which can also take the images from elsewhere:
+
+   ```sh
+   cd ~/Downloads/nolfsrc-v0.0.3-alpha    # the game folder
+   ./mac-install.command /path/to/disc1.zip /path/to/disc2.zip
+   ```
+
+3. In CrossOver, make a new bottle (Windows 10), then use the bottle's Run
+   Command, browse to the game folder's `NOLF.exe` and run it; "Save command
+   as a launcher" keeps it for next time. Click Launch.
+
+The game, its movies and its music need nothing installed in the bottle.
+If the picture is wrong, try `opengl.ren` or `d3d7.ren` in Options >
+Display. The Mac installer has been tested on Linux, which runs the same
+Perl, but not on a Mac yet, and the game has not been tried in CrossOver
+here: please report how it goes.
 
 ## First start
 

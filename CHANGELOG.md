@@ -17,6 +17,11 @@ Since the first public release:
   it did not round as Miles does); its volume, master volume and pan now
   match the retail DLL within 0.01 dB, measured. (OpenMiles patch 0002,
   issue #31)
+- **An installer for the Mac**, `mac-install.command`, to play the game
+  with CrossOver or another Wine. Double-click it with the disc images in
+  the game folder; it needs only the Perl every Mac has, and checks the
+  folder, the images and every file it writes as the other installers do.
+  Not yet tried on a Mac ([`docs/INSTALL.md`](docs/INSTALL.md), "Mac").
 - **The crane in A Tenuous Lead no longer drills.** OpenMiles put the loop
   of a compressed (IMA ADPCM) sound in the wrong place, so the crane outside
   the warehouse repeated a 66 ms scrap of its sound while it moved; it now

@@ -160,7 +160,7 @@ The `-private` archives hold the retail game's data (1.1 GB of it), so they
 are for your own machines and for others developing on the build. To give
 the game to anyone else, give them the `-public` archive instead
 (`out/nolf-modern-release-public.tar.gz`, about 5 MB): the same directory
-without anything from the discs, and two scripts that copy it out of their
+without anything from the discs, and three scripts that copy it out of their
 own disc images of the Game of the Year Edition (Europe). An image can be a
 plain `.iso` (an own rip), redump's `.bin` (or its `.cue`), or redump's
 `.zip` as archive.org serves it; a `.bin` or `.zip` is converted to a
@@ -170,10 +170,11 @@ the result is the `-private` archive's directory, byte for byte:
 
 ```sh
 nolf-modern-release/linux-install.sh disc1.zip disc2.zip    # Linux, Steam Deck
+nolf-modern-release/mac-install.command disc1.zip disc2.zip # a Mac, for CrossOver
 ```
 
 On Windows, drop both images onto `windows-install.bat` (or put them in the
-game folder and double-click it), then start `NOLF.exe`. Either script finds
+game folder and double-click it), then start `NOLF.exe`. Each script finds
 the images in the game directory or the one above it by itself, and can be
 run again: a file already in place is checked and kept. The public archive
 is made only if `rez/isos/` has the two `.iso` images (`build/mkinstall.py`).

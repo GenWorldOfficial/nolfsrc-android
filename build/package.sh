@@ -11,7 +11,8 @@
 #                               developing on the build
 #   out/<name>-public.tar.gz    the same without anything that came from the
 #                               discs, which its linux-install.sh /
-#                               windows-install.bat copy out of the player's
+#                               windows-install.bat / mac-install.command
+#                               copy out of the player's
 #                               own disc images (build/mkinstall.py): the one
 #                               to give to other people. Its SHA256SUMS lists
 #                               every file of the archive and every file the
@@ -85,7 +86,8 @@ else
         --exclude='*.log' --exclude=run-cmds.txt --exclude=cd --exclude='*.part' \
         --anchored --no-wildcards --exclude-from="$PARENT/$STAGE/exclude.txt" \
         --transform="s|^$STAGE/|$NAME/|" \
-        "$NAME" "$STAGE/linux-install.sh" "$STAGE/windows-install.bat"
+        "$NAME" "$STAGE/linux-install.sh" "$STAGE/windows-install.bat" \
+        "$STAGE/mac-install.command"
     # Last, SHA256SUMS: every file of the archive and every file the install
     # scripts write, but autoexec.cfg, which the game rewrites. The scripts
     # check the directory against it before they install, and

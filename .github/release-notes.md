@@ -37,6 +37,10 @@ cd nolfsrc-{{ARCHIVE}}
 
 Add as a non-steam game, enable compatibility mode, and pick a Proton runtime.
 
+### Mac
+
+The game runs in CrossOver (or another Wine for macOS). Unpack the archive, put both disc images in its folder and double-click `mac-install.command`, then run `NOLF.exe` in a CrossOver bottle with Run Command. If macOS will not open the script, the [INSTALL.md guide](https://github.com/{{REPO}}/blob/{{TAG}}/docs/INSTALL.md#mac-crossover) says what to do.
+
 ## What the modern build adds
 
 - Direct3D 9 (the default) and OpenGL renderers, with antialiasing; the original DirectX 7 renderer is included too.
