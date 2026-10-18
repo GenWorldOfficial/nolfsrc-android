@@ -298,10 +298,18 @@ each making OpenMiles behave as Miles 6.0i does:
   engine relies on to recycle its voices -- the game ran out of voices after
   a few dozen sounds and went silent (dialogue stopped mid-conversation).
 * `0002`: the 0..127 sample volume followed later Miles versions' much
-  steeper curve; it now follows Miles 6.0i's, measured from the retail DLL
-  (a test tone played through each at every volume and recorded; they now
-  agree within a decibel). The engine lowers the volume of distant
-  speakers, so their dialogue had been 10-30 dB too quiet to hear.
+  steeper curve, combined with the master volume and the pan as exact
+  floating-point gains. Miles 6.0i's arithmetic is integer and linear,
+  measured from the retail DLL (a test tone played through each at every
+  volume under Wine, with ALSA's output recorded to a file): each volume
+  is scaled to 0..128, a sample's level is (sample * master) >> 7, and a
+  pan's far side is its distance from that edge over 64.5. OpenMiles now
+  does the same, and the two agree within 0.01 dB at every volume, master
+  volume and pan, and for the game's own PCM, IMA ADPCM and MP3 sounds.
+  The engine lowers the volume of distant speakers, so their dialogue had
+  been 10-30 dB too quiet to hear; a first, interpolated version of the
+  curve was 1.5-3 dB too loud at the middle and low volumes most sounds
+  use (issue #31).
 * `0003`: `AIL_open_stream` did not understand the `\\<handle>` file names
   the engine streams a sound inside a `.rez` archive with (an open file
   handle, seeked to the sound), so every such sound was silent -- the

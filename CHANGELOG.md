@@ -12,6 +12,11 @@ covers each change in detail, under its item number (M-P1-01 and so on).
 
 Since the first public release:
 
+- **Sound effects at retail loudness.** OpenMiles played most sounds
+  1.5-3 dB louder than Miles 6.0i (its volume curve was approximated, and
+  it did not round as Miles does); its volume, master volume and pan now
+  match the retail DLL within 0.01 dB, measured. (OpenMiles patch 0002,
+  issue #31)
 - **Left and right move between the buttons along a menu page's bottom**
   (Back, Start mission, ...), with a controller's d-pad or stick and with
   the arrow keys; before, only up and down reached them. (M-P7-05, issue #27)
