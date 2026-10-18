@@ -17,6 +17,10 @@ Since the first public release:
   it did not round as Miles does); its volume, master volume and pan now
   match the retail DLL within 0.01 dB, measured. (OpenMiles patch 0002,
   issue #31)
+- **The crane in A Tenuous Lead no longer drills.** OpenMiles put the loop
+  of a compressed (IMA ADPCM) sound in the wrong place, so the crane outside
+  the warehouse repeated a 66 ms scrap of its sound while it moved; it now
+  loops where Miles does. (OpenMiles patch 0005, issue #31)
 - **Left and right move between the buttons along a menu page's bottom**
   (Back, Start mission, ...), with a controller's d-pad or stick and with
   the arrow keys; before, only up and down reached them. (M-P7-05, issue #27)

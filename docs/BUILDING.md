@@ -291,7 +291,7 @@ Each upstream project is a submodule under `ext/`, pinned to a release
 is written into `ext/`: the builds happen in `out/ext/`. Where upstream needs
 a fix for this game, the fix is a patch in `ext/patches/<project>/`, applied
 in order to a copy of the source in `out/ext/` (the submodule stays exactly
-upstream's); each patch's header says what it fixes. Today there are three,
+upstream's); each patch's header says what it fixes. Today there are four,
 each making OpenMiles behave as Miles 6.0i does:
 
 * `0001`: `AIL_init_sample` cleared a sample handle's user data, which the
@@ -315,6 +315,14 @@ each making OpenMiles behave as Miles 6.0i does:
   handle, seeked to the sound), so every such sound was silent -- the
   opening credits' song in T01S01 among them, danced to in silence. It now
   reads the sound from the handle.
+* `0005`: a sample's loop block (`AIL_set_sample_loop_block`) is in bytes
+  of the sample's own data, which for IMA ADPCM are compressed blocks;
+  OpenMiles divided the offsets by the decoded frame size, so an ADPCM
+  sound looped a stretch an eighth of the way in. The engine loops a
+  sound over its WAV cue region: the crane in M05S03 (`LIFT3.wav`) looped
+  66 ms of its start for as long as it moved, a rattling drill (issue
+  #31). Miles 6.0i loops at the start of the block an offset falls in, as
+  recorded in-game, and OpenMiles now does the same.
 
 Send such fixes upstream too.
 
