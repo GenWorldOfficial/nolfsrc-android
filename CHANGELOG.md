@@ -21,6 +21,11 @@ Since the first public release:
   of a compressed (IMA ADPCM) sound in the wrong place, so the crane outside
   the warehouse repeated a 66 ms scrap of its sound while it moved; it now
   loops where Miles does. (OpenMiles patch 0005, issue #31)
+- **Cleaner sound effects, brighter dialogue than retail.** OpenMiles
+  resampled each sound without a low-pass filter, which added a faint
+  mirror image of most effects at 11-22 kHz; it now filters it out. Retail
+  Miles avoided it by mixing at 22050 Hz, which also cut the dialogue off
+  at 10 kHz; the modern build keeps it to 14 kHz. (OpenMiles patch 0004)
 - **Left and right move between the buttons along a menu page's bottom**
   (Back, Start mission, ...), with a controller's d-pad or stick and with
   the arrow keys; before, only up and down reached them. (M-P7-05, issue #27)

@@ -291,8 +291,8 @@ Each upstream project is a submodule under `ext/`, pinned to a release
 is written into `ext/`: the builds happen in `out/ext/`. Where upstream needs
 a fix for this game, the fix is a patch in `ext/patches/<project>/`, applied
 in order to a copy of the source in `out/ext/` (the submodule stays exactly
-upstream's); each patch's header says what it fixes. Today there are four,
-each making OpenMiles behave as Miles 6.0i does:
+upstream's); each patch's header says what it fixes. Today there are five,
+each making OpenMiles behave as Miles 6.0i does, or better:
 
 * `0001`: `AIL_init_sample` cleared a sample handle's user data, which the
   engine relies on to recycle its voices -- the game ran out of voices after
@@ -315,6 +315,14 @@ each making OpenMiles behave as Miles 6.0i does:
   handle, seeked to the sound), so every such sound was silent -- the
   opening credits' song in T01S01 among them, danced to in silence. It now
   reads the sound from the handle.
+* `0004`: each sound is resampled to the 44100 Hz mix on its own, by
+  miniaudio's pitch resampler, which miniaudio runs without its low-pass
+  filter -- so a 22050 Hz sound (most effects) came out with its mirror
+  image at 11-22 kHz, 30-45 dB down. The filter is now on at its highest
+  order: the image is 58-84 dB down above 12 kHz. An improvement on retail
+  rather than a match: Miles 6.0i avoids the image only by mixing at the
+  22050 Hz NOLF asks for, which also cuts the dialogue (44100 Hz) off at
+  10 kHz, where OpenMiles keeps it to 14 kHz.
 * `0005`: a sample's loop block (`AIL_set_sample_loop_block`) is in bytes
   of the sample's own data, which for IMA ADPCM are compressed blocks;
   OpenMiles divided the offsets by the decoded frame size, so an ADPCM
