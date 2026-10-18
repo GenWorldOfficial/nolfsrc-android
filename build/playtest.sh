@@ -47,6 +47,11 @@
 #                         dialogue decision) in turn, every 3s; returns once
 #                         the HUD has been up for 4s, or after <timeout>
 #                         (default 90s)
+#   cinestart [timeout]   until a cinematic is on screen (the letterbox:
+#                         black bands top and bottom, a lit picture between),
+#                         or <timeout> (default 120s); the clock for timing a
+#                         cinematic's shots, since a level loads in its own
+#                         time
 #   shot <name>           screenshot the game window -> shots/NN-<name>.png
 #   focus                 re-focus the game window
 #   mmove <x> <y>         move the pointer to a point of the menus' 640x480
@@ -91,7 +96,10 @@
 # compares two scripted runs (directory names under out/play/, e.g. two
 # PLAYTEST_NAMEs): per shot, the normalised RMSE between the two frames (0 = same,
 # roughly < 0.1 = the same view, > 0.2 = a different screen), and writes
-# out/play/compare-<runA>-<runB>.png (A left, B right, one row per shot).
+# out/play/compare-<runA>-<runB>.png (A left, B right, one row per shot,
+# each PLAYTEST_COMPARE_SIZE, default 320x240; PLAYTEST_COMPARE_EXT=jpg
+# writes a JPEG; `make test-compare` makes a 640x480 one, small enough
+# to attach to a pull request).
 set -u
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 for t in wine xvfb-run xdotool convert; do
@@ -105,7 +113,7 @@ if [ "${1:-}" = compare ]; then
         r=$(compare -metric RMSE $f $B/shots/$b null: 2>&1 | sed 's/.*(\(.*\))/\1/')
         printf '%-24s %s\n' "$b" "$r"; L+=($f $B/shots/$b)
     done
-    [ ${#L[@]} -gt 0 ] && montage -label '%d/%f' -pointsize 9 "${L[@]}" -tile 2x -geometry 320x240+2+2 compare-$A-$B.png
+    [ ${#L[@]} -gt 0 ] && montage -label '%d/%f' -pointsize 9 "${L[@]}" -tile 2x -geometry ${PLAYTEST_COMPARE_SIZE:-320x240}+2+2 -depth 8 -quality 85 compare-$A-$B.${PLAYTEST_COMPARE_EXT:-png}
     exit
 fi
 GAMEDIR="${1:-out/nolf-legacy-release}"
@@ -222,6 +230,16 @@ if [ -f script.txt ]; then
         xwd -root -silent | convert xwd:- -crop "${w}x${h}+${x}+${y}" -format '%[fx:mean.r] %[fx:mean.g]' info: 2>/dev/null |
             awk '{ exit !($1 > 0.3 && $1 > 2.5 * $2) }'
     }
+    # is a cinematic on screen? The letterbox: the window's top and bottom
+    # tenths black, its middle third lit.
+    letterbox() {
+        local b=$((WH/10)) m=$((WH/3))
+        xwd -root -silent | convert xwd:- \
+            \( +clone -crop "${WW}x${b}+${WX}+$((WY+2))" -format '%[fx:mean] ' -write info: +delete \) \
+            \( +clone -crop "${WW}x${b}+${WX}+$((WY+WH-b-2))" -format '%[fx:mean] ' -write info: +delete \) \
+            -crop "${WW}x${m}+${WX}+$((WY+m))" -format '%[fx:mean]' info: 2>/dev/null |
+            awk '{ exit !($1 < 0.02 && $2 < 0.02 && $3 > 0.08) }'
+    }
     T0=$(date +%s.%N)
     LINE=0
     while IFS= read -r raw || [ -n "$raw" ]; do
@@ -258,6 +276,10 @@ if [ -f script.txt ]; then
                     [ $k = space ] && k=Return || k=space
                 done
                 log "  skipcine done after $(( $(date +%s) - st ))s" ;;
+            cinestart)
+                to=${1:-120}; st=$(date +%s)
+                until letterbox || [ $(( $(date +%s) - st )) -ge $to ] || ! alive; do sleep 0.25; done
+                log "  cinestart after $(( $(date +%s) - st ))s$(letterbox || echo ' (timed out)')" ;;
             shot)  N=$((N+1)); f=$(printf 'shots/%02d-%s.png' $N "$1"); grab "$f"; log "  -> $f" ;;
             focus) focuswin ;;
             mmove) pagemove "$1" "$2" ;;
