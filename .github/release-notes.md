@@ -2,8 +2,8 @@
 
 | File | What it is |
 |---|---|
-| `nolfsrc-{{TAG}}.tar.gz` | **This is what you want**; the retail game with bug fixes and new features. |
-| `nolfsrc-debug-{{TAG}}.tar.gz` | The same build with debug information. For bug reporting. |
+| `nolfsrc-{{ARCHIVE}}.tar.gz` | **This is what you want**; the retail game with bug fixes and new features. |
+| `nolfsrc-debug-{{ARCHIVE}}.tar.gz` | The same build with debug information. For bug reporting. |
 
 **No game data is included.** A platform specific installer is included that copies the game's data from your own images of the two discs of the EU GOTY Edition.
 
@@ -27,8 +27,8 @@ Unpack the archive, drop both disc images onto `windows-install.bat`, then start
 There's no native Linux buid yet, but the game runs well under Wine or Proton; including on Steam Deck.
 
 ```sh
-tar xzf nolfsrc-{{TAG}}.tar.gz
-cd nolfsrc-{{TAG}}
+tar xzf nolfsrc-{{ARCHIVE}}.tar.gz
+cd nolfsrc-{{ARCHIVE}}
 ./linux-install.sh /path/to/disc1.zip /path/to/disc2.zip
 ./linux-run.sh
 ```

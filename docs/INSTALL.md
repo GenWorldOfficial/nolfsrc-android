@@ -14,6 +14,17 @@ example):
 | `nolfsrc-<version>.tar.gz` | **The one you want.** The game built from source with the modern build's fixes and features. |
 | `nolfsrc-debug-<version>.tar.gz` | The same with debug information. If the game crashes, it writes a backtrace to `nolfsrc.log`. |
 
+To try changes before the next release, there is the
+[nightly](https://github.com/nolffan/nolfsrc/releases/tag/nightly): the
+latest `master`, rebuilt each time a change is merged and its builds pass.
+Its archives are named for the commit they were built from,
+`nolfsrc-nightly-<commit>.tar.gz` and `nolfsrc-debug-nightly-<commit>.tar.gz`
+(the first seven digits of its hash, `nolfsrc-nightly-a16e5e8.tar.gz` for
+example), and each unpacks to a directory of that name. It has had no
+testing beyond the builds, so expect the occasional new bug; say in a bug
+report that you are on a nightly, and which commit. It installs like any
+release.
+
 The legacy build, the game built exactly as it shipped in 2001, bugs
 included, is kept for archive purposes and is not attached to releases. To
 get it, build it ([`BUILDING.md`](BUILDING.md)); each build on GitHub
