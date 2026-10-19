@@ -147,7 +147,8 @@ with the action), and no open-source player plays it correctly. Two ways:
 | `mrplatform.h` on Android (`gles/android_platform.cpp`) | done: the mode list from the screen's size, no mode switching |
 | Renderer core (`src/modern/render/mr_*.cpp`) on 64-bit | blocked on M2: its engine-struct mirrors are 32-bit; otherwise it needs `__stdcall` macros and a non-DirectDraw movie path |
 | M1: CMake build, 32-bit Linux (`native/`) | **libraries and game modules compile**: every lithshared library, CShell and Object (with `src/modern/`'s code and the flex/bison parser) with clang `-m32`, from unedited include lines (a case-insensitive overlay) and small source edits that leave the Windows build's code as it was. `native/README.md` lists how |
-| M1: platform layer, engine, link | next |
+| M1: the engine | **compiles**: all 125 of `lithtech.exe`'s sources |
+| M1: link (the reconstruction's alias and vtable lists, for ELF), platform layer, run | next |
 | Everything else | M1 to M5 above |
 
 ## Building and testing what exists

@@ -261,7 +261,11 @@ CUnknown928Obj* sub_1002d355(CServerMgr* pMgr)
 	CLTServer* pServer;
 
 	if (pMem)
+#ifdef NOLF_NATIVE
+		((CLTServer*)pMem)->CLTServer::CLTServer(pMgr), pServer = (CLTServer*)pMem;	// (clang: the call is void)
+#else
 		pServer = &((CLTServer*)pMem)->CLTServer::CLTServer(pMgr);
+#endif
 	else
 		pServer = LTNULL;
 

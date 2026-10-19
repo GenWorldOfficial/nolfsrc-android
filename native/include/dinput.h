@@ -1,10 +1,331 @@
-/* dinput.h -- DirectInput's key codes (DIK_*, the keyboard's scan codes),
- * which the engine's input and the game's controls use as key numbers. The
- * native engine's input (native/plat/) reports keys in these codes. The
- * DirectInput interfaces themselves are not here: nothing native uses them. */
+/* dinput.h -- DirectInput 5's interfaces, structs and constants, as the
+ * engine's input (clientinput.cpp) and the modern build's gamepad device
+ * (src/modern/engine/p7_gamepad.cpp, which implements a device itself) use
+ * them. Native, DirectInputCreateA (native/plat/nolfplat_dinput.cpp) gives
+ * keyboard and mouse devices over SDL; the gamepad is the modern build's
+ * own, reading the pad through the XInput stand-in.
+ *
+ * Every user of these is compiled here, so the interfaces need DirectInput's
+ * methods and meanings, not its exact binary layout; the structs the engine
+ * fills in or reads by offset keep it (DIJOYSTATE for DIJOFS_*). */
 #ifndef NOLF_DINPUT_H
 #define NOLF_DINPUT_H
 #include "nolfwin.h"
+#include "nolfcom.h"
+
+#ifndef DIRECTINPUT_VERSION
+#define DIRECTINPUT_VERSION 0x0700
+#endif
+
+/* ---- results -------------------------------------------------------------------- */
+#define DI_OK                   S_OK
+#define DI_NOTATTACHED          S_FALSE
+#define DI_BUFFEROVERFLOW       S_FALSE
+#define DI_PROPNOEFFECT         S_FALSE
+#define DI_NOEFFECT             S_FALSE
+#define DI_POLLEDDEVICE         ((HRESULT)0x00000002L)
+#define DIERR_GENERIC           E_FAIL
+#define DIERR_INVALIDPARAM      E_INVALIDARG
+#define DIERR_OUTOFMEMORY       E_OUTOFMEMORY
+#define DIERR_UNSUPPORTED       E_NOTIMPL
+#define DIERR_NOINTERFACE       E_NOINTERFACE
+#define DIERR_NOTINITIALIZED    ((HRESULT)0x80070015L)
+#define DIERR_NOTACQUIRED       ((HRESULT)0x8007000CL)
+#define DIERR_INPUTLOST         ((HRESULT)0x8007001EL)
+#define DIERR_ACQUIRED          ((HRESULT)0x800700AAL)
+#define DIERR_DEVICENOTREG      ((HRESULT)0x80040154L)
+#define DIERR_OTHERAPPHASPRIO   ((HRESULT)0x80070005L)
+#define DIERR_OBJECTNOTFOUND    ((HRESULT)0x80070002L)
+#define DIERR_OLDDIRECTINPUTVERSION ((HRESULT)0x8007047EL)
+#define DIERR_BETADIRECTINPUTVERSION ((HRESULT)0x80070481L)
+#define DIENUM_STOP             0
+#define DIENUM_CONTINUE         1
+
+/* ---- device types ------------------------------------------------------------------ */
+#define DIDEVTYPE_DEVICE        1
+#define DIDEVTYPE_MOUSE         2
+#define DIDEVTYPE_KEYBOARD      3
+#define DIDEVTYPE_JOYSTICK      4
+#define DIDEVTYPE_HID           0x00010000
+#define DIDEVTYPEMOUSE_UNKNOWN      1
+#define DIDEVTYPEMOUSE_TRADITIONAL  2
+#define DIDEVTYPEKEYBOARD_PCENH     4
+#define DIDEVTYPEJOYSTICK_UNKNOWN   1
+#define DIDEVTYPEJOYSTICK_TRADITIONAL 2
+#define DIDEVTYPEJOYSTICK_GAMEPAD   5
+#define GET_DIDEVICE_TYPE(dwDevType)    LOBYTE(dwDevType)
+#define GET_DIDEVICE_SUBTYPE(dwDevType) HIBYTE(dwDevType)
+#define DIEDFL_ALLDEVICES       0x00000000
+#define DIEDFL_ATTACHEDONLY     0x00000001
+
+/* ---- objects and data formats --------------------------------------------------------- */
+#define DIDFT_ALL               0x00000000
+#define DIDFT_RELAXIS           0x00000001
+#define DIDFT_ABSAXIS           0x00000002
+#define DIDFT_AXIS              0x00000003
+#define DIDFT_PSHBUTTON         0x00000004
+#define DIDFT_TGLBUTTON         0x00000008
+#define DIDFT_BUTTON            0x0000000C
+#define DIDFT_POV               0x00000010
+#define DIDFT_COLLECTION        0x00000040
+#define DIDFT_NODATA            0x00000080
+#define DIDFT_ANYINSTANCE       0x00FFFF00
+#define DIDFT_INSTANCEMASK      DIDFT_ANYINSTANCE
+#define DIDFT_MAKEINSTANCE(n)   ((WORD)(n) << 8)
+#define DIDFT_GETTYPE(n)        LOBYTE(n)
+#define DIDFT_GETINSTANCE(n)    LOWORD((n) >> 8)
+#define DIDFT_FFACTUATOR        0x01000000
+#define DIDFT_FFEFFECTTRIGGER   0x02000000
+#define DIDFT_OPTIONAL          0x80000000
+#define DIDF_ABSAXIS            0x00000001
+#define DIDF_RELAXIS            0x00000002
+#define DIDOI_FFACTUATOR        0x00000001
+#define DIDOI_POLLED            0x00008000
+#define DIDOI_ASPECTPOSITION    0x00000100
+#define DIDOI_ASPECTVELOCITY    0x00000200
+#define DIDOI_ASPECTACCEL       0x00000300
+#define DIDOI_ASPECTFORCE       0x00000400
+#define DIDC_ATTACHED           0x00000001
+#define DIDC_POLLEDDEVICE       0x00000002
+#define DIDC_EMULATED           0x00000004
+#define DIDC_POLLEDDATAFORMAT   0x00000008
+#define DIDC_FORCEFEEDBACK      0x00000100
+#define DISCL_EXCLUSIVE         0x00000001
+#define DISCL_NONEXCLUSIVE      0x00000002
+#define DISCL_FOREGROUND        0x00000004
+#define DISCL_BACKGROUND        0x00000008
+#define DIGDD_PEEK              0x00000001
+
+typedef struct _DIOBJECTDATAFORMAT {
+    const GUID* pguid;
+    DWORD       dwOfs;
+    DWORD       dwType;
+    DWORD       dwFlags;
+} DIOBJECTDATAFORMAT, *LPDIOBJECTDATAFORMAT;
+typedef const DIOBJECTDATAFORMAT* LPCDIOBJECTDATAFORMAT;
+
+typedef struct _DIDATAFORMAT {
+    DWORD                dwSize;
+    DWORD                dwObjSize;
+    DWORD                dwFlags;
+    DWORD                dwDataSize;
+    DWORD                dwNumObjs;
+    LPDIOBJECTDATAFORMAT rgodf;
+} DIDATAFORMAT, *LPDIDATAFORMAT;
+typedef const DIDATAFORMAT* LPCDIDATAFORMAT;
+
+typedef struct _DIDEVICEOBJECTDATA {
+    DWORD dwOfs;
+    DWORD dwData;
+    DWORD dwTimeStamp;
+    DWORD dwSequence;
+} DIDEVICEOBJECTDATA, *LPDIDEVICEOBJECTDATA;
+typedef const DIDEVICEOBJECTDATA* LPCDIDEVICEOBJECTDATA;
+
+typedef struct DIJOYSTATE {
+    LONG  lX, lY, lZ;
+    LONG  lRx, lRy, lRz;
+    LONG  rglSlider[2];
+    DWORD rgdwPOV[4];
+    BYTE  rgbButtons[32];
+} DIJOYSTATE, *LPDIJOYSTATE;
+typedef struct _DIMOUSESTATE {
+    LONG lX, lY, lZ;
+    BYTE rgbButtons[4];
+} DIMOUSESTATE, *LPDIMOUSESTATE;
+
+#define DIJOFS_X            offsetof(DIJOYSTATE, lX)
+#define DIJOFS_Y            offsetof(DIJOYSTATE, lY)
+#define DIJOFS_Z            offsetof(DIJOYSTATE, lZ)
+#define DIJOFS_RX           offsetof(DIJOYSTATE, lRx)
+#define DIJOFS_RY           offsetof(DIJOYSTATE, lRy)
+#define DIJOFS_RZ           offsetof(DIJOYSTATE, lRz)
+#define DIJOFS_SLIDER(n)    (offsetof(DIJOYSTATE, rglSlider) + (n) * sizeof(LONG))
+#define DIJOFS_POV(n)       (offsetof(DIJOYSTATE, rgdwPOV) + (n) * sizeof(DWORD))
+#define DIJOFS_BUTTON(n)    (offsetof(DIJOYSTATE, rgbButtons) + (n))
+#define DIMOFS_X            offsetof(DIMOUSESTATE, lX)
+#define DIMOFS_Y            offsetof(DIMOUSESTATE, lY)
+#define DIMOFS_Z            offsetof(DIMOUSESTATE, lZ)
+#define DIMOFS_BUTTON0      (offsetof(DIMOUSESTATE, rgbButtons) + 0)
+#define DIMOFS_BUTTON1      (offsetof(DIMOUSESTATE, rgbButtons) + 1)
+#define DIMOFS_BUTTON2      (offsetof(DIMOUSESTATE, rgbButtons) + 2)
+#define DIMOFS_BUTTON3      (offsetof(DIMOUSESTATE, rgbButtons) + 3)
+
+/* ---- properties ----------------------------------------------------------------------- */
+typedef struct DIPROPHEADER {
+    DWORD dwSize;
+    DWORD dwHeaderSize;
+    DWORD dwObj;
+    DWORD dwHow;
+} DIPROPHEADER, *LPDIPROPHEADER;
+typedef const DIPROPHEADER* LPCDIPROPHEADER;
+typedef struct DIPROPDWORD { DIPROPHEADER diph; DWORD dwData; } DIPROPDWORD, *LPDIPROPDWORD;
+typedef const DIPROPDWORD* LPCDIPROPDWORD;
+typedef struct DIPROPRANGE { DIPROPHEADER diph; LONG lMin, lMax; } DIPROPRANGE, *LPDIPROPRANGE;
+typedef const DIPROPRANGE* LPCDIPROPRANGE;
+#define DIPH_DEVICE         0
+#define DIPH_BYOFFSET       1
+#define DIPH_BYID           2
+#define DIPROPRANGE_NOMIN   ((LONG)0x80000000L)
+#define DIPROPRANGE_NOMAX   ((LONG)0x7FFFFFFFL)
+/* a property is named by a small number standing in for a GUID's address */
+#define MAKEDIPROP(prop)    (*(const GUID*)(uintptr_t)(prop))
+#define DIPROP_BUFFERSIZE   MAKEDIPROP(1)
+#define DIPROP_AXISMODE     MAKEDIPROP(2)
+#define DIPROPAXISMODE_ABS  0
+#define DIPROPAXISMODE_REL  1
+#define DIPROP_GRANULARITY  MAKEDIPROP(3)
+#define DIPROP_RANGE        MAKEDIPROP(4)
+#define DIPROP_DEADZONE     MAKEDIPROP(5)
+#define DIPROP_SATURATION   MAKEDIPROP(6)
+#define DIPROP_FFGAIN       MAKEDIPROP(7)
+#define DIPROP_FFLOAD       MAKEDIPROP(8)
+#define DIPROP_AUTOCENTER   MAKEDIPROP(9)
+#define DIPROP_CALIBRATIONMODE MAKEDIPROP(10)
+/* which property a REFGUID names, for an implementation */
+#define NOLF_DIPROP_ID(rguid) ((uintptr_t)&(rguid))
+
+/* ---- instances and capabilities -------------------------------------------------------- */
+typedef struct DIDEVCAPS {
+    DWORD dwSize;
+    DWORD dwFlags;
+    DWORD dwDevType;
+    DWORD dwAxes;
+    DWORD dwButtons;
+    DWORD dwPOVs;
+    DWORD dwFFSamplePeriod;
+    DWORD dwFFMinTimeResolution;
+    DWORD dwFirmwareRevision;
+    DWORD dwHardwareRevision;
+    DWORD dwFFDriverVersion;
+} DIDEVCAPS, *LPDIDEVCAPS;
+
+typedef struct DIDEVICEOBJECTINSTANCEA {
+    DWORD dwSize;
+    GUID  guidType;
+    DWORD dwOfs;
+    DWORD dwType;
+    DWORD dwFlags;
+    CHAR  tszName[MAX_PATH];
+    DWORD dwFFMaxForce;
+    DWORD dwFFForceResolution;
+    WORD  wCollectionNumber;
+    WORD  wDesignatorIndex;
+    WORD  wUsagePage;
+    WORD  wUsage;
+    DWORD dwDimension;
+    WORD  wExponent;
+    WORD  wReserved;
+} DIDEVICEOBJECTINSTANCEA, *LPDIDEVICEOBJECTINSTANCEA;
+typedef const DIDEVICEOBJECTINSTANCEA* LPCDIDEVICEOBJECTINSTANCEA;
+
+typedef struct DIDEVICEINSTANCEA {
+    DWORD dwSize;
+    GUID  guidInstance;
+    GUID  guidProduct;
+    DWORD dwDevType;
+    CHAR  tszInstanceName[MAX_PATH];
+    CHAR  tszProductName[MAX_PATH];
+    GUID  guidFFDriver;
+    WORD  wUsagePage;
+    WORD  wUsage;
+} DIDEVICEINSTANCEA, *LPDIDEVICEINSTANCEA;
+typedef const DIDEVICEINSTANCEA* LPCDIDEVICEINSTANCEA;
+
+typedef DIDEVICEINSTANCEA       DIDEVICEINSTANCE;
+typedef LPDIDEVICEINSTANCEA     LPDIDEVICEINSTANCE;
+typedef LPCDIDEVICEINSTANCEA    LPCDIDEVICEINSTANCE;
+typedef DIDEVICEOBJECTINSTANCEA DIDEVICEOBJECTINSTANCE;
+typedef LPDIDEVICEOBJECTINSTANCEA LPDIDEVICEOBJECTINSTANCE;
+typedef LPCDIDEVICEOBJECTINSTANCEA LPCDIDEVICEOBJECTINSTANCE;
+
+/* force feedback: declared for the interface; nothing native has any */
+typedef struct DIEFFECT { DWORD dwSize; } DIEFFECT, *LPDIEFFECT;
+typedef const DIEFFECT* LPCDIEFFECT;
+typedef struct DIEFFECTINFOA { DWORD dwSize; GUID guid; DWORD dwEffType, dwStaticParams, dwDynamicParams; CHAR tszName[MAX_PATH]; } DIEFFECTINFOA, *LPDIEFFECTINFOA;
+typedef const DIEFFECTINFOA* LPCDIEFFECTINFOA;
+typedef struct DIEFFESCAPE { DWORD dwSize, dwCommand; LPVOID lpvInBuffer; DWORD cbInBuffer; LPVOID lpvOutBuffer; DWORD cbOutBuffer; } DIEFFESCAPE, *LPDIEFFESCAPE;
+
+/* ---- callbacks ------------------------------------------------------------------------- */
+typedef BOOL (*LPDIENUMDEVICESCALLBACKA)(LPCDIDEVICEINSTANCEA, LPVOID);
+typedef BOOL (*LPDIENUMDEVICEOBJECTSCALLBACKA)(LPCDIDEVICEOBJECTINSTANCEA, LPVOID);
+typedef BOOL (*LPDIENUMEFFECTSCALLBACKA)(LPCDIEFFECTINFOA, LPVOID);
+#define LPDIENUMDEVICESCALLBACK         LPDIENUMDEVICESCALLBACKA
+#define LPDIENUMDEVICEOBJECTSCALLBACK   LPDIENUMDEVICEOBJECTSCALLBACKA
+
+/* ---- interfaces ------------------------------------------------------------------------ */
+struct IDirectInputEffect : public IUnknown {
+    STDMETHOD(Initialize)(HINSTANCE, DWORD, REFGUID) PURE;
+    STDMETHOD(GetEffectGuid)(GUID*) PURE;
+    STDMETHOD(GetParameters)(LPDIEFFECT, DWORD) PURE;
+    STDMETHOD(SetParameters)(LPCDIEFFECT, DWORD) PURE;
+    STDMETHOD(Start)(DWORD, DWORD) PURE;
+    STDMETHOD(Stop)() PURE;
+    STDMETHOD(GetEffectStatus)(LPDWORD) PURE;
+    STDMETHOD(Download)() PURE;
+    STDMETHOD(Unload)() PURE;
+    STDMETHOD(Escape)(LPDIEFFESCAPE) PURE;
+};
+typedef struct IDirectInputEffect* LPDIRECTINPUTEFFECT;
+typedef BOOL (*LPDIENUMCREATEDEFFECTOBJECTSCALLBACK)(LPDIRECTINPUTEFFECT, LPVOID);
+
+struct IDirectInputDeviceA : public IUnknown {
+    STDMETHOD(GetCapabilities)(LPDIDEVCAPS) PURE;
+    STDMETHOD(EnumObjects)(LPDIENUMDEVICEOBJECTSCALLBACKA, LPVOID, DWORD) PURE;
+    STDMETHOD(GetProperty)(REFGUID, LPDIPROPHEADER) PURE;
+    STDMETHOD(SetProperty)(REFGUID, LPCDIPROPHEADER) PURE;
+    STDMETHOD(Acquire)() PURE;
+    STDMETHOD(Unacquire)() PURE;
+    STDMETHOD(GetDeviceState)(DWORD, LPVOID) PURE;
+    STDMETHOD(GetDeviceData)(DWORD, LPDIDEVICEOBJECTDATA, LPDWORD, DWORD) PURE;
+    STDMETHOD(SetDataFormat)(LPCDIDATAFORMAT) PURE;
+    STDMETHOD(SetEventNotification)(HANDLE) PURE;
+    STDMETHOD(SetCooperativeLevel)(HWND, DWORD) PURE;
+    STDMETHOD(GetObjectInfo)(LPDIDEVICEOBJECTINSTANCEA, DWORD, DWORD) PURE;
+    STDMETHOD(GetDeviceInfo)(LPDIDEVICEINSTANCEA) PURE;
+    STDMETHOD(RunControlPanel)(HWND, DWORD) PURE;
+    STDMETHOD(Initialize)(HINSTANCE, DWORD, REFGUID) PURE;
+};
+struct IDirectInputDevice2A : public IDirectInputDeviceA {
+    STDMETHOD(CreateEffect)(REFGUID, LPCDIEFFECT, LPDIRECTINPUTEFFECT*, LPUNKNOWN) PURE;
+    STDMETHOD(EnumEffects)(LPDIENUMEFFECTSCALLBACKA, LPVOID, DWORD) PURE;
+    STDMETHOD(GetEffectInfo)(LPDIEFFECTINFOA, REFGUID) PURE;
+    STDMETHOD(GetForceFeedbackState)(LPDWORD) PURE;
+    STDMETHOD(SendForceFeedbackCommand)(DWORD) PURE;
+    STDMETHOD(EnumCreatedEffectObjects)(LPDIENUMCREATEDEFFECTOBJECTSCALLBACK, LPVOID, DWORD) PURE;
+    STDMETHOD(Escape)(LPDIEFFESCAPE) PURE;
+    STDMETHOD(Poll)() PURE;
+    STDMETHOD(SendDeviceData)(DWORD, LPCDIDEVICEOBJECTDATA, LPDWORD, DWORD) PURE;
+};
+typedef struct IDirectInputDeviceA*  LPDIRECTINPUTDEVICEA;
+typedef struct IDirectInputDevice2A* LPDIRECTINPUTDEVICE2A;
+typedef IDirectInputDeviceA  IDirectInputDevice;
+typedef IDirectInputDevice2A IDirectInputDevice2;
+typedef LPDIRECTINPUTDEVICEA  LPDIRECTINPUTDEVICE;
+typedef LPDIRECTINPUTDEVICE2A LPDIRECTINPUTDEVICE2;
+
+struct IDirectInputA : public IUnknown {
+    STDMETHOD(CreateDevice)(REFGUID, LPDIRECTINPUTDEVICEA*, LPUNKNOWN) PURE;
+    STDMETHOD(EnumDevices)(DWORD, LPDIENUMDEVICESCALLBACKA, LPVOID, DWORD) PURE;
+    STDMETHOD(GetDeviceStatus)(REFGUID) PURE;
+    STDMETHOD(RunControlPanel)(HWND, DWORD) PURE;
+    STDMETHOD(Initialize)(HINSTANCE, DWORD) PURE;
+};
+typedef struct IDirectInputA* LPDIRECTINPUTA;
+typedef IDirectInputA  IDirectInput;
+typedef LPDIRECTINPUTA LPDIRECTINPUT;
+
+/* ---- GUIDs and the standard formats (nolfplat_dinput.cpp) ------------------------------------ */
+NOLFCOM_EXTERN const GUID GUID_XAxis, GUID_YAxis, GUID_ZAxis, GUID_RxAxis, GUID_RyAxis, GUID_RzAxis;
+NOLFCOM_EXTERN const GUID GUID_Slider, GUID_Button, GUID_Key, GUID_POV, GUID_Unknown;
+NOLFCOM_EXTERN const GUID GUID_SysMouse, GUID_SysKeyboard, GUID_Joystick;
+NOLFCOM_EXTERN const GUID IID_IDirectInputA, IID_IDirectInputDeviceA, IID_IDirectInputDevice2A;
+NOLFCOM_EXTERN const DIDATAFORMAT c_dfDIJoystick, c_dfDIMouse, c_dfDIKeyboard;
+
+NOLFCOM_EXTERN HRESULT DirectInputCreateA(HINSTANCE hInst, DWORD dwVersion, LPDIRECTINPUTA* ppDI, LPUNKNOWN pUnkOuter);
+#define DirectInputCreate DirectInputCreateA
+
+/* ---- key codes (the keyboard's scan codes) ------------------------------------------------ */
 
 #define DIK_ESCAPE         0x01
 #define DIK_1              0x02

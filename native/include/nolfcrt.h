@@ -143,6 +143,11 @@ NOLFCRT_EXTERN int      _findclose(intptr_t hFind);
 #define _ismbcspace(c)          isspace(c)
 #define _ismbcdigit(c)          isdigit(c)
 
+/* Microsoft's new handler: called with the size that failed; a nonzero
+   return tries the allocation again (nolfplat_crt.cpp) */
+typedef int (*_PNH)(size_t);
+NOLFCRT_EXTERN _PNH _set_new_handler(_PNH pHandler);
+
 /* wsprintf: sprintf without floating point; the game's uses are plain */
 #define wsprintf                sprintf
 #define wsprintfA               sprintf

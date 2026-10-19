@@ -50,10 +50,13 @@ set(NOLF_COMMON
     # VC's address of a temporary (&LTVector(0, 0, 0) as an argument): it
     # lives to the end of the call, as in VC
     -Wno-address-of-temporary
+    # one calling convention: every caller and callee is compiled here, and
+    # Windows' conventions mean nothing off x86
+    -D__stdcall= -D_stdcall= -D__cdecl= -D_cdecl= -D__fastcall= -D_fastcall= -D__thiscall=
     -fno-strict-aliasing -fwrapv -fsigned-char -funsigned-bitfields
-    -ivfsoverlay ${OVERLAY}
+    "SHELL:-ivfsoverlay ${OVERLAY}"
     # what Microsoft's stdlib.h and string.h declare (stricmp, _MAX_PATH, ...)
-    -include ${NATIVE}/include/nolfcrt.h
+    "SHELL:-include ${NATIVE}/include/nolfcrt.h"
     -w)
 if(NOLF_ARCH STREQUAL "x86")
     list(APPEND NOLF_COMMON -m32 -msse2 -mfpmath=sse)
@@ -153,7 +156,7 @@ set(GAME_DEFS _REZFILE _FINAL _NOLFBUILD)
 set(GAME_INCS ${SRC}/LT2/sdk/inc ${LT2LS}/incs ${SRC}/modern)
 # game/Shared for "..." includes only: it holds an empty unistd.h (for flex's
 # output on Windows) that <unistd.h> must not find
-set(GAME_IQUOTE -iquote ${SRC}/game/Shared)
+set(GAME_IQUOTE "SHELL:-iquote ${SRC}/game/Shared")
 
 set(CSHELL ${SRC}/game/ClientShellDLL)
 nolf_dsp(CSHELL_SRC ${CSHELL}/ClientShellDLL.dsp)
@@ -188,3 +191,42 @@ add_library(nolf_object STATIC ${OBJDLL_SRC} ${SRC}/game/Shared/Stdafx.cpp ${OBJ
 target_include_directories(nolf_object PRIVATE ${GEN} ${OBJDLL} ${GAME_INCS})
 target_compile_definitions(nolf_object PRIVATE ${GAME_DEFS})
 target_compile_options(nolf_object PRIVATE ${GAME_IQUOTE})
+
+# ---- 3. the engine (build.mk section 3) ----------------------------------------------------
+# lithtech.exe's sources, as build.mk lists them: its own, the server's it
+# compiles in, localdriver.cpp and controlfile.cpp, and the modern build's
+# gamepad device. Built here as a library first; the program around it (the
+# window, the main loop) is the platform layer's.
+set(LT ${SRC}/engine/lithtech)
+set(SV ${SRC}/engine/server)
+set(LITHTECH_SRC
+    lithtech.cpp ../server/msgterm.cpp ../server/sdkforce.cpp ../server/netobj.cpp
+    ../server/smgrnew.cpp ../server/modelnew.cpp ../server/objmover.cpp ../server/smgrmisc.cpp
+    ../server/shade.cpp wmrotate.cpp collelem.cpp cchandler.cpp cmodelload.cpp dmextra.cpp csvis.cpp
+    diblit.cpp savobj.cpp conline.cpp nettrace.cpp modchunk.cpp partfm.cpp ccobj.cpp demodtx.cpp
+    cissurf.cpp cltapi.cpp sndinst2.cpp sndmgr2.cpp predtick.cpp cmgrinit.cpp wgrid.cpp dmgrow.cpp
+    cmgsurf.cpp warpblit.cpp startload.cpp fntdraw.cpp predobj.cpp fmcvt32.cpp fmconvert.cpp
+    ccclient.cpp clientshell.cpp ccline.cpp binkvideo.cpp smackvideo.cpp lvideomgr.cpp soundinst2.cpp
+    tcpqarray.cpp clientmgr3.cpp clientwin.cpp worldtree2.cpp transform.cpp clientinterface.cpp
+    clientphysics.cpp clientsound.cpp dmloader.cpp clientmgr2.cpp stdlithalloc.cpp clientsoundinst.cpp
+    clientworld.cpp cltcursor.cpp clientconsole.cpp clientdsi.cpp lttexmod.cpp clienttexmgr.cpp
+    clientstreams.cpp clientinput.cpp clientsoundmgr.cpp clientworldinfo.cpp clientblit.cpp
+    clientrender.cpp ltnew1.cpp cltnew.cpp cltrest.cpp lt2new1.cpp lt2new2.cpp lt2new3.cpp lt2new4.cpp
+    ltnew2.cpp ../server/csbase.cpp ../server/servermgr.cpp ../server/servermsg.cpp
+    ../server/netmgr.cpp ../server/servermath.cpp ../server/commonphysics.cpp ../server/commonmodel.cpp
+    ../server/sharedcommon.cpp ../server/servermodel.cpp ../server/serverlightanim.cpp
+    ../server/servercommon.cpp ../server/servermessage.cpp ../server/packet.cpp ../server/lthread.cpp
+    ../server/smgr.cpp ../server/ltobject.cpp ../server/lmessage.cpp ../server/spritecontrol.cpp
+    ../server/server.cpp ../server/stringbank.cpp ../server/dsi.cpp ../server/genericprop.cpp
+    ../server/dhash.cpp ../server/filemgr.cpp ../server/console.cpp ../server/structbank.cpp
+    ../server/counter.cpp ../server/dalloc.cpp ../server/modelanim.cpp ../server/basestream.cpp
+    ../server/collection.cpp ../server/fsstream.cpp ../server/objbank.cpp ../server/objtypes.cpp
+    ../server/saveio.cpp ../server/serverengine.cpp ../server/streamsim.cpp ../server/tcpdriver.cpp
+    ../server/worldbsp.cpp ../server/worldmodels.cpp ../server/worldsim.cpp worldtree.cpp clientmusic.cpp
+    ../server/localdriver.cpp controlfile.cpp ../../modern/engine/p7_gamepad.cpp)
+list(TRANSFORM LITHTECH_SRC PREPEND ${LT}/)
+add_library(nolf_engine STATIC ${LITHTECH_SRC})
+target_include_directories(nolf_engine PRIVATE ${SRC}/LT2/sdk/inc ${SV} ${LT} ${SRC}/modern ${SRC}/nolfsrc)
+# The engine's wide strings are Windows' 16-bit ones: its own declarations
+# of the C runtime's wcs* functions are renamed to 16-bit versions
+target_compile_options(nolf_engine PRIVATE "SHELL:-include ${NATIVE}/include/nolfwchar16.h")

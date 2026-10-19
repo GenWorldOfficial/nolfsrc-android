@@ -577,6 +577,263 @@ NOLFWIN_EXTERN int     LoadString(HINSTANCE hInstance, UINT nID, char* pBuf, int
 #define GetEnvironmentVariableA GetEnvironmentVariable
 #define SetEnvironmentVariableA SetEnvironmentVariable
 
+/* ---- the window class, the message loop (nolfplat_window.cpp) -----------------------------
+ * The engine's window: CreateWindowEx makes the SDL window and keeps the
+ * window procedure; PeekMessage turns SDL's events into Windows messages,
+ * DispatchMessage calls the procedure (the engine's, or the game's hook). */
+typedef struct tagWNDCLASS {
+    UINT      style;
+    WNDPROC   lpfnWndProc;
+    int       cbClsExtra, cbWndExtra;
+    HINSTANCE hInstance;
+    HICON     hIcon;
+    HCURSOR   hCursor;
+    HBRUSH    hbrBackground;
+    LPCSTR    lpszMenuName;
+    LPCSTR    lpszClassName;
+} WNDCLASS, WNDCLASSA, *LPWNDCLASS;
+typedef struct tagPAINTSTRUCT { HDC hdc; BOOL fErase; RECT rcPaint; BOOL fRestore, fIncUpdate; BYTE rgbReserved[32]; } PAINTSTRUCT, *LPPAINTSTRUCT;
+#define CS_VREDRAW          0x0001
+#define CS_HREDRAW          0x0002
+#define CS_DBLCLKS          0x0008
+#define CS_OWNDC            0x0020
+#define CW_USEDEFAULT       ((int)0x80000000)
+#define WS_EX_TOPMOST       0x00000008L
+#define WS_EX_APPWINDOW     0x00040000L
+#define PM_NOREMOVE         0x0000
+#define PM_REMOVE           0x0001
+#define WM_NCACTIVATE       0x0086
+#define WM_ERASEBKGND       0x0014
+#define WM_MOVE             0x0003
+#define WM_CREATE           0x0001
+#define WM_SHOWWINDOW       0x0018
+#define WM_DISPLAYCHANGE    0x007E
+#define WM_GETMINMAXINFO    0x0024
+#define SC_SIZE             0xF000
+#define SC_MOVE             0xF010
+#define SC_MINIMIZE         0xF020
+#define SC_MAXIMIZE         0xF030
+#define SC_CLOSE            0xF060
+#define SC_KEYMENU          0xF100
+#define SC_SCREENSAVE       0xF140
+#define SC_MONITORPOWER     0xF170
+#define IDC_ARROW           MAKEINTRESOURCE(32512)
+#define IDI_APPLICATION     MAKEINTRESOURCE(32512)
+#define IMAGE_BITMAP        0
+#define IMAGE_ICON          1
+#define IMAGE_CURSOR        2
+#define LR_DEFAULTCOLOR     0x0000
+#define LR_LOADFROMFILE     0x0010
+#define RT_CURSOR           MAKEINTRESOURCE(1)
+#define RT_BITMAP           MAKEINTRESOURCE(2)
+#define RT_ICON             MAKEINTRESOURCE(3)
+#define RT_STRING           MAKEINTRESOURCE(6)
+#define RT_RCDATA           MAKEINTRESOURCE(10)
+#define GCL_HCURSOR         (-12)
+#define GCL_HICON           (-14)
+NOLFWIN_EXTERN ATOM     RegisterClass(const WNDCLASS* pClass);
+NOLFWIN_EXTERN BOOL     UnregisterClass(LPCSTR pClass, HINSTANCE hInstance);
+NOLFWIN_EXTERN HWND     CreateWindowEx(DWORD dwExStyle, LPCSTR pClass, LPCSTR pTitle, DWORD dwStyle, int x, int y,
+                                       int w, int h, HWND hParent, HMENU hMenu, HINSTANCE hInstance, LPVOID pParam);
+NOLFWIN_EXTERN BOOL     PeekMessage(MSG* pMsg, HWND hWnd, UINT nMin, UINT nMax, UINT nRemove);
+NOLFWIN_EXTERN BOOL     GetMessage(MSG* pMsg, HWND hWnd, UINT nMin, UINT nMax);
+NOLFWIN_EXTERN BOOL     TranslateMessage(const MSG* pMsg);
+NOLFWIN_EXTERN LRESULT  DispatchMessage(const MSG* pMsg);
+NOLFWIN_EXTERN void     PostQuitMessage(int nExitCode);
+NOLFWIN_EXTERN BOOL     IsIconic(HWND hWnd);
+NOLFWIN_EXTERN BOOL     IsWindow(HWND hWnd);
+NOLFWIN_EXTERN BOOL     IsWindowVisible(HWND hWnd);
+NOLFWIN_EXTERN HWND     GetParent(HWND hWnd);
+NOLFWIN_EXTERN HWND     GetDesktopWindow(void);
+NOLFWIN_EXTERN HWND     SetCapture(HWND hWnd);
+NOLFWIN_EXTERN BOOL     ReleaseCapture(void);
+NOLFWIN_EXTERN HDC      BeginPaint(HWND hWnd, PAINTSTRUCT* pPaint);
+NOLFWIN_EXTERN BOOL     EndPaint(HWND hWnd, const PAINTSTRUCT* pPaint);
+NOLFWIN_EXTERN DWORD    SetClassLong(HWND hWnd, int nIndex, LONG nValue);
+NOLFWIN_EXTERN DWORD    GetClassLong(HWND hWnd, int nIndex);
+#define GetClassLongA       GetClassLong
+NOLFWIN_EXTERN HCURSOR  LoadCursor(HINSTANCE hInstance, LPCSTR pName);
+NOLFWIN_EXTERN HICON    LoadIcon(HINSTANCE hInstance, LPCSTR pName);
+NOLFWIN_EXTERN HANDLE   LoadImage(HINSTANCE hInstance, LPCSTR pName, UINT nType, int cx, int cy, UINT nLoad);
+NOLFWIN_EXTERN HCURSOR  CreateCursor(HINSTANCE hInst, int xHot, int yHot, int w, int h, const void* pAnd, const void* pXor);
+NOLFWIN_EXTERN BOOL     DestroyCursor(HCURSOR hCursor);
+NOLFWIN_EXTERN BOOL     GetKeyboardState(BYTE* pKeys);
+NOLFWIN_EXTERN int      ToAscii(UINT nVirtKey, UINT nScanCode, const BYTE* pKeys, WORD* pChar, UINT nFlags);
+#define RegisterClassA      RegisterClass
+#define CreateWindowExA     CreateWindowEx
+#define PeekMessageA        PeekMessage
+#define GetMessageA         GetMessage
+#define DispatchMessageA    DispatchMessage
+#define DefWindowProcA      DefWindowProc
+#define CallWindowProcA     CallWindowProc
+#define LoadCursorA         LoadCursor
+#define LoadIconA           LoadIcon
+#define LoadImageA          LoadImage
+#define SetClassLongA       SetClassLong
+#define SetWindowLongA      SetWindowLong
+#define GetWindowLongA      GetWindowLong
+#define FindResourceA       FindResource
+#define SetCurrentDirectoryA SetCurrentDirectory
+#define GetCurrentDirectoryA GetCurrentDirectory
+#define GetModuleFileNameA  GetModuleFileName
+#define GetModuleHandleA    GetModuleHandle
+
+/* ---- GDI: what the engine draws its fonts with (nolfplat_gdi.cpp) ------------------------ */
+typedef struct tagBITMAPINFOHEADER {
+    DWORD biSize;
+    LONG  biWidth, biHeight;
+    WORD  biPlanes, biBitCount;
+    DWORD biCompression, biSizeImage;
+    LONG  biXPelsPerMeter, biYPelsPerMeter;
+    DWORD biClrUsed, biClrImportant;
+} BITMAPINFOHEADER, *LPBITMAPINFOHEADER, *PBITMAPINFOHEADER;
+typedef struct tagRGBQUAD { BYTE rgbBlue, rgbGreen, rgbRed, rgbReserved; } RGBQUAD;
+typedef struct tagBITMAPINFO { BITMAPINFOHEADER bmiHeader; RGBQUAD bmiColors[1]; } BITMAPINFO, *LPBITMAPINFO;
+typedef struct tagTEXTMETRIC {
+    LONG tmHeight, tmAscent, tmDescent, tmInternalLeading, tmExternalLeading, tmAveCharWidth, tmMaxCharWidth,
+         tmWeight, tmOverhang, tmDigitizedAspectX, tmDigitizedAspectY;
+    BYTE tmFirstChar, tmLastChar, tmDefaultChar, tmBreakChar, tmItalic, tmUnderlined, tmStruckOut,
+         tmPitchAndFamily, tmCharSet;
+} TEXTMETRIC, TEXTMETRICA, *LPTEXTMETRIC;
+typedef struct tagABC { int abcA; UINT abcB; int abcC; } ABC, *LPABC;
+#define BI_RGB              0L
+#define BI_BITFIELDS        3L
+#define DIB_RGB_COLORS      0
+#define TRANSPARENT         1
+#define OPAQUE              2
+#define BLACK_BRUSH         4
+#define WHITE_BRUSH         0
+#define NULL_BRUSH          5
+#define FW_DONTCARE         0
+#define FW_THIN             100
+#define FW_LIGHT            300
+#define FW_NORMAL           400
+#define FW_MEDIUM           500
+#define FW_SEMIBOLD         600
+#define FW_BOLD             700
+#define FW_HEAVY            900
+#define ANSI_CHARSET        0
+#define DEFAULT_CHARSET     1
+#define OUT_DEFAULT_PRECIS  0
+#define OUT_TT_PRECIS       4
+#define CLIP_DEFAULT_PRECIS 0
+#define DEFAULT_QUALITY     0
+#define ANTIALIASED_QUALITY 4
+#define NONANTIALIASED_QUALITY 3
+#define DEFAULT_PITCH       0
+#define FIXED_PITCH         1
+#define VARIABLE_PITCH      2
+#define FF_DONTCARE         (0 << 4)
+#define FF_ROMAN            (1 << 4)
+#define FF_SWISS            (2 << 4)
+#define FF_MODERN           (3 << 4)
+#define SRCCOPY             0x00CC0020
+#define ETO_OPAQUE          0x0002
+#define ETO_CLIPPED         0x0004
+#define DT_LEFT             0x0000
+#define DT_CENTER           0x0001
+#define DT_RIGHT            0x0002
+#define DT_TOP              0x0000
+#define DT_VCENTER          0x0004
+#define DT_BOTTOM           0x0008
+#define DT_WORDBREAK        0x0010
+#define DT_SINGLELINE       0x0020
+#define DT_NOCLIP           0x0100
+#define DT_CALCRECT         0x0400
+#define DT_NOPREFIX         0x0800
+#define LOGPIXELSX          88
+#define LOGPIXELSY          90
+NOLFWIN_EXTERN HDC      GetDC(HWND hWnd);
+NOLFWIN_EXTERN int      ReleaseDC(HWND hWnd, HDC hDC);
+NOLFWIN_EXTERN HDC      CreateCompatibleDC(HDC hDC);
+NOLFWIN_EXTERN BOOL     DeleteDC(HDC hDC);
+NOLFWIN_EXTERN HGDIOBJ  SelectObject(HDC hDC, HGDIOBJ hObject);
+NOLFWIN_EXTERN HGDIOBJ  GetStockObject(int nObject);
+NOLFWIN_EXTERN HBITMAP  CreateDIBSection(HDC hDC, const BITMAPINFO* pInfo, UINT nUsage, void** ppBits, HANDLE hSection,
+                                         DWORD nOffset);
+NOLFWIN_EXTERN HFONT    CreateFont(int nHeight, int nWidth, int nEscapement, int nOrientation, int nWeight,
+                                   DWORD bItalic, DWORD bUnderline, DWORD bStrikeOut, DWORD nCharSet,
+                                   DWORD nOutPrecision, DWORD nClipPrecision, DWORD nQuality,
+                                   DWORD nPitchAndFamily, LPCSTR pFace);
+NOLFWIN_EXTERN COLORREF SetTextColor(HDC hDC, COLORREF c);
+NOLFWIN_EXTERN COLORREF SetBkColor(HDC hDC, COLORREF c);
+NOLFWIN_EXTERN int      SetBkMode(HDC hDC, int nMode);
+NOLFWIN_EXTERN BOOL     TextOut(HDC hDC, int x, int y, LPCSTR pText, int nLen);
+NOLFWIN_EXTERN BOOL     ExtTextOut(HDC hDC, int x, int y, UINT nOptions, const RECT* pRect, LPCSTR pText, UINT nLen,
+                                   const INT* pDx);
+NOLFWIN_EXTERN int      DrawText(HDC hDC, LPCSTR pText, int nLen, RECT* pRect, UINT nFormat);
+NOLFWIN_EXTERN BOOL     GetTextExtentPoint32(HDC hDC, LPCSTR pText, int nLen, SIZE* pSize);
+NOLFWIN_EXTERN BOOL     GetTextMetrics(HDC hDC, TEXTMETRIC* pMetric);
+NOLFWIN_EXTERN BOOL     GetCharWidth32(HDC hDC, UINT nFirst, UINT nLast, INT* pWidths);
+NOLFWIN_EXTERN BOOL     GetCharABCWidths(HDC hDC, UINT nFirst, UINT nLast, ABC* pABC);
+NOLFWIN_EXTERN int      FillRect(HDC hDC, const RECT* pRect, HBRUSH hBrush);
+NOLFWIN_EXTERN BOOL     PatBlt(HDC hDC, int x, int y, int w, int h, DWORD nRop);
+NOLFWIN_EXTERN BOOL     BitBlt(HDC hDst, int x, int y, int w, int h, HDC hSrc, int xs, int ys, DWORD nRop);
+NOLFWIN_EXTERN int      GetDeviceCaps(HDC hDC, int nIndex);
+NOLFWIN_EXTERN BOOL     GdiFlush(void);
+NOLFWIN_EXTERN int      SetTextCharacterExtra(HDC hDC, int nExtra);
+NOLFWIN_EXTERN int      GetTextCharacterExtra(HDC hDC);
+NOLFWIN_EXTERN BOOL     Rectangle(HDC hDC, int left, int top, int right, int bottom);
+NOLFWIN_EXTERN HBRUSH   CreateSolidBrush(COLORREF c);
+NOLFWIN_EXTERN HPEN     CreatePen(int nStyle, int nWidth, COLORREF c);
+#define PS_SOLID            0
+#define PS_NULL             5
+#define NULL_PEN            8
+#define WHITE_PEN           6
+#define BLACK_PEN           7
+#define CreateFontA         CreateFont
+#define TextOutA            TextOut
+#define ExtTextOutA         ExtTextOut
+#define DrawTextA           DrawText
+#define GetTextExtentPoint32A GetTextExtentPoint32
+#define GetTextExtentPoint  GetTextExtentPoint32
+#define GetTextExtentPointA GetTextExtentPoint32
+#define GetTextMetricsA     GetTextMetrics
+#define GetCharWidth32A     GetCharWidth32
+#define GetCharWidth        GetCharWidth32
+#define GetCharABCWidthsA   GetCharABCWidths
+
+/* ---- processes, temporary files, messages ------------------------------------------------ */
+#define HIGH_PRIORITY_CLASS     0x00000080
+#define NORMAL_PRIORITY_CLASS   0x00000020
+#define IDLE_PRIORITY_CLASS     0x00000040
+#define REALTIME_PRIORITY_CLASS 0x00000100
+#define CREATE_SUSPENDED        0x00000004
+#define FORMAT_MESSAGE_ALLOCATE_BUFFER 0x00000100
+#define FORMAT_MESSAGE_IGNORE_INSERTS  0x00000200
+#define FORMAT_MESSAGE_FROM_STRING     0x00000400
+#define FORMAT_MESSAGE_FROM_SYSTEM     0x00001000
+#define FORMAT_MESSAGE_ARGUMENT_ARRAY  0x00002000
+#define LANG_NEUTRAL            0x00
+#define SUBLANG_DEFAULT         0x01
+#define MAKELANGID(p, s)        ((((WORD)(s)) << 10) | (WORD)(p))
+NOLFWIN_EXTERN HANDLE  GetCurrentProcess(void);
+NOLFWIN_EXTERN DWORD   GetCurrentProcessId(void);
+NOLFWIN_EXTERN BOOL    SetPriorityClass(HANDLE hProcess, DWORD nClass);
+NOLFWIN_EXTERN DWORD   GetTempPath(DWORD nSize, char* pBuf);
+NOLFWIN_EXTERN UINT    GetTempFileName(LPCSTR pPath, LPCSTR pPrefix, UINT nUnique, char* pOut);
+NOLFWIN_EXTERN DWORD   FormatMessage(DWORD nFlags, LPCVOID pSource, DWORD nMessageId, DWORD nLanguageId, char* pBuf,
+                                     DWORD nSize, va_list* pArgs);
+NOLFWIN_EXTERN HLOCAL  LocalFree(HLOCAL h);
+NOLFWIN_EXTERN HLOCAL  LocalAlloc(UINT nFlags, size_t n);
+NOLFWIN_EXTERN HGLOBAL GlobalAlloc(UINT nFlags, size_t n);
+NOLFWIN_EXTERN HGLOBAL GlobalFree(HGLOBAL h);
+NOLFWIN_EXTERN LPVOID  GlobalLock(HGLOBAL h);
+NOLFWIN_EXTERN BOOL    GlobalUnlock(HGLOBAL h);
+NOLFWIN_EXTERN UINT    GetSystemDirectory(char* pBuf, UINT nSize);
+NOLFWIN_EXTERN UINT    GetWindowsDirectory(char* pBuf, UINT nSize);
+NOLFWIN_EXTERN BOOL    GetComputerName(char* pBuf, LPDWORD pSize);
+NOLFWIN_EXTERN BOOL    GetUserName(char* pBuf, LPDWORD pSize);
+#define GetTempPathA        GetTempPath
+#define GetTempFileNameA    GetTempFileName
+#define FormatMessageA      FormatMessage
+#define LMEM_FIXED          0x0000
+#define LMEM_ZEROINIT       0x0040
+#define LPTR                0x0040
+#define GMEM_FIXED          0x0000
+#define GMEM_MOVEABLE       0x0002
+#define GMEM_ZEROINIT       0x0040
+
 /* ---- threads and synchronisation (nolfplat_thread.cpp) ------------------------------------- */
 
 typedef struct _CRITICAL_SECTION { void* pImpl; } CRITICAL_SECTION, *LPCRITICAL_SECTION;
@@ -612,6 +869,15 @@ NOLFWIN_EXTERN BOOL   GetExitCodeThread(HANDLE hThread, LPDWORD pExitCode);
 NOLFWIN_EXTERN BOOL   CloseHandle(HANDLE hObject);
 NOLFWIN_EXTERN DWORD  GetCurrentThreadId(void);
 NOLFWIN_EXTERN HANDLE GetCurrentThread(void);
+NOLFWIN_EXTERN DWORD  ResumeThread(HANDLE hThread);
+NOLFWIN_EXTERN DWORD  SuspendThread(HANDLE hThread);
+NOLFWIN_EXTERN BOOL   PulseEvent(HANDLE hEvent);
+NOLFWIN_EXTERN DWORD  WaitForMultipleObjects(DWORD nCount, const HANDLE* pHandles, BOOL bWaitAll, DWORD nMilliseconds);
 #define STILL_ACTIVE 259
+
+#ifdef __cplusplus
+/* windows.h brings COM's IUnknown with it (objbase.h) */
+#include "nolfcom.h"
+#endif
 
 #endif /* NOLFWIN_H */

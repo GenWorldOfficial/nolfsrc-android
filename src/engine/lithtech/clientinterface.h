@@ -105,7 +105,7 @@ public:
 	LTRESULT (*GetSoundDuration)(HLTSOUND hSound, LTFLOAT *fDuration);        // 0x10c  -> 0x00409aa0
 	LTRESULT (*GetSoundTimer)(HLTSOUND hSound, LTFLOAT *fTimer);              // 0x110  -> 0x00409ac0
 	LTRESULT (*GetSoundData)(HLTSOUND hSound, int16 * & pSixteenBitData, int8 * & pEightBitData, uint32 * dwSamplesPerSecond, uint32 * dwChannels); // 0x114  -> 0x00409bd0
-	LTRESULT (*GetSoundOffset)(HLTSOUND hSound, uint32 * dwOffset, uint32 * dwSize = NULL); // 0x118  -> 0x00409d60
+	LTRESULT (*GetSoundOffset)(HLTSOUND hSound, uint32 * dwOffset, uint32 * dwSize NOLF_DEFARG(NULL)); // 0x118  -> 0x00409d60
 	LTBOOL (*IsDone)(HLTSOUND pSoundHandle);                                  // 0x11c  -> 0x00409ec0
 	void (*KillSound)(HLTSOUND pSoundHandle);                                 // 0x120  -> 0x00409ee0
 	void (*KillSoundLoop)(HLTSOUND hSoundHandle);                             // 0x124  -> 0x00409f00

@@ -823,7 +823,7 @@ public:
 	uint32 (*GetClientInfoFlags)(HCLIENT hClient);                                           // 0x0d8
 	void (*SetClientUserData)(HCLIENT hClient, void *pData);                                 // 0x0dc
 	void* (*GetClientUserData)(HCLIENT hClient);                                             // 0x0e0
-	void (*KickClient)(HCLIENT hClient, uint32 nReasonCode = 0);                             // 0x0e4
+	void (*KickClient)(HCLIENT hClient, uint32 nReasonCode NOLF_DEFARG(0));                  // 0x0e4
 	LTRESULT (*SetClientViewPos)(HCLIENT hClient, LTVector *pPos);                           // 0x0e8
 	void (*RunGameConString)(char *pString);                                                 // 0x0ec
 	void (*SetGameConVar)(char *pName, char *pVal);                                          // 0x0f0

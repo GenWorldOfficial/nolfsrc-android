@@ -1764,7 +1764,7 @@ LTBOOL TCPDriver::GetTcpIpAddress(char* sAddress, uint32 dwBufferSize,
 	if (g_ShowNetInfo)
 	{
 		dsi_PrintCount("---- %d IP device%s ----", nDevices,
-		               (nDevices > 1) ? "s" : "");
+		               (char*)((nDevices > 1) ? "s" : ""));
 
 		for (i = 0; (int)i < nDevices; i++)
 		{
