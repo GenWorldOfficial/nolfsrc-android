@@ -321,7 +321,7 @@ int CString::Find(char ch, DWORD start) const
 	if (start >= GetLength())
 		return -1;
 
-	char *pResult = strchr(&(GetBuffer()[start]), ch);
+	char *pResult = (char*)strchr(&(GetBuffer()[start]), ch);
 
 	return (pResult) ? pResult - GetBuffer() : -1;
 }
@@ -331,7 +331,7 @@ int CString::Find(LPCTSTR pSub, DWORD start) const
 	if (start >= GetLength())
 		return -1;
 
-	char *pResult = strstr(&(GetBuffer()[start]), pSub);
+	char *pResult = (char*)strstr(&(GetBuffer()[start]), pSub);
 
 	return (pResult) ? pResult - GetBuffer() : -1;
 }

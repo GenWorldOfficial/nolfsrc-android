@@ -11,6 +11,41 @@
 #ifndef __FACTORY_H__
 #define __FACTORY_H__
 
+#ifdef NOLF_NATIVE
+// (the native build: the same macros, without the pasting around the
+// class name that only VC accepts)
+#define FACTORY_NEW(fact)\
+	CFactory<fact>::Create();
+
+#define FACTORY_DELETE(fact)\
+	fact->Destroy();
+
+#define DEFINE_FACTORY_CLASS(fact)\
+	public CFactory<fact>
+
+#define	DEFINE_ABSTRACT_FACTORY_METHODS(fact) \
+	public:\
+		virtual void Constructor();\
+		virtual void Destructor();\
+		virtual void Destroy() {}\
+	private:
+
+#define	DEFINE_FACTORY_METHODS(fact) \
+	public:\
+	virtual void Constructor();\
+	virtual void Destructor();\
+	virtual void Destroy() { CFactory<fact>::Destroy((fact*)this); }\
+	private:
+
+// The static members are explicit specializations, which standard C++
+// writes with template<> and defines only with an initializer (VC6 took
+// them bare): zero, as VC6 left them, and the cleaner an aggregate.
+#define IMPLEMENT_FACTORY(fact, size)\
+	template<> CFactory<fact>::CCleaner CFactory<fact>::s_Cleaner = { 0, 0 };\
+	template<> int CFactory<fact>::s_cTYPE = 0;\
+	template<> int CFactory<fact>::s_iCursor = 0;\
+	template<> fact** CFactory<fact>::s_aPTYPE = CFactory<fact>::Initialize(size);
+#else
 #define FACTORY_NEW(fact)\
 	CFactory<##fact##>::Create();
 
@@ -39,6 +74,7 @@
 	int CFactory<##fact##>::s_cTYPE;\
 	int CFactory<##fact##>::s_iCursor;\
 	##fact##** CFactory<##fact##>::s_aPTYPE = CFactory<##fact##>::Initialize(size);
+#endif
 
 template<class TYPE> class CFactory
 {

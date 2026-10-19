@@ -811,7 +811,7 @@ void LithBitmapFont::Draw_Method_Timed()
 
 	// Figure out which line we're currently drawing
 	LTFLOAT fTime = 0.0f;
-	for (uint32 i = 0; i < m_lfFD->nNumLines; i++)
+	uint32 i; for (i = 0; i < m_lfFD->nNumLines; i++)
 	{
 		if (m_dwFlags & LTF_TIMED_LETTERS)
 			fTime += m_lfFD->pTimes[i];

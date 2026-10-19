@@ -855,7 +855,11 @@ void CJoystickAxisTurn::SaveToConsole(ILTClient *pClientDE)
 // Constructor
 CJoystickAxisLook::CJoystickAxisLook()
 {
+#ifdef NOLF_NATIVE
+	CJoystickAxisBase();	// what VC6 made of the call below: a temporary
+#else
 	CJoystickAxisBase::CJoystickAxisBase();
+#endif
 
 	// Members
     m_bFixedPosition=LTTRUE;
@@ -992,7 +996,11 @@ void CJoystickAxisLook::SaveToConsole(ILTClient *pClientDE)
 // Contructor
 CJoystickAxisMove::CJoystickAxisMove()
 {
+#ifdef NOLF_NATIVE
+	CJoystickAxisBase();	// what VC6 made of the call below: a temporary
+#else
 	CJoystickAxisBase::CJoystickAxisBase();
+#endif
 }
 
 // Load from the console

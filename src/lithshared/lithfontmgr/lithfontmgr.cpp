@@ -85,7 +85,7 @@ LithFontMgr::LithFontMgr()
 
 	// Clear the font and cursor lists (loops, not memset: the second memset
 	// expansion schedules its lea differently from the shipped object)
-	for (int i = 0; i < LTF_MGR_MAX_FONTS; i++)
+	int i; for (i = 0; i < LTF_MGR_MAX_FONTS; i++)
 		m_pFontList[i] = LTNULL;
 
 	for (i = 0; i < LTF_MGR_MAX_CURSORS; i++)

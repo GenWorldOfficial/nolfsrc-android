@@ -58,7 +58,7 @@ void CreateClientWeaponFX(CLIENTWEAPONFX & theStruct)
 				{
 					if (WFX_MARK & pAmmo->pImpactFX->nFlags)
 					{
-                        CreateServerMark((CLIENTWEAPONFX)theStruct);
+                        CreateServerMark(NOLF_LVALUE((CLIENTWEAPONFX)theStruct));
 					}
 				}
 
@@ -212,7 +212,7 @@ static void CreateServerMark(CLIENTWEAPONFX & theStruct)
             g_pLTServer->RemoveAttachment(hAttachment);
 		}
 
-        pMoveMark->Setup((CLIENTWEAPONFX)theStruct);
+        pMoveMark->Setup(NOLF_LVALUE((CLIENTWEAPONFX)theStruct));
 		return;
 	}
 
@@ -256,7 +256,7 @@ static void CreateServerMark(CLIENTWEAPONFX & theStruct)
         g_pLTServer->ScaleObject(pMark->m_hObject, &vScale);
 	}
 
-	pMark->Setup((CLIENTWEAPONFX)theStruct);
+	pMark->Setup(NOLF_LVALUE((CLIENTWEAPONFX)theStruct));
 }
 
 

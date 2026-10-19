@@ -80,6 +80,21 @@
 
 	
 
+// Helpers for what only VC accepts; the native build defines them first
+// (native/include/nolfcrt.h), and VC sees exactly the original code:
+// NOLF_DEFARG(x), a default argument on a function pointer, = x;
+// NOLF_CSTR(x), a CString passed through '...' (to sprintf), x;
+// NOLF_LVALUE(x), a temporary bound to a non-const reference, x.
+#ifndef NOLF_DEFARG
+#define NOLF_DEFARG(x) = x
+#endif
+#ifndef NOLF_CSTR
+#define NOLF_CSTR(x) x
+#endif
+#ifndef NOLF_LVALUE
+#define NOLF_LVALUE(x) x
+#endif
+
 	#define DEFINE_HANDLE_TYPE(name) \
 		typedef struct {int __nothing;} ##name##_t, *name;
 

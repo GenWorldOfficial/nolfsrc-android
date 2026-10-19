@@ -146,6 +146,8 @@ with the action), and no open-source player plays it correctly. Two ways:
 | OpenGL ES 3 backend for the renderer core (`src/modern/render/gles/gles_device.cpp`) | **done, tested off-device**: all of `rdev.h`. Fixed-function state kept by the backend and drawn with generated shaders, one per combination in use (up to four texture units with modulate/replace/combine, alpha test, linear fog); BGRA/RGBA/RGB/5:6:5 uploads converted to what GLES takes; push/pop of state; matrix stacks; multisampled antialiasing; screen reads from the back or the last presented frame. Depth clamping with `EXT_depth_clamp`, or in the shader without it; `rd_NearDepth` in the vertex shader, exact by 1/w and drawn once (`opengl.ren` draws such batches twice). Draws at the engine's mode and scales to the screen. `gles/run_test.sh`: 24 pixel checks, single-sampled and 4x, with and without the driver's depth clamp, all pass on Mesa's llvmpipe (OpenGL ES 3.2). Builds without warnings for arm64 |
 | `mrplatform.h` on Android (`gles/android_platform.cpp`) | done: the mode list from the screen's size, no mode switching |
 | Renderer core (`src/modern/render/mr_*.cpp`) on 64-bit | blocked on M2: its engine-struct mirrors are 32-bit; otherwise it needs `__stdcall` macros and a non-DirectDraw movie path |
+| M1: CMake build, 32-bit Linux (`native/`) | **libraries and game modules compile**: every lithshared library, CShell and Object (with `src/modern/`'s code and the flex/bison parser) with clang `-m32`, from unedited include lines (a case-insensitive overlay) and small source edits that leave the Windows build's code as it was. `native/README.md` lists how |
+| M1: platform layer, engine, link | next |
 | Everything else | M1 to M5 above |
 
 ## Building and testing what exists

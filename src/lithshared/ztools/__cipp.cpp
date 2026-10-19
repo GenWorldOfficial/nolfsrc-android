@@ -5,6 +5,9 @@
 
 unsigned long __caller_ip()
 {
+#ifdef NOLF_NATIVE
+	return (unsigned long)(uintptr_t)__builtin_return_address(0);
+#else
 	unsigned long ip;
 
 	__asm
@@ -14,4 +17,5 @@ unsigned long __caller_ip()
 	}
 
 	return ip;
+#endif
 }

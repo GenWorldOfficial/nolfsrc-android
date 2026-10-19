@@ -5,6 +5,12 @@
 // unchanged), container plumbing restored to the LT2 zSymTab/zTools
 // design and verified per-function against the shipped ButeMgr.obj.
 
+#ifndef NOLF_CSTR
+#define NOLF_CSTR(x) x
+#endif
+#ifndef NOLF_LVALUE
+#define NOLF_LVALUE(x) x
+#endif
 #include "stdafx.h"
 #include "butemgr.h"
 #include "stdio.h"
@@ -279,7 +285,7 @@ void CButeMgr::DisplayMessage(const char* szMsg, ...)
 	va_start(v, szMsg);
 	CString str;
 	str.FormatV(szMsg, v);
-	m_sErrorString.Format("ButeMgr (%s, %d):  %s", m_sAttributeFilename, m_lineNumber, str);
+	m_sErrorString.Format("ButeMgr (%s, %d):  %s", NOLF_CSTR(m_sAttributeFilename), m_lineNumber, NOLF_CSTR(str));
 
 	TRACE("%s\n", m_sErrorString.GetBuffer(0));
 	if (m_pDisplayFunc)
@@ -830,9 +836,9 @@ bool CButeMgr::Save(const char* szNewFileName)
 	if (m_bCrypt)
 	{
 		if (szNewFileName)
-			m_cryptMgr.Encrypt(*m_pSaveData, ofstream(szNewFileName, ios::binary));
+			m_cryptMgr.Encrypt(*m_pSaveData, NOLF_LVALUE(ofstream(szNewFileName, ios::binary)));
 		else
-			m_cryptMgr.Encrypt(*m_pSaveData, ofstream(m_sAttributeFilename, ios::binary));
+			m_cryptMgr.Encrypt(*m_pSaveData, NOLF_LVALUE(ofstream(m_sAttributeFilename, ios::binary)));
 	}
 	delete ss.str();
 	if (m_bCrypt)

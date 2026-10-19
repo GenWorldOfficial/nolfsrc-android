@@ -10,8 +10,13 @@
 #include "stddef.h"
 
 
+#ifdef NOLF_NATIVE
+// (the standard library's streams, under the pre-standard names: native/include/nolfios.h)
+#include "nolfios.h"
+#else
 class ostream;
 class istream;
+#endif
 
 
 #ifndef NO_PRAGMA_LIBS
@@ -1007,7 +1012,9 @@ friend class zDFA;
     int edge, val, next1, next2;
 };
 
+#ifndef NOLF_NATIVE
 class istream;
+#endif
 
 class zNFA : public zErrHandling {
 friend class zDFA;
@@ -1203,7 +1210,7 @@ template<class T> void zPriorityQueue<T>::dtf(T *p)
 // length string keys.
 
 // Symbol table visit function type
-typedef (*stvf_t)(const char *, void *, void *);
+typedef int (*stvf_t)(const char *, void *, void *);
 // the visit function will be called with a pointer to the key,
 // a pointer to the associated object and a supplementary
 // pointer provided by the user of traverse.
@@ -1823,7 +1830,7 @@ private:
 
 	int sizeup();
 	int sizedown();
-	static chunk;
+	static int chunk;
 
 	void **body;
 	int size, _current;

@@ -35,7 +35,11 @@ protected:
 class CBaseListCounter : public CBaseList {
 public:
 	// Constructors and destructors
+#ifdef NOLF_NATIVE
+	CBaseListCounter() { m_nCount = 0; CBaseList(); };	// (VC6 made a temporary of the call)
+#else
 	CBaseListCounter() { m_nCount = 0; CBaseList::CBaseList(); };
+#endif
 	~CBaseListCounter() { };
 
 	// member insert and delete functions

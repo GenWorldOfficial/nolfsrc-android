@@ -883,7 +883,7 @@ void CFolderCustomControls::FillControlList()
 		{
 			continue;
 		}
-		for (int i = 0; i < m_nEntries; i++)
+		int i; for (i = 0; i < m_nEntries; i++)
 		{
 			SAFE_STRCPY (m_pEntries[i].strControlName[dev], "");
 		}

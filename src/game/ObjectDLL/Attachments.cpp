@@ -1338,7 +1338,7 @@ LTBOOL CAttachmentProp::HandleProjectileImpact(CProjectile* pProjectile, CAttach
 void CAttachmentProp::CreateSpawnString(char* szSpawn)
 {
 	sprintf(szSpawn, "Prop Filename %s; Skin %s; Gravity 0",
-		g_pAttachButeMgr->GetAttachmentModel(m_nAttachmentID), g_pAttachButeMgr->GetAttachmentSkin(m_nAttachmentID));
+		NOLF_CSTR(g_pAttachButeMgr->GetAttachmentModel(m_nAttachmentID)), NOLF_CSTR(g_pAttachButeMgr->GetAttachmentSkin(m_nAttachmentID)));
 }
 
 // ----------------------------------------------------------------------- //
@@ -1402,7 +1402,7 @@ LTBOOL CAttachmentObject::HandleProjectileImpact(CProjectile* pProjectile, CAtta
 void CAttachmentObject::CreateSpawnString(char* szSpawn)
 {
 	sprintf(szSpawn, "Prop Filename %s; Skin %s; Gravity 0",
-		g_pAttachButeMgr->GetAttachmentModel(m_nAttachmentID), g_pAttachButeMgr->GetAttachmentSkin(m_nAttachmentID));
+		NOLF_CSTR(g_pAttachButeMgr->GetAttachmentModel(m_nAttachmentID)), NOLF_CSTR(g_pAttachButeMgr->GetAttachmentSkin(m_nAttachmentID)));
 }
 
 // ----------------------------------------------------------------------- //
